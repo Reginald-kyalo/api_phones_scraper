@@ -1,0 +1,65 @@
+[
+
+  {
+
+    _id: ObjectId('67cd7caee643842b3eca7b04'),
+
+    model: 'apple iphone 8',
+
+    products: [
+
+      {
+
+        product_id: '9dd48055c286b39cf5b9b4469f1e95dc2e91927a96fc7b5084e9fadc208286d0',
+
+        product_title: "Apple iPhone 8- 4.7''64GB LCD - 2GB RAM - 12MP Rear/7MP Front- Renewed-  Single sim -Black",
+
+        product_image: 'https://ke.jumia.is/unsafe/fit-in/300x300/filters:fill(white)/product/80/4754592/1.jpg?3464',
+
+        price: [
+
+          {
+
+            amount: [ { amount: 20000, timestamp: '20250309_14:06:10' } ],
+
+            timestamp: '20250309_14:34:03'
+
+          }
+
+        ],
+
+        site_fetched: 'jumia.co.ke',
+
+        product_url: 'https://jumia.co.ke/apple-iphone-8-4.764gb-lcd-2gb-ram-12mp-rear7mp-front-renewed-single-sim-black-295457408.html'
+
+      },
+
+      {
+
+        product_id: '95e56bc92fd73e6b08687cfc3217f371ccf314e14b7437fb23fbd65721b1bb3d',
+
+        product_title: 'Apple iPhone 8 64 GB Black',
+
+        product_image: 'https://pictures-kenya.jijistatic.com/72932828_MzAwLTQwMC05YWIzMzI0ZjVj.webp 1x',
+
+        price: [
+
+          {
+
+            amount: [ { amount: 15999, timestamp: '20250309_14:14:44' } ],
+
+            timestamp: '20250309_14:34:03'
+
+          }
+
+        ],
+
+        site_fetched: 'jiji.co.ke',
+
+        product_url: 'https://jiji.co.ke/nairobi-central/mobile-phones/apple-iphone-8-64-gb-black-5htPsBpwe9fagu05nZmCo58y.html?page=1&pos=12&cur_pos=12&ads_per_page=24&ads_count=5038&lid=qzGPKJKJ6wd_03zB&indexPosition=11'
+
+      }
+
+    ]
+
+  },
