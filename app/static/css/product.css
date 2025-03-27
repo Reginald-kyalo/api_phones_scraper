@@ -1,0 +1,402 @@
+/* Container for main product area */
+main[role="main"] {
+  max-width: 1200px;
+  margin: 10px auto;
+  position: relative;
+}
+
+/* Products container for layout */
+.products-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Individual product card (wrapper) */
+.product {
+  background: transparent;
+  max-width: 300px;
+  position: relative;
+  z-index: 15;
+  margin: 0 auto;
+  box-shadow: none;
+  box-sizing: border-box;
+  padding: 10px 40px 10px 10px; /* extra right padding for the sidebar */
+}
+
+/* Inner wrapper handles internal layout */
+.product-inner {
+  position: relative;
+  padding: 10px;
+}
+
+/* Product image and figure styling */
+.product figure {
+  margin: 0;
+  line-height: 0;
+  position: relative;
+}
+.product-image {
+  width: 100%;
+  display: block;
+}
+
+/* Heart icon remains unchanged */
+.heart-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+.heart-icon svg path {
+  width: 22px;
+  height: 22px;
+  fill: transparent;
+  stroke: #444;
+  stroke-width: 1;
+  transition: all 0.3s ease;
+}
+.heart-icon:hover {
+  transform: scale(1.1);
+}
+.heart-icon.favorited svg path {
+  fill: red;
+  stroke: red;
+}
+
+/* Comparison panel */
+.comparison-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.85);
+  z-index: 15;
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  padding: 10px;
+  pointer-events: none;
+}
+.comparison-panel.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.comparison-panel h3 {
+  margin: 0 0 10px 0;
+  font-size: 10px;
+  color: #31353d;
+  text-align: center;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* Merchant list in comparison panel: stacked layout */
+.merchant-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: calc(100% - 40px);
+  overflow-y: auto;
+}
+.merchant-list li {
+  display: flex;
+  flex-direction: column; /* Stack website name and price vertically */
+  align-items: center;
+  gap: 4px; /* space between name and price */
+  padding: 8px 0;
+  min-height: 40px; /* ensure enough room for both lines */
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  line-height: 1.2;
+}
+.merchant-list li:hover {
+  background-color: #9bb6aa;
+}
+.merchant-list li:last-child {
+  border-bottom: none;
+}
+
+/* Close button for comparison panel */
+.close-panel {
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Product description area: vertical stacking */
+.product-description {
+  position: relative;
+  z-index: 15;
+  background: #fff;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  text-align: left;
+}
+.info {
+  color: #555;
+  font-size: 0.85em;
+  margin-bottom: 10px;
+}
+.brand {
+  font-weight: bold;
+  margin: 0;
+  color: #31353d;
+}
+.model {
+  margin: 0;
+  color: #666;
+}
+.price {
+  color: #9bb6aa;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+/* Sidebar positioned adjacent to the product card */
+.product-sidebar {
+  background: white;
+  color: #31353d;
+  width: 40px;
+  position: absolute;
+  top: 10px;
+  right: 10px; /* positioned within padded area so it appears attached */
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 0 0 0 2px;
+  /* Default hidden state: positioned 10px to right and fully transparent */
+  opacity: 0;
+  transform: translateX(10px);
+  /* Transition for the default state when hover is removed */
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+/* Reveal sidebar on hover of the whole product */
+.product:hover .product-sidebar {
+  animation: slideIn 0.4s forwards;
+}
+/* Keyframes for sidebar slide in from right */
+@keyframes slideIn {
+  0% {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+/* Sidebar buttons */
+.product-sidebar button {
+  border: none;
+  color: #31353d;
+  width: 50px;
+  height: 50px;
+  background-color: transparent;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.4s ease;
+}
+.product-sidebar button:hover {
+  background-color: #9bb6aa;
+}
+
+/* Tooltip tag appears below the button, centered */
+.product-sidebar button .button-tag {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.product-sidebar button:hover .button-tag {
+  display: block;
+}
+
+/* Scales icon styling (with inverted colors) */
+.scales-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  position: relative;
+}
+.scales-bar {
+  width: 26px;
+  height: 2px;
+  background-color: #31353d;
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  transform-origin: center;
+}
+.scales-stand {
+  width: 2px;
+  height: 12px;
+  background-color: #31353d;
+  position: absolute;
+  top: 8px;
+  left: 14px;
+}
+.scales-pan-left,
+.scales-pan-right {
+  width: 6px;
+  height: 2px;
+  background-color: #31353d;
+  position: absolute;
+  top: 12px;
+  transform-origin: top;
+}
+.scales-pan-left {
+  left: 3px;
+}
+.scales-pan-right {
+  right: 3px;
+}
+.scales-chain-left,
+.scales-chain-right {
+  width: 1px;
+  height: 6px;
+  background-color: #31353d;
+  position: absolute;
+  top: 6px;
+}
+.scales-chain-left {
+  left: 5px;
+}
+.scales-chain-right {
+  right: 5px;
+}
+@keyframes tiltScales {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes panLeftMove {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(2px);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes panRightMove {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-2px);
+  }
+  75% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.scales-button:hover .scales-bar {
+  animation: tiltScales 2s ease-in-out infinite;
+}
+.scales-button:hover .scales-pan-left {
+  animation: panLeftMove 2s ease-in-out infinite;
+}
+.scales-button:hover .scales-pan-right {
+  animation: panRightMove 2s ease-in-out infinite;
+}
+.scales-button.active .scales-bar {
+  animation: none;
+  transform: rotate(10deg);
+}
+.scales-button.active .scales-pan-left {
+  animation: none;
+  transform: translateY(-2px);
+}
+.scales-button.active .scales-pan-right {
+  animation: none;
+  transform: translateY(2px);
+}
+
+/* Optional: style the alarm icon */
+.alarm-button svg {
+  fill: #000000;
+}
+.alarm-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.1s ease;
+}
+.alarm-button:hover .alarm-icon {
+  animation: vibrate 0.3s ease infinite;
+}
+@keyframes vibrate {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}

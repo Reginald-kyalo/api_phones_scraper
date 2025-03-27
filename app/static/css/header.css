@@ -1,0 +1,327 @@
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Arvo', serif;
+  background: #fff;
+  padding-top: 70px; /* Adjust based on your header's height */
+}
+
+/* HEADER for Desktop */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Ensure header stays on top */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 20px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  transition: transform 0.3s ease;
+}
+
+/* Hide header with a slide-up effect */
+.header--hidden {
+  transform: translateY(-100%);
+}
+
+.header__left,
+.header__center,
+.header__right {
+  display: flex;
+  align-items: center;
+}
+.header__left {
+  flex: 1;
+}
+.header__center {
+  flex: 2;
+  justify-content: center;
+  gap: 1px;
+}
+.header__right {
+  flex: 1;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.header__title {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* --- Search Form --- */
+.search__wrapper {
+  position: relative;
+  width: 50px;
+  margin-left: 20px;
+  transition: width 0.3s ease-in-out;
+  overflow: hidden;
+}
+.search__wrapper:focus-within {
+  width: 20vw;
+}
+.search__field {
+  width: 100%;
+  height: 50px;
+  font-family: Lato, sans-serif;
+  font-size: 1.2em;
+  padding: 0.35em 60px 0.35em 0;
+  border: none;
+  border-bottom: none;
+  outline: none;
+  transition: all 0.3s ease-in-out;
+}
+.search__field:focus {
+  border-bottom-color: #ccc;
+  color: #2b2b2b;
+  cursor: text;
+}
+.search__icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: transparent;
+  width: 50px;
+  height: 50px;
+  border: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* --- Navigation & Dropdown --- */
+.primary-navigation {
+  margin-right: 20px;
+}
+.primary-navigation ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.primary-navigation ul li {
+  position: relative;
+}
+.primary-navigation ul li a {
+  text-decoration: none;
+  color: black;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.3s;
+}
+
+/* --- Dropdown icon rotation --- */
+.dropdown-icon svg {
+  transition: transform 0.3s ease;
+  transform: rotate(0deg);
+}
+.primary-navigation ul li[aria-expanded="true"] .dropdown-icon svg {
+  transform: rotate(180deg);
+}
+
+/* --- Dropdown Menu --- */
+.primary-navigation ul li .dropdown {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: calc(100% + 5px);
+  background: #fff;
+  min-width: 220px;
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px 0;
+  z-index: 1000;
+  border-radius: 5px;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.primary-navigation ul li[aria-expanded="true"] > .dropdown {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- Dropdown Items --- */
+.primary-navigation .dropdown li a {
+  display: block;
+  padding: 12px 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95em;
+  background: transparent;
+}
+.primary-navigation .dropdown li a:hover,
+.primary-navigation .dropdown li a:focus {
+  background: #9bb6aa;
+  color: #000;
+}
+
+/* --- Scrollable Dropdowns --- */
+.brands-dropdown, .models-dropdown {
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 5px;
+}
+
+/* --- Disabled Models --- */
+.models.disabled > a {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* --- Button Styles (if used in header) --- */
+.btn {
+  padding: 10px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+.btn-login{
+  display: inline-flex;
+}
+.btn p {
+  margin: 0;
+  font-size: 20px;
+  color: black;
+  transition: color 0.3s;
+}
+.btn:hover,
+.btn:focus {
+  background-color: #9bb6aa;
+  color: #000;
+}
+.btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -7px;
+  width: 0;
+  height: 2px;
+  background: transparent;
+}
+.btn svg {
+  width: 15px;
+  transition: transform 0.2s;
+}
+.btn.btn-login:hover svg {
+  transform: translateX(6px);
+}
+.favorite-message {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(255, 0, 0, 0.8);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* ===============================
+   Responsive Header (Mobile)
+=============================== */
+@media (max-width: 768px) {
+  /* Adjust body padding if needed for the new header height */
+  body {
+    padding-top: 130px;
+  }
+
+  /* Define a grid with two rows:
+     - First row: title and search icon side-by-side
+     - Second row: brand/models dropdown area */
+  .header {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "title search"
+      "dropdown dropdown";
+    gap: 0px;
+    padding: 1px;
+  }
+
+  /* Place title in the top left area */
+  .header__title {
+    grid-area: title;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 0 10px;
+  }
+  
+  /* Position the search wrapper (which contains the search icon and field)
+     next to the title */
+  .search__wrapper {
+    position: relative;
+    width: 50px;
+    margin-left: 10px;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+  }
+  .search__wrapper:focus-within {
+    width: 80vw;
+  }
+  .search__field {
+    width: 100%;
+    height: 50px;
+    font-family: Lato, sans-serif;
+    font-size: 1em;
+    padding: 0.35em 60px 0.35em 0;
+    border: none;
+    border-bottom: 1px solid transparent;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+  }
+  .search__field:focus {
+    border-bottom-color: #ccc;
+    color: #2b2b2b;
+    cursor: text;
+  }
+  .search__icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: transparent;
+    width: 50px;
+    height: 50px;
+    border: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  /* Container for the dropdowns (brand and models) on the second row */
+  .header__center {
+    grid-area: dropdown;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding-top: 5px;
+  }
+
+  /* If you have a separate container for brand and models dropdowns,
+     ensure they display correctly on mobile. For example: */
+  .brands-dropdown,
+  .models-dropdown {
+    width: 100%;
+  }
+}

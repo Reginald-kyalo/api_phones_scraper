@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phone Deals - Home</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Arvo|Montserrat&display=swap" rel="stylesheet">
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/header.css">
+  <link rel="stylesheet" href="/static/css/products.css">
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header class="header">
+    <!-- Left Group: Title -->
+    <div class="header__left">
+      <div class="header__title">Phone Deals</div>
+    </div>
+    <!-- Center Group: Search, Navigation & Filter Button -->
+    <div class="header__center">
+      <form method="get" class="search" id="searchForm">
+        <div class="search__wrapper">
+          <input type="text" name="query" placeholder="Search for brand..." class="search__field"
+            value="{{ brand or '' }}" />
+          <button type="submit" class="search__icon"></button>
+        </div>
+      </form>
+      <nav role="navigation" class="primary-navigation">
+        <ul>
+          <!-- Brands Dropdown -->
+          <li class="brands" aria-expanded="false">
+            <a href="javascript:void(0)" id="brandSelector" aria-haspopup="true">
+              <span class="brand-label">Brands</span>
+              <span class="dropdown-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </a>
+            <ul class="dropdown brands-dropdown" id="brandsDropdown" role="menu">
+              <li role="menuitem">
+                <a href="javascript:void(0)" data-brand="all">All Brands</a>
+              </li>
+              {% for brand in brands %}
+              <li role="menuitem">
+                <a href="javascript:void(0)" data-brand="{{ brand|lower }}">{{ brand|capitalize }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </li>
+          <!-- Models Dropdown -->
+          <li class="models disabled" aria-expanded="false">
+            <a href="javascript:void(0)" id="modelSelector" aria-haspopup="true">
+              <span class="model-label">Models</span>
+              <span class="dropdown-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </a>
+            <ul class="dropdown models-dropdown" id="modelsDropdown" role="menu">
+              <!-- Will be populated via JS using rendered data -->
+            </ul>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <!-- Right Group: Favourites & Sign In -->
+    <div class="header__right">
+      <button class="btn btn-favourites" aria-label="View favourites">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 
+                     5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 
+                     1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+          </path>
+        </svg>
+      </button>
+      <button class="btn btn-signin" aria-label="Sign in">
+        <p>Sign In</p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black"
+          stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+  <!-- PRODUCT CARD SECTION -->
+  <main role="main">
+    {% for product in comparison_data %}
+    <div class="product">
+      <figure>
+        <img src="{{ product.model_image }}" alt="{{ product.brand }} {{ product.model }}" class="product-image">
+        <div class="heart-icon" id="heartIcon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z">
+            </path>
+          </svg>
+        </div>
+      </figure>
+      <div class="product-description">
+        <div class="info">
+          <!-- Display model name as title -->
+          <h2 class="brand">{{ product.model }}</h2>
+          <!-- Display phone brand under the model name -->
+          <p class="model">{{ product.brand|capitalize }}</p>
+        </div>
+        <div class="price">
+          Ksh {{ product.cheapest_price }}
+        </div>
+      </div>
+      <div class="product-sidebar">
+        <button class="scales-button" id="scalesButton">
+          <div class="scales-icon">
+            <div class="scales-stand"></div>
+            <div class="scales-bar"></div>
+            <div class="scales-chain-left"></div>
+            <div class="scales-chain-right"></div>
+            <div class="scales-pan-left"></div>
+            <div class="scales-pan-right"></div>
+          </div>
+          <span>Price Comparison</span>
+        </button>
+        <button class="alarm-button" id="alarmButton">
+          <div class="alarm-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-alarm"
+              viewBox="0 0 16 16">
+              <path d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9z" />
+              <path
+                d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1zm1.038 3.018a6 6 0 0 1 .924 0 6 6 0 1 1-.924 0M0 3.5c0 .753.333 1.429.86 1.887A8.04 8.04 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5M13.5 1c-.753 0-1.429.333-1.887.86a8.04 8.04 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1" />
+            </svg>
+          </div>
+          <span>Price Alarm</span>
+        </button>
+      </div>
+      <div class="comparison-panel" id="comparisonPanel">
+        <button class="close-panel" id="closePanel">&times;</button>
+        <h3>Price Comparison</h3>
+        <ul class="merchant-list">
+          {% for pc in product.price_comparison %}
+          <li>
+            <span class="merchant-name">{{ pc.store }}</span>
+            <span class="merchant-price">Ksh {{ pc.price }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endfor %}
+  </main>
+
+  <!-- Embed rendered data for use by JavaScript -->
+  <script type="text/javascript">
+    modelsByBrand = {{ models_by_brand | tojson | safe }};
+  </script>
+
+  <!-- Custom JavaScript -->
+  <script src="/static/js/header.js"></script>
+  <script src="/static/js/product.js"></script>
+
+</body>
+
+</html>
