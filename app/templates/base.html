@@ -1,56 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Phone Deals - Home</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Arvo|Montserrat&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css?family=Arvo|Montserrat&display=swap"
+      rel="stylesheet"
+    />
     <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/header.css">
-    <link rel="stylesheet" href="/static/css/product.css">
-    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="/static/css/header.css" />
+    <link rel="stylesheet" href="/static/css/product.css" />
+    <link rel="stylesheet" href="/static/css/auth.css" />
     <style>
-        .global-message {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1001;
-            padding: 10px 20px;
-            background-color: rgba(0, 128, 0, 0.8);
-            /* green by default */
-            color: #fff;
-            font-size: 1em;
-            border-radius: 0 0 4px 4px;
-            display: none;
-            /* Hidden by default */
-        }
-
-        .global-message.error {
-            background-color: rgba(255, 0, 0, 0.8);
-        }
-
-        /* Favorites view container styles */
-        #favorites-view {
-            display: none;
-            padding: 20px;
-        }
-
-        #favorites-back-btn {
-            margin-bottom: 20px;
-            padding: 8px 16px;
-            font-size: 1em;
-            cursor: pointer;
-        }
+      .global-message {
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1001;
+        padding: 10px 20px;
+        background-color: rgba(0, 128, 0, 0.8);
+        /* green by default */
+        color: #fff;
+        font-size: 1em;
+        border-radius: 0 0 4px 4px;
+        display: none;
+      }
+      .global-message.error {
+        background-color: rgba(255, 0, 0, 0.8);
+      }
+      /* Favorites view container styles */
+      #favorites-view {
+        display: none;
+        padding: 20px;
+      }
+      #favorites-back-btn {
+        margin-bottom: 20px;
+        padding: 8px 16px;
+        font-size: 1em;
+        cursor: pointer;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <!-- Global message container -->
     <div id="globalMessage" class="global-message"></div>
 
@@ -58,15 +62,18 @@
 
     <!-- Main product view -->
     <div id="main-view">
-        {% include "product.html" %}
+      {% include "product.html" %}
     </div>
 
     <!-- Favorites view -->
     <section id="favorites-view">
-        <button id="favorites-back-btn">← Back to Products</button>
-        <div id="favorites-container">
-            <!-- Favorites will be rendered here by JavaScript -->
-        </div>
+      <button id="favorites-back-btn">← Back to Products</button>
+      <div id="favorites-container">
+        {% for product in favorites %}
+          {% include "product.html" with context %}
+        {% endfor %}
+        <!-- Favorites added via JavaScript will use the template below -->
+      </div>
     </section>
 
     <!-- Include the auth modal -->
@@ -74,12 +81,17 @@
 
     <!-- Embed rendered data for use by JavaScript -->
     <script type="text/javascript">
-        modelsByBrand = {{ models_by_brand | tojson | safe }};
+      modelsByBrand = {{ models_by_brand | tojson | safe }};
     </script>
+    
+    <!-- Hidden client-side template for product card -->
+    <template id="product-template">
+      {% include "product.html" %}
+    </template>
+
     <!-- Custom JavaScript -->
     <script src="/static/js/header.js"></script>
     <script src="/static/js/product.js"></script>
     <script src="/static/js/auth.js"></script>
-</body>
-
+  </body>
 </html>

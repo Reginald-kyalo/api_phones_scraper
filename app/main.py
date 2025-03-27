@@ -1,4 +1,7 @@
+import asyncio
 import json
+import jwt
+import logging
 from redis.asyncio import Redis
 from fastapi import FastAPI, Request, Query, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
@@ -7,12 +10,12 @@ from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from passlib.context import CryptContext
-import jwt
-import logging
-import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from bson import ObjectId
 from typing import Optional, Dict, Any, List
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +28,7 @@ class AuthRequest(BaseModel):
     password: str
 
 # Create the MongoDB client
-client = AsyncIOMotorClient("mongodb://localhost:27017", serverSelectionTimeoutMS=5000)
+client = AsyncIOMotorClient("mongodb://192.168.88.212:27017", serverSelectionTimeoutMS=5000)
 db: AsyncIOMotorDatabase = client["phone_products"]
 
 # Redis client (update host/port as necessary)
@@ -235,11 +238,11 @@ async def signin(auth: AuthRequest):
     token = jwt.encode({"user_id": str(user["_id"]), "email": user["email"]}, SECRET_KEY, algorithm="HS256")
     return {"token": token, "user_id": str(user["_id"])}
 
-# Favorites endpoints
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-security = HTTPBearer()
+# -----------------------------
+# Favorites endpoints (updated)
+# -----------------------------
 
-# POST endpoint to add a product to favorites (stores product id only)
+# POST endpoint to add a product to favorites (stores full product details)
 @app.post("/api/favorites")
 async def add_favorite(item: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
@@ -247,26 +250,27 @@ async def add_favorite(item: dict, credentials: HTTPAuthorizationCredentials = D
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
+    
     user_id = payload.get("user_id")
-    product_id = item.get("product_id")
-
-    if not product_id:
-        raise HTTPException(status_code=400, detail="Product ID required")
-
-    # Optionally verify that the product exists
-    product = await db["products"].find_one({"_id": ObjectId(product_id)})
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
+    # Expect the full product data from the client under the "product" key
+    product_data = item.get("product")
+    if not product_data:
+        raise HTTPException(status_code=400, detail="Product data required")
+    
+    # Check if a favorite with the same _id already exists in the user's favorites
+    existing_fav = await db["users"].find_one({
+        "_id": ObjectId(user_id),
+        "favorites._id": product_data.get("_id")
+    })
+    if existing_fav:
+        raise HTTPException(status_code=400, detail="Item might already be in favorites")
+    
     result = await db["users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$addToSet": {"favorites": ObjectId(product_id)}}
+        {"$push": {"favorites": product_data}}
     )
-
     if result.modified_count == 0:
-        raise HTTPException(status_code=400, detail="Item might already be in favorites")
-
+        raise HTTPException(status_code=400, detail="Failed to add favorite")
     return {"message": "Item added to favorites"}
 
 # GET endpoint to fetch all favorites for the logged-in user
@@ -283,29 +287,31 @@ async def get_favorites(credentials: HTTPAuthorizationCredentials = Depends(secu
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    favorites_ids = user.get("favorites", [])
-    favorites_list = []
+    stored_favorites = user.get("favorites", [])
     
-    if favorites_ids:
-        for fav_id in favorites_ids:
-            # Use a Redis key based on product id
-            key = f"product:{str(fav_id)}"
-            cached_product = await redis_client.get(key)
-            if cached_product:
-                product = json.loads(cached_product)
-            else:
-                product = await db["products"].find_one({"_id": fav_id})
-                if product:
-                    product["_id"] = str(product["_id"])
-                    product["brand_id"] = str(product["brand_id"])
-                    # Cache the product details in Redis for future requests
-                    await redis_client.set(key, json.dumps(product, default=str))
-            if product:
-                favorites_list.append(product)
-    return favorites_list
+    # For each favorite, try to update it with the latest comparison data.
+    # If no updated info is found, fall back to the stored snapshot.
+    updated_favorites = []
+    tasks = []
+    for fav in stored_favorites:
+        # Prepare tasks only if the favorite contains brand and model.
+        if "brand" in fav and "model" in fav:
+            tasks.append(get_comparison_data(fav["brand"], fav["model"]))
+        else:
+            tasks.append(asyncio.sleep(0, result=None))
+    
+    # Run tasks concurrently.
+    updated_results = await asyncio.gather(*tasks)
+    
+    for stored, updated in zip(stored_favorites, updated_results):
+        if updated:
+            updated_favorites.append(updated)
+        else:
+            updated_favorites.append(stored)
+    
+    return updated_favorites
 
-
-# DELETE endpoint to remove a product from favorites
+# DELETE endpoint to remove a product from favorites by matching its _id (as a string)
 @app.delete("/api/favorites/{product_id}")
 async def delete_favorite(product_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
@@ -317,7 +323,7 @@ async def delete_favorite(product_id: str, credentials: HTTPAuthorizationCredent
     user_id = payload.get("user_id")
     result = await db["users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$pull": {"favorites": ObjectId(product_id)}}
+        {"$pull": {"favorites": {"_id": product_id}}}
     )
     if result.modified_count == 0:
         raise HTTPException(status_code=400, detail="Favorite not found")

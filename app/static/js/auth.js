@@ -20,11 +20,9 @@ const originalLoginBtnHTML = loginBtn.innerHTML;
 
 // Function to update UI after login/signup with a welcome button (with logout)
 function updateUserUI(username) {
-  // Hide the login button
   if (loginBtn) {
     loginBtn.style.display = "none";
   }
-  // Update header to show a welcome button with logout functionality
   const headerRight = document.querySelector(".header__right");
   let welcomeBtn = document.getElementById("welcomeBtn");
   if (!welcomeBtn) {
@@ -34,8 +32,6 @@ function updateUserUI(username) {
     headerRight.appendChild(welcomeBtn);
   }
   welcomeBtn.innerHTML = `Welcome ${username} <i class="fas fa-sign-out-alt" style="margin-left: 8px;"></i>`;
-
-  // Log the user out on click
   welcomeBtn.onclick = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -63,17 +59,85 @@ function showGlobalMessage(message, isError = false) {
   }, 3000);
 }
 
-// Function to add product to favorites (triggered by heart icon)
-async function addToFavorites(productId, heartIcon) {
+/**
+ * Extract essential product details from a product card.
+ * We gather _id, brand, model, and model_image only.
+ * The cheapest_price and price_comparison will be populated server-side.
+ */
+function getProductDataFromCard(productEl) {
+  const productId = productEl.dataset.productId;
+  const brand = productEl.querySelector(".brand")?.innerText || "";
+  const model = productEl.querySelector(".model")?.innerText || "";
+  const modelImage = productEl.querySelector(".product-image")?.src || "";
+  return {
+    _id: productId,
+    brand: brand,
+    model: model,
+    model_image: modelImage
+  };
+}
+
+/**
+ * Clone and populate the product template.
+ * This uses the hidden <template id="product-template"> embedded in base.html.
+ */
+function renderProductCard(product) {
+  const template = document.getElementById("product-template");
+  if (!template) {
+    console.error("Product template not found");
+    return null;
+  }
+  const clone = template.content.cloneNode(true);
+  const productEl = clone.querySelector(".product");
+  if (productEl) {
+    productEl.dataset.productId = product._id;
+  }
+  const img = clone.querySelector(".product-image");
+  if (img) {
+    img.src = product.model_image;
+    img.alt = `${product.brand} ${product.model}`;
+  }
+  const brandEl = clone.querySelector(".brand");
+  if (brandEl) {
+    brandEl.textContent = product.brand;
+  }
+  const modelEl = clone.querySelector(".model");
+  if (modelEl) {
+    modelEl.textContent = product.model;
+  }
+  const priceEl = clone.querySelector(".price");
+  if (priceEl) {
+    priceEl.textContent = `Ksh ${product.cheapest_price}`;
+  }
+  
+  // Populate the price comparison list if available
+  if (product.price_comparison && product.price_comparison.length) {
+    const comparisonList = clone.querySelector(".merchant-list");
+    if (comparisonList) {
+      comparisonList.innerHTML = product.price_comparison
+        .map(pc => `
+          <li data-url="${pc.url}">
+            <span class="merchant-name">${pc.store}</span>
+            <span class="merchant-price">Ksh ${pc.price}</span>
+          </li>
+        `)
+        .join("");
+    }
+  }
+  
+  return clone;
+}
+
+
+// Function to add product to favorites (sending essential product details)
+async function addToFavorites(productData, heartIcon) {
   const token = localStorage.getItem("token");
   if (!token) {
-    // Not logged in: prompt login modal
     authModal.classList.remove("hidden");
     loginForm.classList.remove("hidden");
     signUpForm.classList.add("hidden");
     return;
   }
-
   try {
     const response = await fetch("http://127.0.0.1:8000/api/favorites", {
       method: "POST",
@@ -81,25 +145,20 @@ async function addToFavorites(productId, heartIcon) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ product_id: productId }),
+      body: JSON.stringify({ product: productData }),
     });
     const data = await response.json();
     if (response.ok) {
       heartIcon.classList.add("favorited");
       showGlobalMessage("Favorite added!");
     } else {
-      showGlobalMessage(
-        data.detail || "Item might already be in favorites",
-        true
-      );
+      showGlobalMessage(data.detail || "Item might already be in favorites", true);
     }
   } catch (err) {
     console.error("An error occurred:", err);
     showGlobalMessage("An error occurred", true);
   }
 }
-
-// Favorites view functions
 
 // Function to load the user's favorites via GET endpoint
 async function loadFavorites() {
@@ -108,7 +167,6 @@ async function loadFavorites() {
     showGlobalMessage("Please log in to view favorites", true);
     return;
   }
-
   try {
     const response = await fetch("http://127.0.0.1:8000/api/favorites", {
       headers: { Authorization: `Bearer ${token}` },
@@ -125,51 +183,22 @@ async function loadFavorites() {
 function renderFavorites(favorites) {
   const favContainer = document.getElementById("favorites-container");
   favContainer.innerHTML = ""; // Clear previous content
-
   if (!favorites.length) {
     favContainer.innerHTML = `<p class="empty-favorites">You have no favorites yet. Start adding your favorite products!</p>`;
     return;
   }
-
   favorites.forEach((fav) => {
-    // Create a product card reusing your product template
-    const productCard = document.createElement("div");
-    productCard.className = "product";
-    productCard.dataset.productId = fav._id; // Assuming _id is already a string from backend
-
-    productCard.innerHTML = `
-      <div class="product-inner">
-        <figure>
-          <img src="${fav.model_image}" alt="${fav.brand} ${fav.model}" class="product-image">
-          <div class="heart-icon favorited">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
-                        2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 
-                        14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 
-                        11.54L12 21.35z"></path>
-            </svg>
-          </div>
-          <button class="favorite-delete" aria-label="Remove from favorites">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-        </figure>
-        <div class="product-description">
-          <div class="info">
-            <h2 class="brand">${fav.brand}</h2>
-            <p class="model">${fav.model}</p>
-          </div>
-          <div class="price">Ksh ${fav.cheapest_price}</div>
-        </div>
-      </div>
-    `;
-    favContainer.appendChild(productCard);
-
-    // Attach delete listener for the trash can button
-    const deleteBtn = productCard.querySelector(".favorite-delete");
-    deleteBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      deleteFavorite(fav._id, productCard);
-    });
+    const productCard = renderProductCard(fav);
+    if (productCard) {
+      favContainer.appendChild(productCard);
+      const deleteBtn = productCard.querySelector(".favorite-delete");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteFavorite(fav._id, productCard);
+        });
+      }
+    }
   });
 }
 
@@ -177,15 +206,11 @@ function renderFavorites(favorites) {
 async function deleteFavorite(productId, productCard) {
   const token = localStorage.getItem("token");
   if (!token) return;
-
   try {
-    const response = await fetch(
-      `http://127.0.0.1:8000/api/favorites/${productId}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await fetch(`http://127.0.0.1:8000/api/favorites/${productId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (response.ok) {
       productCard.remove();
       showGlobalMessage("Favorite removed!");
@@ -206,7 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (token && storedUsername) {
     updateUserUI(storedUsername);
   }
-
   // Attach event listener for heart icons in the main product view
   document.querySelectorAll(".heart-icon").forEach((icon) => {
     icon.addEventListener("click", (e) => {
@@ -214,8 +238,8 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
       const productEl = e.target.closest(".product");
       if (!productEl) return;
-      const productId = productEl.dataset.productId;
-      addToFavorites(productId, icon);
+      const productData = getProductDataFromCard(productEl);
+      addToFavorites(productData, icon);
     });
   });
 });
@@ -236,7 +260,6 @@ favBtn.addEventListener("click", () => {
     signUpForm.classList.add("hidden");
     return;
   }
-  // Hide the main view and show the favorites view
   document.getElementById("main-view").style.display = "none";
   document.getElementById("favorites-view").style.display = "block";
   loadFavorites();
@@ -279,7 +302,6 @@ loginFormEl.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = document.getElementById("loginEmail").value;
   const password = document.getElementById("loginPassword").value;
-
   try {
     const response = await fetch("http://127.0.0.1:8000/api/signin", {
       method: "POST",
@@ -307,7 +329,6 @@ signUpFormEl.addEventListener("submit", async (e) => {
   const email = document.getElementById("signUpEmail").value;
   const password = document.getElementById("signUpPassword").value;
   const username = email.split("@")[0];
-
   try {
     const response = await fetch("http://127.0.0.1:8000/api/signup", {
       method: "POST",
@@ -321,8 +342,7 @@ signUpFormEl.addEventListener("submit", async (e) => {
       authModal.classList.add("hidden");
       updateUserUI(username);
     } else {
-      signUpError.innerText =
-        data.detail || "Sign up failed. Please try again.";
+      signUpError.innerText = data.detail || "Sign up failed. Please try again.";
     }
   } catch (err) {
     signUpError.innerText = "An error occurred. Please try again later.";
