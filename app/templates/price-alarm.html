@@ -1,0 +1,75 @@
+<div id="priceAlarmModal" class="price-alarm-modal hidden">
+    <div class="price-alarm-content">
+        <!-- Header with close button -->
+        <div class="price-alarm-header">
+            <h2>Set Price Alert</h2>
+            <button class="price-alarm-close">&times;</button>
+        </div>
+
+        <!-- Product info section -->
+        <div class="product-preview">
+            <div class="product-image">
+                <img src="" alt="Product image">
+            </div>
+            <div class="product-info">
+                <h3 class="product-title"></h3>
+                <p class="product-brand"></p>
+                <div class="current-price">
+                    <span>Current price:</span>
+                    <span class="price-value">Ksh 0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price options section -->
+        <div class="alert-options">
+            <h3>Notify me when price drops to:</h3>
+
+            <!-- Percentage buttons -->
+            <div class="percentage-options">
+                <button class="percentage-btn active" data-percent="5">
+                    <span class="percent-label">5% off</span>
+                    <span class="price-label">Under <span class="calculated-price"></span></span>
+                </button>
+                <button class="percentage-btn" data-percent="10">
+                    <span class="percent-label">10% off</span>
+                    <span class="price-label">Under <span class="calculated-price"></span></span>
+                </button>
+                <button class="percentage-btn" data-percent="15">
+                    <span class="percent-label">15% off</span>
+                    <span class="price-label">Under <span class="calculated-price"></span></span>
+                </button>
+            </div>
+
+            <!-- Custom price input -->
+            <div class="custom-price">
+                <h3>Choose your own desired price:</h3>
+                <div class="input-wrapper">
+                    <span class="currency">Ksh</span>
+                    <input type="number" id="customPrice" placeholder="Enter price">
+                </div>
+            </div>
+        </div>
+
+        <!-- Email input section -->
+        <div class="email-section">
+            <h3>Stay updated</h3>
+            <div class="logged-in-email">
+                <p>We'll send price alerts to your account email. <button id="changeEmailBtn" class="text-button">Use a different email?</button></p>
+                <div class="account-email"><i class="fas fa-envelope"></i> <span id="userEmail">user@example.com</span></div>
+            </div>
+            <div class="alternate-email" style="display: none;">
+                <p>Enter an alternative email for price alerts:</p>
+                <div class="input-wrapper">
+                    <input type="email" placeholder="Alternative email address" id="alertEmail">
+                    <button id="useAccountEmailBtn" class="text-button">Use my account email</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit button -->
+        <div class="button-section">
+            <button id="setPriceAlert" class="btn-primary">Set Price Alert</button>
+        </div>
+    </div>
+</div>

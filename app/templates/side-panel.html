@@ -1,0 +1,57 @@
+<!-- Side Panel -->
+<div class="side-panel" aria-hidden="true">
+    <nav class="side-panel__nav">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" class="side-panel__item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 
+                   5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 
+                   1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                        </path>
+                    </svg>
+                    <span>Favorites</span>
+                </a>
+            </li>
+            <!-- Brands dropdown -->
+            <li>
+                <a href="javascript:void(0)" class="side-panel__dropdown" id="sidePanelBrandSelector"
+                    aria-expanded="false">
+                    <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    <span>Brands</span>
+                </a>
+                <div class="side-panel__submenu">
+                    <ul class="submenu-list brands-list" id="sidePanelBrandsDropdown">
+                        <!-- Brand items will be populated here -->
+                    </ul>
+                </div>
+            </li>
+            <!-- Models dropdown - initially hidden -->
+            <li class="models-dropdown-li" style="display: none;">
+                <a href="javascript:void(0)" class="side-panel__dropdown" id="sidePanelModelSelector"
+                    aria-expanded="false">
+                    <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    <span>Models</span>
+                </a>
+                <div class="side-panel__submenu">
+                    <ul class="submenu-list models-list" id="sidePanelModelsDropdown">
+                        <!-- Model items will be populated here -->
+                    </ul>
+                </div>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<!-- The overlay element is already included in the HTML.
+         The JS will use this element rather than creating a duplicate. -->
+<div class="side-panel-overlay" aria-hidden="true"></div>

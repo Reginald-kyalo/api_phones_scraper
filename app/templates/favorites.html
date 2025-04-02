@@ -1,0 +1,7 @@
+<main role="main">
+    <div class="products-container">
+        {% for product in favorites %}
+            {% include "product-card.html" %}
+        {% endfor %}
+    </div>
+</main>

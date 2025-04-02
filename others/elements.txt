@@ -1,0 +1,24 @@
+----filter icon button-------
+<button class="btn btn-filter" aria-label="Filter products">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+               viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="4 5 20 5 14 12 14 19 10 19 10 12 4 5"></polygon>
+          </svg>
+        </button>
+
+sudo apt-get install lsb-release curl gpg
+curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+sudo chmod 644 /usr/share/keyrings/redis-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+sudo apt-get update
+sudo apt-get install redis
+
+use admin;
+db.createUser({
+  user: "root",
+  pwd: "mongodbmypass!",
+  roles: ["root"]
+});
+
+gcloud compute instances delete-access-config api-frontend-vm --zone=us-central1-c

@@ -1,0 +1,200 @@
+/* ===============================
+   SIDE PANEL
+=============================== */
+.side-panel {
+  position: fixed;
+  top: var(--header-height, 58px);
+  left: -280px; /* Use left instead of transform for clarity */
+  height: auto; /* Auto height based on content */
+  max-height: calc(100vh - var(--header-height, 58px));
+  background-color: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: left 0.3s ease; /* Change to match the property we're animating */
+  z-index: 998;
+  padding: 24px 0; /* Removed horizontal padding */
+  width: 280px; /* Fixed width */
+  overflow-y: auto;
+}
+
+.side-panel.open {
+  left: 0; /* Move to visible position */
+}
+
+.side-panel__nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.side-panel__item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px; /* Added horizontal padding */
+  color: black;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.side-panel__item:hover {
+  background-color: #b8d1c7; /* Lighter shade for better aesthetics */
+}
+
+.side-panel__item svg {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+/* Side panel dropdown styles */
+.side-panel__dropdown {
+  display: flex;
+  align-items: center;
+  /* Your existing styles */
+}
+
+.side-panel__dropdown[aria-expanded="true"] .chevron-icon {
+  transform: rotate(90deg);
+}
+
+.side-panel__submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.side-panel__dropdown[aria-expanded="true"] .side-panel__submenu {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Side panel submenu items */
+.side-panel__submenu ul {
+  list-style: none;
+  padding: 0;
+}
+
+.side-panel__submenu ul li {
+  margin: 0;
+  padding: 0;
+}
+
+.side-panel__submenu ul li a {
+  display: block;
+  padding: 8px 16px 8px 30px; /* Extra left padding for indentation */
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.side-panel__submenu ul li a:hover {
+  background-color: #b8d1c7;
+}
+
+.side-panel__submenu ul li a.active {
+  background-color: #9bb6aa;
+  color: white;
+  font-weight: 500;
+}
+
+.side-panel__submenu ul li .no-models {
+  display: block;
+  padding: 8px 16px 8px 30px;
+  color: #777;
+  font-style: italic;
+}
+
+/* ===============================
+     OVERLAY
+  =============================== */
+.side-panel-overlay {
+  position: fixed;
+  top: var(--header-height, 57px);
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - var(--header-height, 57px));
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  z-index: 997;
+}
+
+.side-panel-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Remove hyperlink styling and fix alignment */
+.side-panel__nav a {
+  text-decoration: none;
+  color: #333;
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  width: 100%;
+}
+
+/* Ensure consistent alignment of all items */
+.side-panel__dropdown,
+.side-panel__item {
+  display: flex;
+  align-items: center;
+}
+
+/* Fix icon alignment */
+.side-panel__dropdown svg,
+.side-panel__item svg {
+  min-width: 20px;
+  margin-right: 12px;
+}
+
+/* Fix chevron icon positioning */
+.chevron-icon {
+  margin-right: 12px !important;
+}
+
+/* Make sure submenu is visible when expanded */
+.side-panel__dropdown[aria-expanded="true"] + .side-panel__submenu {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Add these styles to your side-panel.css file */
+
+/* Hover effect for main dropdown items (Brands/Models buttons) */
+.side-panel__dropdown:hover,
+.side-panel__item:hover {
+  background-color: #f0f8f5; /* Light green background on hover */
+  color: #417c64; /* Darker green text on hover */
+  transition: all 0.2s ease;
+}
+
+/* Hover effect for submenu items (individual brands/models) */
+.side-panel__submenu ul li a:hover {
+  background-color: #f0f8f5; /* Light green background */
+  color: #417c64; /* Darker green text */
+  border-left: 3px solid #9bb6aa; /* Green left border for visual indication */
+  padding-left: 27px; /* Adjust padding to account for border */
+}
+
+/* Active state styling */
+.side-panel__submenu ul li a.active {
+  background-color: #e0efe9; /* Slightly darker than hover */
+  color: #417c64;
+  font-weight: 500;
+  border-left: 3px solid #417c64; /* Darker border for active item */
+  padding-left: 27px;
+}
+
+/* Ensure the chevron icon also changes color on hover */
+.side-panel__dropdown:hover .chevron-icon,
+.side-panel__item:hover svg {
+  stroke: #417c64; /* Change icon color on hover */
+}
+
+/* Add a subtle transition for smooth hover effects */
+.side-panel__dropdown,
+.side-panel__item,
+.side-panel__submenu ul li a {
+  transition: all 0.2s ease;
+}

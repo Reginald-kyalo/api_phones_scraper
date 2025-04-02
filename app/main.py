@@ -28,7 +28,7 @@ class AuthRequest(BaseModel):
     password: str
 
 # Create the MongoDB client
-client = AsyncIOMotorClient("mongodb://192.168.88.212:27017", serverSelectionTimeoutMS=5000)
+client = AsyncIOMotorClient("mongodb://localhost:27017", serverSelectionTimeoutMS=5000)
 db: AsyncIOMotorDatabase = client["phone_products"]
 
 # Redis client (update host/port as necessary)
@@ -199,6 +199,7 @@ async def home(
         ]
         results = await asyncio.gather(*tasks)
         comparison_data = [r for r in results if r]
+        logger.info("No brand or model specified, fetching all products.")
 
     return templates.TemplateResponse("base.html", {
         "request": request,
@@ -276,39 +277,33 @@ async def add_favorite(item: dict, credentials: HTTPAuthorizationCredentials = D
 # GET endpoint to fetch all favorites for the logged-in user
 @app.get("/api/favorites")
 async def get_favorites(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    logger.info("Received request for favorites")  # Debugging log
+    
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except jwt.PyJWTError:
+        logger.error("Invalid token received")
         raise HTTPException(status_code=401, detail="Invalid token")
     
     user_id = payload.get("user_id")
+    logger.info(f"User ID extracted: {user_id}")
+
     user = await db["users"].find_one({"_id": ObjectId(user_id)})
     if not user:
+        logger.warning(f"User not found: {user_id}")
         raise HTTPException(status_code=404, detail="User not found")
     
     stored_favorites = user.get("favorites", [])
-    
-    # For each favorite, try to update it with the latest comparison data.
-    # If no updated info is found, fall back to the stored snapshot.
-    updated_favorites = []
-    tasks = []
-    for fav in stored_favorites:
-        # Prepare tasks only if the favorite contains brand and model.
-        if "brand" in fav and "model" in fav:
-            tasks.append(get_comparison_data(fav["brand"], fav["model"]))
-        else:
-            tasks.append(asyncio.sleep(0, result=None))
-    
-    # Run tasks concurrently.
+    logger.info(f"Stored favorites count: {len(stored_favorites)}")
+
+    # Fetch latest product info
+    tasks = [get_comparison_data(fav["brand"].lower(), fav["model"].lower()) for fav in stored_favorites]
     updated_results = await asyncio.gather(*tasks)
-    
-    for stored, updated in zip(stored_favorites, updated_results):
-        if updated:
-            updated_favorites.append(updated)
-        else:
-            updated_favorites.append(stored)
-    
+
+    updated_favorites = [r for r in updated_results if r]
+    logger.info(f"Updated favorites count: {len(updated_favorites)}")
+
     return updated_favorites
 
 # DELETE endpoint to remove a product from favorites by matching its _id (as a string)

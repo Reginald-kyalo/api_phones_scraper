@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Alert Modal</title>
+</head>
+<style>
+    /* Price Alarm Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Header styles */
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 1.5rem;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #888;
+    }
+
+    /* Product preview styles */
+    .product-preview {
+        display: flex;
+        margin-bottom: 25px;
+        gap: 15px;
+    }
+
+    .product-image {
+        flex: 0 0 80px;
+    }
+
+    .product-image img {
+        width: 100%;
+        border-radius: 4px;
+    }
+
+    .product-info {
+        flex: 1;
+    }
+
+    .product-title {
+        margin: 0 0 5px;
+        font-size: 1.2rem;
+    }
+
+    .product-brand {
+        margin: 0 0 10px;
+        color: #666;
+    }
+
+    .current-price {
+        font-weight: bold;
+        color: #333;
+    }
+
+    /* Price options styles */
+    .alert-options h3 {
+        margin: 0 0 15px;
+        font-size: 1rem;
+        color: #333;
+    }
+
+    .percentage-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+
+    .percentage-btn {
+        flex: 1;
+        min-width: 100px;
+        background-color: #f5f5f5;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .percentage-btn.active {
+        border-color: #9bb6aa;
+        background-color: rgba(155, 182, 170, 0.1);
+    }
+
+    .percent-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .price-label {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .custom-price {
+        margin-bottom: 25px;
+    }
+
+    .input-wrapper {
+        position: relative;
+        margin-top: 10px;
+    }
+
+    .currency {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 10px 10px 10px 45px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    /* Email section styles */
+    .email-section {
+        margin-bottom: 25px;
+    }
+
+    .email-section p {
+        margin: 5px 0 15px;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .email-section input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    /* Button section */
+    .button-section {
+        text-align: center;
+    }
+
+    .btn-primary {
+        background-color: #9bb6aa;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn-primary:hover {
+        background-color: #82a598;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .percentage-options {
+            flex-direction: column;
+        }
+
+        .product-preview {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .product-image {
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+<body>
+    <!-- Price Alert Modal -->
+    <div id="priceAlarmModal" class="modal active">
+        <div class="modal-content">
+            <!-- Header with close button -->
+            <div class="modal-header">
+                <h2>Set Price Alert</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+
+            <!-- Product info section -->
+            <div class="product-preview">
+                <div class="product-image">
+                    <img src="" alt="Product image">
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title"></h3>
+                    <p class="product-brand"></p>
+                    <div class="current-price">
+                        <span>Current price:</span>
+                        <span class="price-value">Ksh 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price options section -->
+            <div class="alert-options">
+                <h3>Notify me when price drops to:</h3>
+
+                <!-- Percentage buttons -->
+                <div class="percentage-options">
+                    <button class="percentage-btn active" data-percent="5">
+                        <span class="percent-label">5% off</span>
+                        <span class="price-label">Under <span class="calculated-price"></span></span>
+                    </button>
+                    <button class="percentage-btn" data-percent="10">
+                        <span class="percent-label">10% off</span>
+                        <span class="price-label">Under <span class="calculated-price"></span></span>
+                    </button>
+                    <button class="percentage-btn" data-percent="15">
+                        <span class="percent-label">15% off</span>
+                        <span class="price-label">Under <span class="calculated-price"></span></span>
+                    </button>
+                </div>
+
+                <!-- Custom price input -->
+                <div class="custom-price">
+                    <h3>Choose your own desired price:</h3>
+                    <div class="input-wrapper">
+                        <span class="currency">Ksh</span>
+                        <input type="number" id="customPrice" placeholder="Enter price">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email input section -->
+            <div class="email-section">
+                <h3>Stay updated</h3>
+                <p>We'll email you when the price reaches your target</p>
+                <input type="email" placeholder="Your email address" id="alertEmail">
+            </div>
+
+            <!-- Submit button -->
+            <div class="button-section">
+                <button id="setPriceAlert" class="btn-primary">Set Price Alert</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -4,13 +4,16 @@
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
   font-family: 'Arvo', serif;
   background: #fff;
-  padding-top: 70px; /* Adjust based on your header's height */
+  padding-top: 0px; /* Adjust based on your header's height */
 }
 
-/* HEADER for Desktop */
+/* ===============================
+   HEADER - Base Styles
+=============================== */
 .header {
   position: fixed;
   top: 0;
@@ -20,9 +23,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 3px 20px;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
+  padding: 10px 20px;
+  background: #9bb6aa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease;
 }
 
@@ -31,181 +35,205 @@ body {
   transform: translateY(-100%);
 }
 
+/* Header Layout */
 .header__left,
 .header__center,
 .header__right {
   display: flex;
   align-items: center;
 }
+
 .header__left {
+  margin-left: 10px;
   flex: 1;
 }
+
 .header__center {
   flex: 2;
   justify-content: center;
   gap: 1px;
 }
+
 .header__right {
   flex: 1;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px; /* Increased from 10px */
+  align-items: center;
+  height: 100%;
 }
+
 .header__title {
   font-size: 1.5em;
   font-weight: bold;
+  color: #fff;
 }
 
-/* --- Search Form --- */
-.search__wrapper {
+/* ===============================
+   SEARCH COMPONENT - EXPANDING
+=============================== */
+:root {
+  --rad: 25px;
+  --dur: 0.3s;
+  --color-dark: #2f2f2f;
+  --color-light: #fff;
+  --color-brand: #66b491;
+  --font-fam: 'Arvo', serif;
+  --height: 40px;
+  --btn-width: 60px;
+  --bez: cubic-bezier(0, 0, 0.43, 1.49);
+}
+
+/* Static search container */
+.search__container {
+  display: flex;
+  align-items: center;
+}
+
+/* Base search form with expansion */
+.search-form {
   position: relative;
-  width: 50px;
-  margin-left: 20px;
-  transition: width 0.3s ease-in-out;
-  overflow: hidden;
+  width: 440px;
+  background: var(--color-brand);
+  border-radius: var(--rad);
+  margin-right: 20px;
+  display: flex;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
-.search__wrapper:focus-within {
-  width: 20vw;
+
+.search-form input,
+.search-form button {
+  height: var(--height);
+  font-family: var(--font-fam);
+  border: 0;
+  color: var(--color-dark);
+  font-size: 1rem;
 }
-.search__field {
+
+.search-form input[type="search"] {
+  outline: 0;
   width: 100%;
-  height: 50px;
-  font-family: Lato, sans-serif;
-  font-size: 1.2em;
-  padding: 0.35em 60px 0.35em 0;
-  border: none;
-  border-bottom: none;
-  outline: none;
-  transition: all 0.3s ease-in-out;
+  background: var(--color-light);
+  padding: 0 1.2rem;
+  border-radius: var(--rad);
+  appearance: none;
+  transition: all var(--dur) var(--bez);
+  transition-property: width, border-radius;
+  z-index: 1;
+  position: relative;
 }
-.search__field:focus {
-  border-bottom-color: #ccc;
-  color: #2b2b2b;
-  cursor: text;
-}
-.search__icon {
+
+/* Update search button styling for icon */
+.search-form button {
+  display: none;
   position: absolute;
   top: 0;
   right: 0;
-  background-color: transparent;
-  width: 50px;
-  height: 50px;
-  border: none;
+  width: var(--btn-width);
+  font-weight: bold;
+  background: var(--color-brand);
+  border-radius: 0 var(--rad) var(--rad) 0;
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  transition: background-color 0.2s ease-in-out;
-}
-
-/* --- Navigation & Dropdown --- */
-.primary-navigation {
-  margin-right: 20px;
-}
-.primary-navigation ul {
-  list-style: none;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-.primary-navigation ul li {
-  position: relative;
-}
-.primary-navigation ul li a {
-  text-decoration: none;
-  color: black;
-  padding: 5px 10px;
-  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: center;
+  height: var(--height);
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: color 0.3s;
+  justify-content: center;
 }
 
-/* --- Dropdown icon rotation --- */
-.dropdown-icon svg {
-  transition: transform 0.3s ease;
-  transform: rotate(0deg);
-}
-.primary-navigation ul li[aria-expanded="true"] .dropdown-icon svg {
-  transform: rotate(180deg);
+/* Center the search icon within the button */
+.search-form button svg.search-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  vertical-align: middle;
+  stroke: var(--color-dark);
 }
 
-/* --- Dropdown Menu --- */
-.primary-navigation ul li .dropdown {
-  display: none;
+/* Make sure the icon is visible */
+.search-form input:not(:placeholder-shown) + button svg.search-icon {
+  display: inline-block;
+}
+
+/* Make the Go button hidden by default */
+.search-form input:not(:placeholder-shown) {
+  border-radius: var(--rad) 0 0 var(--rad);
+  width: calc(100% - var(--btn-width));
+}
+
+.search-form input:not(:placeholder-shown) + button {
+  display: block;
+}
+
+.search-form label {
   position: absolute;
-  left: 0;
-  top: calc(100% + 5px);
-  background: #fff;
-  min-width: 220px;
-  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
-  padding: 10px 0;
-  z-index: 1000;
-  border-radius: 5px;
-  transition: opacity 0.3s ease;
-  opacity: 0;
-  pointer-events: none;
-}
-.primary-navigation ul li[aria-expanded="true"] > .dropdown {
-  display: block;
-  opacity: 1;
-  pointer-events: auto;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 0;
+  border: 0;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
 }
 
-/* --- Dropdown Items --- */
-.primary-navigation .dropdown li a {
-  display: block;
-  padding: 12px 20px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.95em;
-  background: transparent;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
-.primary-navigation .dropdown li a:hover,
-.primary-navigation .dropdown li a:focus {
-  background: #9bb6aa;
-  color: #000;
-}
-
-/* --- Scrollable Dropdowns --- */
-.brands-dropdown, .models-dropdown {
-  max-height: 300px;
-  overflow-y: auto;
-  border-radius: 5px;
-}
-
-/* --- Disabled Models --- */
-.models.disabled > a {
-  color: #aaa;
-  cursor: not-allowed;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .search-form {
+    width: 180px; /* Smaller initial width on mobile */
+    margin: 0 10px;
+  }
+  
+  .search-form:focus-within {
+    width: calc(100vw - 100px);
+    max-width: 280px;
+  }
 }
 
-/* --- Button Styles (if used in header) --- */
+/* ===============================
+   BUTTONS
+=============================== */
 .btn {
-  padding: 10px 10px;
+  padding: 12px 15px;
   border: none;
   background: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.8rem;
   position: relative;
   transition: background-color 0.3s ease;
+  border-radius: none;
 }
-.btn-login{
+
+.btn-login {
   display: inline-flex;
+  margin-right: 10px;
+  padding: 12px 18px;
 }
+
 .btn p {
   margin: 0;
-  font-size: 20px;
+  font-size: 17px; /* Increased from 15px */
   color: black;
   transition: color 0.3s;
+  font-weight: 500;
 }
+
 .btn:hover,
 .btn:focus {
-  background-color: #9bb6aa;
+  background-color: #c5d3cd; /* Lighter shade of #9bb6aa */
   color: #000;
 }
+
 .btn::after {
   content: "";
   position: absolute;
@@ -215,13 +243,38 @@ body {
   height: 2px;
   background: transparent;
 }
+
+/* Increase size of SVG icons */
 .btn svg {
-  width: 15px;
+  width: 24px; /* Increased from 15px */
+  height: 24px; /* Added explicit height */
   transition: transform 0.2s;
 }
+
+/* Update alarm and favorites buttons */
+.btn.btn-alarm svg,
+.btn.btn-favourites svg {
+  stroke-width: 1.5; /* Makes icons more visible */
+  fill: currentColor; /* For consistency with filled icons */
+}
+
+.btn-login svg {
+  stroke-width: 2.5; /* Make arrow thicker */
+}
+
+/* Updated animations */
+.btn.btn-alarm:hover svg {
+  transform: rotate(15deg);
+}
+
+.btn.btn-favourites:hover svg {
+  transform: scale(1.15);
+}
+
 .btn.btn-login:hover svg {
   transform: translateX(6px);
 }
+
 .favorite-message {
   position: absolute;
   bottom: 10px;
@@ -234,17 +287,215 @@ body {
 }
 
 /* ===============================
-   Responsive Header (Mobile)
+   TOOLTIPS FOR BUTTONS
+=============================== */
+.btn-alarm,
+.btn-favourites,
+.btn-login {
+  position: relative;
+  border-radius: 20px;
+}
+
+/* Updated tooltip style with black background and no arrow */
+.btn-alarm::before,
+.btn-favourites::before,
+.btn-login::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #31353d; /* Solid black background */
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: normal;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 1001;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  pointer-events: none;
+}
+
+/* Removing the arrow by disabling these styles */
+.btn-alarm::after,
+.btn-favourites::after,
+.btn-login::after {
+  display: none; /* Remove the arrow pointer entirely */
+}
+
+/* Show tooltip on hover */
+.btn-alarm:hover::before,
+.btn-favourites:hover::before,
+.btn-login:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Responsive adjustments for tooltips */
+@media (max-width: 768px) {
+  .btn-alarm::before,
+  .btn-favourites::before,
+  .btn-login::before {
+    bottom: auto;
+    top: -30px; /* Adjusted to remove space for missing arrow */
+  }
+}
+
+/* ===============================
+   HAMBURGER MENU
+=============================== */
+.hamburger-menu {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 40px; /* Increased from 24px */
+  height: 40px; /* Increased from 18px */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 11px 8px; /* Added padding to create space around lines */
+  margin-right: 16px;
+  position: relative;
+  transition: background-color 0.2s ease;
+  border-radius: 20px;
+}
+
+.hamburger-menu:hover,
+.hamburger-menu:focus {
+  background-color: #c5d3cd; /* Lighter shade of #9bb6aa */
+  border-radius: 20px;
+}
+
+.hamburger-line {
+  width: 100%;
+  height: 2px;
+  background-color: black;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Fix to ensure even X formation with properly aligned lines */
+.hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+
+/* Remove favorites button from header when side panel is used */
+@media (max-width: 991px) {
+  .btn-favourites {
+    display: none;
+  }
+}
+
+.brand-model-selector {
+  margin: 10px 0 50px 0; /* Increased bottom margin */
+  padding: 15px 0;
+  position: relative;
+  background-color: #fff;
+  border-radius: 8px;
+  z-index: 10; /* Add z-index but lower than header */
+}
+
+/* Container for both brand buttons and model buttons */
+.selector-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Center horizontally */
+  align-items: center;
+  width: 100%;
+  margin: 0 auto; /* Center the container itself */
+  max-width: 900px; /* Prevent excessive spreading on wide screens */
+}
+
+/* Models container with fixed height */
+.models-container {
+  width: 100%;
+  min-height: 50px; /* Set a minimum height */
+  max-height: 120px; /* Limit maximum expansion */
+  overflow-y: auto; /* Allow scrolling if many models */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 0;
+  padding: 5px 0;
+}
+
+/* More attractive button styling */
+.selector-button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+  margin: 4px;
+}
+
+/* Brand buttons - green theme */
+.selector-button.brand {
+  background-color: #9bb6aa;
+  color: white;
+  margin: 5px;
+  flex: 0 0 auto; /* Don't allow buttons to grow/shrink */
+}
+
+.selector-button.brand:hover {
+  background-color: #8aa699;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Model buttons - white with green border */
+.selector-button.model {
+  background-color: white;
+  color: #333;
+  border: 2px solid #9bb6aa;
+  width: auto;
+  max-width: fit-content;
+  white-space: nowrap;
+}
+
+.selector-button.model:hover {
+  background-color: #f0f8f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Active state */
+.selector-button.active {
+  background-color: #7a9589;
+  color: white;
+  font-weight: bold;
+}
+
+/* ===============================
+   RESPONSIVE DESIGN (MOBILE)
 =============================== */
 @media (max-width: 768px) {
   /* Adjust body padding if needed for the new header height */
   body {
-    padding-top: 130px;
+    padding-top: 110px;
   }
 
-  /* Define a grid with two rows:
-     - First row: title and search icon side-by-side
-     - Second row: brand/models dropdown area */
+  /* Define a grid with two rows */
   .header {
     display: grid;
     grid-template-columns: auto auto;
@@ -264,18 +515,21 @@ body {
     padding: 0 10px;
   }
   
-  /* Position the search wrapper (which contains the search icon and field)
-     next to the title */
+  /* Position the search wrapper */
   .search__wrapper {
     position: relative;
     width: 50px;
-    margin-left: 10px;
+    margin-left: 12px;
     transition: width 0.3s ease-in-out;
     overflow: hidden;
+    height: 40px;
+    padding-top: 0px;
   }
+  
   .search__wrapper:focus-within {
     width: 80vw;
   }
+  
   .search__field {
     width: 100%;
     height: 50px;
@@ -287,18 +541,20 @@ body {
     outline: none;
     transition: all 0.3s ease-in-out;
   }
+  
   .search__field:focus {
     border-bottom-color: #ccc;
     color: #2b2b2b;
     cursor: text;
   }
+  
   .search__icon {
     position: absolute;
     top: 0;
     right: 0;
     background-color: transparent;
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 40px;
     border: none;
     cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
@@ -307,19 +563,21 @@ body {
     transition: background-color 0.2s ease-in-out;
   }
 
-  /* Container for the dropdowns (brand and models) on the second row */
+  /* Container for the dropdowns */
   .header__center {
     grid-area: dropdown;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 5px;
-    padding-top: 5px;
+    gap: 2px;
+    padding-top: 0;
   }
 
-  /* If you have a separate container for brand and models dropdowns,
-     ensure they display correctly on mobile. For example: */
+  .primary-navigation {
+    margin-left: 25px;
+  }
+  
   .brands-dropdown,
   .models-dropdown {
     width: 100%;

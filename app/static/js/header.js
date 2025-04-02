@@ -1,70 +1,28 @@
+// header.js
+// Import functions from other modules.
+import { showAuthModal } from "./auth.js";
+import { loadFavorites } from "./product.js";
+import { initSidePanel } from "./side-panel.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const modelsByBrand = window.modelsByBrand || {}; // Object containing brand-to-model mapping
+  const modelsByBrand = window.modelsByBrand || {}; // Brand-to-model mapping.
 
-  // Get dropdown elements
-  const brandSelector = document.getElementById("brandSelector");
-  const brandsDropdown = document.getElementById("brandsDropdown");
-  const modelSelector = document.getElementById("modelSelector");
-  const modelsDropdown = document.getElementById("modelsDropdown");
+  // Read URL parameters.
+  const favBtn = document.querySelector(".btn-favourites");
 
-  // Read URL parameters for pre-selected values
-  const params = new URLSearchParams(window.location.search);
-  const selectedBrandParam = params.get("brand");
-  const selectedModelParam = params.get("model");
 
-  // Restore selections from URL parameters when the page loads
-  if (selectedBrandParam) {
-    const brandName = Object.keys(modelsByBrand).find(
-      (b) => b.toLowerCase() === selectedBrandParam.toLowerCase()
-    );
-
-    if (selectedBrandParam === "all") {
-      document.querySelector(".brand-label").textContent = "All Brands";
-      document.querySelector(".models").classList.add("disabled");
-      modelsDropdown.innerHTML = "<li>Select a brand first</li>";
-    } else if (brandName) {
-      document.querySelector(".brand-label").textContent =
-        brandName.charAt(0).toUpperCase() + brandName.slice(1);
-
-      const brandData = modelsByBrand[brandName.toLowerCase()];
-      if (brandData) {
-        modelsDropdown.innerHTML = "";
-        brandData.models.forEach((modelObj) => {
-          const li = document.createElement("li");
-          li.setAttribute("role", "menuitem");
-          const a = document.createElement("a");
-          a.href = "javascript:void(0)";
-          a.setAttribute("data-model", modelObj.model.toLowerCase());
-          a.textContent = modelObj.model;
-          li.appendChild(a);
-          modelsDropdown.appendChild(li);
-        });
-        document.querySelector(".models").classList.remove("disabled");
-      }
-    }
-  }
-
-  if (selectedModelParam) {
-    document.querySelector(".model-label").textContent = selectedModelParam;
-  }
-
-  // ** Search Form Handler **
+  // ---------------
+  // Search Form Handler
+  // ---------------
   document.getElementById("searchForm").addEventListener("submit", function (e) {
     e.preventDefault();
 
-    // Retrieve the search query input
     const searchInput = this.querySelector('input[name="query"]');
     const queryInput = searchInput.value.trim();
 
-    // Prevent search submission if input is empty (do nothing)
-    if (!queryInput) {
-      return;
-    }
+    if (!queryInput) return;
 
-    // Clear the search input before redirecting
     searchInput.value = "";
-
-    // Create a URL object based on the current location
     const url = new URL(window.location);
 
     const matchingBrand = Object.keys(modelsByBrand).find(
@@ -78,108 +36,181 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       url.searchParams.set("query", queryInput);
     }
-
     window.location = url;
   });
 
-  // ** Toggle brand dropdown **
-  brandSelector.addEventListener("click", (e) => {
-    e.preventDefault();
-    const brandLi = brandSelector.parentElement;
-    const expanded = brandLi.getAttribute("aria-expanded") === "true";
-    brandLi.setAttribute("aria-expanded", !expanded);
-    brandsDropdown.style.display = !expanded ? "block" : "none";
-  });
 
-  // ** Toggle model dropdown **
-  modelSelector.addEventListener("click", (e) => {
-    e.preventDefault();
-    const modelLi = modelSelector.parentElement;
-    if (modelLi.classList.contains("disabled")) {
-      return;
-    }
-    const expanded = modelLi.getAttribute("aria-expanded") === "true";
-    modelLi.setAttribute("aria-expanded", !expanded);
-    modelsDropdown.style.display = !expanded ? "block" : "none";
-  });
-
-  // ** Handle brand selection from dropdown **
-  brandsDropdown.addEventListener("click", (e) => {
-    e.preventDefault();
-    const target = e.target;
-    if (target.tagName === "A") {
-      const selectedBrand = target.getAttribute("data-brand").toLowerCase();
-
-      const url = new URL(window.location);
-      url.searchParams.set("brand", selectedBrand);
-      url.searchParams.delete("model");
-      url.searchParams.delete("query");
-      window.location = url;
-    }
-  });
-
-  // ** Handle model selection from dropdown **
-  modelsDropdown.addEventListener("click", (e) => {
-    e.preventDefault();
-    const target = e.target;
-    if (target.tagName === "A") {
-      const selectedModel = target.getAttribute("data-model");
-
-      const url = new URL(window.location);
-      url.searchParams.set("model", selectedModel);
-      url.searchParams.delete("query");
-      window.location = url;
-    }
-  });
-
-  // ** Click outside to close dropdowns **
-  document.addEventListener("click", (e) => {
-    const isBrandArea =
-      brandSelector.contains(e.target) || brandsDropdown.contains(e.target);
-    const isModelArea =
-      modelSelector.contains(e.target) || modelsDropdown.contains(e.target);
-
-    if (!isBrandArea) {
-      brandsDropdown.style.display = "none";
-      brandSelector.parentElement.setAttribute("aria-expanded", "false");
-    }
-
-    if (!isModelArea) {
-      modelsDropdown.style.display = "none";
-      modelSelector.parentElement.setAttribute("aria-expanded", "false");
-    }
-  });
-
-  // ** Sticky Header Functionality **
+  // ---------------
+  // Sticky Header Functionality
+  // ---------------
   let lastScroll = 0;
   const header = document.querySelector(".header");
 
   window.addEventListener("scroll", () => {
-    const currentScroll =
-      window.pageYOffset || document.documentElement.scrollTop;
-
-    // Always show header at the very top
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
     if (currentScroll <= 0) {
       header.classList.remove("header--hidden");
       lastScroll = currentScroll;
       return;
     }
-
-    // If scrolling down and header is visible, hide it
-    if (
-      currentScroll > lastScroll &&
-      !header.classList.contains("header--hidden")
-    ) {
+    if (currentScroll > lastScroll && !header.classList.contains("header--hidden")) {
       header.classList.add("header--hidden");
-    }
-    // If scrolling up and header is hidden, show it
-    else if (
-      currentScroll < lastScroll &&
-      header.classList.contains("header--hidden")
-    ) {
+    } else if (currentScroll < lastScroll && header.classList.contains("header--hidden")) {
       header.classList.remove("header--hidden");
     }
-
     lastScroll = currentScroll;
   });
-});
+
+  // ---------------
+  // Favorites Button Handler
+  // ---------------
+  favBtn?.addEventListener("click", () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showAuthModal();
+      return;
+    }
+    document.getElementById("main-view").style.display = "none";
+    document.getElementById("favorites-view").style.display = "block";
+    loadFavorites();
+  });
+
+  // ---------------
+  // Search Icon & Field Enhancements
+  // ---------------
+  const searchIcon = document.querySelector(".search__icon");
+  const searchField = document.querySelector(".search__field");
+  const searchWrapper = document.querySelector(".search__wrapper");
+
+  if (searchIcon && searchField) {
+    searchIcon.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (window.innerWidth <= 768) {
+        searchWrapper.style.width = "100%";
+        setTimeout(() => {
+          searchField.focus();
+          try {
+            searchField.click();
+            searchField.scrollIntoView({ behavior: "smooth", block: "center" });
+          } catch (err) {
+            console.log("Error focusing search field:", err);
+          }
+        }, 500);
+      } else {
+        searchField.focus();
+      }
+    });
+
+    searchField.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (
+          document.activeElement !== searchIcon &&
+          document.activeElement !== searchField
+        ) {
+          searchWrapper.style.width = "";
+        }
+      }, 200);
+    });
+  }
+
+  // Update header height on load and resize.
+  const updateHeaderHeight = () => {
+    const headerHeight = header.offsetHeight;
+    document.documentElement.style.setProperty("--header-height", `${headerHeight}px`);
+    const brandModelSelector = document.querySelector(".brand-model-selector");
+    if (brandModelSelector) {
+      brandModelSelector.style.top = `${headerHeight}px`;
+      }
+    };
+    updateHeaderHeight();
+    window.addEventListener("resize", updateHeaderHeight);
+
+    // ---------------
+    // Brands & Models Selector (Main Page)
+    // ---------------
+    function displayBrands() {
+      const container = document.getElementById("selector-container");
+      container.querySelectorAll(".selector-button.model").forEach((btn) => btn.remove());
+      const existingModelsContainer = container.querySelector(".models-container");
+      if (existingModelsContainer) existingModelsContainer.remove();
+
+      if (container.querySelectorAll(".selector-button.brand").length === 0) {
+        const brandsContainer = document.createElement("div");
+        brandsContainer.classList.add("brands-row");
+
+        const brands = Object.keys(window.modelsByBrand || {});
+        // Randomize brand order.
+        const randomizedBrands = [...brands];
+        for (let i = randomizedBrands.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [randomizedBrands[i], randomizedBrands[j]] = [randomizedBrands[j], randomizedBrands[i]];
+        }
+
+        randomizedBrands.forEach((brand) => {
+          const button = document.createElement("button");
+          button.classList.add("selector-button", "brand");
+          button.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
+          button.setAttribute("data-brand", brand.toLowerCase());
+          button.addEventListener("click", (e) => {
+            document.querySelectorAll(".selector-button.brand").forEach((btn) => btn.classList.remove("active"));
+            e.target.classList.add("active");
+            displayModels(brand);
+          });
+          brandsContainer.appendChild(button);
+        });
+        container.appendChild(brandsContainer);
+      }
+
+      // Highlight selected brand from URL parameters.
+      const params = new URLSearchParams(window.location.search);
+      const selectedBrandParam = params.get("brand");
+      if (selectedBrandParam) {
+        const brandButton = container.querySelector(
+          `.selector-button.brand[data-brand="${selectedBrandParam.toLowerCase()}"]`
+        );
+        if (brandButton) {
+          brandButton.classList.add("active");
+          displayModels(selectedBrandParam);
+        }
+      }
+    }
+
+    function displayModels(brand) {
+      const container = document.getElementById("selector-container");
+      const existingModelsContainer = container.querySelector(".models-container");
+      if (existingModelsContainer) existingModelsContainer.remove();
+
+      const modelsContainer = document.createElement("div");
+      modelsContainer.classList.add("models-container");
+
+      const brandData = window.modelsByBrand[brand.toLowerCase()];
+      if (brandData && brandData.models && brandData.models.length > 0) {
+        brandData.models.forEach((modelObj) => {
+          const button = document.createElement("button");
+          button.classList.add("selector-button", "model");
+          button.textContent = modelObj.model;
+          button.addEventListener("click", () => selectModel(brand, modelObj.model));
+          modelsContainer.appendChild(button);
+        });
+      } else {
+        const noModelsMsg = document.createElement("p");
+        noModelsMsg.textContent = "No models available for this brand";
+        noModelsMsg.style.textAlign = "center";
+        noModelsMsg.style.width = "100%";
+        modelsContainer.appendChild(noModelsMsg);
+      }
+      container.appendChild(modelsContainer);
+    }
+
+    function selectModel(brand, model) {
+      const url = new URL(window.location);
+      url.searchParams.set("brand", brand.toLowerCase());
+      url.searchParams.set("model", model.toLowerCase());
+      url.searchParams.delete("query");
+      window.location = url;
+    }
+
+    // Initialize main page brand/model selector.
+    displayBrands();
+    initSidePanel();
+  });

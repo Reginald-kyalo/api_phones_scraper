@@ -22,6 +22,8 @@
     <link rel="stylesheet" href="/static/css/header.css" />
     <link rel="stylesheet" href="/static/css/product.css" />
     <link rel="stylesheet" href="/static/css/auth.css" />
+    <link rel="stylesheet" href="/static/css/price-alarm.css">
+    <link rel="stylesheet" href="/static/css/side-panel.css" />
     <style>
       .global-message {
         position: fixed;
@@ -59,39 +61,43 @@
     <div id="globalMessage" class="global-message"></div>
 
     {% include "header.html" %}
+    {% include "side-panel.html" %}
 
     <!-- Main product view -->
-    <div id="main-view">
+    <div id="main-view" style="display: {% if view == 'favorites' %}none{% else %}block{% endif %}">
       {% include "product.html" %}
     </div>
 
     <!-- Favorites view -->
-    <section id="favorites-view">
+    <section id="favorites-view" style="display: {% if view == 'favorites' %}block{% else %}none{% endif %}">
       <button id="favorites-back-btn">← Back to Products</button>
       <div id="favorites-container">
-        {% for product in favorites %}
-          {% include "product.html" with context %}
-        {% endfor %}
-        <!-- Favorites added via JavaScript will use the template below -->
+<!-- Empty container - JS will populate this -->
       </div>
     </section>
 
     <!-- Include the auth modal -->
     {% include "auth.html" %}
-
-    <!-- Embed rendered data for use by JavaScript -->
+    {% include "price-alarm.html" %}
+   <!-- Embed rendered data for use by JavaScript -->
     <script type="text/javascript">
       modelsByBrand = {{ models_by_brand | tojson | safe }};
     </script>
     
     <!-- Hidden client-side template for product card -->
     <template id="product-template">
-      {% include "product.html" %}
+      {% include "product-card.html" %}
     </template>
 
     <!-- Custom JavaScript -->
-    <script src="/static/js/header.js"></script>
-    <script src="/static/js/product.js"></script>
-    <script src="/static/js/auth.js"></script>
+    <script type="module">
+      import { showAuthModal } from '/static/js/auth.js';
+      window.showAuthModal = showAuthModal;  // Make it globally available
+    </script>
+    <!--script src="/static/js/price-alarm.js" type="module"></script-->
+    <script src="/static/js/side-panel.js" type="module"></script>
+    <script src="/static/js/product.js" type="module"></script>
+    <script src="/static/js/header.js" type="module"></script>
+
   </body>
 </html>

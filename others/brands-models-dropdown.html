@@ -1,0 +1,41 @@
+<nav role="navigation" class="primary-navigation">
+    <ul>
+        <!-- Brands Dropdown -->
+        <li class="brands" aria-expanded="false">
+            <a href="javascript:void(0)" id="brandSelector" aria-haspopup="true">
+                <span class="brand-label">Brands</span>
+                <span class="dropdown-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </span>
+            </a>
+            <ul class="dropdown brands-dropdown" id="brandsDropdown" role="menu">
+                <li role="menuitem">
+                    <a href="javascript:void(0)" data-brand="all">All Brands</a>
+                </li>
+                {% for brand in brands %}
+                <li role="menuitem">
+                    <a href="javascript:void(0)" data-brand="{{ brand|lower }}">{{ brand|capitalize }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
+        <!-- Models Dropdown -->
+        <li class="models disabled" aria-expanded="false">
+            <a href="javascript:void(0)" id="modelSelector" aria-haspopup="true">
+                <span class="model-label">Models</span>
+                <span class="dropdown-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </span>
+            </a>
+            <ul class="dropdown models-dropdown" id="modelsDropdown" role="menu">
+                <!-- Will be populated via JS using rendered data -->
+            </ul>
+        </li>
+    </ul>
+</nav>
