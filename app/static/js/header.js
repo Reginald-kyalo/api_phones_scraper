@@ -9,8 +9,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Read URL parameters.
   const favBtn = document.querySelector(".btn-favourites");
+  const alertsBtn = document.querySelector(".btn-alarm"); // This is correct, using existing btn-alarm class
 
-
+  // ---------------
+  // Price Alerts Button Handler
+  // ---------------
+  alertsBtn?.addEventListener("click", () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Set flag to show track alerts after login
+      localStorage.setItem("pendingTrackAlerts", "true");
+      
+      // Show auth modal
+      if (window.showAuthModal) {
+        window.showAuthModal();
+      }
+      return;
+    }
+    
+    // User is logged in, show the track alerts modal
+    if (window.openTrackAlertsModal) {
+      window.openTrackAlertsModal();
+    }
+  });
+  
   // ---------------
   // Search Form Handler
   // ---------------

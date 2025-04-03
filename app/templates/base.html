@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="/static/css/auth.css" />
     <link rel="stylesheet" href="/static/css/price-alarm.css">
     <link rel="stylesheet" href="/static/css/side-panel.css" />
+    <link rel="stylesheet" href="/static/css/track-alerts.css" />
     <style>
       .global-message {
         position: fixed;
@@ -78,6 +79,7 @@
 
     <!-- Include the auth modal -->
     {% include "auth.html" %}
+    {% include "track-alerts.html" %}
     {% include "price-alarm.html" %}
    <!-- Embed rendered data for use by JavaScript -->
     <script type="text/javascript">
@@ -95,8 +97,10 @@
       window.showAuthModal = showAuthModal;  // Make it globally available
     </script>
     <!--script src="/static/js/price-alarm.js" type="module"></script-->
+    <script src="/static/js/track-alerts.js"></script>
     <script src="/static/js/side-panel.js" type="module"></script>
     <script src="/static/js/product.js" type="module"></script>
+    <script src="/static/js/track-alerts.js"></script>
     <script src="/static/js/header.js" type="module"></script>
 
   </body>

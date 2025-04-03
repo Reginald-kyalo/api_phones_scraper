@@ -81,6 +81,44 @@ function handlePendingPriceAlarm() {
   }
 }
 
+// Add this function after handlePendingPriceAlarm function
+// Update or add the handlePendingRequests function
+function handlePendingRequests() {
+  // Check for pending price alarm
+  const pendingPriceAlarm = localStorage.getItem("pendingPriceAlarm");
+  if (pendingPriceAlarm) {
+    // Clear the flag
+    localStorage.removeItem("pendingPriceAlarm");
+
+    // Get product data from DOM or API and show modal
+    // This depends on where the product data is stored
+    const productElement = document.querySelector(`[data-product-id="${pendingPriceAlarm}"]`);
+    if (productElement && window.showPriceAlarmModal) {
+      const productData = JSON.parse(productElement.dataset.productInfo);
+      setTimeout(() => {
+        window.showPriceAlarmModal(productData);
+      }, 500); // Short delay to ensure auth modal is fully closed
+    }
+  }
+
+  // Check for pending track alerts
+  const pendingTrackAlerts = localStorage.getItem("pendingTrackAlerts");
+  if (pendingTrackAlerts === "true") {
+    // Clear the flag
+    localStorage.removeItem("pendingTrackAlerts");
+
+    // Show track alerts modal
+    if (window.openTrackAlertsModal) {
+      setTimeout(() => {
+        window.openTrackAlertsModal();
+      }, 500); // Short delay to ensure auth modal is fully closed
+    }
+  }
+}
+
+// Replace existing calls to handlePendingPriceAlarm with handlePendingRequests
+// in your login and signup form submission handlers
+
 // Rest of your auth.js code (not exported)
 document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
@@ -149,12 +187,12 @@ loginFormEl.addEventListener("submit", async (e) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", username);
       localStorage.setItem("userEmail", email);  // Store email for price alerts
-      
+
       authModal.classList.add("hidden");
       updateUserUI(username);
-      
+
       // Call the helper function instead of duplicating code
-      handlePendingPriceAlarm();
+      handlePendingRequests();
     } else {
       loginError.innerText = data.detail || "Login failed. Please try again.";
     }
@@ -180,16 +218,18 @@ signUpFormEl.addEventListener("submit", async (e) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", username);
       localStorage.setItem("userEmail", email);  // Store email for price alerts
-      
+
       authModal.classList.add("hidden");
       updateUserUI(username);
-      
+
       // Call the helper function instead of duplicating code
-      handlePendingPriceAlarm();
+      handlePendingRequests();
     } else {
       signUpError.innerText = data.detail || "Sign up failed. Please try again.";
     }
   } catch (err) {
     signUpError.innerText = "An error occurred. Please try again later.";
   }
+  window.showAuthModal = showAuthModal;
+
 });

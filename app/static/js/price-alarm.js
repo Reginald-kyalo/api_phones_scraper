@@ -7,6 +7,19 @@ export function showPriceAlarmModal(productData) {
   const customPriceInput = document.getElementById('customPrice');
   const setPriceAlertBtn = document.getElementById('setPriceAlert');
   
+  // Check if this is an edit operation
+  const isEdit = productData._existingAlert !== undefined;
+  const existingAlertData = productData._existingAlert || {};
+  
+  // Update button text for edit mode
+  if (isEdit) {
+    setPriceAlertBtn.textContent = 'Update Price Alert';
+    setPriceAlertBtn.dataset.alertId = existingAlertData.id;
+  } else {
+    setPriceAlertBtn.textContent = 'Set Price Alert';
+    delete setPriceAlertBtn.dataset.alertId;
+  }
+  
   // Fill product details
   const productImage = priceAlarmModal.querySelector('.product-image img');
   productImage.src = productData.model_image;
@@ -22,10 +35,28 @@ export function showPriceAlarmModal(productData) {
     const percent = parseInt(btn.dataset.percent);
     const discountedPrice = Math.round(price * (1 - percent/100));
     btn.querySelector('.calculated-price').textContent = `Ksh ${discountedPrice}`;
+    
+    // If editing, check if this percentage matches the target price
+    if (isEdit) {
+      const targetPrice = existingAlertData.targetPrice;
+      // Remove active from all buttons first
+      btn.classList.remove('active');
+      
+      // If this percentage button matches the target price within a small margin
+      if (Math.abs(discountedPrice - targetPrice) < 1) {
+        btn.classList.add('active');
+        customPriceInput.value = '';
+      }
+    }
   });
   
   // Set custom price placeholder
   customPriceInput.placeholder = `Less than ${price}`;
+  
+  // If we're editing and no percentage button was selected, use custom input
+  if (isEdit && !document.querySelector('.percentage-btn.active')) {
+    customPriceInput.value = existingAlertData.targetPrice;
+  }
   
   // Store product ID for submission
   setPriceAlertBtn.dataset.productId = productData._id;
@@ -41,8 +72,18 @@ export function showPriceAlarmModal(productData) {
   const loggedInEmailSection = priceAlarmModal.querySelector('.logged-in-email');
   const alternateEmailSection = priceAlarmModal.querySelector('.alternate-email');
   if (loggedInEmailSection && alternateEmailSection) {
-    loggedInEmailSection.style.display = 'block';
-    alternateEmailSection.style.display = 'none';
+    // If editing with a different email
+    if (isEdit && existingAlertData.email !== userEmail) {
+      loggedInEmailSection.style.display = 'none';
+      alternateEmailSection.style.display = 'block';
+      const altEmailInput = document.getElementById('alertEmail');
+      if (altEmailInput) {
+        altEmailInput.value = existingAlertData.email;
+      }
+    } else {
+      loggedInEmailSection.style.display = 'block';
+      alternateEmailSection.style.display = 'none';
+    }
   }
   
   // Show modal
@@ -114,42 +155,99 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Submit price alert
-  setPriceAlertBtn.addEventListener('click', function() {
+  setPriceAlertBtn.addEventListener('click', async function() {
     const productId = this.dataset.productId;
+    const alertId = this.dataset.alertId; // Will exist if editing
+    const isEdit = !!alertId;
+    
     let targetPrice;
     
     const activePercentBtn = document.querySelector('.percentage-btn.active');
     if (activePercentBtn) {
-      const percent = parseInt(activePercentBtn.dataset.percent);
-      const currentPrice = parseFloat(priceAlarmModal.querySelector('.price-value').textContent.replace('Ksh ', ''));
-      targetPrice = Math.round(currentPrice * (1 - percent/100));
+        const percent = parseInt(activePercentBtn.dataset.percent);
+        const currentPrice = parseFloat(priceAlarmModal.querySelector('.price-value').textContent.replace('Ksh ', ''));
+        targetPrice = Math.round(currentPrice * (1 - percent/100));
     } else if (customPriceInput.value) {
-      targetPrice = parseFloat(customPriceInput.value);
+        targetPrice = parseFloat(customPriceInput.value);
     }
     
     if (!targetPrice) {
-      showGlobalMessage('Please select a target price', true);
-      return;
+        showGlobalMessage('Please select a target price', true);
+        return;
     }
     
     // Determine which email to use
+    const userEmail = localStorage.getItem("userEmail");
     let emailToUse = userEmail; // Default to account email
     
     // If alternate email section is visible and has a value, use that instead
-    if (alternateEmailSection.style.display !== 'none') {
-      const altEmail = document.getElementById('alertEmail').value;
-      if (altEmail) {
-        emailToUse = altEmail;
-      } else {
-        showGlobalMessage('Please enter an email address or use your account email', true);
-        return;
-      }
+    if (alternateEmailSection && alternateEmailSection.style.display !== 'none') {
+        const altEmail = document.getElementById('alertEmail').value;
+        if (altEmail) {
+            emailToUse = altEmail;
+        } else {
+            showGlobalMessage('Please enter an email address or use your account email', true);
+            return;
+        }
     }
     
-    // Rest of your code...
-    console.log("Setting price alert:", { productId, email: emailToUse, targetPrice });
+    // Get auth token
+    const token = localStorage.getItem("token");
+    if (!token) {
+        showGlobalMessage('Please log in to set a price alert', true);
+        closeModalBtn.click();
+        if (window.showAuthModal) {
+            localStorage.setItem("pendingPriceAlarm", productId);
+            window.showAuthModal();
+        }
+        return;
+    }
     
-    showGlobalMessage('Price alert has been set! We will notify you when the price drops.');
-    closeModalBtn.click();
+    // API endpoint and method change based on whether this is an edit or create
+    const endpoint = isEdit ? `/api/price-alerts/${alertId}` : '/api/price-alerts';
+    const method = isEdit ? 'PUT' : 'POST';
+    
+    try {
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isEdit ? 'Updating' : 'Setting'} Alert...`;
+        
+        const response = await fetch(endpoint, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                target_price: targetPrice,
+                alternate_email: userEmail !== emailToUse ? emailToUse : null
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to ${isEdit ? 'update' : 'create'} price alert`);
+        }
+        
+        const result = await response.json();
+        
+        // Update UI and alerts
+        showGlobalMessage(`Price alert has been ${isEdit ? 'updated' : 'set'}! We will notify you when the price drops.`);
+        closeModalBtn.click();
+        
+        // Refresh alerts badge count
+        if (window.updateAlertsBadge) {
+            setTimeout(() => {
+                window.updateAlertsBadge();
+            }, 500);
+        }
+    } catch (error) {
+        console.error('Error setting price alert:', error);
+        showGlobalMessage('Failed to set price alert. Please try again.', true);
+    } finally {
+        // Reset button
+        this.disabled = false;
+        this.innerHTML = 'Set Price Alert';
+    }
   });
 });

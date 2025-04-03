@@ -1,3 +1,13 @@
+:root {
+  /* Define color variables for easy theming */
+  --primary-color: #9bb6aa;
+  --primary-hover: #c5d3cd;
+  --text-color: #333;
+  --error-color: #e74c3c;
+  --bg-color: #fff;
+  --border-color: #ddd;
+}
+
 /* Modal backdrop */
 .modal {
   position: fixed;
@@ -5,60 +15,133 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
 }
 
-/* Hide modal by default */
-.hidden {
+.modal.hidden {
   display: none;
 }
 
-/* Modal content box */
+.modal:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Modal content */
 .authmodal-content {
-  background: #fff;
-  padding: 20px 30px;
+  background-color: var(--bg-color);
+  width: 90%;
+  max-width: 400px;
   border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
   position: relative;
-  width: 300px;
+  animation: modalSlideIn 0.4s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Close button */
 .modal-close {
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 15px;
+  right: 20px;
   font-size: 24px;
   cursor: pointer;
+  color: #999;
+  transition: color 0.3s ease;
 }
 
-/* Form styling */
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.modal-close:hover {
+  color: var(--text-color);
 }
 
+/* Form heading */
+.form-section h2 {
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-align: center;
+}
+
+/* Form elements */
 .form-section input {
-  padding: 8px;
   width: 100%;
-  border: 1px solid #ccc;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
+  font-size: 16px;
+  transition: border 0.3s ease;
+}
+
+.form-section input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
 .form-section button {
-  padding: 10px;
-  background-color: #007bff;
-  border: none;
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-color);
   color: white;
+  border: none;
   border-radius: 4px;
+  font-size: 16px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
 }
 
+.form-section button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Links */
+.form-section a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.form-section a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* Error messages */
 .error-msg {
-  color: red;
-  font-size: 0.9em;
+  color: var(--error-color);
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* Hidden sections */
+.form-section.hidden {
+  display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .authmodal-content {
+    padding: 1.5rem;
+  }
 }

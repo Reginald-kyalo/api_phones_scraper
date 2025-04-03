@@ -258,6 +258,39 @@ body {
   fill: currentColor; /* For consistency with filled icons */
 }
 
+/* Add this to your existing header.css */
+.btn-alarm {
+  position: relative;
+}
+
+/* Add a badge for when there are active alerts */
+.btn-alarm.has-alerts svg {
+  color: #e74c3c; /* Red color for alerts */
+  animation: pulse 2s infinite;
+}
+
+.alert-badge-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
 .btn-login svg {
   stroke-width: 2.5; /* Make arrow thicker */
 }

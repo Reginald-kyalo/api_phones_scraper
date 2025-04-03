@@ -1,0 +1,82 @@
+<div id="trackAlertsModal" class="price-alarm-modal hidden">
+    <div class="track-alerts-content">
+        <!-- Header with close button -->
+        <div class="price-alarm-header">
+            <h2>Your Price Alerts</h2>
+            <button class="price-alarm-close">&times;</button>
+        </div>
+
+        <!-- Filters and sorting section -->
+        <div class="alerts-filters">
+            <div class="filter-group">
+                <label for="alertsFilter">Filter:</label>
+                <select id="alertsFilter">
+                    <option value="all">All alerts</option>
+                    <option value="active">Active</option>
+                    <option value="triggered">Price dropped</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="alertsSort">Sort by:</label>
+                <select id="alertsSort">
+                    <option value="date-desc">Newest first</option>
+                    <option value="date-asc">Oldest first</option>
+                    <option value="price-desc">Highest price</option>
+                    <option value="price-asc">Lowest price</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Alerts list -->
+        <div class="alerts-list">
+            <!-- Empty state -->
+            <div id="noAlertsMessage" class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <p>You don't have any price alerts set</p>
+                <button class="btn-primary">Browse Products</button>
+            </div>
+
+            <!-- Template for alert items (will be populated dynamically) -->
+            <template class="alert-item-template">
+                <div class="alert-item">
+                    <div class="alert-badge">
+                        <span class="badge-active">Active</span>
+                    </div>
+                    <div class="alert-product">
+                        <div class="alert-image">
+                            <img src="" alt="Product image">
+                        </div>
+                        <div class="alert-details">
+                            <h3 class="alert-title"></h3>
+                            <p class="alert-brand"></p>
+                        </div>
+                    </div>
+                    <div class="alert-prices">
+                        <div class="alert-price-row">
+                            <span class="alert-price-label">Target price:</span>
+                            <span class="alert-target-price">Ksh 0</span>
+                        </div>
+                        <div class="alert-price-row">
+                            <span class="alert-price-label">Current price:</span>
+                            <span class="alert-current-price">Ksh 0</span>
+                            <span class="price-change down">↓ -5%</span>
+                        </div>
+                        <div class="alert-date">Created on: <span class="date-value">Apr 1, 2025</span></div>
+                    </div>
+                    <div class="alert-actions">
+                        <button class="btn-edit" title="Edit alert"><i class="fas fa-edit"></i></button>
+                        <button class="btn-delete" title="Delete alert"><i class="fas fa-trash"></i></button>
+                        <a href="#" class="btn-view" title="View product"><i class="fas fa-external-link-alt"></i></a>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Pagination -->
+        <div class="alerts-pagination">
+            <button class="btn-page" disabled>Previous</button>
+            <div class="page-info">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></div>
+            <button class="btn-page">Next</button>
+        </div>
+    </div>
+</div>
