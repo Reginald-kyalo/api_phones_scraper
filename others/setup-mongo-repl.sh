@@ -16,7 +16,7 @@ SECONDARY2_IP=$(gcloud compute instances describe $SECONDARY2_VM --zone=$ZONE --
 
 # MongoDB user credentials
 MONGO_USER="root"
-MONGO_PASS="mongodbmypass!"
+MONGO_PASS=""
 AUTH_DB="admin"  # Typically the admin database for MongoDB authentication
 
 # Step 7: Initialize the replica set from the primary
