@@ -19,7 +19,7 @@ async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(ve
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    brand = await get_brand_from_cache(product.get("brand_id"))
+    product_info = get_brand_from_cache(product.get("brand_id"), product)
     alert_data = {
         "user_id": ObjectId(user_id),
         "email": alert.alternate_email or user_email,
@@ -27,8 +27,8 @@ async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(ve
         "product": {
             "id": str(product["_id"]),
             "name": product["model"],
-            "brand": brand,
-            "image": product.get("model_image", "")
+            "brand": product_info["brand"],
+            "image": product_info["model_image"],
         },
         "original_price": product.get("latest_price", {}).get("amount", 0),
         "current_price": product.get("latest_price", {}).get("amount", 0),

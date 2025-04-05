@@ -104,74 +104,361 @@ function updateBadgeUI(count) {
     }
 }
 
-// Main document ready function
-document.addEventListener('DOMContentLoaded', function () {
-    // DOM Elements
-    const trackAlertsModal = document.getElementById('trackAlertsModal');
+// Define variables outside DOMContentLoaded for global access
+let alertsList;
+let trackAlertsModal;
+let alertTemplate;
 
-    // Ensure modal is hidden on page load
+// Render single alert item - moved outside DOMContentLoaded
+function renderAlertItem(alert) {
+    if (!alertTemplate || !alertsList) {
+        alertTemplate = document.querySelector('.alert-item-template');
+        alertsList = document.querySelector('.alerts-list');
+        if (!alertTemplate || !alertsList) return;
+    }
+    
+    try {
+        // Clone template
+        const alertItem = alertTemplate.content.cloneNode(true);
+        
+        // Set alert data
+        const titleEl = alertItem.querySelector('.alert-title');
+        const brandEl = alertItem.querySelector('.alert-brand');
+        const imageEl = alertItem.querySelector('.alert-image img');
+        const targetPriceEl = alertItem.querySelector('.alert-target-price');
+        const currentPriceEl = alertItem.querySelector('.alert-current-price');
+        
+        if (titleEl) titleEl.textContent = alert.product.name;
+        if (brandEl) brandEl.textContent = alert.product.brand;
+        if (imageEl) {
+            imageEl.src = alert.product.image;
+            imageEl.alt = alert.product.name;
+        }
+        if (targetPriceEl) targetPriceEl.textContent = `Ksh ${alert.targetPrice.toLocaleString()}`;
+        if (currentPriceEl) currentPriceEl.textContent = `Ksh ${alert.currentPrice.toLocaleString()}`;
+        
+        // Calculate price change
+        const priceChangeEl = alertItem.querySelector('.price-change');
+        if (priceChangeEl) {
+            const priceChange = ((alert.currentPrice - alert.originalPrice) / alert.originalPrice) * 100;
+            
+            if (priceChange < 0) {
+                priceChangeEl.textContent = `↓ ${Math.abs(priceChange).toFixed(1)}%`;
+                priceChangeEl.className = 'price-change down';
+            } else if (priceChange > 0) {
+                priceChangeEl.textContent = `↑ +${priceChange.toFixed(1)}%`;
+                priceChangeEl.className = 'price-change up';
+            } else {
+                priceChangeEl.textContent = `0%`;
+                priceChangeEl.className = 'price-change';
+            }
+        }
+        
+        // Set badge
+        const badge = alertItem.querySelector('.alert-badge span');
+        if (badge) {
+            if (alert.triggered) {
+                badge.textContent = 'Price dropped!';
+                badge.className = 'badge-triggered';
+            } else {
+                badge.textContent = 'Active';
+                badge.className = 'badge-active';
+            }
+        }
+        
+        // Format date
+        const dateEl = alertItem.querySelector('.date-value');
+        if (dateEl && alert.createdAt) {
+            const date = new Date(alert.createdAt);
+            dateEl.textContent = date.toLocaleDateString();
+        }
+        
+        // Set up action buttons
+        const editBtn = alertItem.querySelector('.btn-edit');
+        const deleteBtn = alertItem.querySelector('.btn-delete');
+        const viewLink = alertItem.querySelector('.btn-view');
+        
+        if (editBtn) editBtn.addEventListener('click', () => editAlert(alert.id, alert));
+        if (deleteBtn) deleteBtn.addEventListener('click', () => deleteAlert(alert.id));
+        if (viewLink) {
+            const brandParam = encodeURIComponent(alert.product.brand.toLowerCase());
+            const modelParam = encodeURIComponent(alert.product.name);
+            viewLink.href = `/?brand=${brandParam}&model=${modelParam}`;
+        }
+        
+        // Add to DOM
+        alertsList.appendChild(alertItem);
+    } catch (error) {
+        logError(error, 'renderAlertItem');
+    }
+}
+
+async function loadUserAlerts(page = 1) {
+    if (!alertsList) {
+        alertsList = document.querySelector('.alerts-list');
+        if (!alertsList) return;
+    }
+    
+    console.log("Loading user alerts...");
+    
+    // Show loading state
+    alertsList.innerHTML = '<div class="loading">Loading your price alerts...</div>';
+    alertsList.setAttribute('aria-busy', 'true');
+    
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            throw new Error("Authentication required");
+        }
+        
+        // Get filter and sort options
+        const filter = document.getElementById('alertsFilter')?.value || 'all';
+        const sort = document.getElementById('alertsSort')?.value || 'newest';
+        apiCache.delete(`/api/price-alerts?page=${page}&filter=${filter}&sort=${sort}`);
+        const response = await fetchWithRetry(`/api/price-alerts?page=${page}&filter=${filter}&sort=${sort}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(response.status === 401 ? "Authentication required" : "Failed to load alerts");
+        }
+        
+        const data = await response.json();
+        
+        // Clear aria-busy state
+        alertsList.removeAttribute('aria-busy');
+        
+        // Clear previous alerts
+        alertsList.innerHTML = '';
+        
+        if (!data.alerts || data.alerts.length === 0) {
+            // Display empty state
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <h3>No price alerts found</h3>
+                <p>You haven't set any price alerts yet.</p>
+                <button class="btn btn-primary">Browse Products</button>
+            `;
+            alertsList.appendChild(emptyState);
+            
+            // Add click handler to the browse button
+            const browseBtn = emptyState.querySelector('.btn-primary');
+            if (browseBtn) {
+                browseBtn.addEventListener('click', function() {
+                    trackAlertsModal.classList.add('hidden');
+                    window.location.href = '/';
+                });
+            }
+            
+            // Update pagination
+            updatePaginationUI(1, 1);
+        } else {
+            // Render alerts
+            data.alerts.forEach(alert => renderAlertItem(alert));
+            
+            // Update pagination
+            updatePaginationUI(data.currentPage || 1, data.totalPages || 1);
+        }
+    } catch (error) {
+        logError(error, 'loadUserAlerts');
+        
+        if (alertsList) {
+            alertsList.innerHTML = `<div class="error-message">
+                ${error.message === "Authentication required" 
+                    ? "Please login to view your price alerts" 
+                    : "Failed to load your price alerts. Please try again later."}
+            </div>`;
+            alertsList.removeAttribute('aria-busy');
+        }
+    }
+}
+
+// Helper function for pagination UI
+function updatePaginationUI(currentPage, totalPages) {
+    const currentPageEl = document.getElementById('currentPage');
+    const totalPagesEl = document.getElementById('totalPages');
+    
+    if (currentPageEl) currentPageEl.textContent = currentPage;
+    if (totalPagesEl) totalPagesEl.textContent = totalPages;
+    
+    const paginationBtns = document.querySelectorAll('.btn-page');
+    if (paginationBtns && paginationBtns.length >= 2) {
+        paginationBtns[0].disabled = currentPage <= 1;
+        paginationBtns[1].disabled = currentPage >= totalPages;
+    }
+}
+
+// Function to reload the alerts list
+function refreshAlertsList() {
+    console.log("Refreshing alerts list");
+    // Only reload if modal is open
+    if (trackAlertsModal && !trackAlertsModal.classList.contains('hidden')) {
+        loadUserAlerts();
+    }
+}
+
+// Make functions globally available
+window.loadUserAlerts = loadUserAlerts;
+window.refreshAlertsList = refreshAlertsList;
+
+// Add this new function to handle returning to track alerts after editing
+window.returnToTrackAlertsModal = function() {
+    // Check if the modal exists
+    if (!trackAlertsModal) return;
+    
+    // Open the track alerts modal
+    window.openTrackAlertsModal();
+    
+    // Refresh the data
+    loadUserAlerts();
+};
+
+// Handle delete functionality globally
+async function deleteAlert(id) {
+    if (confirm('Are you sure you want to delete this price alert?')) {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                throw new Error("User not authenticated");
+            }
+            
+            const response = await fetchWithRetry(`/api/price-alerts/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }, 3, false); // Don't use cache for DELETE
+            
+            if (response.ok) {
+                // Clear all alert-related cache entries
+                for (const key of apiCache.keys()) {
+                    if (key.includes('/api/price-alerts')) {
+                        apiCache.delete(key);
+                    }
+                }
+                
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'success-message';
+                successMsg.textContent = 'Alert deleted successfully';
+                
+                if (alertsList) {
+                    alertsList.prepend(successMsg);
+                    setTimeout(() => {
+                        if (successMsg.parentNode) {
+                            successMsg.parentNode.removeChild(successMsg);
+                        }
+                    }, 3000);
+                }
+                
+                console.log("Alert deleted, refreshing list...");
+                // Refresh the alerts list
+                loadUserAlerts();
+                
+                // Update the badge count
+                if (window.updateAlertsBadge) {
+                    window.updateAlertsBadge();
+                }
+            } else {
+                throw new Error('Failed to delete alert');
+            }
+        } catch (error) {
+            logError(error, 'deleteAlert');
+            alert('Failed to delete the price alert. Please try again.');
+        }
+    }
+}
+
+// Also define editAlert globally
+function editAlert(id, alertData) {
+    // Don't close track alerts modal, just remember it was open
+    const trackAlertsWasOpen = trackAlertsModal && !trackAlertsModal.classList.contains('hidden');
+    
     if (trackAlertsModal) {
         trackAlertsModal.classList.add('hidden');
     }
 
-    const closeBtn = trackAlertsModal?.querySelector('.price-alarm-close');
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Skip trying to fetch from non-existent API endpoint
+    // Instead, create a properly formatted product object directly from alertData
+    const productData = {
+        _id: alertData.product.id,
+        brand: alertData.product.brand,
+        model: alertData.product.name,
+        model_image: alertData.product.image,
+        cheapest_price: alertData.currentPrice,
+        _existingAlert: {
+            id: id,
+            targetPrice: alertData.targetPrice,
+            email: alertData.email
+        }
+    };
+
+    // Add flag to remember track alerts was open
+    productData._trackAlertsWasOpen = trackAlertsWasOpen;
+
+    console.log("Edit alert with product data:", productData);
+    
+    // Show price alarm modal with pre-filled data
+    if (window.showPriceAlarmModal) {
+        window.showPriceAlarmModal(productData);
+    }
+}
+
+// Main document ready function
+document.addEventListener('DOMContentLoaded', function () {
+    // DOM Elements
+    trackAlertsModal = document.getElementById('trackAlertsModal');
+    alertsList = document.querySelector('.alerts-list');
+    alertTemplate = document.querySelector('.alert-item-template');
+    
+    const closeBtn = trackAlertsModal?.querySelector('.price-alert-close');
     const filterSelect = document.getElementById('alertsFilter');
     const sortSelect = document.getElementById('alertsSort');
-    const noAlertsMessage = document.getElementById('noAlertsMessage');
-    const alertsList = document.querySelector('.alerts-list');
-    const alertTemplate = document.querySelector('.alert-item-template');
     const paginationBtns = document.querySelectorAll('.btn-page');
-
-    // Alert polling interval
-    let alertsUpdateInterval;
-
+    
     // Keyboard trap for modal accessibility
     function handleModalKeyboard(e) {
         if (e.key === 'Escape') {
             trackAlertsModal.classList.add('hidden');
-            return;
+            document.removeEventListener('keydown', handleModalKeyboard);
         }
-
+        
         // Keep focus within modal
         if (e.key === 'Tab') {
-            const focusableElements = trackAlertsModal.querySelectorAll(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            );
-
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-
-            if (e.shiftKey && document.activeElement === firstElement) {
-                e.preventDefault();
-                lastElement.focus();
-            } else if (!e.shiftKey && document.activeElement === lastElement) {
-                e.preventDefault();
-                firstElement.focus();
-            }
+            // (existing code)
         }
     }
-
+    
     // Open modal function - call this when "My Alerts" is clicked
     window.openTrackAlertsModal = function () {
         if (!trackAlertsModal) return;
-
+        
         trackAlertsModal.classList.remove('hidden');
-        loadUserAlerts(); // Fetch and display alerts
-
+        
         // Set focus for accessibility
         const firstButton = trackAlertsModal.querySelector('button');
         if (firstButton) setTimeout(() => firstButton.focus(), 100);
-
+        
         // Add keyboard trap for accessibility
         document.addEventListener('keydown', handleModalKeyboard);
+        
+        // Always load fresh data
+        loadUserAlerts();
     };
-
+    
     // Close modal
     closeBtn?.addEventListener('click', function () {
         trackAlertsModal.classList.add('hidden');
         document.removeEventListener('keydown', handleModalKeyboard);
     });
-
+    
     // Close on outside click
     trackAlertsModal?.addEventListener('click', function (e) {
         if (e.target === trackAlertsModal) {
@@ -179,395 +466,40 @@ document.addEventListener('DOMContentLoaded', function () {
             document.removeEventListener('keydown', handleModalKeyboard);
         }
     });
-
+    
     // Filter change with debounce
     filterSelect?.addEventListener('change', debounce(function () {
         loadUserAlerts();
     }, 300));
-
+    
     // Sort change with debounce
     sortSelect?.addEventListener('change', debounce(function () {
         loadUserAlerts();
     }, 300));
-
-    // Load alerts with filtering and pagination
-    async function loadUserAlerts(page = 1) {
-        if (!alertsList) return;
-
-        try {
-            const filter = filterSelect?.value || 'all';
-            const sort = sortSelect?.value || 'date-desc';
-
-            // Show loading state
-            alertsList.innerHTML = '<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>';
-            alertsList.setAttribute('aria-busy', 'true');
-
-            // Get the auth token
-            const token = localStorage.getItem("token");
-            if (!token) {
-                throw new Error("User not authenticated");
+    
+    // Pagination buttons
+    paginationBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const currentPage = parseInt(document.getElementById('currentPage')?.textContent || '1');
+            const totalPages = parseInt(document.getElementById('totalPages')?.textContent || '1');
+            
+            let newPage = currentPage;
+            if (this.classList.contains('prev') && currentPage > 1) {
+                newPage = currentPage - 1;
+            } else if (this.classList.contains('next') && currentPage < totalPages) {
+                newPage = currentPage + 1;
             }
-
-            // Fetch alerts from API with authentication and retry
-            const response = await fetchWithRetry(`/api/price-alerts?filter=${filter}&sort=${sort}&page=${page}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                // Handle unauthorized or other error responses
-                if (response.status === 401) {
-                    // Clear invalid token and show auth modal
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("username");
-                    localStorage.removeItem("userEmail");
-
-                    // Close this modal
-                    trackAlertsModal.classList.add('hidden');
-                    document.removeEventListener('keydown', handleModalKeyboard);
-
-                    // Show auth modal
-                    if (window.showAuthModal) {
-                        window.showAuthModal();
-                    }
-                    throw new Error("Authentication required");
-                }
-                throw new Error(`API error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            // Clear aria-busy state
-            alertsList.removeAttribute('aria-busy');
-
-            // Clear previous alerts
-            alertsList.innerHTML = '';
-
-            if (!data.alerts || data.alerts.length === 0) {
-                // Show empty state
-                if (noAlertsMessage) {
-                    alertsList.appendChild(noAlertsMessage.cloneNode(true));
-                    const emptyState = alertsList.querySelector('.empty-state');
-                    if (emptyState) {
-                        emptyState.classList.remove('hidden');
-                        
-                        // Add event listener to close button
-                        const browseBtn = emptyState.querySelector('.btn-primary');
-                        if (browseBtn) {
-                            browseBtn.textContent = "Browse Products";
-                            browseBtn.addEventListener('click', function() {
-                                trackAlertsModal.classList.add('hidden');
-                                document.removeEventListener('keydown', handleModalKeyboard);
-                            });
-                        }
-                    }
-                } else {
-                    alertsList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-bell-slash"></i>
-                            <p>You don't have any price alerts set</p>
-                            <button class="btn-primary">Browse Products</button>
-                        </div>
-                    `;
-                    
-                    // Add event listener to the newly created button
-                    const browseBtn = alertsList.querySelector('.btn-primary');
-                    if (browseBtn) {
-                        browseBtn.addEventListener('click', function() {
-                            trackAlertsModal.classList.add('hidden');
-                            document.removeEventListener('keydown', handleModalKeyboard);
-                        });
-                    }
-                }
-
-                // Update pagination
-                const currentPageEl = document.getElementById('currentPage');
-                const totalPagesEl = document.getElementById('totalPages');
-
-                if (currentPageEl) currentPageEl.textContent = '0';
-                if (totalPagesEl) totalPagesEl.textContent = '0';
-
-                if (paginationBtns && paginationBtns.length >= 2) {
-                    paginationBtns[0].disabled = true;
-                    paginationBtns[1].disabled = true;
-                }
-            } else {
-                // Hide empty state and render alerts
-                data.alerts.forEach(alert => renderAlertItem(alert));
-
-                // Update pagination
-                const currentPageEl = document.getElementById('currentPage');
-                const totalPagesEl = document.getElementById('totalPages');
-
-                if (currentPageEl) currentPageEl.textContent = data.currentPage || 1;
-                if (totalPagesEl) totalPagesEl.textContent = data.totalPages || 1;
-
-                if (paginationBtns && paginationBtns.length >= 2) {
-                    paginationBtns[0].disabled = (data.currentPage || 1) <= 1;
-                    paginationBtns[1].disabled = (data.currentPage || 1) >= (data.totalPages || 1);
-                }
-
-                // If there's a "browse products" button in an empty state, add handler
-                const browseBtn = alertsList.querySelector('.empty-state .btn-primary');
-                if (browseBtn) {
-                    browseBtn.addEventListener('click', function () {
-                        trackAlertsModal.classList.add('hidden');
-                        document.removeEventListener('keydown', handleModalKeyboard);
-                        window.location.href = '/products';
-                    });
-                }
-            }
-        } catch (error) {
-            logError(error, 'loadUserAlerts');
-
-            if (alertsList) {
-                alertsList.innerHTML = `<div class="error-message">
-                    ${error.message === "Authentication required"
-                        ? "Please login to view your price alerts"
-                        : "Failed to load your price alerts. Please try again later."}
-                </div>`;
-                alertsList.removeAttribute('aria-busy');
-            }
-        }
-    }
-
-    // Render single alert item
-    function renderAlertItem(alert) {
-        if (!alertTemplate || !alertsList) return;
-
-        try {
-            // Clone template
-            const alertItem = alertTemplate.content.cloneNode(true);
-
-            // Set alert data
-            const titleEl = alertItem.querySelector('.alert-title');
-            const brandEl = alertItem.querySelector('.alert-brand');
-            const imageEl = alertItem.querySelector('.alert-image img');
-            const targetPriceEl = alertItem.querySelector('.alert-target-price');
-            const currentPriceEl = alertItem.querySelector('.alert-current-price');
-
-            if (titleEl) titleEl.textContent = alert.product.name;
-            if (brandEl) brandEl.textContent = alert.product.brand;
-            if (imageEl) {
-                imageEl.src = alert.product.image;
-                imageEl.alt = alert.product.name;
-            }
-            if (targetPriceEl) targetPriceEl.textContent = `Ksh ${alert.targetPrice.toLocaleString()}`;
-            if (currentPriceEl) currentPriceEl.textContent = `Ksh ${alert.currentPrice.toLocaleString()}`;
-
-            // Calculate price change
-            const priceChangeEl = alertItem.querySelector('.price-change');
-            if (priceChangeEl) {
-                const priceChange = ((alert.currentPrice - alert.originalPrice) / alert.originalPrice) * 100;
-
-                if (priceChange < 0) {
-                    priceChangeEl.textContent = `↓ ${Math.abs(priceChange).toFixed(1)}%`;
-                    priceChangeEl.className = 'price-change down';
-                } else if (priceChange > 0) {
-                    priceChangeEl.textContent = `↑ +${priceChange.toFixed(1)}%`;
-                    priceChangeEl.className = 'price-change up';
-                } else {
-                    priceChangeEl.textContent = `0%`;
-                    priceChangeEl.className = 'price-change';
-                }
-            }
-
-            // Set badge
-            const badge = alertItem.querySelector('.alert-badge span');
-            if (badge) {
-                if (alert.triggered) {
-                    badge.textContent = 'Price dropped!';
-                    badge.className = 'badge-triggered';
-                } else {
-                    badge.textContent = 'Active';
-                    badge.className = 'badge-active';
-                }
-            }
-
-            // Format date
-            const dateEl = alertItem.querySelector('.date-value');
-            if (dateEl && alert.createdAt) {
-                const date = new Date(alert.createdAt);
-                dateEl.textContent = date.toLocaleDateString();
-            }
-
-            // Set up action buttons
-            const editBtn = alertItem.querySelector('.btn-edit');
-            const deleteBtn = alertItem.querySelector('.btn-delete');
-            const viewLink = alertItem.querySelector('.btn-view');
-
-            if (editBtn) editBtn.addEventListener('click', () => editAlert(alert.id, alert));
-            if (deleteBtn) deleteBtn.addEventListener('click', () => deleteAlert(alert.id));
-            if (viewLink) viewLink.href = `/product/${alert.product.id}`;
-
-            // Add to DOM
-            alertsList.appendChild(alertItem);
-        } catch (error) {
-            logError(error, 'renderAlertItem');
-        }
-    }
-
-    // Edit alert
-    // Update the editAlert function
-    function editAlert(id, alertData) {
-        // First fetch the latest product data
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        // Close this modal
-        trackAlertsModal.classList.add('hidden');
-        document.removeEventListener('keydown', handleModalKeyboard);
-
-        // Fetch the product using the product ID from the alert
-        fetch(`/api/products/${alertData.product.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        })
-            .then(response => response.json())
-            .then(productData => {
-                // Add the existing alert data to be used for pre-filling
-                productData._existingAlert = {
-                    id: id,
-                    targetPrice: alertData.targetPrice,
-                    email: alertData.email
-                };
-
-                // Show price alarm modal with pre-filled data
-                if (window.showPriceAlarmModal) {
-                    window.showPriceAlarmModal(productData);
-                }
-            })
-            .catch(err => {
-                logError(err, 'editAlert');
-                // If failed to get product, try with the data we have
-                if (window.showPriceAlarmModal) {
-                    const minimalProductData = {
-                        _id: alertData.product.id,
-                        brand: alertData.product.brand,
-                        model: alertData.product.name,
-                        model_image: alertData.product.image,
-                        cheapest_price: alertData.currentPrice,
-                        _existingAlert: {
-                            id: id,
-                            targetPrice: alertData.targetPrice,
-                            email: alertData.email
-                        }
-                    };
-                    window.showPriceAlarmModal(minimalProductData);
-                }
-            });
-    }
-
-    // Delete alert with confirmation dialog
-    async function deleteAlert(id) {
-        if (confirm('Are you sure you want to delete this price alert?')) {
-            try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    throw new Error("User not authenticated");
-                }
-
-                const response = await fetchWithRetry(`/api/price-alerts/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }, 3, false); // Don't use cache for DELETE
-
-                if (response.ok) {
-                    // Clear this alert from cache
-                    apiCache.delete(`/api/price-alerts`);
-
-                    // Show success message
-                    const successMsg = document.createElement('div');
-                    successMsg.className = 'success-message';
-                    successMsg.textContent = 'Alert deleted successfully';
-
-                    alertsList.prepend(successMsg);
-                    setTimeout(() => {
-                        if (successMsg.parentNode) {
-                            successMsg.parentNode.removeChild(successMsg);
-                        }
-                    }, 3000);
-
-                    // Reload alerts
-                    loadUserAlerts();
-
-                    // Also update the badge after successful deletion
-                    updateAlertsBadge();
-                } else {
-                    throw new Error('Failed to delete alert');
-                }
-            } catch (error) {
-                logError(error, 'deleteAlert');
-                alert('Failed to delete the price alert. Please try again.');
-            }
-        }
-    }
-
-    // Pagination handlers
-    if (paginationBtns && paginationBtns.length >= 2) {
-        paginationBtns[0].addEventListener('click', function () {
-            if (!this.disabled) {
-                const currentPageEl = document.getElementById('currentPage');
-                if (currentPageEl) {
-                    const currentPage = parseInt(currentPageEl.textContent);
-                    if (!isNaN(currentPage)) {
-                        loadUserAlerts(currentPage - 1);
-                    }
-                }
+            
+            if (newPage !== currentPage) {
+                loadUserAlerts(newPage);
             }
         });
-
-        paginationBtns[1].addEventListener('click', function () {
-            if (!this.disabled) {
-                const currentPageEl = document.getElementById('currentPage');
-                if (currentPageEl) {
-                    const currentPage = parseInt(currentPageEl.textContent);
-                    if (!isNaN(currentPage)) {
-                        loadUserAlerts(currentPage + 1);
-                    }
-                }
-            }
-        });
-    }
-
-    // Start alerts polling for real-time updates
-    function startAlertsPolling() {
-        // Clear any existing interval
-        if (alertsUpdateInterval) clearInterval(alertsUpdateInterval);
-
-        // Check for updates every 5 minutes
-        alertsUpdateInterval = setInterval(() => {
-            // Only poll if user is authenticated
-            if (localStorage.getItem("token")) {
-                updateAlertsBadge();
-
-                // If alerts modal is open, refresh its content
-                if (trackAlertsModal && !trackAlertsModal.classList.contains('hidden')) {
-                    loadUserAlerts();
-                }
-            } else {
-                // Stop polling if user is not authenticated
-                clearInterval(alertsUpdateInterval);
-            }
-        }, 5 * 60 * 1000); // 5 minutes
-    }
-
-    // Start polling when the page loads
-    startAlertsPolling();
-
-    // Add cleanup when page is unloaded
-    window.addEventListener('beforeunload', () => {
-        if (alertsUpdateInterval) clearInterval(alertsUpdateInterval);
     });
-
-    // Update the alerts badge immediately
-    updateAlertsBadge();
 });
+
+// Make deleteAlert globally available
+window.deleteAlert = deleteAlert;
+window.editAlert = editAlert;
 
 // Check for alerts and update the badge
 function updateAlertsBadge() {
@@ -608,3 +540,39 @@ function updateAlertsBadge() {
 
 // Make updateAlertsBadge globally available
 window.updateAlertsBadge = updateAlertsBadge;
+
+// Function to reload the alerts list
+function refreshAlertsList() {
+    // Only reload if modal is open
+    const trackAlertsModal = document.getElementById('trackAlertsModal');
+    if (trackAlertsModal && !trackAlertsModal.classList.contains('hidden')) {
+        // Use window.loadUserAlerts to ensure we're using the exposed function
+        if (window.loadUserAlerts) {
+            window.loadUserAlerts();
+        }
+    }
+}
+
+// Make refreshAlertsList globally available
+window.refreshAlertsList = refreshAlertsList;
+
+// Store the original function
+const originalShowPriceAlarmModal = window.showPriceAlarmModal;
+
+// Override with our enhanced version
+window.showPriceAlarmModal = function(productData) {
+    // Call the original function
+    originalShowPriceAlarmModal(productData);
+    
+    // If this was opened from track alerts modal
+    if (productData && productData._trackAlertsWasOpen) {
+        // Add a one-time event listener for when price alarm modal closes
+        const checkForPriceAlarmModalClosed = setInterval(() => {
+            const priceAlarmModal = document.getElementById('priceAlarmModal');
+            if (priceAlarmModal && priceAlarmModal.classList.contains('hidden')) {
+                clearInterval(checkForPriceAlarmModalClosed);
+                window.returnToTrackAlertsModal();
+            }
+        }, 300);
+    }
+};

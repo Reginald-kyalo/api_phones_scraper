@@ -141,25 +141,52 @@ async def get_comparison_data(brand: str, model: str):
         "price_comparison": price_comparison
     }
 
-def get_brand_from_cache(brands_models_cache, product_id=None, brand_id=None):
+def get_brand_from_cache(brand_id=None, product=None):
     """
-    Get brand name from the brands_models_cache by either product_id or brand_id
+    Get brand name and other product details from the brands_models_cache
     
-    Returns the brand name with proper capitalization, or "Unknown" if not found
+    Args:
+        brand_id: The brand ObjectId
+        product: Optional full product document
+    
+    Returns:
+        dict: Product details including brand name and model image
     """
-    # If we have a brand_id, find the brand directly
-    if brand_id:
-        for brand_name, brand_data in brands_models_cache.items():
-            if brand_data["brand_id"] == brand_id:
-                # Return with proper capitalization (e.g., "samsung" -> "Samsung")
-                return brand_name.capitalize()
+    global brands_models_cache
     
-    # If we have a product_id, find which brand contains this model
-    if product_id:
-        for brand_name, brand_data in brands_models_cache.items():
-            # Check if this model_id exists in any brand's models
-            if any(model.get("id") == product_id or str(model.get("_id")) == product_id 
-                  for model in brand_data["models"]):
-                return brand_name.capitalize()
+    result = {
+        "brand": "Unknown",
+        "model_image": ""
+    }
     
-    return "Unknown"
+    # If no cache is loaded yet, return defaults
+    if not brands_models_cache:
+        return result
+        
+    # Get brand_id either directly or from product
+    if product and not brand_id:
+        brand_id = product.get("brand_id")
+    
+    if not brand_id:
+        return result
+        
+    # Find the brand
+    for brand_name, brand_data in brands_models_cache.items():
+        if str(brand_data["brand_id"]) == str(brand_id):
+            result["brand"] = brand_name.capitalize()
+            
+            # If we have a product, try to find matching model for image
+            if product:
+                model_name = product.get("model", "").lower()
+                for model in brand_data["models"]:
+                    if model["model"].lower() == model_name:
+                        result["model_image"] = model.get("model_image", product.get("product_image", ""))
+                        break
+                
+                # If we didn't find a model image, use product_image as fallback
+                if not result["model_image"] and product.get("product_image"):
+                    result["model_image"] = product.get("product_image")
+            
+            break
+            
+    return result
