@@ -1,3 +1,6 @@
+import { secureApiCall, apiCallWithRetry } from './api-utils.js';
+import { showAuthModal } from './auth.js';
+
 // Utility functions
 function debounce(func, wait) {
     let timeout;
@@ -28,86 +31,27 @@ function logError(error, context) {
     console.error(error);
     console.trace();
     console.groupEnd();
+    
+    // Return a standardized error message for UI
+    return error.message === "Authentication required" 
+        ? "Please login to view your price alerts" 
+        : "An error occurred. Please try again later.";
 }
 
-// API fetch with retry logic and caching
-async function fetchWithRetry(url, options, maxRetries = 3, useCache = true) {
-    // Generate cache key based on URL and relevant options
-    const cacheKey = url + (options.body || '') + (options.method || 'GET');
-
-    // Check cache first (for GET requests)
-    if (useCache && options.method !== 'DELETE' && options.method !== 'PUT' && options.method !== 'POST') {
-        const cachedData = apiCache.get(cacheKey);
-        if (cachedData && (Date.now() - cachedData.timestamp < API_CACHE_TTL)) {
-            return {
-                ok: true,
-                status: 200,
-                json: () => Promise.resolve(cachedData.data)
-            };
+// Clear specific cache entries by pattern
+function clearCacheByPattern(pattern) {
+    for (const key of apiCache.keys()) {
+        if (key.includes(pattern)) {
+            apiCache.delete(key);
         }
-    }
-
-    let retries = 0;
-    while (retries <= maxRetries) {
-        try {
-            const response = await fetch(url, options);
-
-            // For successful GET requests, cache the response
-            if (response.ok && useCache && (!options.method || options.method === 'GET')) {
-                const data = await response.json();
-                apiCache.set(cacheKey, {
-                    timestamp: Date.now(),
-                    data: data
-                });
-                return {
-                    ok: true,
-                    status: response.status,
-                    json: () => Promise.resolve(data)
-                };
-            }
-
-            return response;
-        } catch (err) {
-            retries++;
-            if (retries > maxRetries) throw err;
-
-            // Exponential backoff
-            const delay = Math.min(1000 * 2 ** retries, 10000);
-            await new Promise(resolve => setTimeout(resolve, delay));
-        }
-    }
-}
-
-// Badge UI update function
-function updateBadgeUI(count) {
-    const alertsBtn = document.querySelector('.btn-alarm');
-    if (!alertsBtn) return;
-
-    if (count > 0) {
-        alertsBtn.classList.add('has-alerts');
-
-        let badge = alertsBtn.querySelector('.alert-badge-count');
-        if (!badge) {
-            badge = document.createElement('span');
-            badge.className = 'alert-badge-count';
-            alertsBtn.appendChild(badge);
-        }
-        badge.textContent = count;
-
-        // Add ARIA for accessibility
-        alertsBtn.setAttribute('aria-label', `Price alerts (${count} new)`);
-    } else {
-        alertsBtn.classList.remove('has-alerts');
-        const badge = alertsBtn.querySelector('.alert-badge-count');
-        if (badge) badge.remove();
-        alertsBtn.setAttribute('aria-label', 'Price alerts');
     }
 }
 
 // Define variables outside DOMContentLoaded for global access
-let alertsList;
-let trackAlertsModal;
-let alertTemplate;
+let alertsList = null;
+let trackAlertsModal = null;
+let alertTemplate = null;
+let currentAlertsPage = 1;
 
 // Render single alert item - moved outside DOMContentLoaded
 function renderAlertItem(alert) {
@@ -133,6 +77,8 @@ function renderAlertItem(alert) {
         if (imageEl) {
             imageEl.src = alert.product.image;
             imageEl.alt = alert.product.name;
+            // Add loading="lazy" for better performance
+            imageEl.loading = "lazy";
         }
         if (targetPriceEl) targetPriceEl.textContent = `Ksh ${alert.targetPrice.toLocaleString()}`;
         if (currentPriceEl) currentPriceEl.textContent = `Ksh ${alert.currentPrice.toLocaleString()}`;
@@ -173,13 +119,20 @@ function renderAlertItem(alert) {
             dateEl.textContent = date.toLocaleDateString();
         }
         
-        // Set up action buttons
+        // Set up action buttons with data attributes for better event delegation
         const editBtn = alertItem.querySelector('.btn-edit');
         const deleteBtn = alertItem.querySelector('.btn-delete');
         const viewLink = alertItem.querySelector('.btn-view');
         
-        if (editBtn) editBtn.addEventListener('click', () => editAlert(alert.id, alert));
-        if (deleteBtn) deleteBtn.addEventListener('click', () => deleteAlert(alert.id));
+        if (editBtn) {
+            editBtn.setAttribute('data-alert-id', alert.id);
+            editBtn.setAttribute('data-alert-data', JSON.stringify(alert));
+        }
+        
+        if (deleteBtn) {
+            deleteBtn.setAttribute('data-alert-id', alert.id);
+        }
+        
         if (viewLink) {
             const brandParam = encodeURIComponent(alert.product.brand.toLowerCase());
             const modelParam = encodeURIComponent(alert.product.name);
@@ -193,35 +146,46 @@ function renderAlertItem(alert) {
     }
 }
 
+// Add before loadUserAlerts function
+function mapSortValue(clientValue) {
+  const sortMap = {
+    'newest': 'date-desc',
+    'oldest': 'date-asc',
+    'price-high': 'price-desc', 
+    'price-low': 'price-asc'
+  };
+  return sortMap[clientValue] || 'date-desc';
+}
+
 async function loadUserAlerts(page = 1) {
     if (!alertsList) {
         alertsList = document.querySelector('.alerts-list');
         if (!alertsList) return;
     }
     
-    console.log("Loading user alerts...");
+    currentAlertsPage = page;
     
     // Show loading state
-    alertsList.innerHTML = '<div class="loading">Loading your price alerts...</div>';
+    alertsList.innerHTML = '<div class="loading-spinner" aria-hidden="true"></div><div class="loading">Loading your price alerts...</div>';
     alertsList.setAttribute('aria-busy', 'true');
     
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            throw new Error("Authentication required");
-        }
-        
         // Get filter and sort options
         const filter = document.getElementById('alertsFilter')?.value || 'all';
         const sort = document.getElementById('alertsSort')?.value || 'newest';
-        apiCache.delete(`/api/price-alerts?page=${page}&filter=${filter}&sort=${sort}`);
-        const response = await fetchWithRetry(`/api/price-alerts?page=${page}&filter=${filter}&sort=${sort}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const mappedSort = mapSortValue(sort);
+        
+        // Clear cache for fresh data
+        clearCacheByPattern(`price-alerts?page=${page}`);
+        
+        // Use secureApiCall instead of checking for token
+        const response = await secureApiCall(`price-alerts?page=${page}&filter=${filter}&sort=${mappedSort}`);
         
         if (!response.ok) {
+            if (response.status === 401) {
+                // Show auth modal for unauthorized access
+                showAuthModal();
+            }
             throw new Error(response.status === 401 ? "Authentication required" : "Failed to load alerts");
         }
         
@@ -232,6 +196,7 @@ async function loadUserAlerts(page = 1) {
         
         // Clear previous alerts
         alertsList.innerHTML = '';
+        console.log('Alerts data:', data);
         
         if (!data.alerts || data.alerts.length === 0) {
             // Display empty state
@@ -261,18 +226,47 @@ async function loadUserAlerts(page = 1) {
             
             // Update pagination
             updatePaginationUI(data.currentPage || 1, data.totalPages || 1);
+            
+            // Set up event delegation for alert actions
+            setupAlertEventListeners();
         }
     } catch (error) {
-        logError(error, 'loadUserAlerts');
+        const errorMessage = logError(error, 'loadUserAlerts');
         
         if (alertsList) {
-            alertsList.innerHTML = `<div class="error-message">
-                ${error.message === "Authentication required" 
-                    ? "Please login to view your price alerts" 
-                    : "Failed to load your price alerts. Please try again later."}
-            </div>`;
+            alertsList.innerHTML = `<div class="error-message">${errorMessage}</div>`;
             alertsList.removeAttribute('aria-busy');
         }
+    }
+}
+
+// Setup event delegation for alert actions
+function setupAlertEventListeners() {
+    if (!alertsList) return;
+    
+    // Remove existing listeners to prevent duplicates
+    alertsList.removeEventListener('click', handleAlertActions);
+    
+    // Add new listener
+    alertsList.addEventListener('click', handleAlertActions);
+}
+
+// Event handler for alert actions using event delegation
+function handleAlertActions(event) {
+    const editBtn = event.target.closest('.btn-edit');
+    const deleteBtn = event.target.closest('.btn-delete');
+    
+    if (editBtn) {
+        const alertId = editBtn.getAttribute('data-alert-id');
+        try {
+            const alertData = JSON.parse(editBtn.getAttribute('data-alert-data'));
+            editAlert(alertId, alertData);
+        } catch (error) {
+            logError(error, 'handleAlertActions - edit');
+        }
+    } else if (deleteBtn) {
+        const alertId = deleteBtn.getAttribute('data-alert-id');
+        deleteAlert(alertId);
     }
 }
 
@@ -288,15 +282,18 @@ function updatePaginationUI(currentPage, totalPages) {
     if (paginationBtns && paginationBtns.length >= 2) {
         paginationBtns[0].disabled = currentPage <= 1;
         paginationBtns[1].disabled = currentPage >= totalPages;
+        
+        // Update ARIA labels
+        paginationBtns[0].setAttribute('aria-label', `Go to previous page (${currentPage > 1 ? currentPage - 1 : 1})`);
+        paginationBtns[1].setAttribute('aria-label', `Go to next page (${currentPage < totalPages ? currentPage + 1 : totalPages})`);
     }
 }
 
 // Function to reload the alerts list
 function refreshAlertsList() {
-    console.log("Refreshing alerts list");
     // Only reload if modal is open
     if (trackAlertsModal && !trackAlertsModal.classList.contains('hidden')) {
-        loadUserAlerts();
+        loadUserAlerts(currentAlertsPage);
     }
 }
 
@@ -304,7 +301,7 @@ function refreshAlertsList() {
 window.loadUserAlerts = loadUserAlerts;
 window.refreshAlertsList = refreshAlertsList;
 
-// Add this new function to handle returning to track alerts after editing
+// Add this function to handle returning to track alerts after editing
 window.returnToTrackAlertsModal = function() {
     // Check if the modal exists
     if (!trackAlertsModal) return;
@@ -313,38 +310,34 @@ window.returnToTrackAlertsModal = function() {
     window.openTrackAlertsModal();
     
     // Refresh the data
-    loadUserAlerts();
+    loadUserAlerts(currentAlertsPage);
 };
 
 // Handle delete functionality globally
 async function deleteAlert(id) {
     if (confirm('Are you sure you want to delete this price alert?')) {
         try {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                throw new Error("User not authenticated");
+            // Show loading state
+            const alertItem = document.querySelector(`[data-alert-id="${id}"]`)?.closest('.alert-item');
+            if (alertItem) {
+                alertItem.classList.add('deleting');
+                alertItem.innerHTML += '<div class="overlay-loading">Deleting...</div>';
             }
             
-            const response = await fetchWithRetry(`/api/price-alerts/${id}`, {
+            // Use secureApiCall instead of checking for token
+            const response = await secureApiCall(`price-alerts/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }, 3, false); // Don't use cache for DELETE
+            });
             
             if (response.ok) {
                 // Clear all alert-related cache entries
-                for (const key of apiCache.keys()) {
-                    if (key.includes('/api/price-alerts')) {
-                        apiCache.delete(key);
-                    }
-                }
+                clearCacheByPattern('price-alerts');
                 
                 // Show success message
                 const successMsg = document.createElement('div');
                 successMsg.className = 'success-message';
                 successMsg.textContent = 'Alert deleted successfully';
+                successMsg.setAttribute('role', 'status');
                 
                 if (alertsList) {
                     alertsList.prepend(successMsg);
@@ -355,9 +348,8 @@ async function deleteAlert(id) {
                     }, 3000);
                 }
                 
-                console.log("Alert deleted, refreshing list...");
                 // Refresh the alerts list
-                loadUserAlerts();
+                loadUserAlerts(currentAlertsPage);
                 
                 // Update the badge count
                 if (window.updateAlertsBadge) {
@@ -369,11 +361,19 @@ async function deleteAlert(id) {
         } catch (error) {
             logError(error, 'deleteAlert');
             alert('Failed to delete the price alert. Please try again.');
+            
+            // Remove loading state if still present
+            const alertItem = document.querySelector(`[data-alert-id="${id}"]`)?.closest('.alert-item');
+            if (alertItem) {
+                alertItem.classList.remove('deleting');
+                const overlay = alertItem.querySelector('.overlay-loading');
+                if (overlay) overlay.remove();
+            }
         }
     }
 }
 
-// Also define editAlert globally
+// Define editAlert globally
 function editAlert(id, alertData) {
     // Don't close track alerts modal, just remember it was open
     const trackAlertsWasOpen = trackAlertsModal && !trackAlertsModal.classList.contains('hidden');
@@ -382,11 +382,7 @@ function editAlert(id, alertData) {
         trackAlertsModal.classList.add('hidden');
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    // Skip trying to fetch from non-existent API endpoint
-    // Instead, create a properly formatted product object directly from alertData
+    // Create a properly formatted product object from alertData
     const productData = {
         _id: alertData.product.id,
         brand: alertData.product.brand,
@@ -397,18 +393,91 @@ function editAlert(id, alertData) {
             id: id,
             targetPrice: alertData.targetPrice,
             email: alertData.email
-        }
+        },
+        _trackAlertsWasOpen: trackAlertsWasOpen
     };
-
-    // Add flag to remember track alerts was open
-    productData._trackAlertsWasOpen = trackAlertsWasOpen;
-
-    console.log("Edit alert with product data:", productData);
     
     // Show price alarm modal with pre-filled data
     if (window.showPriceAlarmModal) {
         window.showPriceAlarmModal(productData);
     }
+}
+
+// Add this function before updateAlertsBadge()
+
+/**
+ * Updates the badge UI element with the count of triggered alerts
+ * @param {number} count - Number of triggered alerts
+ */
+function updateBadgeUI(count) {
+  // Find the parent elements
+  const alertBtn = document.querySelector('.btn-alarm, .price-alerts-icon');
+  if (!alertBtn) {
+    console.warn('Price alerts button element not found');
+    return;
+  }
+
+  // Find or create badge element
+  let badge = alertBtn.querySelector('.badge');
+  
+  if (!badge) {
+    // Create the badge element if it doesn't exist
+    console.log('Creating new badge element');
+    badge = document.createElement('span');
+    badge.className = 'badge';
+    alertBtn.appendChild(badge);
+  }
+
+  // Update the badge count
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'flex';
+    badge.classList.add('active');
+    
+    // Add animation effect
+    badge.classList.remove('pulse');
+    setTimeout(() => {
+      badge.classList.add('pulse');
+    }, 10);
+  } else {
+    badge.textContent = '';
+    badge.style.display = 'none';
+    badge.classList.remove('active', 'pulse');
+  }
+  
+  // Update any title/tooltip on the parent button for accessibility
+  alertBtn.setAttribute('aria-label', 
+    count > 0 ? `Price alerts (${count} triggered)` : 'Price alerts');
+}
+
+// Check for alerts and update the badge
+function updateAlertsBadge() {
+    // Don't update too frequently (throttle)
+    if (alertsState.lastUpdated && (Date.now() - alertsState.lastUpdated < 60000)) {
+        updateBadgeUI(alertsState.triggered);
+        return;
+    }
+
+    // Fetch alerts count from API using secureApiCall
+    secureApiCall('price-alerts/count')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch alerts count');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update state
+            alertsState.total = data.totalCount || 0;
+            alertsState.triggered = data.triggeredCount || 0;
+            alertsState.lastUpdated = Date.now();
+
+            updateBadgeUI(data.triggeredCount || 0);
+        })
+        .catch(err => {
+            logError(err, 'updateAlertsBadge');
+            // Don't clear existing badge on error
+        });
 }
 
 // Main document ready function
@@ -430,9 +499,24 @@ document.addEventListener('DOMContentLoaded', function () {
             document.removeEventListener('keydown', handleModalKeyboard);
         }
         
-        // Keep focus within modal
+        // Keep focus within modal for accessibility
         if (e.key === 'Tab') {
-            // (existing code)
+            const focusableElements = trackAlertsModal.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+            
+            // If going backward and at first element, go to last element
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            }
+            // If going forward and at last element, circle back to first element
+            else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
+            }
         }
     }
     
@@ -450,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.addEventListener('keydown', handleModalKeyboard);
         
         // Always load fresh data
-        loadUserAlerts();
+        loadUserAlerts(currentAlertsPage);
     };
     
     // Close modal
@@ -469,12 +553,12 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Filter change with debounce
     filterSelect?.addEventListener('change', debounce(function () {
-        loadUserAlerts();
+        loadUserAlerts(1); // Reset to first page when filter changes
     }, 300));
     
     // Sort change with debounce
     sortSelect?.addEventListener('change', debounce(function () {
-        loadUserAlerts();
+        loadUserAlerts(1); // Reset to first page when sort changes
     }, 300));
     
     // Pagination buttons
@@ -495,74 +579,48 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+    
+    // Initialize badge by checking session instead of token
+    checkAuthenticated().then(isAuthenticated => {
+        if (isAuthenticated) {
+            updateAlertsBadge();
+            
+            // Poll for alerts every 5 minutes
+            setInterval(updateAlertsBadge, 300000);
+        }
+    }).catch(error => {
+        console.error("Failed to check authentication status:", error);
+    });
 });
 
-// Make deleteAlert globally available
+/**
+ * Check if the user is authenticated by verifying session
+ * @returns {Promise<boolean>} - Authentication status
+ */
+async function checkAuthenticated() {
+  try {
+    const response = await secureApiCall("verify-session");
+    return response.ok;
+  } catch (error) {
+    console.error("Session verification failed:", error);
+    return false;
+  }
+}
+
+// Make functions globally available
 window.deleteAlert = deleteAlert;
 window.editAlert = editAlert;
-
-// Check for alerts and update the badge
-function updateAlertsBadge() {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    // Don't update too frequently (throttle)
-    if (alertsState.lastUpdated && (Date.now() - alertsState.lastUpdated < 60000)) {
-        updateBadgeUI(alertsState.triggered);
-        return;
-    }
-
-    // Fetch alerts count from API
-    fetchWithRetry('/api/price-alerts/count', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch alerts count');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Update state
-            alertsState.total = data.totalCount || 0;
-            alertsState.triggered = data.triggeredCount || 0;
-            alertsState.lastUpdated = Date.now();
-
-            updateBadgeUI(data.triggeredCount || 0);
-        })
-        .catch(err => {
-            logError(err, 'updateAlertsBadge');
-            // Don't clear existing badge on error
-        });
-}
-
-// Make updateAlertsBadge globally available
 window.updateAlertsBadge = updateAlertsBadge;
 
-// Function to reload the alerts list
-function refreshAlertsList() {
-    // Only reload if modal is open
-    const trackAlertsModal = document.getElementById('trackAlertsModal');
-    if (trackAlertsModal && !trackAlertsModal.classList.contains('hidden')) {
-        // Use window.loadUserAlerts to ensure we're using the exposed function
-        if (window.loadUserAlerts) {
-            window.loadUserAlerts();
-        }
-    }
-}
-
-// Make refreshAlertsList globally available
-window.refreshAlertsList = refreshAlertsList;
-
-// Store the original function
+// Override the original showPriceAlarmModal
 const originalShowPriceAlarmModal = window.showPriceAlarmModal;
 
-// Override with our enhanced version
+// Enhance with our version that remembers track alerts state
 window.showPriceAlarmModal = function(productData) {
-    // Call the original function
-    originalShowPriceAlarmModal(productData);
+    // Call the original function if it exists
+    if (typeof originalShowPriceAlarmModal === 'function') {
+        originalShowPriceAlarmModal(productData);
+    }
     
     // If this was opened from track alerts modal
     if (productData && productData._trackAlertsWasOpen) {

@@ -1,0 +1,103 @@
+/**
+ * Product Animations Styles
+ * 
+ * Contains all animations and keyframes
+ */
+
+/* Keyframes for sidebar slide in from right */
+@keyframes slideIn {
+  0% {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Scales animations */
+@keyframes tiltScales {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes panLeftMove {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(2px);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes panRightMove {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-2px);
+  }
+  75% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Alarm vibration animation */
+@keyframes vibrate {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Animation triggers */
+.product:hover .product-sidebar {
+  animation: slideIn 0.4s forwards;
+}
+
+.scales-button:hover .scales-bar {
+  animation: tiltScales 2s ease-in-out infinite;
+}
+
+.scales-button:hover .scales-pan-left {
+  animation: panLeftMove 2s ease-in-out infinite;
+}
+
+.scales-button:hover .scales-pan-right {
+  animation: panRightMove 2s ease-in-out infinite;
+}
+
+.alarm-button:hover .alarm-icon {
+  animation: vibrate 0.3s ease infinite;
+}

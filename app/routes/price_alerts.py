@@ -6,8 +6,8 @@ from app.models import PriceAlertCreate
 from app.database import db
 from app.auth import verify_token
 from app.routes.home import get_brand_from_cache
-
-
+import logging
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/api/price-alerts")
@@ -48,7 +48,8 @@ async def get_price_alerts(
     page_size: int = Query(10),
     payload: dict = Depends(verify_token)
 ):
-    user_id = payload.get("user_id")
+    logger.info(f"Fetching price alerts with filter: {filter}, sort: {sort}, page: {page}, page_size: {page_size}")
+    user_id = payload.get("sub")
     query = {"user_id": ObjectId(user_id)}
     if filter == "triggered":
         query["triggered"] = True
@@ -71,18 +72,9 @@ async def get_price_alerts(
     cursor = db["price_alerts"].find(query).sort(sort_options).skip(skip).limit(page_size)
     alerts = await cursor.to_list(length=page_size)
 
+    # Simply format alerts without updating prices
     formatted_alerts = []
     for alert in alerts:
-        product = await db["products"].find_one({"_id": alert["product_id"]})
-        current_price = product.get("latest_price", {}).get("amount", alert["current_price"]) if product else alert["current_price"]
-        if current_price != alert["current_price"]:
-            triggered = current_price <= alert["target_price"]
-            await db["price_alerts"].update_one(
-                {"_id": alert["_id"]},
-                {"$set": {"current_price": current_price, "triggered": triggered, "updated_at": datetime.utcnow()}}
-            )
-            alert["current_price"] = current_price
-            alert["triggered"] = triggered
         formatted_alerts.append({
             "id": str(alert["_id"]),
             "product": alert["product"],
@@ -93,6 +85,8 @@ async def get_price_alerts(
             "createdAt": alert["created_at"].isoformat(),
             "email": alert["email"]
         })
+    
+    logger.info(f"Fetched {len(formatted_alerts)} price alerts for user {user_id}")
     return {
         "alerts": formatted_alerts,
         "currentPage": page,

@@ -1,0 +1,150 @@
+/* ===============================
+   BRAND/MODEL SELECTOR COMPONENT
+=============================== */
+
+/* Import design system variables if needed */
+@import url('variables.css');
+
+/* Fixed positioning approach for consistent spacing */
+.brand-model-selector {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-sm) 0 var(--space-lg);
+}
+
+.selector-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Ensure center alignment */
+  align-items: center;
+  width: 100%;
+  margin: 0 auto;
+  max-width: 900px;
+  padding: var(--space-xs) 0;
+  gap: 0; /* Remove gap here, we'll use margins instead */
+}
+
+.models-container {
+  width: 100%;
+  min-height: 50px;
+  max-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: 0;
+  margin-bottom: auto;
+  padding: var(--space-xs) 0;
+}
+
+.selector-button {
+  padding: var(--space-md) calc(var(--space-lg) + var(--space-sm));
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+  font-family: var(--font-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+}
+
+.selector-button.brand {
+  background-color: var(--color-primary);
+  color: var(--color-light);
+  flex: 0 0 auto;
+  margin: 0 var(--space-sm) var(--space-sm) var(--space-sm); /* Added left margin */
+}
+
+/* Remove the margin-right: 0 on last-child since we're using gap */
+.selector-button.brand:last-child {
+  margin-right: var(--space-sm); /* Changed to match left margin */
+}
+
+.selector-button.brand:hover {
+  background-color: var(--color-hover-dark);
+  transform: var(--elevation-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.selector-button.model {
+  background-color: var(--color-light);
+  color: var(--color-dark);
+  border: 2px solid var(--color-primary);
+  width: auto;
+  max-width: fit-content;
+  white-space: nowrap;
+}
+
+.selector-button.model:hover {
+  background-color: var(--color-hover-light);
+  transform: var(--elevation-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.selector-button.active {
+  background-color: var(--color-primary-dark);
+  color: var(--color-light);
+  font-weight: bold;
+  box-shadow: var(--shadow-lg);
+  transform: var(--elevation-hover);
+}
+
+
+/* ===============================
+   RESPONSIVE BREAKPOINTS FOR SELECTORS
+=============================== */
+
+/* Large tablet and below (991px and below) */
+@media (max-width: 991px) {
+  .brand-model-selector {
+    padding: var(--space-md) 0;
+  }
+}
+
+/* Medium tablets and below (768px and below) */
+@media (max-width: 768px) {
+  .brand-model-selector {
+    top: 56px; /* Match smaller header height */
+  }
+  
+  .selector-button {
+    padding: var(--space-sm) var(--space-lg);
+  }
+  
+  .selector-container {
+    justify-content: center;
+    padding: var(--space-xs);
+    gap: 0; /* Reset gap and rely on margins */
+    text-align: center; /* Reinforce center alignment */
+  }
+  
+  .selector-button.brand {
+    margin: 0 var(--space-xs) var(--space-xs) var(--space-xs); /* Equal margins on both sides */
+  }
+  
+  .selector-button.brand:last-child {
+    margin-right: var(--space-xs); /* Match left margin */
+  }
+}
+
+/* Small mobile devices (480px and below) */
+@media (max-width: 480px) {
+  .selector-button {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.85rem;
+  }
+}
+
+/* Very small devices (400px and below) */
+@media (max-width: 400px) {
+  .selector-container {
+    padding: 0 var(--space-xs);
+  }
+}

@@ -1,0 +1,31 @@
+.global-message {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  padding: 10px 20px;
+  background-color: rgba(0, 128, 0, 0.8);
+  /* green by default */
+  color: #fff;
+  font-size: 1em;
+  border-radius: 0 0 4px 4px;
+  display: none;
+}
+
+.global-message.error {
+  background-color: rgba(255, 0, 0, 0.8);
+}
+
+/* Favorites view container styles */
+#favorites-view {
+  display: none;
+  padding: 20px;
+}
+
+#favorites-back-btn {
+  margin-bottom: 20px;
+  padding: 8px 16px;
+  font-size: 1em;
+  cursor: pointer;
+}

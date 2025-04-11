@@ -91,11 +91,20 @@
   color: #333;
 }
 
+/* Mobile-first base styles */
 .percentage-options {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 25px;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+/* Then add desktop styles */
+@media (min-width: 768px) {
+  .percentage-options {
+    flex-direction: row;
+    gap: 10px;
+  }
 }
 
 .percentage-btn {
@@ -151,6 +160,58 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+}
+
+/* Remove spinners from custom price input */
+.custom-price input[type=number]::-webkit-inner-spin-button,
+.custom-price input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-price input[type=number] {
+  -webkit-appearance: textfield; /* Chrome, Safari, newer versions of Opera */
+  -moz-appearance: textfield;    /* Firefox */
+  appearance: textfield;         /* Standard property */
+}
+
+/* Add this after the custom-price section */
+.custom-percentage {
+  margin-bottom: 25px;
+}
+
+.input-suffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+/* Adjust these styles to fix the percentage sign overlap */
+.custom-percentage .input-wrapper input {
+  padding-right: 30px; /* Make room for the percentage sign */
+  padding-left: 10px;
+}
+
+.custom-percentage .input-suffix {
+  position: absolute;
+  right: 20px; /* Move it away from the spinner buttons */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.custom-percentage input[type=number]::-webkit-inner-spin-button,
+.custom-percentage input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-percentage input[type=number] {
+  -webkit-appearance: textfield; /* Chrome, Safari, newer versions of Opera */
+  -moz-appearance: textfield;    /* Firefox */
+  appearance: textfield;         /* Standard property */
 }
 
 /* Email section styles */
@@ -228,6 +289,110 @@
   }
   
   .product-image {
+    flex: 0 0 40px;
     margin-bottom: 10px;
   }
+
+  .product-image img {
+    width: 40%;
+    border-radius: 4px;
+  }
+
+  /* Fix the input interference with numeric spinners */
+  .input-wrapper {
+    position: relative;
+    margin-top: 10px;
+  }
+  
+  /* Better handling of custom fields */
+  .custom-percentage .input-wrapper input {
+    padding-right: 40px; /* More room for the spinner */
+  }
+  
+  /* Better spacing for form sections */
+  .custom-price,
+  .custom-percentage,
+  .email-section {
+    margin-bottom: 20px;
+  }
+
+  #priceAlarmModal {
+    align-items: flex-end; /* Position at bottom on mobile */
+    transition: opacity 0.2s; /* Reduce animations for better performance */
+  }
+  
+  .price-alarm-content {
+    border-radius: 12px 12px 0 0; /* Rounded corners only at top */
+    max-height: 85vh; /* Limit height */
+    width: 100%; /* Full width */
+    margin-bottom: 0; /* Align to bottom */
+  }
+
+}
+
+@media (max-width: 480px) {
+  .price-alarm-content {
+    padding: 15px;
+    width: 95%;
+  }
+  
+  .product-title {
+    font-size: 1rem;
+  }
+  
+  .price-alarm-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .percentage-btn {
+    padding: 12px;
+    min-height: 60px; /* Ensures adequate touch area */
+  }
+  
+  .price-alarm-close {
+    font-size: 1.8rem; /* Larger close button */
+
+    padding: 8px; /* Larger hit area */
+  }
+  
+  .btn-primary {
+    padding: 14px 20px; /* Larger button */
+    width: 100%; /* Full width on mobile */
+  }
+  
+  .input-wrapper input {
+    padding: 12px 12px 12px 45px; /* Taller input for easier tapping */
+  }
+  
+  /* More compact and clearer hierarchy */
+  .alert-options h3 {
+    font-size: 0.9rem;
+    margin: 0 0 12px;
+  }
+  
+  .email-section p {
+    font-size: 0.85rem;
+  }
+  
+  /* Better spacing between sections */
+  .product-preview {
+    margin-bottom: 20px;
+  }
+  
+  /* Clear visual separations */
+  .custom-price, 
+  .email-section {
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+  }
+}
+
+/* Medium devices (tablets) */
+@media (min-width: 481px) and (max-width: 768px) {
+  /* Your existing tablet styles */
+}
+
+/* Large devices (desktops) */
+@media (min-width: 769px) {
+  /* Any specific desktop enhancements */
 }

@@ -1,0 +1,80 @@
+/**
+ * Product Sidebar Styles
+ * 
+ * Contains styling for sidebar and its buttons
+ */
+
+/* Sidebar positioned adjacent to the product card */
+.product-sidebar {
+  background: white;
+  color: #31353d;
+  width: 40px;
+  position: absolute;
+  top: 10px;
+  right: 10px; /* positioned within padded area so it appears attached */
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 0 0 0 2px;
+  /* Default hidden state: positioned 10px to right and fully transparent */
+  opacity: 0;
+  transform: translateX(10px);
+  /* Transition for the default state when hover is removed */
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+/* Sidebar buttons */
+.product-sidebar button {
+  border: none;
+  color: #31353d;
+  width: 50px;
+  height: 50px;
+  background-color: transparent;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.4s ease;
+}
+
+.product-sidebar button:hover {
+  background-color: #9bb6aa;
+}
+
+/* Tooltip tag appears below the button, centered */
+.product-sidebar button .button-tag {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.product-sidebar button:hover .button-tag {
+  display: block;
+}
+
+/* Active states for sidebar buttons */
+.scales-button.active .scales-bar {
+  animation: none;
+  transform: rotate(10deg);
+}
+
+.scales-button.active .scales-pan-left {
+  animation: none;
+  transform: translateY(-2px);
+}
+
+.scales-button.active .scales-pan-right {
+  animation: none;
+  transform: translateY(2px);
+}

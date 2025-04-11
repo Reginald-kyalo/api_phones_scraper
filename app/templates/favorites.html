@@ -1,7 +1,14 @@
-<main role="main">
-    <div class="products-container">
-        {% for product in favorites %}
-            {% include "product-card.html" %}
-        {% endfor %}
+<div id="favorites-modal" class="fav-modal">
+  <div class="fav-modal-content">
+    <div class="fav-modal-header">
+      <h2>Your Favorites</h2>
+      <span class="fav-close-modal">&times;</span>
     </div>
-</main>
+    <div id="favorites-container" class="fav-modal-body">
+      <!-- Favorites will be dynamically loaded here -->
+    </div>
+    <div class="fav-modal-footer">
+      <p class="favorites-count">You have <span id="favorites-count">0</span> favorites</p>
+    </div>
+  </div>
+</div>

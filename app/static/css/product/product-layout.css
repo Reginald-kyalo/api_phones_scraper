@@ -1,0 +1,22 @@
+/**
+ * Product Layout Styles
+ * 
+ * Contains layout for main product containers
+ */
+
+/* Container for main product area */
+main[role="main"] {
+  max-width: 1200px;
+  margin: 10px auto;
+  position: relative;
+}
+
+/* Products container for layout */
+.products-container {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 30px;
+}

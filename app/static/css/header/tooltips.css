@@ -1,0 +1,28 @@
+/* ===============================
+   TOOLTIPS FOR BUTTONS
+=============================== */
+.btn[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-tooltip);
+  color: var(--color-light);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: normal;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-medium), visibility var(--transition-medium);
+  z-index: 1001;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+.btn[data-tooltip]:hover::before {
+  opacity: 1;
+  visibility: visible;
+}

@@ -1,0 +1,134 @@
+/* ===============================
+   RESPONSIVE BREAKPOINTS
+=============================== */
+/* Medium tablets and below (768px and below) */
+@media (max-width: 768px) {
+  /* Header adjustments */
+  .header {
+    padding: var(--space-xs);
+    height: 56px;
+  }
+  
+  .header__left {
+    flex: 0 0 auto;
+    margin-left: 0;
+  }
+  
+  .header__center {
+    flex: 1;
+    margin: 0 var(--space-xs);
+  }
+  
+  .header__right {
+    flex: 0 0 auto;
+    gap: var(--space-xs);
+  }
+  
+  .header__title {
+    font-size: 1.2rem;
+    margin-left: var(--space-xs);
+  }
+  
+  /* Button adjustments */
+  .btn {
+    padding: var(--space-sm);
+  }
+  
+  .btn-login p {
+    display: none;
+  }
+  
+  .btn-favorites {
+    display: none; /* Hide favorites button in header on mobile */
+  }
+
+  /* Search adjustments */
+  .search-form {
+    max-width: 180px;
+  }
+  
+  /* Tooltip position */
+  .btn[data-tooltip]::before {
+    bottom: auto;
+    top: -30px;
+  }
+  
+  /* Mobile search */
+  .mobile-search-icon {
+    display: flex;
+  }
+  
+  .search-close {
+    display: flex;
+  }
+  
+  .search__container {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--color-primary);
+    z-index: 1002;
+    padding: 0 var(--space-sm);
+  }
+  
+  .search__container.expanded {
+    display: flex;
+    align-items: center; /* Ensure vertical alignment */
+  }
+  
+  /* When expanded, make search form take almost full width */
+  .search__container.expanded .search-form {
+    flex: 1;
+    margin: var(--space-sm) var(--space-xl) var(--space-sm) var(--space-sm);
+    max-width: none; /* Remove max-width limitation */
+  }
+  
+  /* Position the close button properly */
+  .search__container.expanded .search-close {
+    position: absolute;
+    right: var(--space-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: var(--space-xs); /* Add some spacing from search form */
+  }
+}
+
+/* Small mobile devices (480px and below) */
+@media (max-width: 480px) {
+  .btn-favorites {
+    display: none; /* Hide favorites button in header on mobile */
+  }
+  
+  .btn-alarm {
+    display: none;
+  }
+  
+  .search-form {
+    max-width: 140px;
+  }
+}
+
+/* Very small devices (400px and below) */
+@media (max-width: 400px) {
+  .header__title {
+    font-size: 1.1rem;
+    white-space: nowrap;
+  }
+  
+  .header__left {
+    flex: 0 1 auto;
+  }
+  
+  .btn-login {
+    padding: var(--space-sm);
+  }
+  
+  .hamburger-menu {
+    margin-right: var(--space-sm);
+    width: 36px;
+    height: 36px;
+  }
+}

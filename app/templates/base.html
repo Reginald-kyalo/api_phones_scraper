@@ -1,107 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Phone Deals - Home</title>
-    <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css?family=Arvo|Montserrat&display=swap"
-      rel="stylesheet"
-    />
-    <!-- FontAwesome for icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    />
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/header.css" />
-    <link rel="stylesheet" href="/static/css/product.css" />
-    <link rel="stylesheet" href="/static/css/auth.css" />
-    <link rel="stylesheet" href="/static/css/price-alarm.css">
-    <link rel="stylesheet" href="/static/css/side-panel.css" />
-    <link rel="stylesheet" href="/static/css/track-alerts.css" />
-    <style>
-      .global-message {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1001;
-        padding: 10px 20px;
-        background-color: rgba(0, 128, 0, 0.8);
-        /* green by default */
-        color: #fff;
-        font-size: 1em;
-        border-radius: 0 0 4px 4px;
-        display: none;
-      }
-      .global-message.error {
-        background-color: rgba(255, 0, 0, 0.8);
-      }
-      /* Favorites view container styles */
-      #favorites-view {
-        display: none;
-        padding: 20px;
-      }
-      #favorites-back-btn {
-        margin-bottom: 20px;
-        padding: 8px 16px;
-        font-size: 1em;
-        cursor: pointer;
-      }
-    </style>
-  </head>
 
-  <body>
-    <!-- Global message container -->
-    <div id="globalMessage" class="global-message"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phone Deals - Home</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Arvo|Montserrat&display=swap" rel="stylesheet" />
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/header.css">
+  <link rel="stylesheet" href="/static/css/product.css" />
+  <link rel="stylesheet" href="/static/css/auth.css" />
+  <link rel="stylesheet" href="/static/css/price-alarm.css">
+  <link rel="stylesheet" href="/static/css/side-panel.css" />
+  <link rel="stylesheet" href="/static/css/track-alerts.css" />
+  <link rel="stylesheet" href="/static/css/favorites.css" />
+  <link rel="stylesheet" href="/static/css/global.css" />
+</head>
 
-    {% include "header.html" %}
-    {% include "side-panel.html" %}
+<body>
+  <!-- Global message container -->
+  <div id="globalMessage" class="global-message"></div>
 
-    <!-- Main product view -->
-    <div id="main-view" style="display: {% if view == 'favorites' %}none{% else %}block{% endif %}">
-      {% include "product.html" %}
-    </div>
+  {% include "header.html" %}
+  {% include "side-panel.html" %}
 
-    <!-- Favorites view -->
-    <section id="favorites-view" style="display: {% if view == 'favorites' %}block{% else %}none{% endif %}">
-      <button id="favorites-back-btn">← Back to Products</button>
-      <div id="favorites-container">
-<!-- Empty container - JS will populate this -->
-      </div>
-    </section>
+  <!-- Main product view -->
+  <div id="main-view" style="display: {% if view == 'favorites' %}none{% else %}block{% endif %}">
+    {% include "product.html" %}
+  </div>
 
-    <!-- Include the auth modal -->
-    {% include "auth.html" %}
-    {% include "track-alerts.html" %}
-    {% include "price-alarm.html" %}
-   <!-- Embed rendered data for use by JavaScript -->
-    <script type="text/javascript">
-      modelsByBrand = {{ models_by_brand | tojson | safe }};
-    </script>
-    
-    <!-- Hidden client-side template for product card -->
-    <template id="product-template">
-      {% include "product-card.html" %}
-    </template>
+  <!-- Favorites view -->
+  {% include "favorites.html" %}
 
-    <!-- Custom JavaScript -->
-    <script type="module">
-      import { showAuthModal } from '/static/js/auth.js';
-      window.showAuthModal = showAuthModal;  // Make it globally available
-    </script>
-    <!--script src="/static/js/price-alarm.js" type="module"></script-->
-    <script src="/static/js/track-alerts.js"></script>
-    <script src="/static/js/side-panel.js" type="module"></script>
-    <script src="/static/js/product.js" type="module"></script>
-    <script src="/static/js/track-alerts.js"></script>
-    <script src="/static/js/header.js" type="module"></script>
+  <!-- Include the auth modal -->
+  {% include "auth.html" %}
+  {% include "track-alerts.html" %}
+  {% include "price-alarm.html" %}
+  <!-- Embed rendered data for use by JavaScript -->
+  <script type="text/javascript">
+    modelsByBrand = {{ models_by_brand | tojson | safe }};
+  </script>
 
-  </body>
+  <!-- Hidden client-side template for product card -->
+  <template id="product-template">
+    {% include "product-card.html" %}
+  </template>
+
+  <script type="module" src="/static/js/api-utils.js"></script>
+  <script type="module" src="/static/js/auth.js"></script>
+  <script type="module" src="/static/js/header.js"></script>
+  <script type="module" src="/static/js/side-panel.js"></script>
+  <script type="module" src="/static/js/price-alarm.js"></script>
+  <script type="module" src="/static/js/track-alerts.js"></script>
+  <script type="module" src="/static/js/favorites.js"></script>
+  <script type="module" src="/static/js/product.js"></script>
+</body>
+
 </html>

@@ -13,7 +13,7 @@
 }
 
 /* Make sure this CSS rule is strong enough to hide the modal */
-.price-alarm-modal.hidden {
+.price-alert-modal.hidden {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
@@ -21,7 +21,7 @@
 }
 
 /* Position the modal in the center of the screen when shown */
-.price-alarm-modal {
+.price-alert-modal {
   position: fixed;
   top: 0;
   left: 0;

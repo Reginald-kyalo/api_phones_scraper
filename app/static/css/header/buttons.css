@@ -1,0 +1,105 @@
+/* ===============================
+   BUTTONS - Base Styles
+=============================== */
+.btn {
+  padding: var(--space-md);
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  position: relative;
+  transition: all var(--transition-medium);
+  border-radius: var(--radius-md);
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.btn p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-light);
+  font-weight: 500;
+}
+
+.btn svg {
+  width: 24px;
+  height: 24px;
+  transition: transform var(--transition-fast);
+  color: var(--color-light);
+}
+
+.btn:hover,
+.btn:focus {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: var(--color-dark);
+  transform: var(--elevation-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:active {
+  transform: var(--elevation-active);
+  box-shadow: none;
+}
+
+/* Button Variants */
+.btn-login {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-right: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.btn-alarm,
+.btn-favorites,
+.btn-login {
+  position: relative;
+  border-radius: var(--radius-lg);
+}
+
+.btn.btn-alarm svg,
+.btn.btn-favorites svg {
+  stroke-width: 0;
+  fill: currentColor;
+}
+
+.btn-login svg {
+  stroke-width: 2.5;
+}
+
+/* Button Animations */
+.btn.btn-alarm:hover svg {
+  transform: rotate(15deg);
+}
+
+.btn.btn-favorites:hover svg {
+  transform: scale(1.15);
+}
+
+.btn.btn-login:hover svg {
+  transform: translateX(6px);
+}
+
+/* Notification Badge */
+.btn-alarm.has-alerts svg {
+  color: var(--color-alert);
+  animation: pulse 2s infinite;
+}
+
+.alert-badge-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--color-alert);
+  color: var(--color-light);
+  border-radius: var(--radius-circle);
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}

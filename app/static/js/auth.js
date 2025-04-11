@@ -1,3 +1,5 @@
+import { secureApiCall } from './api-utils.js';
+
 // Get elements
 const authModal = document.getElementById("authModal");
 const loginForm = document.getElementById("loginForm");
@@ -14,10 +16,17 @@ const signUpError = document.getElementById("signUpError");
 
 // Header buttons
 let loginBtn = document.querySelector(".btn-login");
+// Store original login button HTML to preserve SVG icon
+let originalLoginBtnHTML = loginBtn ? loginBtn.innerHTML : '';
+
+export function sanitizeInput(input) {
+  const div = document.createElement('div');
+  div.textContent = input;
+  return div.innerHTML;
+}
 
 // Export required functions
 export function showAuthModal() {
-  const authModal = document.getElementById("authModal");
   authModal.classList.remove("hidden");
   document.getElementById("loginForm").classList.remove("hidden");
   document.getElementById("signUpForm").classList.add("hidden");
@@ -39,104 +48,166 @@ export function showGlobalMessage(message, isError = false) {
 }
 
 export function updateUserUI(username) {
+  const headerRight = document.querySelector(".header__right");
+  let welcomeBtn = document.getElementById("welcomeBtn");
+  
+  // User is logged out
+  if (!username) {
+    // Remove welcome button if it exists
+    if (welcomeBtn) {
+      welcomeBtn.remove();
+    }
+    // Show login button and restore its original content with SVG
+    if (loginBtn) {
+      loginBtn.style.display = "flex";
+      // Restore original content including SVG icon
+      if (originalLoginBtnHTML) {
+        loginBtn.innerHTML = originalLoginBtnHTML;
+      }
+    }
+    return;
+  }
+  
+  // User is logged in - continue with existing logic
+  const sanitizedUsername = sanitizeInput(username);
+
   if (loginBtn) {
     loginBtn.style.display = "none";
   }
-  const headerRight = document.querySelector(".header__right");
-  let welcomeBtn = document.getElementById("welcomeBtn");
+  
   if (!welcomeBtn) {
     welcomeBtn = document.createElement("button");
     welcomeBtn.id = "welcomeBtn";
     welcomeBtn.className = "btn btn-welcome";
     headerRight.appendChild(welcomeBtn);
   }
-  welcomeBtn.innerHTML = `Welcome ${username} <i class="fas fa-sign-out-alt" style="margin-left: 8px;"></i>`;
-  welcomeBtn.onclick = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    welcomeBtn.remove();
-    loginBtn.style.display = "flex"
+
+  // Use the sanitized username in HTML content
+  welcomeBtn.innerHTML = `Welcome ${sanitizedUsername} <i class="fas fa-sign-out-alt" style="margin-left: 8px;"></i>`;
+
+  welcomeBtn.onclick = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Fallback UI update if API call fails
+      localStorage.removeItem("username");
+      welcomeBtn.remove();
+      loginBtn.style.display = "flex";
+    }
   };
 }
 
-// New helper function to handle showing price alarm after authentication
-function handlePendingPriceAlarm() {
-  const showPriceAlarm = sessionStorage.getItem("showPriceAlarmAfterLogin");
-  if (showPriceAlarm === "true") {
-    try {
-      const productData = JSON.parse(sessionStorage.getItem("pendingPriceAlarmProduct"));
-      if (productData && window.showPriceAlarmModal) {
-        // Small delay to allow auth modal to close first
-        setTimeout(() => {
-          window.showPriceAlarmModal(productData);
-        }, 300);
-      }
-    } catch (err) {
-      console.error("Error showing price alarm after login:", err);
-    } finally {
-      // Always clear the pending data
-      sessionStorage.removeItem("showPriceAlarmAfterLogin");
-      sessionStorage.removeItem("pendingPriceAlarmProduct");
-    }
-  }
-}
-
-// Add this function after handlePendingPriceAlarm function
-// Update or add the handlePendingRequests function
+// Update the handlePendingRequests function
 function handlePendingRequests() {
-  // Check for pending price alarm
-  const pendingPriceAlarm = localStorage.getItem("pendingPriceAlarm");
-  if (pendingPriceAlarm) {
-    // Clear the flag
-    localStorage.removeItem("pendingPriceAlarm");
-
-    // Get product data from DOM or API and show modal
-    // This depends on where the product data is stored
-    const productElement = document.querySelector(`[data-product-id="${pendingPriceAlarm}"]`);
-    if (productElement && window.showPriceAlarmModal) {
-      const productData = JSON.parse(productElement.dataset.productInfo);
-      setTimeout(() => {
-        window.showPriceAlarmModal(productData);
-      }, 500); // Short delay to ensure auth modal is fully closed
+  try {
+    // Handle pending price alarms (from both storage mechanisms)
+    
+    // Check localStorage implementation
+    const pendingPriceAlarm = localStorage.getItem("pendingPriceAlarm");
+    if (pendingPriceAlarm) {
+      try {
+        const productData = JSON.parse(pendingPriceAlarm);
+        localStorage.removeItem("pendingPriceAlarm");
+        
+        // Wait a moment before showing the modal to ensure UI is updated
+        setTimeout(() => {
+          if (window.showPriceAlarmModal) {
+            window.showPriceAlarmModal(productData);
+          } else {
+            console.error("showPriceAlarmModal function not available");
+          }
+        }, 300);
+      } catch (err) {
+        console.error("Failed to parse pending price alarm data from localStorage:", err);
+        localStorage.removeItem("pendingPriceAlarm");
+      }
     }
-  }
+  
+    // Handle other pending actions
+    const pendingTrackAlerts = localStorage.getItem("pendingTrackAlerts");
+    const pendingFavorite = localStorage.getItem("pendingFavorite");
 
-  // Check for pending track alerts
-  const pendingTrackAlerts = localStorage.getItem("pendingTrackAlerts");
-  if (pendingTrackAlerts === "true") {
-    // Clear the flag
-    localStorage.removeItem("pendingTrackAlerts");
-
-    // Show track alerts modal
-    if (window.openTrackAlertsModal) {
-      setTimeout(() => {
+    // Process pending track alerts
+    if (pendingTrackAlerts === "true") {
+      localStorage.removeItem("pendingTrackAlerts");
+      if (window.openTrackAlertsModal) {
         window.openTrackAlertsModal();
-      }, 500); // Short delay to ensure auth modal is fully closed
+      }
     }
+    
+    // Process pending favorites
+    if (pendingFavorite) {
+      const favoriteData = JSON.parse(pendingFavorite);
+      localStorage.removeItem("pendingFavorite");
+      
+      // Use a try-catch block for the fetch call
+      try {
+        secureApiCall("favorites", {
+          method: "POST",
+          body: JSON.stringify({ product: favoriteData }),
+        })
+          .then(response => {
+            if (response.ok) {
+              return response.json().catch(err => {
+                // Handle empty or invalid JSON
+                console.warn("Empty or invalid JSON response:", err);
+                return {};
+              });
+            }
+            throw new Error("Failed to add favorite");
+          })
+          .then(data => {
+            showGlobalMessage("Item added to favorites", false);
+            const heartIcon = document.querySelector(`.heart-icon[data-product-id="${favoriteData._id}"]`);
+            if (heartIcon) {
+              heartIcon.classList.add("favorited"); // Updated to match other code
+            }
+          })
+          .catch(error => {
+            console.error("Error processing pending favorite:", error);
+          });
+      } catch (error) {
+        console.error("Error in handlePendingRequests:", error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in handlePendingRequests:", error);
   }
 }
 
-// Replace existing calls to handlePendingPriceAlarm with handlePendingRequests
-// in your login and signup form submission handlers
+// Replace checkSession function
+async function checkSession() {
+  try {
+    // Use the centralized secureApiCall
+    const response = await secureApiCall("verify-session");
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("username", data.username || data.email || "User");
+      updateUserUI(localStorage.getItem("username"));
+      return true;
+    } else {
+      localStorage.removeItem("username");
+      localStorage.removeItem("userEmail");
+      return false;
+    }
+  } catch (error) {
+    console.error("Authentication check failed:", error);
+    return false;
+  }
+}
 
 // Rest of your auth.js code (not exported)
-document.addEventListener("DOMContentLoaded", () => {
-  const token = localStorage.getItem("token");
-  const storedUsername = localStorage.getItem("username");
-  if (token && storedUsername) {
-    updateUserUI(storedUsername);
+document.addEventListener("DOMContentLoaded", async () => {
+  // Store original login button HTML including SVG on page load
+  if (loginBtn) {
+    originalLoginBtnHTML = loginBtn.innerHTML;
   }
+  
+  window.addEventListener("load", checkSession);
+
   // Attach event listener for heart icons in the main product view
-  document.querySelectorAll(".heart-icon").forEach((icon) => {
-    icon.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const productEl = e.target.closest(".product");
-      if (!productEl) return;
-      const productData = getProductDataFromCard(productEl);
-      addToFavorites(productData, icon);
-    });
-  });
 });
 
 // Event listener for login button in header
@@ -170,66 +241,144 @@ showLoginLink.addEventListener("click", (e) => {
   signUpError.innerText = "";
 });
 
-// Handle login form submission
+// Add this function to validate emails
+function validateEmail(email) {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+}
+
+// Update login form handler
 loginFormEl.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("loginEmail").value;
+  const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
+
+  // Validate email
+  if (!validateEmail(email)) {
+    loginError.innerText = "Please enter a valid email address";
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.innerText = "Logging in...";
+  
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/signin", {
+    // Use the centralized secureApiCall
+    const response = await secureApiCall("login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
+
     const data = await response.json();
+
     if (response.ok) {
-      const username = email.split("@")[0];
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", username);
-      localStorage.setItem("userEmail", email);  // Store email for price alerts
-
+      // Store minimal user info in localStorage for UI only
+      localStorage.setItem("username", data.name || data.email);
+      localStorage.setItem("userEmail", data.email);
+      
+      // Update UI to logged in state
       authModal.classList.add("hidden");
-      updateUserUI(username);
-
-      // Call the helper function instead of duplicating code
+      updateUserUI(data.name || data.email);
+      
+      // Check for any pending actions
       handlePendingRequests();
     } else {
-      loginError.innerText = data.detail || "Login failed. Please try again.";
+      loginError.innerText = data.detail || "Login failed";
     }
-  } catch (err) {
-    loginError.innerText = "An error occurred. Please try again later.";
+  } catch (error) {
+    loginError.innerText = "An error occurred. Please try again.";
+    console.error("Login error:", error);
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.innerText = "Log In";
   }
 });
 
-// Handle sign-up form submission
+// Update signup form handler
 signUpFormEl.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = document.getElementById("signUpEmail").value;
   const password = document.getElementById("signUpPassword").value;
-  const username = email.split("@")[0];
+  
+  // Clear previous error
+  signUpError.innerText = "";
+  
+  // Validate inputs
+  if (!validateEmail(email)) {
+    signUpError.innerText = "Please enter a valid email address";
+    return;
+  }
+  
+  // Disable button and show loading state
+  const signupBtn = signUpFormEl.querySelector("button[type='submit']");
+  if (signupBtn) {
+    signupBtn.disabled = true;
+    signupBtn.innerText = "Signing up...";
+  }
+  
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/signup", {
+    const response = await secureApiCall("signup", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
+    
     const data = await response.json();
+    
     if (response.ok) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", username);
-      localStorage.setItem("userEmail", email);  // Store email for price alerts
+      const username = data.name || email.split("@")[0];
+      localStorage.setItem("username", username);  
+      localStorage.setItem("userEmail", email);    
 
       authModal.classList.add("hidden");
       updateUserUI(username);
-
-      // Call the helper function instead of duplicating code
       handlePendingRequests();
     } else {
+      // Display the specific error from the server
       signUpError.innerText = data.detail || "Sign up failed. Please try again.";
+      
+      // If this is an email already exists error, offer login option
+      if (data.detail?.includes("already registered") || data.detail?.includes("existing")) {
+        signUpError.innerHTML += ' <a href="#" id="switchToLogin">Login instead?</a>';
+        document.getElementById("switchToLogin").addEventListener("click", (e) => {
+          e.preventDefault();
+          showLoginLink.click();
+        });
+      }
     }
   } catch (err) {
+    console.error("Signup error:", err);
     signUpError.innerText = "An error occurred. Please try again later.";
+  } finally {
+    // Reset button state
+    if (signupBtn) {
+      signupBtn.disabled = false;
+      signupBtn.innerText = "Sign Up";
+    }
   }
-  window.showAuthModal = showAuthModal;
-
 });
+
+// Update logout function
+async function logout() {
+  try {
+    // Use the centralized secureApiCall
+    const response = await secureApiCall("logout", {
+      method: "POST",
+    });
+
+    if (response.ok) {
+      // Clear local storage data
+      localStorage.removeItem("username");
+      localStorage.removeItem("userEmail");
+      
+      // Update UI
+      updateUserUI(null);
+      
+      showGlobalMessage("You have been logged out successfully", false);
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+}
+
+window.showAuthModal = showAuthModal;
+window.sanitizeInput = sanitizeInput;

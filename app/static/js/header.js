@@ -1,32 +1,51 @@
 // header.js
 // Import functions from other modules.
+import { secureApiCall } from "./api-utils.js";
 import { showAuthModal } from "./auth.js";
-import { loadFavorites } from "./product.js";
+import { loadAndShowFavorites } from "./favorites.js";
 import { initSidePanel } from "./side-panel.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const modelsByBrand = window.modelsByBrand || {}; // Brand-to-model mapping.
 
   // Read URL parameters.
-  const favBtn = document.querySelector(".btn-favourites");
+  const favBtn = document.querySelector(".btn-favorites");
   const alertsBtn = document.querySelector(".btn-alarm"); // This is correct, using existing btn-alarm class
+
+  /**
+   * Check if the user is authenticated by verifying session
+   * @returns {Promise<boolean>} - Authentication status
+   */
+  async function checkAuthenticated() {
+    try {
+      const response = await secureApiCall("verify-session");
+      return response.ok;
+    } catch (error) {
+      console.error("Session verification failed:", error);
+      return false;
+    }
+  }
 
   // ---------------
   // Price Alerts Button Handler
   // ---------------
-  alertsBtn?.addEventListener("click", () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+  alertsBtn?.addEventListener("click", async () => {
+    console.log("Price alerts button clicked");
+    
+    // Use the cookie-based authentication check
+    const isAuthenticated = await checkAuthenticated();
+    
+    if (!isAuthenticated) {
+      console.log("User not authenticated, showing auth modal");
       // Set flag to show track alerts after login
       localStorage.setItem("pendingTrackAlerts", "true");
       
       // Show auth modal
-      if (window.showAuthModal) {
-        window.showAuthModal();
-      }
+      showAuthModal();
       return;
     }
     
+    console.log("User is authenticated, showing track alerts modal");
     // User is logged in, show the track alerts modal
     if (window.openTrackAlertsModal) {
       window.openTrackAlertsModal();
@@ -40,24 +59,30 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
     const searchInput = this.querySelector('input[name="query"]');
-    const queryInput = searchInput.value.trim();
+    let queryInput = searchInput.value.trim();
 
     if (!queryInput) return;
 
+    // Production-ready sanitization
+    // 1. Allow alphanumeric, certain special chars relevant to phone models
+    // 2. Limit length to prevent abuse
+    // 3. Encode to prevent injection
+    const sanitizedQuery = queryInput
+      .slice(0, 100) // Reasonable length limit
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/[^\p{L}\p{N}\s\-+._]/gu, '') // Keep letters, numbers, spaces, hyphens, plus, periods, underscores
+      .trim();
+    
+    if (!sanitizedQuery) return;
+
     searchInput.value = "";
     const url = new URL(window.location);
-
-    const matchingBrand = Object.keys(modelsByBrand).find(
-      (b) => b.toLowerCase() === queryInput.toLowerCase()
-    );
-
-    if (matchingBrand) {
-      url.searchParams.set("brand", matchingBrand.toLowerCase());
-      url.searchParams.delete("model");
-      url.searchParams.delete("query");
-    } else {
-      url.searchParams.set("query", queryInput);
-    }
+    
+    // Use encodeURIComponent for additional safety when adding to URL
+    url.searchParams.set("query", encodeURIComponent(sanitizedQuery));
+    url.searchParams.delete("brand");
+    url.searchParams.delete("model");
+    
     window.location = url;
   });
 
@@ -86,15 +111,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------
   // Favorites Button Handler
   // ---------------
-  favBtn?.addEventListener("click", () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+  favBtn?.addEventListener("click", async () => {    
+    // Use the cookie-based authentication check
+    const isAuthenticated = await checkAuthenticated();
+    
+    if (!isAuthenticated) {
+      console.log("User not authenticated, showing auth modal");
       showAuthModal();
       return;
     }
-    document.getElementById("main-view").style.display = "none";
-    document.getElementById("favorites-view").style.display = "block";
-    loadFavorites();
+    loadAndShowFavorites();
   });
 
   // ---------------
@@ -235,4 +261,67 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize main page brand/model selector.
     displayBrands();
     initSidePanel();
+
+    // ---------------
+    // Mobile Search Toggle
+    // ---------------
+    const mobileSearchIcon = document.querySelector('.mobile-search-icon');
+    const searchContainer = document.querySelector('.search__container');
+    const searchCloseBtn = document.querySelector('.search-close');
+    const searchInput = document.querySelector('#search');
+
+    if (mobileSearchIcon && searchContainer && searchCloseBtn) {
+      // Variable to track if we just opened the search
+      let justOpened = false;
+      
+      // Open search on mobile
+      mobileSearchIcon.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event from bubbling up
+        searchContainer.classList.add('expanded');
+        justOpened = true; // Set flag
+        
+        setTimeout(() => {
+          // Focus the search input after animation
+          searchInput.focus();
+          // Reset flag after a short delay
+          setTimeout(() => {
+            justOpened = false;
+          }, 100);
+        }, 300);
+      });
+
+      // Close search on mobile
+      searchCloseBtn.addEventListener('click', () => {
+        searchContainer.classList.remove('expanded');
+      });
+
+      // Close search when pressing Escape
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          searchContainer.classList.remove('expanded');
+        }
+      });
+
+      // Submit form when pressing Enter
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('searchForm').submit();
+        }
+      });
+      
+      // Close search when clicking outside
+      document.addEventListener('click', (e) => {
+        // Don't close if we just opened the search
+        if (justOpened) return;
+        
+        // Check if search is expanded and click is outside search container
+        if (
+          searchContainer.classList.contains('expanded') && 
+          !searchContainer.contains(e.target) && 
+          e.target !== mobileSearchIcon
+        ) {
+          searchContainer.classList.remove('expanded');
+        }
+      });
+    }
   });

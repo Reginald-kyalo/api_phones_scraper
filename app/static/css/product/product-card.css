@@ -1,0 +1,71 @@
+/**
+ * Product Card Styles
+ * 
+ * Contains styling for individual product cards
+ */
+
+/* Individual product card (wrapper) */
+.product {
+  background: transparent;
+  max-width: 300px;
+  position: relative;
+  z-index: 15;
+  margin: 0 auto;
+  box-shadow: none;
+  box-sizing: border-box;
+  padding: 10px 40px 10px 10px; /* extra right padding for the sidebar */
+}
+
+/* Inner wrapper handles internal layout */
+.product-inner {
+  position: relative;
+  padding: 10px;
+}
+
+/* Product image and figure styling */
+.product figure {
+  margin: 0;
+  line-height: 0;
+  position: relative;
+}
+
+.product-image {
+  width: 100%;
+  display: block;
+}
+
+/* Product description area: vertical stacking */
+.product-description {
+  position: relative;
+  z-index: 15;
+  background: #fff;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  text-align: left;
+}
+
+.info {
+  color: #555;
+  font-size: 0.85em;
+  margin-bottom: 10px;
+}
+
+.brand {
+  font-weight: bold;
+  margin: 0;
+  color: #31353d;
+}
+
+.model {
+  margin: 0;
+  color: #666;
+}
+
+.price {
+  color: #9bb6aa;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 5px;
+}

@@ -1,0 +1,121 @@
+/**
+ * Product Icons Styles
+ * 
+ * Contains styling for interactive icons including:
+ * - Heart (favorite) icon
+ * - Scales (comparison) icon
+ * - Alarm (price alert) icon
+ */
+
+/* Heart icon styling */
+.heart-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+.heart-icon svg path {
+  width: 22px;
+  height: 22px;
+  fill: transparent;
+  stroke: #444;
+  stroke-width: 1;
+  transition: all 0.3s ease;
+}
+
+.heart-icon:hover {
+  transform: scale(1.1);
+}
+
+.heart-icon.favorited svg path {
+  fill: red;
+  stroke: red;
+}
+
+/* Scales icon styling */
+.scales-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  position: relative;
+}
+
+.scales-bar {
+  width: 26px;
+  height: 2px;
+  background-color: #31353d;
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  transform-origin: center;
+}
+
+.scales-stand {
+  width: 2px;
+  height: 12px;
+  background-color: #31353d;
+  position: absolute;
+  top: 8px;
+  left: 14px;
+}
+
+.scales-pan-left,
+.scales-pan-right {
+  width: 6px;
+  height: 2px;
+  background-color: #31353d;
+  position: absolute;
+  top: 12px;
+  transform-origin: top;
+}
+
+.scales-pan-left {
+  left: 3px;
+}
+
+.scales-pan-right {
+  right: 3px;
+}
+
+.scales-chain-left,
+.scales-chain-right {
+  width: 1px;
+  height: 6px;
+  background-color: #31353d;
+  position: absolute;
+  top: 6px;
+}
+
+.scales-chain-left {
+  left: 5px;
+}
+
+.scales-chain-right {
+  right: 5px;
+}
+
+/* Alarm icon styling */
+.alarm-button svg {
+  fill: #000000;
+}
+
+.alarm-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.1s ease;
+}

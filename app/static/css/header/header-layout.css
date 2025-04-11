@@ -1,0 +1,59 @@
+/* ===============================
+   HEADER - Base Layout
+=============================== */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(var(--color-primary-rgb), 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-medium);
+  height: 60px;
+}
+
+/* Hide header with a slide-up effect */
+.header--hidden {
+  transform: translateY(-100%);
+}
+
+/* Header Layout Components */
+.header__left,
+.header__center,
+.header__right {
+  display: flex;
+  align-items: center;
+}
+
+.header__left {
+  margin-left: var(--space-sm);
+  flex: 1;
+}
+
+.header__center {
+  flex: 2;
+  justify-content: center;
+  gap: 1px;
+}
+
+.header__right {
+  flex: 1;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  align-items: center;
+  height: 100%;
+}
+
+.header__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-light);
+}

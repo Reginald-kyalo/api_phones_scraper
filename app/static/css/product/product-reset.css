@@ -1,0 +1,54 @@
+/**
+ * Product Reset Styles
+ * 
+ * Basic reset rules for product components
+ */
+
+/* Reset box-sizing for product-related elements */
+.product,
+.product-sidebar,
+.comparison-panel,
+.merchant-list,
+.heart-icon {
+  box-sizing: border-box;
+}
+
+/* Force image rendering */
+.product img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Remove excess margins */
+.product h1,
+.product h2,
+.product h3,
+.product h4,
+.product h5,
+.product h6,
+.product p,
+.product figure {
+  margin: 0;
+  padding: 0;
+}
+
+/* Fix anchor styling */
+.product a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Fix button styling */
+.product button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Fix for long text that might break layout */
+.product {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
