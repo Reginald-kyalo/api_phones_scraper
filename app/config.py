@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = True
     # Database settings
-    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_URI: str = "mongodb://root:mongodbmypass%21@localhost:27017/?tls=true&tlsCertificateKeyFile=/etc/ssl/mongodb.pem&tlsCAFile=/etc/ssl/ca.crt"
     DB_NAME: str = os.getenv("DB_NAME", "phone_products")
     
     # Secret key settings

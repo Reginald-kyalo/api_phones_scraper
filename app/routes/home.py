@@ -6,8 +6,7 @@ from fastapi.responses import JSONResponse
 import Levenshtein  # Make sure to install this: pip install python-Levenshtein
 
 from app.database import db, redis_client
-from app.utils.cache import serialize_brands_models_cache
-from app.utils.search import search_brands_and_models
+from app.utils.search import search_brands_and_models, normalize_text
 import logging
 
 router = APIRouter()
@@ -15,41 +14,37 @@ logger = logging.getLogger(__name__)
 
 # In-memory cache (for UI purposes)
 brands_models_cache = {}
-serialized_brands_models_cache = {}
 
 def get_templates():
     from fastapi.templating import Jinja2Templates
     return Jinja2Templates(directory="app/templates")
 
 async def initialize_cache():
-    global brands_models_cache, serialized_brands_models_cache
+    global brands_models_cache
     docs = await db["brands_models"].find().to_list(length=None)
     brands_models_cache = {}
 
-    async def check_model(brand_id, model):
-        model_name = model["model"]
-        product_exists = await db["products"].find_one({
-            "brand_id": brand_id,
+    async def check_model_name_image(brand, models):
+        model_name = models["model"]
+        product_exists = await db["phones"].find_one({
+            "brand": brand.lower(),
             "model": model_name
         })
         if product_exists:
-            return {"model": model_name, "model_image": model.get("model_image", "")}
+            return {"model": model_name, "model_image": models.get("model_image", "")}
         return None
 
     for doc in docs:
-        brand_id = doc["_id"]
-        brand_name = doc["brand"]
+        brand = doc["brand"]
         models = doc.get("models", [])
-        tasks = [check_model(brand_id, model) for model in models]
+        tasks = [check_model_name_image(brand, model) for model in models]
         results = await asyncio.gather(*tasks)
         valid_models = [r for r in results if r is not None]
         if valid_models:
-            brands_models_cache[brand_name.lower()] = {
-                "brand_id": brand_id,
+            brands_models_cache[brand.lower()] = {
                 "models": valid_models
             }
-    serialized_brands_models_cache = serialize_brands_models_cache(brands_models_cache)
-    logger.info("Cached and serialized brands/models.")
+    logger.info("Cached brands/models.")
 
 # Add these functions near your other cache functions
 async def get_cached_search(query: str):
@@ -77,7 +72,7 @@ async def home(
 
     comparison_data = []
     search_results = None
-    
+
     # Handle search query parameter
     if query and not brand and not model:
         # Try getting from cache first
@@ -100,7 +95,7 @@ async def home(
             # Use the highest-scoring model and its brand
             brand = model_matches[0]["brand"]
             model = model_matches[0]["model"]
-    
+
     # Handle different query parameters for fetching comparison data
     if brand == "all":
         tasks = [
@@ -138,7 +133,7 @@ async def home(
             get_comparison_data(model_result["brand"], model_result["model"])
             for model_result in top_model_results
         ]
-        
+
         # Combine results and get unique items
         all_tasks = brand_tasks + model_tasks
         if all_tasks:
@@ -159,63 +154,46 @@ async def home(
         "request": request,
         "comparison_data": comparison_data,
         "brands": list(brands_models_cache.keys()),
-        "models_by_brand": serialized_brands_models_cache,
+        "models_by_brand": brands_models_cache,
         "query": query,
         "selected_brand": brand,
         "selected_model": model,
         "search_results": search_results
     })
 
-# Add a dedicated search endpoint for AJAX requests
-@router.get("/api/search")
-async def search_endpoint(query: str = Query(None)):
-    if not brands_models_cache:
-        await initialize_cache()
-    
-    if not query:
-        return JSONResponse({"brands": [], "models": []})
-    
-    search_results = search_brands_and_models(query, brands_models_cache)
-    
-    # Limit results to prevent overwhelming response
-    return JSONResponse({
-        "brands": search_results["brands"][:10],  # Top 10 brand matches
-        "models": search_results["models"][:20]   # Top 20 model matches
-    })
-
-async def get_cached_cheapest_product(brand_id: str, model: str):
-    key = f"aggregate:{brand_id}_{model.lower()}"
+async def get_cached_cheapest_product(brand: str, model: str):
+    key = f"aggregate:{brand}_{model.lower()}"
     cached_value = await redis_client.get(key)
     if cached_value:
         return json.loads(cached_value)
     return None
 
 async def get_comparison_data(brand: str, model: str):
-    brand_data = brands_models_cache.get(brand)
+    brand_data = brands_models_cache.get(brand.lower())
     if not brand_data:
         return None
-    cached_cheapest = await get_cached_cheapest_product(str(brand_data["brand_id"]), model)
+    cached_cheapest = await get_cached_cheapest_product(brand, model)
     if cached_cheapest is None:
-        cursor = db["products"].find({
-            "brand_id": brand_data["brand_id"],
+        cursor = db["phones"].find({
+            "brand": brand,
             "model": {"$regex": f"^{model}$", "$options": "i"}
         })
-        products = await cursor.to_list(length=None)
-        if not products:
+        phones = await cursor.to_list(length=None)
+        if not phones:
             return None
-        products.sort(key=lambda x: x.get("latest_price", {}).get("amount", 0))
-        cached_cheapest = products[0]
-    cursor = db["products"].find({
-        "brand_id": brand_data["brand_id"],
+        phones.sort(key=lambda x: x.get("latest_price", {}).get("amount", 0))
+        cached_cheapest = phones[0]
+    cursor = db["phones"].find({
+        "brand": brand,
         "model": {"$regex": f"^{model}$", "$options": "i"}
     })
-    products = await cursor.to_list(length=None)
-    products.sort(key=lambda x: x.get("latest_price", {}).get("amount", 0))
+    phones = await cursor.to_list(length=None)
+    phones.sort(key=lambda x: x.get("latest_price", {}).get("amount", 0))
     price_comparison = [{
         "store": p.get("site_fetched").split(".")[0],
         "price": p.get("latest_price", {}).get("amount", 0),
         "product_url": p.get("product_url")
-    } for p in products]
+    } for p in phones]
     return {
         "brand": brand,
         "model": model,
@@ -224,53 +202,3 @@ async def get_comparison_data(brand: str, model: str):
         "_id": str(cached_cheapest.get("_id")),
         "price_comparison": price_comparison
     }
-
-def get_brand_from_cache(brand_id=None, product=None):
-    """
-    Get brand name and other product details from the brands_models_cache
-    
-    Args:
-        brand_id: The brand ObjectId
-        product: Optional full product document
-    
-    Returns:
-        dict: Product details including brand name and model image
-    """
-    global brands_models_cache
-    
-    result = {
-        "brand": "Unknown",
-        "model_image": ""
-    }
-    
-    # If no cache is loaded yet, return defaults
-    if not brands_models_cache:
-        return result
-        
-    # Get brand_id either directly or from product
-    if product and not brand_id:
-        brand_id = product.get("brand_id")
-    
-    if not brand_id:
-        return result
-        
-    # Find the brand
-    for brand_name, brand_data in brands_models_cache.items():
-        if str(brand_data["brand_id"]) == str(brand_id):
-            result["brand"] = brand_name.capitalize()
-            
-            # If we have a product, try to find matching model for image
-            if product:
-                model_name = product.get("model", "").lower()
-                for model in brand_data["models"]:
-                    if model["model"].lower() == model_name:
-                        result["model_image"] = model.get("model_image", product.get("product_image", ""))
-                        break
-                
-                # If we didn't find a model image, use product_image as fallback
-                if not result["model_image"] and product.get("product_image"):
-                    result["model_image"] = product.get("product_image")
-            
-            break
-            
-    return result

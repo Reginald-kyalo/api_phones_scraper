@@ -5,7 +5,7 @@ from datetime import datetime
 from app.models import PriceAlertCreate
 from app.database import db
 from app.auth import verify_token
-from app.routes.home import get_brand_from_cache
+from app.routes.home import brands_models_cache
 import logging
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -15,11 +15,12 @@ async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(ve
     user_id = payload.get("user_id")
     user_email = payload.get("email")
     product_id_obj = ObjectId(alert.product_id) if len(alert.product_id) == 24 else alert.product_id
-    product = await db["products"].find_one({"_id": product_id_obj})
+    product = await db["phones"].find_one({"_id": product_id_obj})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    product_info = get_brand_from_cache(product.get("brand_id"), product)
+    brand = product.get("brand")
+    product_info = brands_models_cache.get(brand.lower())
     alert_data = {
         "user_id": ObjectId(user_id),
         "email": alert.alternate_email or user_email,
