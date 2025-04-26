@@ -9,7 +9,7 @@
 }
 
 /* Modal backdrop */
-.modal {
+.auth-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -25,11 +25,11 @@
   transition: opacity 0.3s ease;
 }
 
-.modal.hidden {
+.auth-modal.hidden {
   display: none;
 }
 
-.modal:not(.hidden) {
+.auth-modal:not(.hidden) {
   opacity: 1;
   visibility: visible;
 }
@@ -58,7 +58,7 @@
 }
 
 /* Close button */
-.modal-close {
+.auth-modal-close {
   position: absolute;
   top: 15px;
   right: 20px;
@@ -68,7 +68,7 @@
   transition: color 0.3s ease;
 }
 
-.modal-close:hover {
+.auth-modal-close:hover {
   color: var(--text-color);
 }
 

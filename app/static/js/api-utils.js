@@ -5,6 +5,20 @@
 // Base URL configuration - use relative URLs in development for flexibility
 export const API_BASE_URL = "/api"; 
 
+  /**
+   * Check if the user is authenticated by verifying session
+   * @returns {Promise<boolean>} - Authentication status
+   */
+export async function checkAuthenticated() {
+  try {
+    const response = await secureApiCall("verify-session");
+    return response.ok;
+  } catch (error) {
+    console.error("Session verification failed:", error);
+    return false;
+  }
+}
+
 /**
  * Makes an API call with proper configuration
  * @param {string} endpoint - API endpoint (without /api prefix)

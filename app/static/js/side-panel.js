@@ -1,5 +1,6 @@
 // side-panel.js
-
+import { loadAndShowFavorites } from "./favorites.js";
+import { checkAuthenticated } from "./api-utils.js";
 /**
  * Toggle the side panel and overlay visibility
  */
@@ -237,6 +238,45 @@ export function initSidePanel() {
       toggleMenu();
     });
     sidePanelAlarmBtn.setAttribute("listener-added", "true");
+  }
+
+  const favBtn = document.getElementById("sidePanelFavBtn");
+  console.log("Favorites button found:", favBtn); // Debug if button exists
+  
+  if (favBtn && !favBtn.hasAttribute("listener-added")) {
+    console.log("Adding click listener to favorites button");
+    
+    favBtn.addEventListener("click", async (event) => {
+      console.log("Favorites button clicked!"); // Debug if click event fires
+      event.preventDefault();
+      
+      try {
+        console.log("Checking authentication status...");
+        const isAuthenticated = await checkAuthenticated();
+        console.log("Authentication status:", isAuthenticated);
+        
+        if (!isAuthenticated) {
+          console.log("User not authenticated, showing auth modal");
+          if (window.showAuthModal) {
+            window.showAuthModal();
+          } else {
+            console.error("showAuthModal function is not defined");
+          }
+          return;
+        }
+        
+        console.log("User authenticated, loading favorites");
+        await loadAndShowFavorites();
+        console.log("Favorites loaded and displayed");
+      } catch (error) {
+        console.error("Error in favorites button handler:", error);
+      }
+    });
+    
+    favBtn.setAttribute("listener-added", "true");
+    console.log("Listener added to favorites button");
+  } else {
+    console.log("Favorites button not found or already has listener");
   }
 }
 

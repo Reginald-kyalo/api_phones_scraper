@@ -12,14 +12,6 @@
   flex-direction: column;
 }
 
-/* Make sure this CSS rule is strong enough to hide the modal */
-.price-alert-modal.hidden {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
 /* Position the modal in the center of the screen when shown */
 .price-alert-modal {
   position: fixed;

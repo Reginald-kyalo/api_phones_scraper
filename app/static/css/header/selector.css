@@ -96,6 +96,79 @@
   transform: var(--elevation-hover);
 }
 
+/* Horizontally scrollable brands container */
+.brands-row.scrollable-brands {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  width: 100%;
+  padding: var(--space-xs) 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+  justify-content: flex-start; /* Changed from center to allow proper scrolling */
+}
+
+.brands-row.scrollable-brands::-webkit-scrollbar {
+  height: 4px;
+}
+
+.brands-row.scrollable-brands::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-light, rgba(0, 0, 0, 0.2));
+  border-radius: var(--radius-pill, 4px);
+}
+
+.brands-row .selector-button.brand {
+  flex: 0 0 auto;
+}
+
+/* Brands wrapper with arrow navigation */
+.brands-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  margin: var(--space-xs) 0;
+}
+
+/* Arrow buttons for horizontal scrolling */
+.brand-scroll-arrow {
+  /* Remove circular styling */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent; /* Remove background */
+  color: var(--color-primary); /* Apply the color to the arrow itself */
+  border: none;
+  cursor: pointer;
+  font-size: 1.8rem; /* Larger font size for visibility */
+  font-weight: bold;
+  z-index: 2;
+  transition: transform 0.2s ease, color 0.2s ease;
+  padding: 0;
+  margin: 0 var(--space-xs);
+  width: auto; /* Let width be determined by content */
+  flex: 0 0 auto;
+}
+
+.brand-scroll-arrow:hover {
+  color: var(--color-primary-dark); /* Change color on hover */
+  transform: scale(1.2);
+}
+
+.brand-scroll-arrow.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: visible;
+  transition: opacity 0.4s ease;
+}
+
+/* Adjust spacing around the arrows */
+.brands-wrapper .scrollable-brands {
+  flex: 1;
+  scroll-behavior: smooth;
+  margin: 0 var(--space-sm);
+}
 
 /* ===============================
    RESPONSIVE BREAKPOINTS FOR SELECTORS
@@ -132,6 +205,12 @@
   .selector-button.brand:last-child {
     margin-right: var(--space-xs); /* Match left margin */
   }
+
+  .brand-scroll-arrow {
+    min-width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
 }
 
 /* Small mobile devices (480px and below) */
@@ -139,6 +218,12 @@
   .selector-button {
     padding: var(--space-sm) var(--space-md);
     font-size: 0.85rem;
+  }
+
+  .brand-scroll-arrow {
+    min-width: 24px;
+    height: 24px;
+    font-size: 0.9rem;
   }
 }
 

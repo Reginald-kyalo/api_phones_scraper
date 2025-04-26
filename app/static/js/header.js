@@ -1,6 +1,6 @@
 // header.js
 // Import functions from other modules.
-import { secureApiCall } from "./api-utils.js";
+import { checkAuthenticated } from "./api-utils.js";
 import { showAuthModal } from "./auth.js";
 import { loadAndShowFavorites } from "./favorites.js";
 import { initSidePanel } from "./side-panel.js";
@@ -11,20 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Read URL parameters.
   const favBtn = document.querySelector(".btn-favorites");
   const alertsBtn = document.querySelector(".btn-alarm"); // This is correct, using existing btn-alarm class
-
-  /**
-   * Check if the user is authenticated by verifying session
-   * @returns {Promise<boolean>} - Authentication status
-   */
-  async function checkAuthenticated() {
-    try {
-      const response = await secureApiCall("verify-session");
-      return response.ok;
-    } catch (error) {
-      console.error("Session verification failed:", error);
-      return false;
-    }
-  }
 
   // ---------------
   // Price Alerts Button Handler
@@ -183,18 +169,35 @@ document.addEventListener("DOMContentLoaded", () => {
       if (existingModelsContainer) existingModelsContainer.remove();
 
       if (container.querySelectorAll(".selector-button.brand").length === 0) {
+        // Create a wrapper for the brands container and scroll arrows
+        const brandsWrapper = document.createElement("div");
+        brandsWrapper.classList.add("brands-wrapper");
+        
+        // Create left arrow
+        const leftArrow = document.createElement("button");
+        leftArrow.classList.add("brand-scroll-arrow", "left-arrow");
+        leftArrow.innerHTML = "&#10094;"; // Using chevron character instead of &lt;
+        leftArrow.setAttribute("aria-label", "Scroll brands left");
+        
+        // Create right arrow
+        const rightArrow = document.createElement("button");
+        rightArrow.classList.add("brand-scroll-arrow", "right-arrow");
+        rightArrow.innerHTML = "&#10095;"; // Using chevron character instead of &gt;
+        rightArrow.setAttribute("aria-label", "Scroll brands right");
+        
+        // Create the brands container
         const brandsContainer = document.createElement("div");
-        brandsContainer.classList.add("brands-row");
+        brandsContainer.classList.add("brands-row", "scrollable-brands");
 
         const brands = Object.keys(window.modelsByBrand || {});
-        // Randomize brand order.
-        const randomizedBrands = [...brands];
-        for (let i = randomizedBrands.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [randomizedBrands[i], randomizedBrands[j]] = [randomizedBrands[j], randomizedBrands[i]];
-        }
+        // Sort brands by popularity (model count)
+        const sortedBrands = [...brands].sort((a, b) => {
+          const aModelsCount = window.modelsByBrand[a]?.models?.length || 0;
+          const bModelsCount = window.modelsByBrand[b]?.models?.length || 0;
+          return bModelsCount - aModelsCount; // Most popular first
+        });
 
-        randomizedBrands.forEach((brand) => {
+        sortedBrands.forEach((brand) => {
           const button = document.createElement("button");
           button.classList.add("selector-button", "brand");
           button.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
@@ -206,7 +209,66 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           brandsContainer.appendChild(button);
         });
-        container.appendChild(brandsContainer);
+        
+        // Add components to the wrapper
+        brandsWrapper.appendChild(leftArrow);
+        brandsWrapper.appendChild(brandsContainer);
+        brandsWrapper.appendChild(rightArrow);
+        container.appendChild(brandsWrapper);
+        
+        // Add scroll functionality to arrows
+        leftArrow.addEventListener('click', () => {
+          brandsContainer.scrollBy({ left: -200, behavior: 'smooth' });
+        });
+        
+        rightArrow.addEventListener('click', () => {
+          brandsContainer.scrollBy({ left: 200, behavior: 'smooth' });
+        });
+        
+        // Add horizontal scroll behavior for mouse wheel
+        brandsContainer.addEventListener('wheel', function(event) {
+          if (event.deltaY !== 0) {
+            event.preventDefault();
+            
+            // Scroll horizontally instead of vertically
+            // Use a multiplier to control scroll speed
+            const scrollMultiplier = 2;
+            this.scrollLeft += event.deltaY * scrollMultiplier;
+          }
+        }, { passive: false });
+        
+        // Update arrow visibility based on scroll position
+        function updateArrowVisibility() {
+          // Add larger threshold to create a buffer zone for smoother transitions
+          const threshold = 50; // Increased from 10 to 50
+          
+          // Left arrow visibility
+          const showLeftArrow = brandsContainer.scrollLeft > threshold;
+          if (showLeftArrow && leftArrow.classList.contains('hidden')) {
+            leftArrow.classList.remove('hidden');
+          } else if (!showLeftArrow && !leftArrow.classList.contains('hidden')) {
+            leftArrow.classList.add('hidden');
+          }
+          
+          // Right arrow visibility
+          const scrollableDistance = brandsContainer.scrollWidth - brandsContainer.clientWidth;
+          const showRightArrow = brandsContainer.scrollLeft < scrollableDistance - threshold;
+          
+          if (showRightArrow && rightArrow.classList.contains('hidden')) {
+            rightArrow.classList.remove('hidden');
+          } else if (!showRightArrow && !rightArrow.classList.contains('hidden')) {
+            rightArrow.classList.add('hidden');
+          }
+        }
+        
+        // Initial check for arrow visibility
+        updateArrowVisibility();
+        
+        // Update arrow visibility on scroll
+        brandsContainer.addEventListener('scroll', updateArrowVisibility);
+        
+        // Update on window resize as well
+        window.addEventListener('resize', updateArrowVisibility);
       }
 
       // Highlight selected brand from URL parameters.

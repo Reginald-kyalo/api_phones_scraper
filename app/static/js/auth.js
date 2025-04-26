@@ -4,7 +4,7 @@ import { secureApiCall } from './api-utils.js';
 const authModal = document.getElementById("authModal");
 const loginForm = document.getElementById("loginForm");
 const signUpForm = document.getElementById("signUpForm");
-const modalClose = document.getElementById("modalClose");
+const modalClose = document.getElementById("AuthModalClose");
 const showSignUpLink = document.getElementById("showSignUp");
 const showLoginLink = document.getElementById("showLogin");
 
