@@ -1,62 +1,145 @@
-/* Standardized Modal Animation Base - applied to all modals */
-.price-alert-modal,
-.auth-modal,
-.sidepanel, 
-.favorites-modal,
-.fav-modal {
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4);
-  animation: fadeIn 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Base Modal Styles - Common styling for all modals */
+
+:root {
+  /* Common color variables */
+  --primary-color: #9bb6aa;
+  --primary-hover: #82a598;
+  --text-color: #333;
+  --border-color: #ddd;
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --modal-bg: #ffffff;
+  --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Hidden state for all modals */
-.price-alert-modal.hidden,
-.auth-modal.hidden,
-.sidepanel.hidden,
-.favorites-modal.hidden,
-.fav-modal.hidden {
+/* Base Modal Container */
+.base-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--overlay-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.base-modal:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.base-modal.hidden {
   display: none;
 }
 
-/* Content container animation for all modals */
-.price-alert-content,
-.auth-content,
-.sidepanel-content,
-.favorites-content,
-.fav-modal-content {
-  position: relative;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  animation: slideDown 0.4s;
+/* Modal Content */
+.modal-content {
+  animation: modalSlideIn 0.4s ease;
 }
 
-/* Standard animation keyframes */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Header styling */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+.modal-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1.2rem;
 }
 
-@keyframes slideDown {
-  from { transform: translateY(-50px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+/* Close button */
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-50px); opacity: 0; }
+.modal-close:hover {
+  color: #444;
+}
+
+/* Footer styling if needed */
+.modal-footer {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+  text-align: right;
+}
+
+/* Animation keyframes - standardized slide-in from top */
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Standard button styling */
+.modal-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+  }
+}
+
+@media (max-width: 480px) {
+  .base-modal {
+    align-items: flex-end; /* Position modal at bottom on mobile */
+  }
+  
+  .modal-content {
+    padding: 15px;
+    width: 100%;
+    border-radius: 12px 12px 0 0; /* Rounded corners only at top */
+    max-height: 85vh;
+    margin-bottom: 0;
+  }
+  
+  .modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .modal-close {
+    font-size: 1.8rem; /* Larger close button */
+    padding: 8px; /* Larger hit area */
+  }
+  
+  .modal-btn {
+    padding: 14px 20px;
+    width: 100%; /* Full width on mobile */
+  }
 }

@@ -130,7 +130,9 @@ export async function addToFavorites(productData, heartIcon) {
     const data = await response.json();
 
     if (response.ok) {
-      heartIcon.classList.add("favorited");
+      if (heartIcon) {
+        heartIcon.classList.add("favorited");
+      }
       showGlobalMessage("Favorite added!");
       
       // Notify favorites.js that a new favorite was added (using custom event)
@@ -168,6 +170,12 @@ export async function deleteFavorite(productId, productCard) {
           detail: { productId }
         }));
       }, 300);
+      
+      // Update heart icons for this product in all other views
+      document.querySelectorAll(`.product[data-product-id="${productId}"] .heart-icon`)
+        .forEach(heartIcon => {
+          heartIcon.classList.remove('favorited');
+        });
       
       showGlobalMessage("Favorite removed!");
     } else {

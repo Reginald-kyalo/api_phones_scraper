@@ -67,7 +67,7 @@ function handleFavoriteDeleted(productId) {
  */
 function showFavoritesModal() {
     if (favoritesModal) {
-        favoritesModal.style.display = 'block';
+        favoritesModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
     }
 }
@@ -77,7 +77,7 @@ function showFavoritesModal() {
  */
 function hideFavoritesModal() {
     if (favoritesModal) {
-        favoritesModal.style.display = 'none';
+        favoritesModal.classList.add('hidden');;
         document.body.style.overflow = ''; // Restore scrolling
     }
 }

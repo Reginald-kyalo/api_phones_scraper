@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (!isAuthenticated) {
       console.log("User not authenticated, showing auth modal");
+      //localStorage.setItem("pendingFavorites");
       showAuthModal();
       return;
     }

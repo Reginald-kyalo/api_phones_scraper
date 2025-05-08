@@ -1,4 +1,5 @@
 import { secureApiCall } from './api-utils.js';
+import { addToFavorites } from './product.js';
 
 // Get elements
 const authModal = document.getElementById("authModal");
@@ -47,7 +48,7 @@ export function showGlobalMessage(message, isError = false) {
   }, 3000);
 }
 
-export function updateUserUI(username) {
+export function updateLogInBtn(username) {
   const headerRight = document.querySelector(".header__right");
   let welcomeBtn = document.getElementById("welcomeBtn");
   
@@ -79,11 +80,13 @@ export function updateUserUI(username) {
     welcomeBtn = document.createElement("button");
     welcomeBtn.id = "welcomeBtn";
     welcomeBtn.className = "btn btn-welcome";
+    welcomeBtn.setAttribute('data-tooltip', 'Log out');
+    welcomeBtn.setAttribute('aria-label', 'Log out');
     headerRight.appendChild(welcomeBtn);
   }
 
-  // Use the sanitized username in HTML content
-  welcomeBtn.innerHTML = `Welcome ${sanitizedUsername} <i class="fas fa-sign-out-alt" style="margin-left: 8px;"></i>`;
+  // Use the sanitized username in HTML content with white text color
+  welcomeBtn.innerHTML = `<span style="color: white;">Welcome ${sanitizedUsername}</span> <i class="fas fa-sign-out-alt" style="margin-left: 8px; color: white;"></i>`;
 
   welcomeBtn.onclick = async () => {
     try {
@@ -94,12 +97,13 @@ export function updateUserUI(username) {
       localStorage.removeItem("username");
       welcomeBtn.remove();
       loginBtn.style.display = "flex";
+
     }
   };
 }
 
 // Update the handlePendingRequests function
-function handlePendingRequests() {
+async function handlePendingRequests() {
   try {
     // Handle pending price alarms (from both storage mechanisms)
     
@@ -138,41 +142,29 @@ function handlePendingRequests() {
     
     // Process pending favorites
     if (pendingFavorite) {
-      const favoriteData = JSON.parse(pendingFavorite);
       localStorage.removeItem("pendingFavorite");
       
-      // Use a try-catch block for the fetch call
       try {
-        secureApiCall("favorites", {
-          method: "POST",
-          body: JSON.stringify({ product: favoriteData }),
-        })
-          .then(response => {
-            if (response.ok) {
-              return response.json().catch(err => {
-                // Handle empty or invalid JSON
-                console.warn("Empty or invalid JSON response:", err);
-                return {};
-              });
-            }
-            throw new Error("Failed to add favorite");
-          })
-          .then(data => {
-            showGlobalMessage("Item added to favorites", false);
-            const heartIcon = document.querySelector(`.heart-icon[data-product-id="${favoriteData._id}"]`);
-            if (heartIcon) {
-              heartIcon.classList.add("favorited"); // Updated to match other code
-            }
-          })
-          .catch(error => {
-            console.error("Error processing pending favorite:", error);
-          });
+        const productData = JSON.parse(pendingFavorite);
+        
+        // Find the corresponding heart icon in the DOM
+        let heartIcon = null;
+        if (productData._id) {
+          // Try to find the product card and then the heart icon within it
+          const productCard = document.querySelector(`.product[data-product-id="${productData._id}"]`);
+          if (productCard) {
+            heartIcon = productCard.querySelector('.heart-icon');
+          }
+        }
+        
+        // Call addToFavorites with the heart icon (may still be null if not found)
+        await addToFavorites(productData, heartIcon);
       } catch (error) {
         console.error("Error in handlePendingRequests:", error);
       }
     }
   } catch (error) {
-    console.error("Error in handlePendingRequests:", error);
+    console.error("Error handling pending requests:", error);
   }
 }
 
@@ -185,7 +177,7 @@ async function checkSession() {
     if (response.ok) {
       const data = await response.json();
       localStorage.setItem("username", data.username || data.email || "User");
-      updateUserUI(localStorage.getItem("username"));
+      updateLogInBtn(localStorage.getItem("username"));
       return true;
     } else {
       localStorage.removeItem("username");
@@ -278,7 +270,7 @@ loginFormEl.addEventListener("submit", async (e) => {
       
       // Update UI to logged in state
       authModal.classList.add("hidden");
-      updateUserUI(data.name || data.email);
+      updateLogInBtn(data.name || data.email);
       
       // Check for any pending actions
       handlePendingRequests();
@@ -330,7 +322,7 @@ signUpFormEl.addEventListener("submit", async (e) => {
       localStorage.setItem("userEmail", email);    
 
       authModal.classList.add("hidden");
-      updateUserUI(username);
+      updateLogInBtn(username);
       handlePendingRequests();
     } else {
       // Display the specific error from the server
@@ -371,7 +363,7 @@ async function logout() {
       localStorage.removeItem("userEmail");
       
       // Update UI
-      updateUserUI(null);
+      updateLogInBtn(null);
       
       showGlobalMessage("You have been logged out successfully", false);
     }

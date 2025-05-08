@@ -186,11 +186,16 @@
   padding-left: 27px;
 }
 
-/* Ensure the chevron icon also changes color on hover */
-.side-panel__dropdown:hover .chevron-icon,
+/* For fill-based icons like Bootstrap Icons */
 .side-panel__item:hover svg {
-  stroke: #417c64; /* Change icon color on hover */
+  fill: #417c64;
 }
+
+/* For actual stroke-based icons, like custom line icons */
+.side-panel__dropdown:hover .chevron-icon {
+  stroke: #417c64;
+}
+
 
 /* Add a subtle transition for smooth hover effects */
 .side-panel__dropdown,
