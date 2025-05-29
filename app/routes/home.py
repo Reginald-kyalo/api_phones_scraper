@@ -180,11 +180,15 @@ async def get_comparison_data(brand: str, model: str):
         "price": p.get("latest_price", {}).get("amount", 0),
         "product_url": p.get("product_url")
     } for p in phones]
-    return {
+    
+    result = {
         "brand": brand,
         "model": model,
         "model_image": next((m["model_image"] for m in brand_data["models"] if m["model"].lower() == model.lower()), ""),
         "cheapest_price": cached_cheapest.get("latest_price", {}).get("amount", 0),
-        "_id": str(cached_cheapest.get("_id")),
+        "product_id": cached_cheapest.get("product_id"),
         "price_comparison": price_comparison
     }
+    
+    logger.info(f"Returning product data: product_id={result.get('product_id')}, _id={result.get('_id')}")
+    return result

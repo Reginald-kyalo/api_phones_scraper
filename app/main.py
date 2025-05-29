@@ -54,8 +54,8 @@ async def lifespan(app: FastAPI):
         )
         
         # Start the scheduler
-        scheduler.start()
-        logger.info("APScheduler started with price monitoring jobs")
+        #scheduler.start()
+        #logger.info("APScheduler started with price monitoring jobs")
     except Exception as e:
         logger.error(f"Failed to start APScheduler: {e}")
     

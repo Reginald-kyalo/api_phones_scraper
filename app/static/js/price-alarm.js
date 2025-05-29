@@ -116,9 +116,9 @@ function _displayPriceAlarmModal(productData) {
   
   // Set product ID on the button instead
   const setPriceAlertBtn = priceAlarmModal.querySelector('#setPriceAlert');
-  if (setPriceAlertBtn && productData._id) {
-    setPriceAlertBtn.dataset.productId = productData._id;
-    console.log('Product ID set on button:', productData._id);
+  if (setPriceAlertBtn && productData.product_id) {
+    setPriceAlertBtn.dataset.productId = productData.product_id;
+    console.log('Product ID set on button:', productData.product_id);
   }
   
   // Populate user email

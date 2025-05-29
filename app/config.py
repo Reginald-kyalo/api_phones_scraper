@@ -1,38 +1,41 @@
 from pydantic_settings import BaseSettings
-import os
-import secrets
-from datetime import datetime, timedelta
-
-# Load environment variables from .env file
+from datetime import datetime
 
 class Settings(BaseSettings):
-    HOST: str = "127.0.0.1"  # Default host
+    HOST: str = "127.0.0.1"
     PORT: int = 8000
     DEBUG: bool = True
+    
     # Database settings
-    MONGODB_HOST: str = os.getenv("MONGO_URI")
-    #MONGODB_URI: str = "mongodb://root:mongodbmypass%21@localhost:27017/?tls=true&tlsCertificateKeyFile=/etc/ssl/mongodb.pem&tlsCAFile=/etc/ssl/ca.crt"
-    DB_NAME: str = os.getenv("DB_NAME", "phone_products")
+    MONGO_URI: str = "mongodb://root:mongodbmypass!@localhost:27017/?tls=true&tlsCertificateKeyFile=/etc/ssl/mongodb.pem&tlsCAFile=/etc/ssl/ca.crt"
+    DB_NAME: str = "phone_products"
     
     # Secret key settings
-    PRIMARY_SECRET_KEY: str = os.getenv("PRIMARY_SECRET_KEY", "development-key-not-for-production")
-    SECONDARY_SECRET_KEY: str = os.getenv("SECONDARY_SECRET_KEY", "")
-    KEY_ROTATION_INTERVAL_DAYS: int = int(os.getenv("KEY_ROTATION_INTERVAL_DAYS", "30"))
-    LAST_ROTATION_DATE: str = os.getenv("LAST_ROTATION_DATE", datetime.now().isoformat())
+    PRIMARY_SECRET_KEY: str = "development-key-not-for-production"
+    SECONDARY_SECRET_KEY: str = ""
+    KEY_ROTATION_INTERVAL_DAYS: int = 30
+    LAST_ROTATION_DATE: str = datetime.now().isoformat()
     
     # Redis connection settings
-    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "")
-    REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = ""
+    REDIS_DB: int = 0
     
     # Email settings
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "dealsonline")
-    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    SMTP_TLS: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
-    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "reginald.kyalo@gmail.com")
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = "dealsonline"
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    EMAIL_FROM: str = "reginald.kyalo@gmail.com"
+    
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore"
+    }
+
     # Helper property to access the current active key
     @property
     def SECRET_KEY(self) -> str:

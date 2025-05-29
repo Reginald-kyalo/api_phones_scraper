@@ -3,7 +3,7 @@ from redis.asyncio import Redis
 from app.config import settings
 
 # MongoDB client and database
-client: AsyncIOMotorClient = AsyncIOMotorClient(settings.MONGODB_URI, serverSelectionTimeoutMS=5000)
+client: AsyncIOMotorClient = AsyncIOMotorClient(settings.MONGO_URI, serverSelectionTimeoutMS=5000)
 db: AsyncIOMotorDatabase = client[settings.DB_NAME]
 
 # Redis client

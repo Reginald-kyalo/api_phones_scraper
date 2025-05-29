@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from bson import ObjectId
 from datetime import datetime
+import uuid
 
 from app.models import PriceAlertCreate
 from app.database import db
@@ -14,23 +15,30 @@ router = APIRouter()
 async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(verify_token)):
     user_id = payload.get("user_id")
     user_email = payload.get("email")
-    product_id_obj = ObjectId(alert.product_id) if len(alert.product_id) == 24 else alert.product_id
-    product = await db["phones"].find_one({"product_id": product_id_obj})
+    product_id = ObjectId(alert.product_id) if len(alert.product_id) == 24 else alert.product_id
+    product = await db["phones"].find_one({"product_id": product_id})
     if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
+        raise HTTPException(status_code=400, detail="Product not found, incorrect or missing product ID")
     
     brand = product.get("brand")
-    product_info = brands_models_cache.get(brand.lower())
+    model = product.get("model")
+    if not brand or not model:
+        raise HTTPException(status_code=400, detail="Product must have a brand and model")
+    brand_data = brands_models_cache.get(brand.lower())
+    
+    # Generate unique alert ID
+    alert_id = f"ALT-{uuid.uuid4().hex[:8].upper()}"
+    
     alert_data = {
+        "alert_id": alert_id,  # Add the unique alert ID
         "user_id": ObjectId(user_id),
         "email": alert.alternate_email or user_email,
-        "product_id": product_id_obj,
         "product": {
-            "id": str(product["_id"]),
+            "product_id": str(product["product_id"]),
             "name": product["model"],
-            "brand": product_info["brand"],
-            "model": product_info["model"],
-            "image": product_info["model_image"],
+            "brand": brand_data["brand"],
+            "model": brand_data["model"],
+            "model_image": next((m["model_image"] for m in brand_data["models"] if m["model"].lower() == model.lower()), ""),
         },
         "original_price": product.get("latest_price", {}).get("amount", 0),
         "current_price": product.get("latest_price", {}).get("amount", 0),
@@ -40,8 +48,17 @@ async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(ve
         "updated_at": datetime.now()
     }
     result = await db["price_alerts"].insert_one(alert_data)
-    return {"id": str(result.inserted_id), "message": "Price alert created successfully"}
-    logger.info(f"Price alert created for user {user_id} on product {alert.product_id} with target price {alert.target_price}")
+    
+    # Log information
+    logger.debug(f"Product data: {product}")
+    logger.debug(f"Alert data: {alert_data}")
+    logger.info(f"Price alert {alert_id} created for user {user_id} on product {alert.product_id} with target price {alert.target_price}")
+    
+    return {
+        "id": str(result.inserted_id),
+        "alert_id": alert_id,
+        "message": "Price alert created successfully"
+    }
 
 @router.get("/api/price-alerts")
 async def get_price_alerts(

@@ -246,7 +246,7 @@ export function getProductDataFromCard(productEl, isFavorite = false) {
   }
   
   return {
-    _id: sanitizeInput(productId),
+    product_id: sanitizeInput(productId),
     brand: sanitizeInput(brand),
     model: sanitizeInput(model),
     cheapest_price: sanitizeInput(price.replace('Ksh ', '')),
