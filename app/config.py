@@ -1,19 +1,17 @@
 from pydantic_settings import BaseSettings
 import os
-from dotenv import load_dotenv
 import secrets
 from datetime import datetime, timedelta
 
 # Load environment variables from .env file
-load_dotenv()
 
 class Settings(BaseSettings):
     HOST: str = "127.0.0.1"  # Default host
     PORT: int = 8000
     DEBUG: bool = True
     # Database settings
+    MONGODB_HOST: str = os.getenv("MONGO_URI")
     #MONGODB_URI: str = "mongodb://root:mongodbmypass%21@localhost:27017/?tls=true&tlsCertificateKeyFile=/etc/ssl/mongodb.pem&tlsCAFile=/etc/ssl/ca.crt"
-    MONGODB_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     DB_NAME: str = os.getenv("DB_NAME", "phone_products")
     
     # Secret key settings
@@ -28,6 +26,13 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "")
     REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
     
+    # Email settings
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "dealsonline")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_TLS: bool = os.getenv("SMTP_TLS", "true").lower() in ("true", "1", "yes")
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "reginald.kyalo@gmail.com")
     # Helper property to access the current active key
     @property
     def SECRET_KEY(self) -> str:

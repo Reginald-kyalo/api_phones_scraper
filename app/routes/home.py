@@ -115,6 +115,7 @@ async def home(
             tasks = [get_comparison_data(brand.lower(), m["model"]) for m in brand_data["models"]]
             results = await asyncio.gather(*tasks)
             comparison_data = [r for r in results if r]
+            logger.info(f"{comparison_data[:5]}")
     elif search_results:
         # No definitive match but we have search results, return top results
         top_brand_results = [match["brand"] for match in search_results["brands"][:3]]
@@ -161,34 +162,19 @@ async def home(
         "search_results": search_results
     })
 
-async def get_cached_cheapest_product(brand: str, model: str):
-    key = f"aggregate:{brand}_{model.lower()}"
-    cached_value = await redis_client.get(key)
-    if cached_value:
-        return json.loads(cached_value)
-    return None
-
 async def get_comparison_data(brand: str, model: str):
     brand_data = brands_models_cache.get(brand.lower())
     if not brand_data:
         return None
-    cached_cheapest = await get_cached_cheapest_product(brand, model)
-    if cached_cheapest is None:
-        cursor = db["phones"].find({
-            "brand": brand,
-            "model": {"$regex": f"^{model}$", "$options": "i"}
-        })
-        phones = await cursor.to_list(length=None)
-        if not phones:
-            return None
-        phones.sort(key=lambda x: x.get("latest_price", {}).get("amount", 0))
-        cached_cheapest = phones[0]
     cursor = db["phones"].find({
         "brand": brand,
         "model": {"$regex": f"^{model}$", "$options": "i"}
     })
     phones = await cursor.to_list(length=None)
+    if not phones:
+        return None
     phones.sort(key=lambda x: x.get("latest_price", {}).get("amount", 0))
+    cached_cheapest = phones[0]
     price_comparison = [{
         "store": p.get("site_fetched").split(".")[0],
         "price": p.get("latest_price", {}).get("amount", 0),

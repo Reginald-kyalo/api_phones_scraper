@@ -121,6 +121,15 @@ function _displayPriceAlarmModal(productData) {
     console.log('Product ID set on button:', productData._id);
   }
   
+  // Populate user email
+  const userEmailSpan = priceAlarmModal.querySelector('#userEmail');
+  const userEmail = localStorage.getItem("userEmail");
+  if (userEmailSpan && userEmail) {
+    userEmailSpan.textContent = userEmail;
+  } else if (userEmailSpan) {
+    userEmailSpan.textContent = "user@example.com"; // fallback
+  }
+  
   // Show modal
   priceAlarmModal.classList.remove('hidden');
   priceAlarmModal.classList.add('active'); // Add this line

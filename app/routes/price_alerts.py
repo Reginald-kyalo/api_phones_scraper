@@ -15,7 +15,7 @@ async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(ve
     user_id = payload.get("user_id")
     user_email = payload.get("email")
     product_id_obj = ObjectId(alert.product_id) if len(alert.product_id) == 24 else alert.product_id
-    product = await db["phones"].find_one({"_id": product_id_obj})
+    product = await db["phones"].find_one({"product_id": product_id_obj})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
@@ -29,17 +29,19 @@ async def create_price_alert(alert: PriceAlertCreate, payload: dict = Depends(ve
             "id": str(product["_id"]),
             "name": product["model"],
             "brand": product_info["brand"],
+            "model": product_info["model"],
             "image": product_info["model_image"],
         },
         "original_price": product.get("latest_price", {}).get("amount", 0),
         "current_price": product.get("latest_price", {}).get("amount", 0),
         "target_price": alert.target_price,
         "triggered": False,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "created_at": datetime.now(),
+        "updated_at": datetime.now()
     }
     result = await db["price_alerts"].insert_one(alert_data)
     return {"id": str(result.inserted_id), "message": "Price alert created successfully"}
+    logger.info(f"Price alert created for user {user_id} on product {alert.product_id} with target price {alert.target_price}")
 
 @router.get("/api/price-alerts")
 async def get_price_alerts(

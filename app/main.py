@@ -34,9 +34,7 @@ async def lifespan(app: FastAPI):
             logger.error(f"Failed to rotate keys: {e}")
     
     # Startup: Initialize caches and databases
-    await init_db()
-    await update_aggregated_products_cache()
-    
+    await init_db()    
     # Setup APScheduler for price monitoring
     try:
         # Add job to run every hour (adjust the interval as needed)

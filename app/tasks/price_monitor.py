@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 async def check_product_price(product_id):
     """Check current price of a product."""
     try:
-        product = await db["products"].find_one({"_id": product_id})
+        product = await db["phones"].find_one({"_id": product_id})
         if not product:
             logger.warning(f"Product {product_id} not found during price check")
             return None
@@ -19,7 +19,7 @@ async def check_product_price(product_id):
         return {
             "product_id": product_id,
             "price": product.get("latest_price", {}).get("amount", 0),
-            "price_date": product.get("latest_price", {}).get("date", datetime.utcnow())
+            "price_date": product.get("latest_price", {}).get("date", datetime.now())
         }
     except Exception as e:
         logger.error(f"Error checking price for product {product_id}: {str(e)}")

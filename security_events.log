@@ -89,3 +89,18 @@
 {"timestamp": "2025-05-07T13:13:51.657610", "event": "Successful login", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
 {"timestamp": "2025-05-07T13:32:14.667308", "event": "Successful login", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
 {"timestamp": "2025-05-07T13:32:42.800943", "event": "Successful login", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-11T09:57:20.862109", "event": "Failed login attempt", "details": {"email": "user@gmail.com"}, "ip": "196.96.234.206", "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"}
+{"timestamp": "2025-05-11T09:57:37.005596", "event": "Signup attempt for existing email", "details": {"email": "user@gmail.com"}}
+{"timestamp": "2025-05-11T09:57:42.658805", "event": "New user registered", "details": {"email": "user1@gmail.com"}}
+{"timestamp": "2025-05-16T14:02:49.686316", "event": "Failed login attempt", "details": {"email": "user1@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-16T14:02:58.868582", "event": "Failed login attempt", "details": {"email": "user1@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-16T14:03:00.356535", "event": "Failed login attempt", "details": {"email": "user1@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-16T14:03:58.752611", "event": "New user registered", "details": {"email": "user2@gmail.com"}}
+{"timestamp": "2025-05-16T16:39:17.758535", "event": "Failed login attempt", "details": {"email": "user1@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-16T16:39:28.160014", "event": "Failed login attempt", "details": {"email": "user5@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-16T16:39:40.806073", "event": "Failed login attempt", "details": {"email": "user5@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-16T16:40:15.353185", "event": "New user registered", "details": {"email": "user3@gmail.com"}}
+{"timestamp": "2025-05-17T11:21:51.716176", "event": "New user registered", "details": {"email": "mutembeiallan20@gmail.com"}}
+{"timestamp": "2025-05-27T13:58:44.148570", "event": "New user registered", "details": {"email": "user6@gmail.com"}}
+{"timestamp": "2025-05-27T14:29:36.862956", "event": "Successful login", "details": {"email": "user6@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-05-27T14:30:32.714527", "event": "Successful login", "details": {"email": "user6@gmail.com"}, "ip": "197.248.166.131", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
