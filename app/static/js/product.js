@@ -249,7 +249,7 @@ export function getProductDataFromCard(productEl, isFavorite = false) {
     product_id: sanitizeInput(productId),
     brand: sanitizeInput(brand),
     model: sanitizeInput(model),
-    cheapest_price: sanitizeInput(price.replace('Ksh ', '')),
+    current_price: sanitizeInput(price.replace('Ksh ', '')),
     model_image: image, // URLs should be validated separately
     price_comparison: price_comparison
   };

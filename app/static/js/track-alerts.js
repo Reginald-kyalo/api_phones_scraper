@@ -52,6 +52,10 @@ let alertsList = null;
 let trackAlertsModal = null;
 let alertTemplate = null;
 let currentAlertsPage = 1;
+const title = str => {
+    if (!str) return ''; // Add null check
+    return str.replace(/\b\w/g, c => c.toUpperCase());
+};
 
 // Render single alert item - moved outside DOMContentLoaded
 function renderAlertItem(alert) {
@@ -66,17 +70,19 @@ function renderAlertItem(alert) {
         const alertItem = alertTemplate.content.cloneNode(true);
         
         // Set alert data
-        const titleEl = alertItem.querySelector('.alert-title');
+        const modelEl = alertItem.querySelector('.alert-model');
         const brandEl = alertItem.querySelector('.alert-brand');
         const imageEl = alertItem.querySelector('.alert-image img');
         const targetPriceEl = alertItem.querySelector('.alert-target-price');
         const currentPriceEl = alertItem.querySelector('.alert-current-price');
         
-        if (titleEl) titleEl.textContent = alert.product.name;
-        if (brandEl) brandEl.textContent = alert.product.brand;
+        const model = title(alert.product.model);
+        const brand = title(alert.product.brand);
+        if (modelEl) modelEl.textContent = model;
+        if (brandEl) brandEl.textContent = brand;
         if (imageEl) {
-            imageEl.src = alert.product.image;
-            imageEl.alt = alert.product.name;
+            imageEl.src = alert.product.model_image;
+            imageEl.alt = alert.product.model;
             // Add loading="lazy" for better performance
             imageEl.loading = "lazy";
         }
@@ -125,18 +131,20 @@ function renderAlertItem(alert) {
         const viewLink = alertItem.querySelector('.btn-view');
         
         if (editBtn) {
-            editBtn.setAttribute('data-alert-id', alert.id);
+            editBtn.setAttribute('data-alert-id', alert.alert_id);
             editBtn.setAttribute('data-alert-data', JSON.stringify(alert));
         }
         
         if (deleteBtn) {
-            deleteBtn.setAttribute('data-alert-id', alert.id);
+            deleteBtn.setAttribute('data-alert-id', alert.alert_id);
         }
         
         if (viewLink) {
             const brandParam = encodeURIComponent(alert.product.brand.toLowerCase());
-            const modelParam = encodeURIComponent(alert.product.name);
+            const modelParam = encodeURIComponent(alert.product.model.toLowerCase());
             viewLink.href = `/?brand=${brandParam}&model=${modelParam}`;
+            viewLink.target = "_blank";
+            viewLink.rel = "noopener noreferrer"; // Security best practice
         }
         
         // Add to DOM
@@ -214,7 +222,6 @@ async function loadUserAlerts(page = 1) {
             if (browseBtn) {
                 browseBtn.addEventListener('click', function() {
                     trackAlertsModal.classList.add('hidden');
-                    window.location.href = '/';
                 });
             }
             
@@ -314,18 +321,18 @@ window.returnToTrackAlertsModal = function() {
 };
 
 // Handle delete functionality globally
-async function deleteAlert(id) {
+async function deleteAlert(alert_id) {
     if (confirm('Are you sure you want to delete this price alert?')) {
         try {
             // Show loading state
-            const alertItem = document.querySelector(`[data-alert-id="${id}"]`)?.closest('.alert-item');
+            const alertItem = document.querySelector(`[data-alert-id="${alert_id}"]`)?.closest('.alert-item');
             if (alertItem) {
                 alertItem.classList.add('deleting');
                 alertItem.innerHTML += '<div class="overlay-loading">Deleting...</div>';
             }
             
             // Use secureApiCall instead of checking for token
-            const response = await secureApiCall(`price-alerts/${id}`, {
+            const response = await secureApiCall(`price-alerts/${alert_id}`, {
                 method: 'DELETE',
             });
             
@@ -374,7 +381,7 @@ async function deleteAlert(id) {
 }
 
 // Define editAlert globally
-function editAlert(id, alertData) {
+function editAlert(alert_id, alertData) {
     // Don't close track alerts modal, just remember it was open
     const trackAlertsWasOpen = trackAlertsModal && !trackAlertsModal.classList.contains('hidden');
     
@@ -382,15 +389,16 @@ function editAlert(id, alertData) {
         trackAlertsModal.classList.add('hidden');
     }
 
+    const brand = title(alertData.product.brand);
     // Create a properly formatted product object from alertData
     const productData = {
-        _id: alertData.product.id,
-        brand: alertData.product.brand,
-        model: alertData.product.name,
-        model_image: alertData.product.image,
-        cheapest_price: alertData.currentPrice,
+        product_id: alertData.product.product_id,
+        brand: brand,
+        model: alertData.product.model,
+        model_image: alertData.product.model_image,
+        current_price: alertData.currentPrice,
         _existingAlert: {
-            id: id,
+            alert_id: alert_id,
             targetPrice: alertData.targetPrice,
             email: alertData.email
         },
@@ -487,7 +495,7 @@ document.addEventListener('DOMContentLoaded', function () {
     alertsList = document.querySelector('.alerts-list');
     alertTemplate = document.querySelector('.alert-item-template');
     
-    const closeBtn = trackAlertsModal?.querySelector('.price-alert-close');
+    const closeBtn = trackAlertsModal?.querySelector('.modal-close');
     const filterSelect = document.getElementById('alertsFilter');
     const sortSelect = document.getElementById('alertsSort');
     const paginationBtns = document.querySelectorAll('.btn-page');

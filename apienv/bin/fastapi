@@ -1,4 +1,4 @@
-#!/home/reginaldkyalo/codes/api_phones_scraper/apienv/bin/python3
+#!/home/reginaldkyalo/codes/api_phones_scraper/apienv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys

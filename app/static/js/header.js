@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = new URL(window.location);
     
     // Use encodeURIComponent for additional safety when adding to URL
-    url.searchParams.set("query", encodeURIComponent(sanitizedQuery));
+    url.searchParams.set("query", sanitizedQuery);
     url.searchParams.delete("brand");
     url.searchParams.delete("model");
     

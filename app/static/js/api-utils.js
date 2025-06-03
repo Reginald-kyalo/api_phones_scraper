@@ -2,6 +2,9 @@
  * API utilities for centralized URL configuration and fetch calls
  */
 
+// Capitalize the first letter of a string
+export const title = str => str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
 // Base URL configuration - use relative URLs in development for flexibility
 export const API_BASE_URL = "/api"; 
 

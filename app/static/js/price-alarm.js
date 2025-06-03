@@ -67,7 +67,7 @@ function _displayPriceAlarmModal(productData) {
   const priceValue = priceAlarmModal.querySelector('.price-value');
   if (priceValue) {
     // Format price appropriately
-    const price = productData.cheapest_price || 0;
+    const price = productData.current_price || 0;
     console.log('Price value found:', price);
     
     try {
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
   console.log('DOM fully loaded and parsed');
   // DOM Elements
   const priceAlarmModal = document.getElementById('priceAlarmModal');
-  const closeBtn = document.querySelector('#priceAlarmModal .price-alarm-close');
+  const closeBtn = document.querySelector('#priceAlarmModal .modal-close');
   const percentageBtns = document.querySelectorAll('.percentage-btn');
   const customPriceInput = document.getElementById('customPrice');
   const setPriceAlertBtn = document.getElementById('setPriceAlert');
@@ -254,7 +254,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (activePercentBtn) {
       const percent = parseInt(activePercentBtn.dataset.percent);
       const priceText = priceAlarmModal.querySelector('.price-value').textContent;
-      // Remove any non-numeric characters except decimal points
       const currentPrice = parseFloat(priceText.replace(/[^0-9.]/g, ''));
       targetPrice = Math.round(currentPrice * (1 - percent / 100));
     } else if (customPriceInput.value) {
@@ -277,11 +276,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
     }
+
     // Determine which email to use
     const userEmail = localStorage.getItem("userEmail");
-    let emailToUse = userEmail; // Default to account email
+    let emailToUse = userEmail;
 
-    // If alternate email section is visible and has a value, use that instead
     if (alternateEmailSection && alternateEmailSection.style.display !== 'none') {
       const altEmail = document.getElementById('alertEmail').value;
       if (altEmail) {
@@ -297,7 +296,6 @@ document.addEventListener('DOMContentLoaded', function () {
       this.disabled = true;
       this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isEdit ? 'Updating' : 'Setting'} Alert...`;
 
-      // Use secureApiCall instead of direct fetch
       const response = await secureApiCall(
         isEdit ? `price-alerts/${alertId}` : 'price-alerts', 
         {
@@ -311,7 +309,18 @@ document.addEventListener('DOMContentLoaded', function () {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to ${isEdit ? 'update' : 'create'} price alert`);
+        // Parse the error response to get the specific message
+        const errorData = await response.json();
+        const errorMessage = errorData.detail || `Failed to ${isEdit ? 'update' : 'create'} price alert`;
+        
+        // Handle specific error cases
+        if (response.status === 400 && errorMessage.includes("Price alert already exists")) {
+          // Show a user-friendly message with options
+          showGlobalMessage('You already have a price alert set for this product. Please edit it instead.', true);
+          return;
+        } else {
+          throw new Error(errorMessage);
+        }
       }
 
       const result = await response.json();
@@ -325,15 +334,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.updateAlertsBadge) {
           window.updateAlertsBadge();
         }
-
-        // Also refresh the alerts list if modal is open
         if (window.refreshAlertsList) {
           window.refreshAlertsList();
         }
       }, 500);
     } catch (error) {
       console.error('Error setting price alert:', error);
-      showGlobalMessage('Failed to set price alert. Please try again.', true);
+      showGlobalMessage(error.message || 'Failed to set price alert. Please try again.', true);
     } finally {
       // Reset button
       this.disabled = false;

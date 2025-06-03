@@ -28,12 +28,12 @@ redis_client = redis.Redis(
     decode_responses=True
 )
 
-MAX_LOGIN_ATTEMPTS = 5
-LOCKOUT_PERIOD = 15  # minutes
+MAX_LOGIN_ATTEMPTS = 10
+LOCKOUT_PERIOD = 1  # minutes
 
 def log_security_event(event_type, details, request=None):
     log_data = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "event": event_type,
         "details": details,
     }
@@ -174,7 +174,7 @@ async def signup(user_data: AuthRequest, response: Response):
         "password_hash": hashed_password,
         "name": name,  # Use the extracted name
         "favorites": [],
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(),
         "last_login": None,
         "failed_login_attempts": 0
     }
@@ -239,7 +239,7 @@ async def login(user_data: AuthRequest, request: Request, response: Response):
         {
             "$set": {
                 "failed_login_attempts": 0,
-                "last_login": datetime.utcnow()
+                "last_login": datetime.now()
             }
         }
     )
@@ -274,7 +274,7 @@ async def request_password_reset(email_request: Dict[str, str], request: Request
     
     # Generate reset token and store in database with expiration
     reset_token = secrets.token_urlsafe(32)
-    expiry = datetime.utcnow() + timedelta(hours=1)
+    expiry = datetime.now() + timedelta(hours=1)
     
     # Always return success even if email doesn't exist (security)
     await db["password_resets"].insert_one({
@@ -299,7 +299,7 @@ async def logout(
     jti = token_data.get("jti")
     if jti:
         # Add token to blacklist with the same expiry as the token
-        exp_time = datetime.fromtimestamp(token_data["exp"]) - datetime.utcnow()
+        exp_time = datetime.fromtimestamp(token_data["exp"]) - datetime.now()
         redis_client.setex(f"revoked_token:{jti}", int(exp_time.total_seconds()), 1)
     
     # Clear cookies
@@ -339,7 +339,7 @@ async def refresh_token(
                 # Invalidate old refresh token
                 jti = payload.get("jti")
                 if jti:
-                    exp_time = datetime.fromtimestamp(payload["exp"]) - datetime.utcnow()
+                    exp_time = datetime.fromtimestamp(payload["exp"]) - datetime.now()
                     redis_client.setex(f"revoked_token:{jti}", int(exp_time.total_seconds()), 1)
                     
                 return {"message": "Token refreshed successfully"}

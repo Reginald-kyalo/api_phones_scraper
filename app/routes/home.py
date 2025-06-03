@@ -1,52 +1,20 @@
-import asyncio
-import json
 from fastapi import APIRouter, Request, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
-import Levenshtein  # Make sure to install this: pip install python-Levenshtein
+import json
+import asyncio
+import logging
 
 from app.database import db, redis_client
 from app.utils.search import search_brands_and_models, normalize_text
-import logging
+from app.utils.cache import get_brands_models_cache
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# In-memory cache (for UI purposes)
-brands_models_cache = {}
-
 def get_templates():
-    from fastapi.templating import Jinja2Templates
     return Jinja2Templates(directory="app/templates")
 
-async def initialize_cache():
-    global brands_models_cache
-    docs = await db["brands_models"].find().to_list(length=None)
-    brands_models_cache = {}
-
-    async def check_model_name_image(brand, models):
-        model_name = models["model"]
-        product_exists = await db["phones"].find_one({
-            "brand": brand.lower(),
-            "model": model_name
-        })
-        if product_exists:
-            return {"model": model_name, "model_image": models.get("model_image", "")}
-        return None
-
-    for doc in docs:
-        brand = doc["brand"]
-        models = doc.get("models", [])
-        tasks = [check_model_name_image(brand, model) for model in models]
-        results = await asyncio.gather(*tasks)
-        valid_models = [r for r in results if r is not None]
-        if valid_models:
-            brands_models_cache[brand.lower()] = {
-                "models": valid_models
-            }
-    logger.info("Cached brands/models.")
-
-# Add these functions near your other cache functions
 async def get_cached_search(query: str):
     """Get cached search results."""
     key = f"search:{normalize_text(query)}"
@@ -67,8 +35,12 @@ async def home(
     brand: str = Query(None),
     model: str = Query(None)
 ):
-    if not brands_models_cache:
-        await initialize_cache()
+    # Get cache from Redis
+    global brands_models_cache
+    brands_models_cache =  await get_brands_models_cache()
+    
+    logger.info(f"Available brands: {list(brands_models_cache.keys())}")
+    logger.info(f"Cache size: {len(brands_models_cache)} brands/models.")
 
     comparison_data = []
     search_results = None
@@ -76,12 +48,16 @@ async def home(
     # Handle search query parameter
     if query and not brand and not model:
         # Try getting from cache first
-        search_results = await get_cached_search(query)
+        #search_results = await get_cached_search(query)
+        if search_results:
+            # Log results from cache
+            logger.info(f"Immediate Search results for '{query}' found in cache: {search_results}")
         
         # If not in cache, perform the search and cache it
         if not search_results:
             search_results = search_brands_and_models(query, brands_models_cache)
-            await cache_search_results(query, search_results)
+            #await cache_search_results(query, search_results)
+            logger.info(f"Processed Search results for '{query}': {search_results}")
         
         # If we have exact brand matches or high-confidence matches
         brand_matches = search_results["brands"]
@@ -190,5 +166,5 @@ async def get_comparison_data(brand: str, model: str):
         "price_comparison": price_comparison
     }
     
-    logger.info(f"Returning product data: product_id={result.get('product_id')}, _id={result.get('_id')}")
+    logger.info(f"Returning product data: product_id={result.get('product_id')}")
     return result

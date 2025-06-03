@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Database settings
-    MONGO_URI: str = "mongodb://root:mongodbmypass!@localhost:27017/?tls=true&tlsCertificateKeyFile=/etc/ssl/mongodb.pem&tlsCAFile=/etc/ssl/ca.crt"
+    MONGO_URI: str = "mongodb://localhost:27017"
     DB_NAME: str = "phone_products"
     
     # Secret key settings
@@ -22,13 +22,17 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = ""
     REDIS_DB: int = 0
     
-    # Email settings
-    SMTP_HOST: str = "localhost"
+    # Email settings (Brevo API)
+    BREVO_API_KEY: str = ""  # Set this in your .env file
+    EMAIL_FROM: str = "pricemonitor@dealsonline.ninja"
+    EMAIL_FROM_NAME: str = "Phone Deals Price Monitor"
+    
+    # Legacy SMTP settings (keeping for reference)
+    SMTP_HOST: str = "smtp-relay.brevo.com"
     SMTP_PORT: int = 587
-    SMTP_USERNAME: str = "dealsonline"
+    SMTP_USERNAME: str = "8e0efb001@smtp-brevo.com"
     SMTP_PASSWORD: str = ""
     SMTP_TLS: bool = True
-    EMAIL_FROM: str = "reginald.kyalo@gmail.com"
     
     model_config = {
         "env_file": ".env",
@@ -60,3 +64,4 @@ class Settings(BaseSettings):
             return True  # If date parsing fails, trigger rotation
 
 settings = Settings()
+

@@ -10,7 +10,6 @@ from apscheduler.triggers.cron import CronTrigger
 from app.config import settings
 from app.database import init_db, close_db
 from app.routes import home, user, favorites, price_alerts
-from app.utils.cache import update_aggregated_products_cache
 from app.security.key_rotation import rotate_keys
 from app.tasks.price_monitor import monitor_price_alerts
 
@@ -36,28 +35,34 @@ async def lifespan(app: FastAPI):
     # Startup: Initialize caches and databases
     await init_db()    
     # Setup APScheduler for price monitoring
+    #try:
+    #    # Add job to run every hour (adjust the interval as needed)
+    #    scheduler.add_job(
+    #        monitor_price_alerts,
+    #        trigger=IntervalTrigger(hours=1),
+    #        id="price_monitoring_hourly",
+    #        replace_existing=True
+    #    )
+    #    
+    #    # Add a daily full refresh at midnight
+    #    scheduler.add_job(
+    #        monitor_price_alerts,
+    #        trigger=CronTrigger(hour=0, minute=0),
+    #        id="price_monitoring_daily",
+    #        replace_existing=True
+    #    )
+    #    
+    #    # Start the scheduler
+    #    scheduler.start()
+    #    logger.info("APScheduler started with price monitoring jobs")
+    #except Exception as e:
+    #    logger.error(f"Failed to start APScheduler: {e}")
+    
     try:
-        # Add job to run every hour (adjust the interval as needed)
-        scheduler.add_job(
-            monitor_price_alerts,
-            trigger=IntervalTrigger(hours=1),
-            id="price_monitoring_hourly",
-            replace_existing=True
-        )
-        
-        # Add a daily full refresh at midnight
-        scheduler.add_job(
-            monitor_price_alerts,
-            trigger=CronTrigger(hour=0, minute=0),
-            id="price_monitoring_daily",
-            replace_existing=True
-        )
-        
-        # Start the scheduler
-        #scheduler.start()
-        #logger.info("APScheduler started with price monitoring jobs")
+        logger.info("Starting initial price monitoring...")
+        await monitor_price_alerts()
     except Exception as e:
-        logger.error(f"Failed to start APScheduler: {e}")
+        logger.error(f"Error during initial price monitoring: {e}")
     
     logger.info("Startup complete")
     

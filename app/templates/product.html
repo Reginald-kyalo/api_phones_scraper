@@ -1,67 +1,849 @@
 <main role="main">
-    <div class="products-container">
-        {% for product in comparison_data %}
-        <div class="product" data-product-id="{{ product._id }}">
-            <div class="product-inner">
-                <figure>
-                    <img src="{{ product.model_image }}" alt="{{ product.brand }} {{ product.model }}"
-                        class="product-image">
-                    <div class="heart-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path
-                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z">
-                            </path>
-                        </svg>
-                    </div>
-                    <!-- Comparison panel inside the image -->
-                    <div class="comparison-panel">
-                        <button class="close-panel">&times;</button>
-                        <h3>compare prices</h3>
-                        <ul class="merchant-list">
-                            {% for pc in product.price_comparison %}
-                            <li data-url="{{ pc.product_url }}">
-                                <span class="merchant-name">{{ pc.store }}</span>
-                                <span class="merchant-price">Ksh {{ pc.price }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </figure>
-                <div class="product-description">
-                    <div class="info">
-                        <h2 class="model">{{ product.model|capitalize }}</h2>
-                        <p class="brand">{{ product.brand|capitalize }}</p>
-                    </div>
-                    <div class="price">Ksh {{ product.cheapest_price }}</div>
-                </div>
-            </div> <!-- end .product-inner -->
-            <!-- Sidebar placed as a sibling to .product-inner -->
-            <div class="product-sidebar">
-                <button class="scales-button">
-                    <div class="scales-icon">
-                        <div class="scales-stand"></div>
-                        <div class="scales-bar"></div>
-                        <div class="scales-chain-left"></div>
-                        <div class="scales-chain-right"></div>
-                        <div class="scales-pan-left"></div>
-                        <div class="scales-pan-right"></div>
-                    </div>
-                    <div class="button-tag">Compare prices</div>
-                </button>
-                <button class="alarm-button">
-                    <div class="alarm-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                            class="bi bi-alarm" viewBox="0 0 16 16">
-                            <path
-                                d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9z" />
-                            <path
-                                d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1zm1.038 3.018a6 6 0 0 1 .924 0 6 6 0 1 1-.924 0M0 3.5c0 .753.333 1.429.86 1.887A8.04 8.04 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5M13.5 1c-.753 0-1.429.333-1.887.86a8.04 8.04 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1" />
-                        </svg>
-                    </div>
-                    <div class="button-tag">Price Alarm</div>
+    <div class="page-container">
+        <!-- Filter sidebar -->
+        <aside class="filter-sidebar">
+            <div class="filter-sidebar__header">
+                <h2 class="filter-sidebar__title">Filters</h2>
+                <button class="filter-sidebar__close-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path d="m13.4 12 9.3-9.3a1 1 0 0 0-1.4-1.4L12 10.6 2.7 1.3a1 1 0 0 0-1.4 1.4l9.3 9.3-9.3 9.3a1 1 0 1 0 1.4 1.4l9.3-9.3 9.3 9.3a1 1 0 0 0 1.4-1.4z"></path>
+                    </svg>
                 </button>
             </div>
+            
+            <!-- Sorting section -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Sorting</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <form class="sort-box__form">
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" checked value="POPULARITY_DESC">Most popular first
+                        </label>
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" value="PRICE_ASC">Price: Low to High
+                        </label>
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" value="PRICE_DESC">Price: High to Low
+                        </label>
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" value="NEWEST">Newest first
+                        </label>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Popular category types -->
+            <div class="filter-box">
+                <div class="filter-box__header">
+                    <span class="filter-box__title">Popular Phone Types</span>
+                </div>
+                <div class="filter-box__content">
+                    <ul class="quick-filter-box">
+                        <li class="quick-filter-box__entry">
+                            <a href="#" class="quick-filter-entry__link">
+                                <div class="quick-filter-entry__image">
+                                    <img alt="5G Phone" src="/static/img/phone-5g.jpg" width="60" height="50">
+                                </div>
+                                <div class="quick-filter-entry__description">
+                                    <div class="quick-filter-entry__name">5G Phone</div>
+                                    <div class="quick-filter-entry__count">157 products</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="quick-filter-box__entry">
+                            <a href="#" class="quick-filter-entry__link">
+                                <div class="quick-filter-entry__image">
+                                    <img alt="Android Phone" src="/static/img/phone-android.jpg" width="60" height="50">
+                                </div>
+                                <div class="quick-filter-entry__description">
+                                    <div class="quick-filter-entry__name">Android Phone</div>
+                                    <div class="quick-filter-entry__count">243 products</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="quick-filter-box__entry">
+                            <a href="#" class="quick-filter-entry__link">
+                                <div class="quick-filter-entry__image">
+                                    <img alt="Dual SIM" src="/static/img/phone-dual-sim.jpg" width="60" height="50">
+                                </div>
+                                <div class="quick-filter-entry__description">
+                                    <div class="quick-filter-entry__name">Dual SIM</div>
+                                    <div class="quick-filter-entry__count">189 products</div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Price filter -->
+            <div class="filter-box">
+                <div class="filter-box__header">
+                    <span class="filter-box__title">Price</span>
+                    <button class="filter-box__reset-button" disabled>Reset</button>
+                </div>
+                <div class="filter-box__content">
+                    <div class="price-slider">
+                        <div class="price-slider__rail">
+                            <div class="price-slider__full-range"></div>
+                            <div class="price-slider__selected-range"></div>
+                            <span class="price-slider__handle price-slider__handle--left"></span>
+                            <span class="price-slider__handle price-slider__handle--right"></span>
+                        </div>
+                    </div>
+                    <form class="price-range-form">
+                        <div class="price-range-form__input-group">
+                            <div class="price-range-form__input">
+                                <input type="number" min="0" placeholder="Min" value="0">
+                                <span class="price-range-form__currency">Ksh</span>
+                            </div>
+                            <span class="price-range-form__separator">-</span>
+                            <div class="price-range-form__input">
+                                <input type="number" min="0" placeholder="Max" value="200000">
+                                <span class="price-range-form__currency">Ksh</span>
+                            </div>
+                            <button class="price-range-form__submit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <path d="M7 23a1 1 0 0 1-.7-1.7l9.3-9.3-9.3-9.3a1 1 0 0 1 1.4-1.4l10 10a1 1 0 0 1 0 1.4l-10 10a1 1 0 0 1-.7.3"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="price-ranges">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Under Ksh 10,000</span>
+                            <span class="checkbox-count">58</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Ksh 10,000 - 25,000</span>
+                            <span class="checkbox-count">94</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Ksh 25,000 - 50,000</span>
+                            <span class="checkbox-count">127</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Over Ksh 50,000</span>
+                            <span class="checkbox-count">86</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Brand filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Brand</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon filter-box__toggle-icon--expanded">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-search">
+                        <input type="text" placeholder="Search brands..." class="filter-search__input">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-search__icon">
+                            <path d="m22.7 21.3-4.8-4.8a9.6 9.6 0 1 0-1.4 1.4l4.7 4.8a1 1 0 1 0 1.5-1.4M3 10.5a7.5 7.5 0 1 1 7.5 7.5A7.5 7.5 0 0 1 3 10.5"></path>
+                        </svg>
+                    </div>
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Samsung</span>
+                            <span class="checkbox-count">86</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Apple</span>
+                            <span class="checkbox-count">32</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Xiaomi</span>
+                            <span class="checkbox-count">58</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Google</span>
+                            <span class="checkbox-count">17</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Huawei</span>
+                            <span class="checkbox-count">29</span>
+                        </label>
+                    </div>
+                    <button class="filter-list__expand-button">+ Show all</button>
+                </div>
+            </div>
+            
+            <!-- Internal Memory -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Internal Memory</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon filter-box__toggle-icon--expanded">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">16 GB</span>
+                            <span class="checkbox-count">12</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">32 GB</span>
+                            <span class="checkbox-count">24</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">64 GB</span>
+                            <span class="checkbox-count">35</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">128 GB</span>
+                            <span class="checkbox-count">87</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">256 GB</span>
+                            <span class="checkbox-count">63</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">512 GB or more</span>
+                            <span class="checkbox-count">29</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RAM Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">RAM</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">8 GB</span>
+                            <span class="checkbox-count">168</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">12 GB</span>
+                            <span class="checkbox-count">88</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">16 GB</span>
+                            <span class="checkbox-count">15</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">6 GB</span>
+                            <span class="checkbox-count">106</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">4 GB</span>
+                            <span class="checkbox-count">160</span>
+                        </label>
+                    </div>
+                    <button class="filter-list__expand-button">+ Show all</button>
+                </div>
+            </div>
+
+            <!-- Battery Properties Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Battery Properties</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Replaceable Battery</span>
+                            <span class="checkbox-count">65</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Energy Saving Mode</span>
+                            <span class="checkbox-count">84</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Wireless Charging</span>
+                            <span class="checkbox-count">187</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Reverse Wireless Charging</span>
+                            <span class="checkbox-count">85</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Fast Charging</span>
+                            <span class="checkbox-count">503</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Battery Capacity Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Battery Capacity</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">6,000+ mAh</span>
+                            <span class="checkbox-count">59</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">5,000 - 6,000 mAh</span>
+                            <span class="checkbox-count">264</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">4,000 - 5,000 mAh</span>
+                            <span class="checkbox-count">186</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">3,000 - 4,000 mAh</span>
+                            <span class="checkbox-count">145</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Under 3,000 mAh</span>
+                            <span class="checkbox-count">208</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connection Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Connection</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">3.5mm Jack</span>
+                            <span class="checkbox-count">440</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Lightning</span>
+                            <span class="checkbox-count">47</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Micro USB</span>
+                            <span class="checkbox-count">167</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">USB-C</span>
+                            <span class="checkbox-count">583</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Features Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Special Features</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">In-display Fingerprint Sensor</span>
+                            <span class="checkbox-count">182</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">LTE Support</span>
+                            <span class="checkbox-count">449</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Camera Key</span>
+                            <span class="checkbox-count">22</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Scratch-resistant Display</span>
+                            <span class="checkbox-count">299</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">NFC</span>
+                            <span class="checkbox-count">567</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Expandable Storage</span>
+                            <span class="checkbox-count">563</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">FM Radio</span>
+                            <span class="checkbox-count">266</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Waterproof</span>
+                            <span class="checkbox-count">275</span>
+                        </label>
+                    </div>
+                    <button class="filter-list__expand-button">+ Show all</button>
+                </div>
+            </div>
+
+            <!-- Display Type Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Display Type</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">AMOLED</span>
+                            <span class="checkbox-count">258</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">LCD</span>
+                            <span class="checkbox-count">165</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">LTPS</span>
+                            <span class="checkbox-count">13</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">OLED</span>
+                            <span class="checkbox-count">86</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">TFT</span>
+                            <span class="checkbox-count">73</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Resolution Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Display Resolution</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">4K</span>
+                            <span class="checkbox-count">3</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Quad HD</span>
+                            <span class="checkbox-count">65</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Full HD</span>
+                            <span class="checkbox-count">441</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">HD</span>
+                            <span class="checkbox-count">215</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Size Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Display Size</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">6.7+ inches</span>
+                            <span class="checkbox-count">156</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">6.5 - 6.7 inches</span>
+                            <span class="checkbox-count">236</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">6.0 - 6.5 inches</span>
+                            <span class="checkbox-count">264</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">5.5 - 6.0 inches</span>
+                            <span class="checkbox-count">48</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Under 5.5 inches</span>
+                            <span class="checkbox-count">45</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Technology Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Camera Technology</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">4K Video Recording</span>
+                            <span class="checkbox-count">321</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">8K Video Recording</span>
+                            <span class="checkbox-count">73</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Dual Camera</span>
+                            <span class="checkbox-count">195</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Triple Camera</span>
+                            <span class="checkbox-count">269</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Quad Camera</span>
+                            <span class="checkbox-count">93</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Optical Image Stabilization</span>
+                            <span class="checkbox-count">256</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Optical Zoom</span>
+                            <span class="checkbox-count">154</span>
+                        </label>
+                    </div>
+                    <button class="filter-list__expand-button">+ Show all</button>
+                </div>
+            </div>
+
+            <!-- AI Function Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">AI Functions</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Apple Intelligence</span>
+                            <span class="checkbox-count">7</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Google Gemini</span>
+                            <span class="checkbox-count">10</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Live Translation</span>
+                            <span class="checkbox-count">20</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Image Processing</span>
+                            <span class="checkbox-count">34</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Improved Photos</span>
+                            <span class="checkbox-count">99</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Color Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Color</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Black</span>
+                            <span class="checkbox-count">232</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Blue</span>
+                            <span class="checkbox-count">105</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Gold</span>
+                            <span class="checkbox-count">29</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Grey</span>
+                            <span class="checkbox-count">67</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Green</span>
+                            <span class="checkbox-count">52</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Red</span>
+                            <span class="checkbox-count">25</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">White</span>
+                            <span class="checkbox-count">59</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Purple</span>
+                            <span class="checkbox-count">22</span>
+                        </label>
+                    </div>
+                    <button class="filter-list__expand-button">+ Show all</button>
+                </div>
+            </div>
+
+            <!-- Operating System Filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Operating System</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Android 14</span>
+                            <span class="checkbox-count">106</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Android 13</span>
+                            <span class="checkbox-count">115</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Android 12</span>
+                            <span class="checkbox-count">83</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">iOS 17</span>
+                            <span class="checkbox-count">44</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">iOS 16</span>
+                            <span class="checkbox-count">4</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Used Products Toggle -->
+            <div class="filter-box">
+                <div class="filter-box__content">
+                    <div class="filter-switch">
+                        <span>Show used products</span>
+                        <label class="filter-switch__toggle">
+                            <input type="checkbox" checked>
+                            <span class="filter-switch__toggle__slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Finder Section (at the top of the filter bar) -->
+            <div class="filter-box product-finder">
+                <div class="product-finder__header">
+                    <div class="product-finder__title-container">
+                        <h2 class="product-finder__title product-finder__title--small">Product Finder</h2>
+                        <div class="tooltip__trigger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="product-finder__info-icon">
+                                <path d="M12 23a11 11 0 1 1 11-11 11 11 0 0 1-11 11m0-20a9 9 0 1 0 9 9 9 9 0 0 0-9-9m0 3a1.3 1.3 0 1 0 1.3 1.3A1.3 1.3 0 0 0 12 6m1 11v-5a1 1 0 0 0-2 0v5a1 1 0 0 0 2 0"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="filter-switch">
+                        <label class="filter-switch__toggle">
+                            <input type="checkbox" checked>
+                            <span class="filter-switch__toggle__slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="product-finder__content product-finder__content--expanded">
+                    <div class="product-finder__conversation">
+                        <p class="product-finder__question">What brand do you prefer for your new smartphone?</p>
+                        <button class="button__default product-finder__answer-button" role="button">Samsung</button>
+                        <button class="button__default product-finder__answer-button" role="button">Apple</button>
+                        <button class="button__default product-finder__skip-button" role="button">Not important</button>
+                        <p class="product-finder__explanation">Samsung and Apple are the most popular brands, but offer different operating systems and functions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter bar footer with action button -->
+            <div class="filter-sidebar__footer">
+                <button class="filter-sidebar__apply-button">Show Results</button>
+            </div>
+        </aside>
+
+        <!-- Products container (existing code) -->
+        <div class="products-container">
+            {% for product in comparison_data %}
+            <div class="product" data-product-id="{{ product.product_id }}">
+                <div class="product-inner">
+                    <figure>
+                        <img src="{{ product.model_image }}" alt="{{ product.brand }} {{ product.model }}"
+                            class="product-image">
+                        <div class="heart-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z">
+                                </path>
+                            </svg>
+                        </div>
+                        <!-- Comparison panel inside the image -->
+                        <div class="comparison-panel">
+                            <button class="close-panel">&times;</button>
+                            <h3>compare prices</h3>
+                            <ul class="merchant-list">
+                                {% for pc in product.price_comparison %}
+                                <li data-url="{{ pc.product_url }}">
+                                    <span class="merchant-name">{{ pc.store }}</span>
+                                    <span class="merchant-price">Ksh {{ pc.price }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </figure>
+                    <div class="product-description">
+                        <div class="info">
+                            <h2 class="model">{{ product.model|capitalize }}</h2>
+                            <p class="brand">{{ product.brand|capitalize }}</p>
+                        </div>
+                        <div class="price">Ksh {{ product.cheapest_price }}</div>
+                    </div>
+                </div> <!-- end .product-inner -->
+                <!-- Sidebar placed as a sibling to .product-inner -->
+                <div class="product-sidebar">
+                    <button class="scales-button">
+                        <div class="scales-icon">
+                            <div class="scales-stand"></div>
+                            <div class="scales-bar"></div>
+                            <div class="scales-chain-left"></div>
+                            <div class="scales-chain-right"></div>
+                            <div class="scales-pan-left"></div>
+                            <div class="scales-pan-right"></div>
+                        </div>
+                        <div class="button-tag">Compare prices</div>
+                    </button>
+                    <button class="alarm-button">
+                        <div class="alarm-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                class="bi bi-alarm" viewBox="0 0 16 16">
+                                <path
+                                    d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9z" />
+                                <path
+                                    d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1zm1.038 3.018a6 6 0 0 1 .924 0 6 6 0 1 1-.924 0M0 3.5c0 .753.333 1.429.86 1.887A8.04 8.04 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5M13.5 1c-.753 0-1.429.333-1.887.86a8.04 8.04 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1" />
+                            </svg>
+                        </div>
+                        <div class="button-tag">Price Alarm</div>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
 </main>

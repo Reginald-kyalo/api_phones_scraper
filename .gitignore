@@ -1,1 +1,5 @@
 others/*
+apienv
+.vscode
+__pycache__
+*.pyc
