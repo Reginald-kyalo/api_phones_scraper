@@ -1,0 +1,235 @@
+        <aside class="filter-sidebar">
+            <div class="filter-sidebar__header">
+                <h2 class="filter-sidebar__title">Filters</h2>
+                <button class="filter-sidebar__close-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path d="m13.4 12 9.3-9.3a1 1 0 0 0-1.4-1.4L12 10.6 2.7 1.3a1 1 0 0 0-1.4 1.4l9.3 9.3-9.3 9.3a1 1 0 1 0 1.4 1.4l9.3-9.3 9.3 9.3a1 1 0 0 0 1.4-1.4z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Sorting section -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Sorting</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <form class="sort-box__form">
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" checked value="POPULARITY_DESC">Most popular first
+                        </label>
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" value="PRICE_ASC">Price: Low to High
+                        </label>
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" value="PRICE_DESC">Price: High to Low
+                        </label>
+                        <label class="radio-button__label">
+                            <input class="radio-button__input" type="radio" value="NEWEST">Newest first
+                        </label>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Popular category types -->
+            <div class="filter-box">
+                <div class="filter-box__header">
+                    <span class="filter-box__title">Popular Phone Types</span>
+                </div>
+                <div class="filter-box__content">
+                    <ul class="quick-filter-box">
+                        <li class="quick-filter-box__entry">
+                            <a href="#" class="quick-filter-entry__link">
+                                <div class="quick-filter-entry__image">
+                                    <img alt="5G Phone" src="/static/img/phone-5g.jpg" width="60" height="50">
+                                </div>
+                                <div class="quick-filter-entry__description">
+                                    <div class="quick-filter-entry__name">5G Phone</div>
+                                    <div class="quick-filter-entry__count">157 products</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="quick-filter-box__entry">
+                            <a href="#" class="quick-filter-entry__link">
+                                <div class="quick-filter-entry__image">
+                                    <img alt="Android Phone" src="/static/img/phone-android.jpg" width="60" height="50">
+                                </div>
+                                <div class="quick-filter-entry__description">
+                                    <div class="quick-filter-entry__name">Android Phone</div>
+                                    <div class="quick-filter-entry__count">243 products</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="quick-filter-box__entry">
+                            <a href="#" class="quick-filter-entry__link">
+                                <div class="quick-filter-entry__image">
+                                    <img alt="Dual SIM" src="/static/img/phone-dual-sim.jpg" width="60" height="50">
+                                </div>
+                                <div class="quick-filter-entry__description">
+                                    <div class="quick-filter-entry__name">Dual SIM</div>
+                                    <div class="quick-filter-entry__count">189 products</div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Price filter -->
+            <div class="filter-box">
+                <div class="filter-box__header">
+                    <span class="filter-box__title">Price</span>
+                    <button class="filter-box__reset-button" disabled>Reset</button>
+                </div>
+                <div class="filter-box__content">
+                    <div class="price-slider">
+                        <div class="price-slider__rail">
+                            <div class="price-slider__full-range"></div>
+                            <div class="price-slider__selected-range"></div>
+                            <span class="price-slider__handle price-slider__handle--left"></span>
+                            <span class="price-slider__handle price-slider__handle--right"></span>
+                        </div>
+                    </div>
+                    <form class="price-range-form">
+                        <div class="price-range-form__input-group">
+                            <div class="price-range-form__input">
+                                <input type="number" min="0" placeholder="Min" value="0">
+                                <span class="price-range-form__currency">Ksh</span>
+                            </div>
+                            <span class="price-range-form__separator">-</span>
+                            <div class="price-range-form__input">
+                                <input type="number" min="0" placeholder="Max" value="200000">
+                                <span class="price-range-form__currency">Ksh</span>
+                            </div>
+                            <button class="price-range-form__submit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <path d="M7 23a1 1 0 0 1-.7-1.7l9.3-9.3-9.3-9.3a1 1 0 0 1 1.4-1.4l10 10a1 1 0 0 1 0 1.4l-10 10a1 1 0 0 1-.7.3"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="price-ranges">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Under Ksh 10,000</span>
+                            <span class="checkbox-count">58</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Ksh 10,000 - 25,000</span>
+                            <span class="checkbox-count">94</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Ksh 25,000 - 50,000</span>
+                            <span class="checkbox-count">127</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Over Ksh 50,000</span>
+                            <span class="checkbox-count">86</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Brand filter -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Brand</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon filter-box__toggle-icon--expanded">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-search">
+                        <input type="text" placeholder="Search brands..." class="filter-search__input">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-search__icon">
+                            <path d="m22.7 21.3-4.8-4.8a9.6 9.6 0 1 0-1.4 1.4l4.7 4.8a1 1 0 1 0 1.5-1.4M3 10.5a7.5 7.5 0 1 1 7.5 7.5A7.5 7.5 0 0 1 3 10.5"></path>
+                        </svg>
+                    </div>
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Samsung</span>
+                            <span class="checkbox-count">86</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Apple</span>
+                            <span class="checkbox-count">32</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Xiaomi</span>
+                            <span class="checkbox-count">58</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Google</span>
+                            <span class="checkbox-count">17</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">Huawei</span>
+                            <span class="checkbox-count">29</span>
+                        </label>
+                    </div>
+                    <button class="filter-list__expand-button">+ Show all</button>
+                </div>
+            </div>
+            
+            <!-- Internal Memory -->
+            <div class="filter-box">
+                <div class="filter-box__header filter-box__header--clickable">
+                    <span class="filter-box__title">Internal Memory</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="filter-box__toggle-icon filter-box__toggle-icon--expanded">
+                        <path d="M12 16a1 1 0 0 1-.7-.3l-6-6a1 1 0 0 1 1.4-1.4l5.3 5.3 5.3-5.3a1 1 0 0 1 1.4 1.4l-6 6a1 1 0 0 1-.7.3"></path>
+                    </svg>
+                </div>
+                <div class="filter-box__content">
+                    <div class="filter-list">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">16 GB</span>
+                            <span class="checkbox-count">12</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">32 GB</span>
+                            <span class="checkbox-count">24</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">64 GB</span>
+                            <span class="checkbox-count">35</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">128 GB</span>
+                            <span class="checkbox-count">87</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">256 GB</span>
+                            <span class="checkbox-count">63</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="checkbox-input">
+                            <span class="checkbox-text">512 GB or more</span>
+                            <span class="checkbox-count">29</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter bar footer with action button -->
+            <div class="filter-sidebar__footer">
+                <button class="filter-sidebar__apply-button">Show Results</button>
+            </div>
+        </aside>
+    </div>
+</main>
