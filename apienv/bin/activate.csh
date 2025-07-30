@@ -13,13 +13,13 @@ setenv VIRTUAL_ENV /home/reginaldkyalo/codes/api_phones_scraper/apienv
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/"bin":$PATH"
+setenv VIRTUAL_ENV_PROMPT apienv
 
 
 set _OLD_VIRTUAL_PROMPT="$prompt"
 
 if (! "$?VIRTUAL_ENV_DISABLE_PROMPT") then
-    set prompt = '(apienv) '"$prompt"
-    setenv VIRTUAL_ENV_PROMPT '(apienv) '
+    set prompt = "("apienv") $prompt:q"
 endif
 
 alias pydoc python -m pydoc

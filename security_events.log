@@ -113,3 +113,5 @@
 {"timestamp": "2025-05-30T09:54:17.600925", "event": "Successful login", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
 {"timestamp": "2025-05-30T11:35:07.150541", "event": "Successful login", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
 {"timestamp": "2025-05-30T14:28:01.493591", "event": "Successful login", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"}
+{"timestamp": "2025-07-09T15:26:08.725749", "event": "Failed login attempt", "details": {"email": "user@gmail.com"}, "ip": "127.0.0.1", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"}
+{"timestamp": "2025-07-09T15:26:22.372416", "event": "New user registered", "details": {"email": "user@gmail.com"}}

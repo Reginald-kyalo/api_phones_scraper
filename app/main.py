@@ -12,6 +12,7 @@ from app.database import init_db, close_db
 from app.routes import home, user, favorites, price_alerts
 from app.security.key_rotation import rotate_keys
 from app.tasks.price_monitor import monitor_price_alerts
+from app.utils.cache import get_brands_models_cache
 
 # Configure logging
 logging.basicConfig(
@@ -25,15 +26,16 @@ scheduler = AsyncIOScheduler()
 
 async def lifespan(app: FastAPI):
     # Check if key rotation is needed
-    if settings.rotation_needed:
-        try:
-            rotate_keys()
-            logger.info("Secret keys rotated on startup")
-        except Exception as e:
-            logger.error(f"Failed to rotate keys: {e}")
-    
+    #if settings.rotation_needed:
+    #    try:
+    #        rotate_keys()
+    #        logger.info("Secret keys rotated on startup")
+    #    except Exception as e:
+    #        logger.error(f"Failed to rotate keys: {e}")
+    #
     # Startup: Initialize caches and databases
-    await init_db()    
+    await init_db()
+    await get_brands_models_cache()
     # Setup APScheduler for price monitoring
     #try:
     #    # Add job to run every hour (adjust the interval as needed)

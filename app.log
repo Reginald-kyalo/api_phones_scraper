@@ -1,0 +1,14 @@
+INFO:     Started server process [20072]
+INFO:     Waiting for application startup.
+2025-07-09 15:22:49,707 - app.main - INFO - Starting initial price monitoring...
+2025-07-09 15:22:49,711 - app.tasks.price_monitor - INFO - Starting price monitoring for 0 alerts
+2025-07-09 15:22:49,712 - app.tasks.price_monitor - INFO - Completed price monitoring. Processed 0/0 alerts, updated 0
+2025-07-09 15:22:49,712 - app.main - INFO - Startup complete
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-07-09 15:22:56,931 - app.main - ERROR - Error shutting down APScheduler: 'NoneType' object has no attribute 'call_soon_threadsafe'
+2025-07-09 15:22:56,933 - app.main - INFO - Shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20072]
