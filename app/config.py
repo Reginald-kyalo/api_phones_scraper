@@ -3,7 +3,7 @@ from datetime import datetime
 
 class Settings(BaseSettings):
     HOST: str = "127.0.0.1"
-    PORT: int = 8000
+    PORT: int = 10000
     DEBUG: bool = False  # Keep False for security
     
     # ngrok settings
