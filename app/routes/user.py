@@ -11,7 +11,7 @@ import json
 import jwt
 
 from app.models import AuthRequest
-from app.database import db
+from app.database import db, redis_client
 from app.auth import REFRESH_COOKIE_NAME, pwd_context, verify_token, create_tokens, set_auth_cookies, clear_auth_cookies
 from app.config import settings  # Add this import for Redis settings
 
@@ -19,14 +19,6 @@ from app.config import settings  # Add this import for Redis settings
 security_logger = logging.getLogger("security")
 
 router = APIRouter()
-
-# Initialize Redis connection
-redis_client = redis.Redis(
-    host=settings.REDIS_HOST, 
-    port=settings.REDIS_PORT,
-    password=settings.REDIS_PASSWORD,
-    decode_responses=True
-)
 
 MAX_LOGIN_ATTEMPTS = 10
 LOCKOUT_PERIOD = 1  # minutes
