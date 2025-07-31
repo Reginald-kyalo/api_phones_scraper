@@ -4,8 +4,8 @@ from redis.asyncio import Redis
 from app.config import settings
 import os
 
-mongo_uri = os.getenv("MONGO_URI", settings.MONGO_URI)
-redis_url = os.getenv("REDIS_URL", settings.REDIS_URL)
+redis_url = os.getenv("REDIS_URL")
+mongo_uri = os.getenv("MONGO_URI")
 # MongoDB client and database
 client: AsyncIOMotorClient = AsyncIOMotorClient(mongo_uri, serverSelectionTimeoutMS=5000)
 db: AsyncIOMotorDatabase = client[settings.DB_NAME]
