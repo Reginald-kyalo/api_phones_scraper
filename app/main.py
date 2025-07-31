@@ -109,6 +109,12 @@ async def set_security_headers(request: Request, call_next):
     return response
 
 # Register routes
+
+# Health check endpoint for Render or other services
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
+
 app.include_router(home.router)
 app.include_router(user.router)
 app.include_router(favorites.router)
