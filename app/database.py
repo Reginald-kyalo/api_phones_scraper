@@ -2,7 +2,10 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import server_api
 from redis.asyncio import Redis
 from app.config import settings
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 redis_url = os.getenv("REDIS_URL")
 mongo_uri = os.getenv("MONGO_URI")

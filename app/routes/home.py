@@ -120,7 +120,7 @@ async def home(
         # Default to showing a sampling of data
         sample_tasks = []
         for brand, brand_data in list(brands_models_cache.items()):
-            for model in brand_data["models"]:
+            for model in brand_data["models"][:2]:  # Limit to first 2 models per brand
                 sample_tasks.append(get_comparison_data(brand, model["model"]))
         
         results = await asyncio.gather(*sample_tasks)

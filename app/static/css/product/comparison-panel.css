@@ -45,17 +45,36 @@
   overflow-y: auto;
 }
 
+
 .merchant-list li {
   display: flex;
-  flex-direction: column; /* Stack website name and price vertically */
-  align-items: center;
-  gap: 4px; /* space between name and price */
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
+  gap: 4px;
   padding: 8px 0;
-  min-height: 40px; /* ensure enough room for both lines */
+  min-height: 40px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background-color 0.2s ease;
   line-height: 1.2;
+  position: relative;
+}
+
+.external-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0;
+  height: 24px;
+}
+
+.external-link-icon svg {
+  display: block;
+  margin-left: 4px;
 }
 
 .merchant-list li:hover {
