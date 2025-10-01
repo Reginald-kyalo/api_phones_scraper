@@ -6,7 +6,9 @@ import { loadAndShowFavorites } from "./favorites.js";
 import { initSidePanel } from "./side-panel.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const modelsByBrand = window.modelsByBrand || {}; // Brand-to-model mapping.
+  const modelsByBrand = window.modelsByBrand || {}; // Brand-to-model mapping for selected category
+  const allCategoriesCache = window.allCategoriesCache || {}; // All categories cache
+  const selectedCategory = window.selectedCategory; // Current selected category
 
   // Read URL parameters.
   const favBtn = document.querySelector(".btn-favorites");
@@ -152,49 +154,167 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateHeaderHeight = () => {
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty("--header-height", `${headerHeight}px`);
-    const brandModelSelector = document.querySelector(".brand-model-selector");
-    if (brandModelSelector) {
-      brandModelSelector.style.top = `${headerHeight}px`;
+    const categoryBrandSelector = document.querySelector(".category-brand-selector");
+    if (categoryBrandSelector) {
+      categoryBrandSelector.style.top = `${headerHeight}px`;
       }
     };
     updateHeaderHeight();
     window.addEventListener("resize", updateHeaderHeight);
 
     // ---------------
-    // Brands & Models Selector (Main Page)
+    // Categories & Brands Selector (Main Page)
     // ---------------
-    function displayBrands() {
+    function displayCategories() {
       const container = document.getElementById("selector-container");
-      container.querySelectorAll(".selector-button.model").forEach((btn) => btn.remove());
-      const existingModelsContainer = container.querySelector(".models-container");
-      if (existingModelsContainer) existingModelsContainer.remove();
+      if (!container) {
+        // Container doesn't exist (selector is hidden on some pages)
+        return;
+      }
+      container.innerHTML = ""; // Clear all existing content
 
-      if (container.querySelectorAll(".selector-button.brand").length === 0) {
-        // Create a wrapper for the brands container and scroll arrows
-        const brandsWrapper = document.createElement("div");
-        brandsWrapper.classList.add("brands-wrapper");
-        
-        // Create left arrow
-        const leftArrow = document.createElement("button");
-        leftArrow.classList.add("brand-scroll-arrow", "left-arrow");
-        leftArrow.innerHTML = "&#10094;"; // Using chevron character instead of &lt;
-        leftArrow.setAttribute("aria-label", "Scroll brands left");
-        
-        // Create right arrow
-        const rightArrow = document.createElement("button");
-        rightArrow.classList.add("brand-scroll-arrow", "right-arrow");
-        rightArrow.innerHTML = "&#10095;"; // Using chevron character instead of &gt;
-        rightArrow.setAttribute("aria-label", "Scroll brands right");
-        
-        // Create the brands container
-        const brandsContainer = document.createElement("div");
-        brandsContainer.classList.add("brands-row", "scrollable-brands");
+      // Create a wrapper for the categories container and scroll arrows
+      const categoriesWrapper = document.createElement("div");
+      categoriesWrapper.classList.add("categories-wrapper");
+      
+      // Create left arrow
+      const leftArrow = document.createElement("button");
+      leftArrow.classList.add("category-scroll-arrow", "left-arrow");
+      leftArrow.innerHTML = "&#10094;";
+      leftArrow.setAttribute("aria-label", "Scroll categories left");
+      
+      // Create right arrow
+      const rightArrow = document.createElement("button");
+      rightArrow.classList.add("category-scroll-arrow", "right-arrow");
+      rightArrow.innerHTML = "&#10095;";
+      rightArrow.setAttribute("aria-label", "Scroll categories right");
+      
+      // Create the categories container
+      const categoriesContainer = document.createElement("div");  
+      categoriesContainer.classList.add("categories-row", "scrollable-categories");
 
-        const brands = Object.keys(window.modelsByBrand || {});
+      // Add home button as the first item (only on category pages)
+      if (selectedCategory) {
+        const homeButton = document.createElement("button");
+        homeButton.classList.add("selector-button", "category", "home-button");
+        homeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>';
+        homeButton.setAttribute("data-category", "home");
+        homeButton.setAttribute("title", "Home");
+        homeButton.addEventListener("click", (e) => {
+          document.querySelectorAll(".selector-button.category").forEach((btn) => btn.classList.remove("active"));
+          e.target.classList.add("active");
+          
+          // Navigate to the main page
+          window.location.href = `/`;
+        });
+        categoriesContainer.appendChild(homeButton);
+      }
+
+      const categories = Object.keys(allCategoriesCache);
+      // Sort categories with phones first, then alphabetically
+      const sortedCategories = categories.sort((a, b) => {
+        if (a === "phones") return -1;
+        if (b === "phones") return 1;
+        return a.localeCompare(b);
+      });
+
+      sortedCategories.forEach((category) => {
+        const button = document.createElement("button");
+        button.classList.add("selector-button", "category");
+        button.textContent = category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
+        button.setAttribute("data-category", category.toLowerCase());
+        button.addEventListener("click", (e) => {
+          document.querySelectorAll(".selector-button.category").forEach((btn) => btn.classList.remove("active"));
+          e.target.classList.add("active");
+          
+          // Navigate to the category page using the new routing
+          window.location.href = `/category/${category.toLowerCase()}`;
+        });
+        categoriesContainer.appendChild(button);
+      });
+      
+      // Add components to the wrapper
+      categoriesWrapper.appendChild(leftArrow);
+      categoriesWrapper.appendChild(categoriesContainer);
+      categoriesWrapper.appendChild(rightArrow);
+      container.appendChild(categoriesWrapper);
+      
+      // Add scroll functionality to arrows
+      leftArrow.addEventListener('click', () => {
+        categoriesContainer.scrollBy({ left: -200, behavior: 'smooth' });
+      });
+      
+      rightArrow.addEventListener('click', () => {
+        categoriesContainer.scrollBy({ left: 200, behavior: 'smooth' });
+      });
+      
+      // Add horizontal scroll behavior for mouse wheel
+      categoriesContainer.addEventListener('wheel', function(event) {
+        if (event.deltaY !== 0) {
+          event.preventDefault();
+          const scrollMultiplier = 2;
+          this.scrollLeft += event.deltaY * scrollMultiplier;
+        }
+      }, { passive: false });
+      
+      // Update arrow visibility based on scroll position
+      function updateArrowVisibility() {
+        const threshold = 50;
+        
+        const showLeftArrow = categoriesContainer.scrollLeft > threshold;
+        if (showLeftArrow && leftArrow.classList.contains('hidden')) {
+          leftArrow.classList.remove('hidden');
+        } else if (!showLeftArrow && !leftArrow.classList.contains('hidden')) {
+          leftArrow.classList.add('hidden');
+        }
+        
+        const scrollableDistance = categoriesContainer.scrollWidth - categoriesContainer.clientWidth;
+        const showRightArrow = categoriesContainer.scrollLeft < scrollableDistance - threshold;
+        
+        if (showRightArrow && rightArrow.classList.contains('hidden')) {
+          rightArrow.classList.remove('hidden');
+        } else if (!showRightArrow && !rightArrow.classList.contains('hidden')) {
+          rightArrow.classList.add('hidden');
+        }
+      }
+      
+      updateArrowVisibility();
+      categoriesContainer.addEventListener('scroll', updateArrowVisibility);
+      window.addEventListener('resize', updateArrowVisibility);
+
+      // Highlight selected category from URL parameters
+      const params = new URLSearchParams(window.location.search);
+      const selectedCategoryParam = params.get("category") || selectedCategory;
+      if (selectedCategoryParam) {
+        const categoryButton = container.querySelector(
+          `.selector-button.category[data-category="${selectedCategoryParam.toLowerCase()}"]`
+        );
+        if (categoryButton) {
+          categoryButton.classList.add("active");
+          displayBrands(selectedCategoryParam);
+        }
+      }
+    }
+
+    function displayBrands(category) {
+      const container = document.getElementById("selector-container");
+      if (!container) {
+        // Container doesn't exist (e.g., on main page where selector is hidden)
+        return;
+      }
+      const existingBrandsContainer = container.querySelector(".brands-container");
+      if (existingBrandsContainer) existingBrandsContainer.remove();
+
+      const brandsContainer = document.createElement("div");
+      brandsContainer.classList.add("brands-container");
+
+      const categoryData = allCategoriesCache[category.toLowerCase()];
+      if (categoryData && Object.keys(categoryData).length > 0) {
+        const brands = Object.keys(categoryData);
         // Sort brands by popularity (model count)
         const sortedBrands = [...brands].sort((a, b) => {
-          const aModelsCount = window.modelsByBrand[a]?.models?.length || 0;
-          const bModelsCount = window.modelsByBrand[b]?.models?.length || 0;
+          const aModelsCount = categoryData[a]?.models?.length || 0;
+          const bModelsCount = categoryData[b]?.models?.length || 0;
           return bModelsCount - aModelsCount; // Most popular first
         });
 
@@ -202,127 +322,28 @@ document.addEventListener("DOMContentLoaded", () => {
           const button = document.createElement("button");
           button.classList.add("selector-button", "brand");
           button.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
-          button.setAttribute("data-brand", brand.toLowerCase());
-          button.addEventListener("click", (e) => {
-            document.querySelectorAll(".selector-button.brand").forEach((btn) => btn.classList.remove("active"));
-            e.target.classList.add("active");
-            displayModels(brand);
-          });
+          button.addEventListener("click", () => selectBrand(category, brand));
           brandsContainer.appendChild(button);
         });
-        
-        // Add components to the wrapper
-        brandsWrapper.appendChild(leftArrow);
-        brandsWrapper.appendChild(brandsContainer);
-        brandsWrapper.appendChild(rightArrow);
-        container.appendChild(brandsWrapper);
-        
-        // Add scroll functionality to arrows
-        leftArrow.addEventListener('click', () => {
-          brandsContainer.scrollBy({ left: -200, behavior: 'smooth' });
-        });
-        
-        rightArrow.addEventListener('click', () => {
-          brandsContainer.scrollBy({ left: 200, behavior: 'smooth' });
-        });
-        
-        // Add horizontal scroll behavior for mouse wheel
-        brandsContainer.addEventListener('wheel', function(event) {
-          if (event.deltaY !== 0) {
-            event.preventDefault();
-            
-            // Scroll horizontally instead of vertically
-            // Use a multiplier to control scroll speed
-            const scrollMultiplier = 2;
-            this.scrollLeft += event.deltaY * scrollMultiplier;
-          }
-        }, { passive: false });
-        
-        // Update arrow visibility based on scroll position
-        function updateArrowVisibility() {
-          // Add larger threshold to create a buffer zone for smoother transitions
-          const threshold = 50; // Increased from 10 to 50
-          
-          // Left arrow visibility
-          const showLeftArrow = brandsContainer.scrollLeft > threshold;
-          if (showLeftArrow && leftArrow.classList.contains('hidden')) {
-            leftArrow.classList.remove('hidden');
-          } else if (!showLeftArrow && !leftArrow.classList.contains('hidden')) {
-            leftArrow.classList.add('hidden');
-          }
-          
-          // Right arrow visibility
-          const scrollableDistance = brandsContainer.scrollWidth - brandsContainer.clientWidth;
-          const showRightArrow = brandsContainer.scrollLeft < scrollableDistance - threshold;
-          
-          if (showRightArrow && rightArrow.classList.contains('hidden')) {
-            rightArrow.classList.remove('hidden');
-          } else if (!showRightArrow && !rightArrow.classList.contains('hidden')) {
-            rightArrow.classList.add('hidden');
-          }
-        }
-        
-        // Initial check for arrow visibility
-        updateArrowVisibility();
-        
-        // Update arrow visibility on scroll
-        brandsContainer.addEventListener('scroll', updateArrowVisibility);
-        
-        // Update on window resize as well
-        window.addEventListener('resize', updateArrowVisibility);
-      }
-
-      // Highlight selected brand from URL parameters.
-      const params = new URLSearchParams(window.location.search);
-      const selectedBrandParam = params.get("brand");
-      if (selectedBrandParam) {
-        const brandButton = container.querySelector(
-          `.selector-button.brand[data-brand="${selectedBrandParam.toLowerCase()}"]`
-        );
-        if (brandButton) {
-          brandButton.classList.add("active");
-          displayModels(selectedBrandParam);
-        }
-      }
-    }
-
-    function displayModels(brand) {
-      const container = document.getElementById("selector-container");
-      const existingModelsContainer = container.querySelector(".models-container");
-      if (existingModelsContainer) existingModelsContainer.remove();
-
-      const modelsContainer = document.createElement("div");
-      modelsContainer.classList.add("models-container");
-
-      const brandData = window.modelsByBrand[brand.toLowerCase()];
-      if (brandData && brandData.models && brandData.models.length > 0) {
-        brandData.models.forEach((modelObj) => {
-          const button = document.createElement("button");
-          button.classList.add("selector-button", "model");
-          button.textContent = modelObj.model;
-          button.addEventListener("click", () => selectModel(brand, modelObj.model));
-          modelsContainer.appendChild(button);
-        });
       } else {
-        const noModelsMsg = document.createElement("p");
-        noModelsMsg.textContent = "No models available for this brand";
-        noModelsMsg.style.textAlign = "center";
-        noModelsMsg.style.width = "100%";
-        modelsContainer.appendChild(noModelsMsg);
+        const noBrandsMsg = document.createElement("p");
+        noBrandsMsg.textContent = "No brands available for this category";
+        noBrandsMsg.style.textAlign = "center";
+        noBrandsMsg.style.width = "100%";
+        brandsContainer.appendChild(noBrandsMsg);
       }
-      container.appendChild(modelsContainer);
+      container.appendChild(brandsContainer);
     }
 
-    function selectModel(brand, model) {
-      const url = new URL(window.location);
-      url.searchParams.set("brand", brand.toLowerCase());
-      url.searchParams.set("model", model.toLowerCase());
-      url.searchParams.delete("query");
-      window.location = url;
+    function selectBrand(category, brand) {
+      // Navigate to category page with brand filter using new routing
+      window.location.href = `/category/${category.toLowerCase()}?brand=${brand.toLowerCase()}`;
     }
 
-    // Initialize main page brand/model selector.
-    displayBrands();
+    // Initialize main page category/brand selector (only if container exists).
+    if (document.getElementById("selector-container")) {
+      displayCategories();
+    }
     initSidePanel();
 
     // ---------------

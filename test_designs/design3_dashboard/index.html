@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealsDash - Your Personal Shopping Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>DealsDash</h1>
+            </div>
+            <button class="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <h3>Browse</h3>
+                <ul>
+                    <li class="nav-item active">
+                        <a href="#dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#electronics">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Electronics</span>
+                            <span class="badge">2.4K</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#computers">
+                            <i class="fas fa-laptop"></i>
+                            <span>Computers</span>
+                            <span class="badge">1.8K</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#beauty">
+                            <i class="fas fa-palette"></i>
+                            <span>Beauty & Health</span>
+                            <span class="badge">3.2K</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#gaming">
+                            <i class="fas fa-gamepad"></i>
+                            <span>Gaming</span>
+                            <span class="badge">950</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#home">
+                            <i class="fas fa-couch"></i>
+                            <span>Home & Living</span>
+                            <span class="badge">4.1K</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#fashion">
+                            <i class="fas fa-tshirt"></i>
+                            <span>Fashion</span>
+                            <span class="badge">5.6K</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="nav-section">
+                <h3>My Account</h3>
+                <ul>
+                    <li class="nav-item">
+                        <a href="#favorites">
+                            <i class="fas fa-heart"></i>
+                            <span>Favorites</span>
+                            <span class="badge accent">12</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#alerts">
+                            <i class="fas fa-bell"></i>
+                            <span>Price Alerts</span>
+                            <span class="badge warning">5</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#history">
+                            <i class="fas fa-history"></i>
+                            <span>Search History</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <h4>Guest User</h4>
+                    <p>Free Plan</p>
+                </div>
+                <button class="profile-menu">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Dashboard</h1>
+                <p class="date">Today, September 15, 2025</p>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" placeholder="Search products, brands, categories..." class="search-input">
+                        <button class="search-filter">
+                            <i class="fas fa-sliders-h"></i>
+                        </button>
+                    </div>
+                    <div class="quick-filters">
+                        <button class="filter-chip active">All</button>
+                        <button class="filter-chip">On Sale</button>
+                        <button class="filter-chip">New Arrivals</button>
+                        <button class="filter-chip">Trending</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="header-btn" data-tooltip="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="header-btn" data-tooltip="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <div class="theme-switcher">
+                    <button class="theme-btn" data-theme="light">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button class="theme-btn active" data-theme="dark">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard">
+            <!-- Stats Cards -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon products">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>12,450</h3>
+                            <p>Total Products</p>
+                            <span class="stat-change positive">+5.2%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon savings">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>$2,340</h3>
+                            <p>Total Savings</p>
+                            <span class="stat-change positive">+12.8%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon deals">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>156</h3>
+                            <p>Hot Deals</p>
+                            <span class="stat-change positive">+8.4%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon alerts">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>23</h3>
+                            <p>Active Alerts</p>
+                            <span class="stat-change neutral">+0%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-search-plus"></i>
+                        </div>
+                        <h3>Find Deals</h3>
+                        <p>Search for the best prices</p>
+                    </button>
+                    
+                    <button class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-bell-slash"></i>
+                        </div>
+                        <h3>Set Alert</h3>
+                        <p>Get notified of price drops</p>
+                    </button>
+                    
+                    <button class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3>Wishlist</h3>
+                        <p>Save items you love</p>
+                    </button>
+                    
+                    <button class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>Compare</h3>
+                        <p>Compare prices across stores</p>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Main Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Trending Products Widget -->
+                <section class="widget trending-widget">
+                    <div class="widget-header">
+                        <h2>
+                            <i class="fas fa-fire"></i>
+                            Trending Now
+                        </h2>
+                        <button class="widget-menu">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="trending-list">
+                        <div class="trending-item">
+                            <div class="item-rank">1</div>
+                            <div class="item-image">
+                                <img src="https://via.placeholder.com/60x60/667eea/ffffff?text=📱" alt="iPhone 15">
+                            </div>
+                            <div class="item-info">
+                                <h4>iPhone 15 Pro Max</h4>
+                                <p>Starting at $1,199</p>
+                            </div>
+                            <div class="item-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+15%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="trending-item">
+                            <div class="item-rank">2</div>
+                            <div class="item-image">
+                                <img src="https://via.placeholder.com/60x60/764ba2/ffffff?text=💻" alt="MacBook">
+                            </div>
+                            <div class="item-info">
+                                <h4>MacBook Pro M3</h4>
+                                <p>Starting at $1,999</p>
+                            </div>
+                            <div class="item-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="trending-item">
+                            <div class="item-rank">3</div>
+                            <div class="item-image">
+                                <img src="https://via.placeholder.com/60x60/f093fb/ffffff?text=🎮" alt="Gaming">
+                            </div>
+                            <div class="item-info">
+                                <h4>PS5 Console</h4>
+                                <p>Starting at $499</p>
+                            </div>
+                            <div class="item-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="trending-item">
+                            <div class="item-rank">4</div>
+                            <div class="item-image">
+                                <img src="https://via.placeholder.com/60x60/4facfe/ffffff?text=✨" alt="Beauty">
+                            </div>
+                            <div class="item-info">
+                                <h4>Skincare Bundle</h4>
+                                <p>Starting at $89</p>
+                            </div>
+                            <div class="item-trend">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>-3%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Price Alerts Widget -->
+                <section class="widget alerts-widget">
+                    <div class="widget-header">
+                        <h2>
+                            <i class="fas fa-bell"></i>
+                            Recent Alerts
+                        </h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    
+                    <div class="alerts-list">
+                        <div class="alert-item active">
+                            <div class="alert-icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>iPhone 15 Pro</h4>
+                                <p>Price dropped to $1,099</p>
+                                <span class="alert-time">2 minutes ago</span>
+                            </div>
+                            <button class="alert-action">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="alert-item">
+                            <div class="alert-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>MacBook Air M3</h4>
+                                <p>Back in stock</p>
+                                <span class="alert-time">1 hour ago</span>
+                            </div>
+                            <button class="alert-action">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="alert-item">
+                            <div class="alert-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>Gaming Laptop</h4>
+                                <p>25% off sale started</p>
+                                <span class="alert-time">3 hours ago</span>
+                            </div>
+                            <button class="alert-action">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Categories Overview -->
+                <section class="widget categories-widget">
+                    <div class="widget-header">
+                        <h2>
+                            <i class="fas fa-th-large"></i>
+                            Categories
+                        </h2>
+                        <div class="widget-controls">
+                            <button class="control-btn active" data-view="grid">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="control-btn" data-view="list">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="categories-grid">
+                        <div class="category-card electronics">
+                            <div class="category-header">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span class="category-count">2.4K</span>
+                            </div>
+                            <h3>Electronics</h3>
+                            <div class="category-stats">
+                                <span class="avg-savings">Avg. savings: $127</span>
+                            </div>
+                        </div>
+                        
+                        <div class="category-card computers">
+                            <div class="category-header">
+                                <i class="fas fa-laptop"></i>
+                                <span class="category-count">1.8K</span>
+                            </div>
+                            <h3>Computers</h3>
+                            <div class="category-stats">
+                                <span class="avg-savings">Avg. savings: $234</span>
+                            </div>
+                        </div>
+                        
+                        <div class="category-card beauty">
+                            <div class="category-header">
+                                <i class="fas fa-palette"></i>
+                                <span class="category-count">3.2K</span>
+                            </div>
+                            <h3>Beauty</h3>
+                            <div class="category-stats">
+                                <span class="avg-savings">Avg. savings: $45</span>
+                            </div>
+                        </div>
+                        
+                        <div class="category-card gaming">
+                            <div class="category-header">
+                                <i class="fas fa-gamepad"></i>
+                                <span class="category-count">950</span>
+                            </div>
+                            <h3>Gaming</h3>
+                            <div class="category-stats">
+                                <span class="avg-savings">Avg. savings: $89</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent Searches -->
+                <section class="widget recent-widget">
+                    <div class="widget-header">
+                        <h2>
+                            <i class="fas fa-history"></i>
+                            Recent Searches
+                        </h2>
+                        <button class="clear-all">Clear All</button>
+                    </div>
+                    
+                    <div class="recent-list">
+                        <div class="recent-item">
+                            <div class="recent-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="recent-content">
+                                <h4>iPhone 15 Pro Max</h4>
+                                <p>Found 47 results</p>
+                            </div>
+                            <span class="recent-time">5m ago</span>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="recent-content">
+                                <h4>Gaming Laptop RTX 4070</h4>
+                                <p>Found 23 results</p>
+                            </div>
+                            <span class="recent-time">1h ago</span>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="recent-content">
+                                <h4>Skincare routine set</h4>
+                                <p>Found 156 results</p>
+                            </div>
+                            <span class="recent-time">2h ago</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Price Chart Widget -->
+                <section class="widget chart-widget">
+                    <div class="widget-header">
+                        <h2>
+                            <i class="fas fa-chart-line"></i>
+                            Price Trends
+                        </h2>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-period="7d">7D</button>
+                            <button class="chart-btn" data-period="1m">1M</button>
+                            <button class="chart-btn" data-period="3m">3M</button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <div class="chart-line"></div>
+                            <div class="chart-points">
+                                <div class="chart-point"></div>
+                                <div class="chart-point"></div>
+                                <div class="chart-point active"></div>
+                                <div class="chart-point"></div>
+                                <div class="chart-point"></div>
+                            </div>
+                            <div class="chart-info">
+                                <h3>Average Price Trend</h3>
+                                <p>7-day average showing 5.2% decrease</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Deals - Main</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Arvo|Montserrat&display=swap" rel="stylesheet" />
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <!-- Design System CSS (Load first) -->
+  <link rel="stylesheet" href="/static/css/header/variables.css" />
+  <link rel="stylesheet" href="/static/css/design-system.css" />
+  <!-- Component CSS -->
+  <link rel="stylesheet" href="/static/css/base-modal.css" />
+  <link rel="stylesheet" href="/static/css/header.css" />
+  <link rel="stylesheet" href="/static/css/product.css" />
+  <link rel="stylesheet" href="/static/css/auth.css" />
+  <link rel="stylesheet" href="/static/css/price-alarm.css" />
+  <link rel="stylesheet" href="/static/css/side-panel.css" />
+  <link rel="stylesheet" href="/static/css/track-alerts.css" />
+  <link rel="stylesheet" href="/static/css/favorites.css" />
+  <link rel="stylesheet" href="/static/css/global.css" />
+  <link rel="stylesheet" href="/static/css/mainpage.css" />
+</head>
+
+<body>
+  <!-- Global message container -->
+  <div id="globalMessage" class="global-message"></div>
+
+  {% include "header.html" %} {% include "side-panel.html" %}
+
+  <div class="main-page-container">
+    <!-- Product Sections -->
+    {% for section in sections_data %}
+    <div class="category-section">
+      <div class="section-header">
+        <h2 class="section-title">{{ section.title }}</h2>
+        <a href="/phones" class="view-all-link" data-category="{{ section.category }}">
+          View All {{ section.category.title() }}
+        </a>
+      </div>
+
+      {% if section.products %}
+      <div class="products-scroll-container">
+        <div class="products-grid" data-category="{{ section.category }}">
+          {% for product in section.products %}
+          <div class="product" data-product-id="{{ product.product_id }}" data-category="{{ product.category }}">
+            <div class="product-inner">
+              <figure>
+                <img src="{{ product.model_image }}" alt="{{ product.model }}" class="product-image" />
+                <div class="heart-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z">
+                    </path>
+                  </svg>
+                </div>
+                <div class="comparison-panel">
+                  <button class="close-panel">&times;</button>
+                  <h3>Compare Prices</h3>
+                  <ul class="merchant-list">
+                    {% for comparison in product.price_comparison %}
+                    <li>
+                      <span class="merchant-name">{{ comparison.store }}</span>
+                      <span class="merchant-price">KSh {{ "{:,.0f}".format(comparison.price) }}</span>
+                      <a href="{{ comparison.product_url }}" target="_blank" class="external-link-icon"
+                        style="float:right;display:inline-flex;align-items:center;padding-right:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="7" y1="17" x2="17" y2="7" />
+                          <polyline points="10 7 17 7 17 14" />
+                        </svg>
+                      </a>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </figure>
+              <div class="product-description">
+                <div class="info">
+                  <h2 class="model">{{ product.model }}</h2>
+                  <p class="brand">{{ product.brand.title() }}</p>
+                </div>
+                <div class="price">
+                  KSh {{ "{:,.0f}".format(product.cheapest_price) }}
+                </div>
+              </div>
+            </div>
+            <div class="product-sidebar">
+              <button class="scales-button">
+                <div class="scales-icon">
+                  <div class="scales-stand"></div>
+                  <div class="scales-bar"></div>
+                  <div class="scales-chain-left"></div>
+                  <div class="scales-chain-right"></div>
+                  <div class="scales-pan-left"></div>
+                  <div class="scales-pan-right"></div>
+                </div>
+                <div class="button-tag">Compare prices</div>
+              </button>
+              <button class="alarm-button">
+                <div class="alarm-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-alarm"
+                    viewBox="0 0 16 16">
+                    <path d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9z" />
+                    <path
+                      d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1zm1.038 3.018a6 6 0 0 1 .924 0 6 6 0 1 1-.924 0M0 3.5c0 .753.333 1.429.86 1.887A8.04 8.04 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5M13.5 1c-.753 0-1.429.333-1.887.86a8.04 8.04 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1" />
+                  </svg>
+                </div>
+                <div class="button-tag">Price Alert</div>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Scroll Arrows -->
+        <button class="scroll-arrow left" onclick="scrollSection(this, 'left')">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="scroll-arrow right" onclick="scrollSection(this, 'right')">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      {% else %}
+      <div class="empty-section">
+        No products available in this category at the moment.
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Show message if no sections -->
+    {% if not sections_data %}
+    <div class="empty-section">
+      <h3>No products available at the moment</h3>
+      <p>Please check back later for the latest deals and products.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Include modals -->
+  {% include "auth.html" %} {% include "track-alerts.html" %} {% include
+  "price-alarm.html" %}
+
+  <!-- Embed data for JavaScript -->
+  <script type="text/javascript">
+    // Categories and cache data
+    categories = {{ categories | tojson | safe }};
+    allCategoriesCache = {{ all_categories_cache | tojson | safe }};
+    modelsByBrand = {};
+  </script>
+
+  <script type="module" src="/static/js/api-utils.js"></script>
+  <script type="module" src="/static/js/auth.js"></script>
+  <script type="module" src="/static/js/header.js"></script>
+  <script type="module" src="/static/js/side-panel.js"></script>
+  <script type="module" src="/static/js/price-alarm.js"></script>
+  <script type="module" src="/static/js/track-alerts.js"></script>
+  <script type="module" src="/static/js/favorites.js"></script>
+  <script type="module" src="/static/js/product.js"></script>
+
+  <script>
+    // Horizontal scrolling functionality
+    function scrollSection(button, direction) {
+      const container = button.parentElement.querySelector(".products-grid");
+      const scrollAmount = 300;
+
+      if (direction === "left") {
+        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }
+
+    // Update view all links based on category
+    document.addEventListener("DOMContentLoaded", function () {
+      const viewAllLinks = document.querySelectorAll(".view-all-link");
+      viewAllLinks.forEach((link) => {
+        const category = link.getAttribute("data-category");
+        link.href = `/category/${category}`;
+      });
+    });
+  </script>
+</body>
+
+</html>

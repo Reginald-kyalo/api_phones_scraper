@@ -1,0 +1,903 @@
+nohup: ignoring input
+INFO:     Started server process [9872]
+INFO:     Waiting for application startup.
+2025-09-18 09:09:42,567 - app.main - INFO - Starting initial price monitoring...
+2025-09-18 09:09:42,571 - app.tasks.price_monitor - INFO - Starting price monitoring for 0 alerts
+2025-09-18 09:09:42,573 - app.tasks.price_monitor - INFO - Completed price monitoring. Processed 0/0 alerts, updated 0
+2025-09-18 09:09:42,573 - app.main - INFO - Startup complete
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:10000 (Press CTRL+C to quit)
+2025-09-18 09:10:38,032 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:10:38,032 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:10:38,033 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:10:38,033 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:10:38,033 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:10:38,033 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:10:38,033 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:10:38,034 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:10:38,034 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:10:38,034 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:10:38,034 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:10:38,034 - app.utils.cache - INFO - Completed loading cache for 5 categories
+MongoDB connection successful
+Phones database connection successful
+  - phones_brands_models collection: 116 documents
+  - phones products collection: 2068 documents
+Cosmetics database connection successful
+  - cosmetics_brands_models collection: 345 documents
+  - cosmetics products collection: 1798 documents
+Laptops database connection successful
+  - laptops_brands_models collection: 225 documents
+  - laptops products collection: 427 documents
+Shoes database connection successful
+  - shoes_brands_models collection: 276 documents
+  - shoes products collection: 2120 documents
+Sound_systems database connection successful
+  - sound_systems_brands_models collection: 149 documents
+  - sound_systems products collection: 4155 documents
+Redis connection successful
+INFO:     127.0.0.1:33920 - "GET / HTTP/1.1" 200 OK
+2025-09-18 09:10:53,665 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:10:53,666 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:10:53,666 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:10:53,666 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:10:53,667 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:10:53,667 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:10:53,667 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:10:53,667 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:10:53,668 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:10:53,668 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:10:53,669 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:10:53,669 - app.utils.cache - INFO - Completed loading cache for 5 categories
+INFO:     127.0.0.1:57496 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/css/base-modal.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /static/css/header.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/css/product.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45034 - "GET /static/css/auth.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45052 - "GET /static/css/side-panel.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/css/price-alarm.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/css/track-alerts.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /static/css/favorites.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/css/global.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45034 - "GET /static/css/mainpage.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45052 - "GET /static/js/auth.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/js/header.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/js/side-panel.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /static/js/price-alarm.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/js/track-alerts.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45034 - "GET /static/js/favorites.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/js/product.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/css/header/variables.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/css/header/reset.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/css/header/utilities.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /static/css/header/header-layout.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45052 - "GET /static/css/header/hamburger.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45034 - "GET /static/css/header/buttons.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/css/header/search.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/css/header/tooltips.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/css/header/selector.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /static/css/header/responsive.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45052 - "GET /static/css/product/product-reset.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45034 - "GET /static/css/product/product-layout.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/css/product/product-sidebar.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/css/product/product-card.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/css/product/comparison-panel.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /static/css/product/product-icons.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45020 - "GET /static/css/product/product-animations.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45042 - "GET /static/css/product/filter-bar.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /static/js/api-utils.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57496 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57496 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:12:04,349 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:12:04,349 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:12:04,351 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:12:04,351 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:12:04,351 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:12:04,351 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:12:04,351 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:12:04,352 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:12:04,352 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:12:04,352 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:12:04,352 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:12:04,352 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:12:04,352 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:12:04,352 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:12:04,352 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:56700 - "GET /category/phones HTTP/1.1" 200 OK
+2025-09-18 09:12:19,475 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:12:19,475 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:12:19,476 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:12:19,476 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:12:19,477 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:12:19,477 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:12:19,478 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:12:19,479 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:12:19,480 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:12:19,481 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:12:19,482 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:12:19,483 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:12:19,484 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:12:19,484 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:12:19,484 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:39890 - "GET /category/phones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39890 - "GET /static/css/header.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:39890 - "GET /static/js/header.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:39890 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39902 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39906 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39890 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:39902 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:16:57,070 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:16:57,070 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:16:57,072 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:16:57,072 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:16:57,073 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:16:57,074 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:16:57,075 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:16:57,075 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:16:57,076 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:16:57,076 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:16:57,076 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:16:57,077 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:16:57,077 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:16:57,077 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:16:57,077 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:54990 - "GET /category/phones?category=cosmetics&brand=olay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54990 - "GET /static/css/header.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54994 - "GET /static/js/header.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54990 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55026 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55010 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54990 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55026 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:17:01,713 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:17:01,713 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:17:01,714 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:17:01,714 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:17:01,714 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:17:01,714 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:17:01,715 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:17:01,715 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:17:01,716 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:17:01,716 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:17:01,717 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:17:01,717 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:17:01,717 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:17:01,718 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:17:01,718 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:54990 - "GET /category/phones?category=cosmetics&brand=the_ordinary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54990 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55010 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55026 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54990 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54990 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:17:07,327 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:17:07,328 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:17:07,330 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:17:07,330 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:17:07,332 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:17:07,332 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:17:07,332 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:17:07,333 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:17:07,333 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:17:07,333 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:17:07,334 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:17:07,334 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:17:07,334 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:17:07,334 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:17:07,334 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+2025-09-18 09:17:07,363 - app.routes.home - INFO - Returning phones product data: product_id=4e53a3ec8ec4d64aee3e8c7deaa601b353d98a62cf9f5f14c6d61d6c70034a10
+2025-09-18 09:17:07,363 - app.routes.home - INFO - Returning phones product data: product_id=aa5372b92a049c4c869e40c9666ecb2127577fb1f89cfdd8e964ce220581221b
+2025-09-18 09:17:07,363 - app.routes.home - INFO - Returning phones product data: product_id=465412889ccc65363791a647abddebad23723d26ebe54aa1fdbbe79514d07e70
+2025-09-18 09:17:07,364 - app.routes.home - INFO - Returning phones product data: product_id=ef040edf1128fa6e9955f2194616eb0e21cd271512b3bb64d92cb97ae5211a04
+2025-09-18 09:17:07,386 - app.routes.home - INFO - Returning phones product data: product_id=465412889ccc65363791a647abddebad23723d26ebe54aa1fdbbe79514d07e70
+2025-09-18 09:17:07,387 - app.routes.home - INFO - Returning phones product data: product_id=7dcbfe44c7f0677c23c336058d9c403d457012ae4375167b32b9406a86c56a00
+2025-09-18 09:17:07,387 - app.routes.home - INFO - Returning phones product data: product_id=55f51e87c0beacfff6fabe185996e5d3ea4e090294cafccd6317ce65d94a36db
+2025-09-18 09:17:07,387 - app.routes.home - INFO - Returning phones product data: product_id=25c76b927e7682d805fe4237764a726874ae69240d60f0a62331350394910858
+2025-09-18 09:17:07,387 - app.routes.home - INFO - Returning phones product data: product_id=c6e5dea1426f1e0a53582f8757df056b143bfa91019e5384268dc8665c54da32
+2025-09-18 09:17:07,388 - app.routes.home - INFO - Returning phones product data: product_id=25c76b927e7682d805fe4237764a726874ae69240d60f0a62331350394910858
+2025-09-18 09:17:07,388 - app.routes.home - INFO - Returning phones product data: product_id=25466a0203f27d5858c4e3b5b4e56a60b956e62dc1b58b8b9253ea05a74ed929
+2025-09-18 09:17:07,389 - app.routes.home - INFO - Returning phones product data: product_id=4de8e9354ed61804acdbbc38eadb399b24ac5a8ae8ea48abc8fd90e38c4d285b
+2025-09-18 09:17:07,389 - app.routes.home - INFO - Returning phones product data: product_id=972de075fc8335946c88cc54c5c4c3af42a56f24dcde7a24c7d8613fb5fe5d5e
+2025-09-18 09:17:07,389 - app.routes.home - INFO - Returning phones product data: product_id=e36736ab905464737a240af95b857caded8d0a9205f998bd12c3c713d9799bb3
+2025-09-18 09:17:07,389 - app.routes.home - INFO - Returning phones product data: product_id=5554a76badc635c84ec32799e3562d23955bbfb97b4ec302e1da0a931b86e518
+2025-09-18 09:17:07,389 - app.routes.home - INFO - Returning phones product data: product_id=35673786475d89c0c5e2814a3e5c4531466dfcb205d137fafb52b8832cd51827
+2025-09-18 09:17:07,390 - app.routes.home - INFO - Returning phones product data: product_id=47d0ed2457aa9c31afee38f3f2f359b05f6a3534dd6d0494ee97b73e7b0ff834
+2025-09-18 09:17:07,390 - app.routes.home - INFO - Returning phones product data: product_id=39f30b350b5fa2d8e07831cb4a412e86082435e495d02039c1ed5c1129229bed
+2025-09-18 09:17:07,390 - app.routes.home - INFO - Returning phones product data: product_id=972de075fc8335946c88cc54c5c4c3af42a56f24dcde7a24c7d8613fb5fe5d5e
+2025-09-18 09:17:07,390 - app.routes.home - INFO - Returning phones product data: product_id=e6da71169b0c5a3942149b57dbf6ed6cb960bf1e946a5e77cfa2c3a1f22eb511
+2025-09-18 09:17:07,390 - app.routes.home - INFO - Returning phones product data: product_id=e05e8970cc38696d0444057cec478dfc88ad3fbdc4fd6a1ce7d1b218fd203d8b
+2025-09-18 09:17:07,391 - app.routes.home - INFO - Returning phones product data: product_id=3a48956a5e75008770e25bdb2cce6f6c30b8c8aa5341b202442bc871029ade73
+2025-09-18 09:17:07,394 - app.routes.home - INFO - Returning phones product data: product_id=f118462ab03ea4f8a8d683f57d22e3c8fd0976e19ca0f3becc274663e7c74813
+2025-09-18 09:17:07,395 - app.routes.home - INFO - Returning phones product data: product_id=4574fedb3dc42187557d0153c5e50ce5c83c168f207aa723b01169f00389260c
+2025-09-18 09:17:07,395 - app.routes.home - INFO - Returning phones product data: product_id=0b47debd6c1af10cf5d9aabb0511c253bc962088f1ae35b3cced5950593e84f9
+2025-09-18 09:17:07,395 - app.routes.home - INFO - Returning phones product data: product_id=0a3cd688104b4a415f9c2f36a87f4eb441d96d48fca4e665ef6f21de38f0e174
+2025-09-18 09:17:07,396 - app.routes.home - INFO - Returning phones product data: product_id=38bcda8af77cec3ab795e93f1605eb4ef8c4af968f7be5483c62914fc9976bf3
+2025-09-18 09:17:07,396 - app.routes.home - INFO - Returning phones product data: product_id=6bea4218e48941527b5185251421a5efc0e4461bd8cfbee144f7c7e544e5a9fc
+2025-09-18 09:17:07,396 - app.routes.home - INFO - Returning phones product data: product_id=e6da71169b0c5a3942149b57dbf6ed6cb960bf1e946a5e77cfa2c3a1f22eb511
+2025-09-18 09:17:07,396 - app.routes.home - INFO - Returning phones product data: product_id=8d6ae4bf4e25fa30c1c1a86638e028a17e4be5765a8e57b76d940f157e44ec93
+INFO:     127.0.0.1:55306 - "GET /category/phones?category=phones&brand=xiaomi HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55306 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55312 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55306 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55306 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55306 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:17:15,303 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:17:15,303 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:17:15,304 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:17:15,304 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:17:15,304 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:17:15,304 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:17:15,305 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:17:15,305 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:17:15,305 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:17:15,305 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:17:15,305 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:17:15,306 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:17:15,306 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:17:15,306 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:17:15,306 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:45104 - "GET /category/phones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45104 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45120 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45130 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45104 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45104 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:17:18,425 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:17:18,425 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:17:18,426 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:17:18,426 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:17:18,426 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:17:18,426 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:17:18,426 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:17:18,426 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:17:18,427 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:17:18,427 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:17:18,427 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:17:18,427 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:17:18,427 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:17:18,427 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:17:18,427 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+2025-09-18 09:17:18,549 - app.routes.home - INFO - Returning phones product data: product_id=08ac1d5759cdf9a1dd75e427bb44effcef98959741ac96ff541502754f9d3a7a
+2025-09-18 09:17:18,555 - app.routes.home - INFO - Returning phones product data: product_id=f74f0ec79d6bbe802890e5cb8c8aff6c9ede53354dac856cab457de7012ab51e
+2025-09-18 09:17:18,556 - app.routes.home - INFO - Returning phones product data: product_id=08ac1d5759cdf9a1dd75e427bb44effcef98959741ac96ff541502754f9d3a7a
+2025-09-18 09:17:18,556 - app.routes.home - INFO - Returning phones product data: product_id=da5cb8e73b1ceb55bf073234a6cd81568b9cbe7efa5ad6ac2d4c2f956f5f01dd
+2025-09-18 09:17:18,556 - app.routes.home - INFO - Returning phones product data: product_id=931806952b93913f37fdf76e9b5847c219031417e4d8bf6b94158cd169395e45
+2025-09-18 09:17:18,556 - app.routes.home - INFO - Returning phones product data: product_id=271bded3d3e39f42e2f3e837464892874038b08d38198303e25fd03469d7a10f
+2025-09-18 09:17:18,556 - app.routes.home - INFO - Returning phones product data: product_id=92e58e87139e1cd26f33799ba5d43cea701a0ffff6272a4019d82cfce14d49b0
+2025-09-18 09:17:18,557 - app.routes.home - INFO - Returning phones product data: product_id=7bab38e64291353a3e1fb525a39a9197375e4e76dac2472b8f9079f413f19fa1
+2025-09-18 09:17:18,557 - app.routes.home - INFO - Returning phones product data: product_id=b0eca7e7bf67a7c0ca6607411a459d18ca6f01265d3c0e4644664df3554be2b8
+2025-09-18 09:17:18,557 - app.routes.home - INFO - Returning phones product data: product_id=4452f3a8f0329adbe7f5bb509e81abc1c9d6cf4f503d62e13fe3a7082d6416e2
+2025-09-18 09:17:18,557 - app.routes.home - INFO - Returning phones product data: product_id=6f9e7333f22fc99ad9dc179a0ba4e9d8ee2f5a0bed9c2e045c1ff11677e9c587
+2025-09-18 09:17:18,557 - app.routes.home - INFO - Returning phones product data: product_id=5128e4f11543782b51f0b886fed62c24ed5fa7b86b29a3cb04a7c33c1ca590d1
+2025-09-18 09:17:18,557 - app.routes.home - INFO - Returning phones product data: product_id=8fa7ba7da446c4a5b733dfec081a74ff6dcebe1f42f86cf7ec1c5b9e1f6ede66
+2025-09-18 09:17:18,558 - app.routes.home - INFO - Returning phones product data: product_id=c169ec8d48554f37932c79741e843f42153d75cd52e6f58f999d4231bb07fa57
+2025-09-18 09:17:18,558 - app.routes.home - INFO - Returning phones product data: product_id=1d4eb3b790a308cfb551e9385146caf9069e8d45268ce162faef08ef8dcfa416
+2025-09-18 09:17:18,558 - app.routes.home - INFO - Returning phones product data: product_id=000554ac758d3a32c3595c1076841b1a5a1b27512176b6ea351d647727e2ed0d
+2025-09-18 09:17:18,558 - app.routes.home - INFO - Returning phones product data: product_id=9b6023eb832b07a1f8b25e76c37da9386aa3bb4f01509e3a5ca51f216ee3b4b5
+2025-09-18 09:17:18,558 - app.routes.home - INFO - Returning phones product data: product_id=0a3c9989661c248abcf89c50c348ff15f6a7f32753c5d099c4e38ed1139ae7c9
+2025-09-18 09:17:18,558 - app.routes.home - INFO - Returning phones product data: product_id=58e8606350e3e05bc12b318617a2cc8ed5be7fa3827ede725471b2b39d2423f0
+2025-09-18 09:17:18,559 - app.routes.home - INFO - Returning phones product data: product_id=df6c528f3f11ad2d5346424087ab942263111254b9b7ceb9fc7eba847c4af01a
+2025-09-18 09:17:18,559 - app.routes.home - INFO - Returning phones product data: product_id=95cef36b40fa913f62cbf1bbc56208d683965c394eda5f5d3fb035555a8580ec
+2025-09-18 09:17:18,559 - app.routes.home - INFO - Returning phones product data: product_id=856948548721f811c57da0d5fac826f143f8a17b3861adb9ad838e7f8f4efdd2
+2025-09-18 09:17:18,559 - app.routes.home - INFO - Returning phones product data: product_id=624ddc081b281be0e467f786b56b9b308bb57c04ed6ef7c9533dee09cd01f23b
+2025-09-18 09:17:18,643 - app.routes.home - INFO - Returning phones product data: product_id=5cf59226076fea1fd3b5a89fe449be2b6aa0fd32f6f9d04db8f48c5af4665d5e
+2025-09-18 09:17:18,643 - app.routes.home - INFO - Returning phones product data: product_id=c7be8724ec5c088a1880ebf330e9981d374621de03cc0a071dc9b47893e5edf2
+2025-09-18 09:17:18,644 - app.routes.home - INFO - Returning phones product data: product_id=656f6e5efe399374a9d5f49128961a2c8e89c98305a6100416ee56be2d66c4eb
+2025-09-18 09:17:18,644 - app.routes.home - INFO - Returning phones product data: product_id=4f48138e5ffaea6604d919b5e379fd128be1ab578ad6724e5d7af5490aec6c41
+2025-09-18 09:17:18,644 - app.routes.home - INFO - Returning phones product data: product_id=df53924b7499673a3bfcfcf91dfe29a1c93dc9c0fb785db6acdb65dfa777576a
+2025-09-18 09:17:18,644 - app.routes.home - INFO - Returning phones product data: product_id=4452f3a8f0329adbe7f5bb509e81abc1c9d6cf4f503d62e13fe3a7082d6416e2
+2025-09-18 09:17:18,691 - app.routes.home - INFO - Returning phones product data: product_id=1d4eb3b790a308cfb551e9385146caf9069e8d45268ce162faef08ef8dcfa416
+2025-09-18 09:17:18,692 - app.routes.home - INFO - Returning phones product data: product_id=1896bfeeab6797da17f63445faed39d611dd2d297ff9dc1ae76055e9ea2a5459
+2025-09-18 09:17:18,692 - app.routes.home - INFO - Returning phones product data: product_id=d86abe20525772d434d3f6b61fc4eb7e0ff91f5be16666ad40b3092f3b2bfe51
+2025-09-18 09:17:18,692 - app.routes.home - INFO - Returning phones product data: product_id=d1c902f2e64c8e372fafd2b29b88873130029886f1302829c8dfc3154885701e
+2025-09-18 09:17:18,693 - app.routes.home - INFO - Returning phones product data: product_id=c6f44985a43d23bbcce030937416eed98a5ff96dbd63490953a7c5fa074669e4
+2025-09-18 09:17:18,693 - app.routes.home - INFO - Returning phones product data: product_id=a0b57b7ecda1890a077f68715bab6aa85208ecfc8e2ecfb8f3180b9bee114dcb
+2025-09-18 09:17:18,693 - app.routes.home - INFO - Returning phones product data: product_id=204d90672e2964ee040c2ca73f46a83a307c7df3b96c0cdc723486639a5e0b57
+2025-09-18 09:17:18,693 - app.routes.home - INFO - Returning phones product data: product_id=7782a47a7e6db964d57ef7142810c70527f6a9044c8c2243d2a7cbbeae7b2841
+2025-09-18 09:17:18,693 - app.routes.home - INFO - Returning phones product data: product_id=d9ca7234f667c7f059832e3635a9ef18dc72d3628a2541c428f5d96a55cb78ef
+2025-09-18 09:17:18,694 - app.routes.home - INFO - Returning phones product data: product_id=19d2bfe900534b723b8823fd475d57c88a8de3cc471089b2968c44f86cc78d3e
+2025-09-18 09:17:18,695 - app.routes.home - INFO - Returning phones product data: product_id=20b632abda6de157a1e9b4bb903f0e5f90749a21e0d169b290bb1a366c650e47
+2025-09-18 09:17:18,695 - app.routes.home - INFO - Returning phones product data: product_id=b24eee5bb4fc75d45df32ea00422e0f699ab6b731cf76d6af79ca4b767f14461
+2025-09-18 09:17:18,695 - app.routes.home - INFO - Returning phones product data: product_id=e05605d78729c093144d5b69f2be25518106ea93762181df201baff178f7b7b5
+2025-09-18 09:17:18,696 - app.routes.home - INFO - Returning phones product data: product_id=869085da1416f4bb7d5be440a8eb61c7daedd1b9cd7629821e7ad855922ace44
+2025-09-18 09:17:18,697 - app.routes.home - INFO - Returning phones product data: product_id=0bd0ed526fe3daa97b74044a49406cc44360984a874f3de46eb0bbd15900e0bc
+2025-09-18 09:17:18,698 - app.routes.home - INFO - Returning phones product data: product_id=ac61ea374e579f986e9a2bf40e716bfe63dc7a559d26b60efd1cfc5e841d764f
+2025-09-18 09:17:18,698 - app.routes.home - INFO - Returning phones product data: product_id=4e2c242f85bb4a7c3c59a1104946255cb6aa962ff9d2150adc0706b32155891f
+2025-09-18 09:17:18,699 - app.routes.home - INFO - Returning phones product data: product_id=ff9ce756cb2edcb28ce2588ffc8feb03b94248847634cf560ee8f846ddbfabe0
+2025-09-18 09:17:18,699 - app.routes.home - INFO - Returning phones product data: product_id=5ef9317ba07e59788597676e3bfa7104c9f578ea7e5d00af686b02e5e3e53e40
+2025-09-18 09:17:18,700 - app.routes.home - INFO - Returning phones product data: product_id=f0671ab0a3ecb98fc8f8b57909abf5955e9cf8d1341db573b31a489835305792
+2025-09-18 09:17:18,702 - app.routes.home - INFO - Returning phones product data: product_id=4e2c242f85bb4a7c3c59a1104946255cb6aa962ff9d2150adc0706b32155891f
+2025-09-18 09:17:18,703 - app.routes.home - INFO - Returning phones product data: product_id=994bc9457b442289583cd660fa049b57e542eba4f396b2d658af89fcb4071d57
+2025-09-18 09:17:18,703 - app.routes.home - INFO - Returning phones product data: product_id=8d03628129dd867fa130a8b094566f3a026e6efb22a981ab776b418bbf0d3feb
+2025-09-18 09:17:18,703 - app.routes.home - INFO - Returning phones product data: product_id=8913fc334d885172dca6a53bb103542d7eac993c0e9220391a692fe6ee4da7fa
+2025-09-18 09:17:18,704 - app.routes.home - INFO - Returning phones product data: product_id=d778d922a90aec48abcd4f89a73ae5265a68b5919a2a3e75616e3fa1a18ddffe
+2025-09-18 09:17:18,704 - app.routes.home - INFO - Returning phones product data: product_id=00cfdcef0be42004428d18e236fb8d85f717f3b08f7c36a5803ab70f5b6d0fdd
+2025-09-18 09:17:18,705 - app.routes.home - INFO - Returning phones product data: product_id=869085da1416f4bb7d5be440a8eb61c7daedd1b9cd7629821e7ad855922ace44
+2025-09-18 09:17:18,705 - app.routes.home - INFO - Returning phones product data: product_id=45d831cb3fec667e387dd2a6cc256072082d8106635ccff347d4a34ba1e7eb57
+2025-09-18 09:17:18,705 - app.routes.home - INFO - Returning phones product data: product_id=2929dd2b4738a644005008fb65bcd3ec268eac02fdc45f1e6b4223d0802f78b3
+2025-09-18 09:17:18,705 - app.routes.home - INFO - Returning phones product data: product_id=f0a9e8365d087e1c5858f9d7b177ffeced5095b08d06c59c6cc7f8b7e2331557
+2025-09-18 09:17:18,706 - app.routes.home - INFO - Returning phones product data: product_id=0bb8e8670bf32f5bbda6c1bf60dec38c357cec3eb3e3023c8a58fd4b0f16eb7a
+2025-09-18 09:17:18,706 - app.routes.home - INFO - Returning phones product data: product_id=79a0bfa89ba02a297309078a5e932e590b338acc8f6c723d87b9c0970a7a7813
+2025-09-18 09:17:18,706 - app.routes.home - INFO - Returning phones product data: product_id=22118bce462a2c5cb9ca0b0f5d57b001b7b8a4adcf3765a9338470e129d8c7bd
+2025-09-18 09:17:18,707 - app.routes.home - INFO - Returning phones product data: product_id=061c0f4ee0a004c738b008f3304c83f2d67b78f007c293f383078693609e3e98
+2025-09-18 09:17:18,708 - app.routes.home - INFO - Returning phones product data: product_id=0693eb30ee9fa0c36ae4594f70760b15dc791d2983f148044e4fc76dd6c6e8d8
+2025-09-18 09:17:18,708 - app.routes.home - INFO - Returning phones product data: product_id=0fbbf88342c56587e722933f5ca709f8cf1324fe60b4344185c7433adbd75480
+2025-09-18 09:17:18,708 - app.routes.home - INFO - Returning phones product data: product_id=85b3546776bfe771e23a47f0574107f26febc6db5f9350b14caad80eac02c7b1
+2025-09-18 09:17:18,709 - app.routes.home - INFO - Returning phones product data: product_id=c0378b30e25cd7fd0339fa065a3a76f2d2df8973bee819f717bac4667a16ca53
+2025-09-18 09:17:18,710 - app.routes.home - INFO - Returning phones product data: product_id=9844791c98e212350afe39c947c6e1253723559715fc1fbbbb0f8e2588e8d02e
+2025-09-18 09:17:18,710 - app.routes.home - INFO - Returning phones product data: product_id=dad3bd5f4a02cacd7309178b61e308b1af1cc610235017b80c230b0452b7ce30
+2025-09-18 09:17:18,711 - app.routes.home - INFO - Returning phones product data: product_id=79af52a7ebe8797438cfa4df7d462b546baa6627e8717d6f5f202256a91252ab
+2025-09-18 09:17:18,711 - app.routes.home - INFO - Returning phones product data: product_id=20b632abda6de157a1e9b4bb903f0e5f90749a21e0d169b290bb1a366c650e47
+2025-09-18 09:17:18,712 - app.routes.home - INFO - Returning phones product data: product_id=139d80baa87af94ee3254e83aa2e5962f5a9015825f4ff20616184c07d4e6001
+2025-09-18 09:17:18,714 - app.routes.home - INFO - Returning phones product data: product_id=ae40c00d77bd604a1becfd243a0cce5431a6f9440deb901377ae0f3bb111dcee
+2025-09-18 09:17:18,715 - app.routes.home - INFO - Returning phones product data: product_id=cf5d5624b95a024f5af118b1707ab9ff1b468537fa1275b3a7268e6b92cb01b8
+2025-09-18 09:17:18,716 - app.routes.home - INFO - Returning phones product data: product_id=f5550267522e516eec1ce7b3cb850e9257e321e0d75842addd3fa5ab819b6711
+2025-09-18 09:17:18,716 - app.routes.home - INFO - Returning phones product data: product_id=ba326ac71ccdadbd3dee9884086980b12291b1fe47dcbca9d47b9849a8f7819b
+2025-09-18 09:17:18,717 - app.routes.home - INFO - Returning phones product data: product_id=b13ac2e681bbc4cdc9cc360b1b69783cf5a7815c953a0ca5a7180f337a378259
+2025-09-18 09:17:18,717 - app.routes.home - INFO - Returning phones product data: product_id=1ea36e9c720807a0ce7725886535af575d33a165b1d836d6fb0811596effabc0
+2025-09-18 09:17:18,718 - app.routes.home - INFO - Returning phones product data: product_id=58760344089b8c3944fa38821f2657f49448f58c1ed823c2d5851108eb3f87bb
+2025-09-18 09:17:18,718 - app.routes.home - INFO - Returning phones product data: product_id=d62570889321f2ba0ac497ea64d7275ae4f2643ea473ce97ef674cc1c3192445
+2025-09-18 09:17:18,719 - app.routes.home - INFO - Returning phones product data: product_id=067cd3c1cf2f7446f96337bdb1309bc0e321a5d42505e3e1865af18c8689d69b
+2025-09-18 09:17:18,721 - app.routes.home - INFO - Returning phones product data: product_id=f5550267522e516eec1ce7b3cb850e9257e321e0d75842addd3fa5ab819b6711
+2025-09-18 09:17:18,721 - app.routes.home - INFO - Returning phones product data: product_id=3e5098ab1581d669e54e7bef0de3586c338185ba281cb4be6d67ec7f0e4ccdc4
+2025-09-18 09:17:18,721 - app.routes.home - INFO - Returning phones product data: product_id=6943b9381b5799ec323ff416a724744a636bcbdb041be9a723fe9cddd0691e96
+2025-09-18 09:17:18,722 - app.routes.home - INFO - Returning phones product data: product_id=600ece32f3d042b1a789671d39b12626dca316989f21f97a36398d6b62587c69
+2025-09-18 09:17:18,722 - app.routes.home - INFO - Returning phones product data: product_id=bf66eee4fc9e1728d86d8133d95369e9d99fdc84b73a9461743707397d26eef4
+2025-09-18 09:17:18,723 - app.routes.home - INFO - Returning phones product data: product_id=7725501b74f0ea9e424b3fc2bae44cdbf79faba3ff42b9a6d3f4b1469ea9f5cd
+2025-09-18 09:17:18,724 - app.routes.home - INFO - Returning phones product data: product_id=a508d3e7f7313a405600dc6eb1e1ebbd42c28eff8de3170878a0199b51d00831
+2025-09-18 09:17:18,724 - app.routes.home - INFO - Returning phones product data: product_id=ae40c00d77bd604a1becfd243a0cce5431a6f9440deb901377ae0f3bb111dcee
+2025-09-18 09:17:18,725 - app.routes.home - INFO - Returning phones product data: product_id=d2fabd8199b0c8aaad7c3ce9c2de56d34fb56c8fdd029bccbf1708365b0f6561
+2025-09-18 09:17:18,725 - app.routes.home - INFO - Returning phones product data: product_id=771bd5390ab15255041dc22553dffd02110690090a37c33935f95d46073b01bf
+2025-09-18 09:17:18,726 - app.routes.home - INFO - Returning phones product data: product_id=e76b93f02897839e7fe92d9769358ef5be11c805b323d05be7ef1ea97e61f477
+2025-09-18 09:17:18,726 - app.routes.home - INFO - Returning phones product data: product_id=a80be8dbae66d929b53f4d2c3d61ebb4c4e4c51e42f52c4be3afe7006f57a564
+2025-09-18 09:17:18,726 - app.routes.home - INFO - Returning phones product data: product_id=51feeaf3ca677fc91a90680b8172b73c5063f740c60c8f5053fe733206d0c443
+2025-09-18 09:17:18,727 - app.routes.home - INFO - Returning phones product data: product_id=4fb7dae92d948fefcfa95ee9efb3f467660ee608b846c2686532fa3fde615689
+2025-09-18 09:17:18,727 - app.routes.home - INFO - Returning phones product data: product_id=44d20bb653d9f325de2ea6f54e56099bf64615c47d27828546224e09c05fe585
+2025-09-18 09:17:18,728 - app.routes.home - INFO - Returning phones product data: product_id=2d843cbc9563ac8cc4e3e0a618d0bb79662e41bf362be42893e1f2cd3bd884be
+2025-09-18 09:17:18,728 - app.routes.home - INFO - Returning phones product data: product_id=75bc7a9d1c156f292a7afb4828341234c0073a128321b45d0d9d3b4ccac0e4b7
+2025-09-18 09:17:18,728 - app.routes.home - INFO - Returning phones product data: product_id=b945edb814d2e0b1ff9527e972dd329983dacfe600daa5f4652929a009aee302
+2025-09-18 09:17:18,729 - app.routes.home - INFO - Returning phones product data: product_id=2a390b384b30569afb2932c80333c58eb85a54128e89f3aa34886357f0810dc1
+2025-09-18 09:17:18,729 - app.routes.home - INFO - Returning phones product data: product_id=471a12ca9211b5d51bdc90dac78f2fd02176eac75579e928d91cfc215cce4eb9
+2025-09-18 09:17:18,730 - app.routes.home - INFO - Returning phones product data: product_id=f0d48411eb7d3e2380a7d60cfe9e4589a8e094ce4ed0e3c5529871059ff22936
+2025-09-18 09:17:18,733 - app.routes.home - INFO - Returning phones product data: product_id=8913fc334d885172dca6a53bb103542d7eac993c0e9220391a692fe6ee4da7fa
+2025-09-18 09:17:18,733 - app.routes.home - INFO - Returning phones product data: product_id=b9752ccf0ecd3bf6253691d7fbc8524d9c2b4fb779346abd405ac74cc887ae94
+2025-09-18 09:17:18,736 - app.routes.home - INFO - Returning phones product data: product_id=0ee2874fda341029f0e6d9355aa17e794488fc307bc07be40ac4be08801ccf43
+2025-09-18 09:17:18,740 - app.routes.home - INFO - Returning phones product data: product_id=ab8a08df1b0d07609a1c3eca39cdca814e42cf81158811dfe1f118c6df7b741f
+2025-09-18 09:17:18,741 - app.routes.home - INFO - Returning phones product data: product_id=cf5d5624b95a024f5af118b1707ab9ff1b468537fa1275b3a7268e6b92cb01b8
+2025-09-18 09:17:18,742 - app.routes.home - INFO - Returning phones product data: product_id=8bb55be5dfce519bb62bcc267df0c9d2bd11e48fd817b65d0d5ed59a78f41921
+2025-09-18 09:17:18,742 - app.routes.home - INFO - Returning phones product data: product_id=8d5f1b7420d8d328fc4806130e26f8cc37fe7903e02afb30424745382c130cc9
+2025-09-18 09:17:18,742 - app.routes.home - INFO - Returning phones product data: product_id=e037f8ada9a454ca2edbfc45dcf0a4f5e9a70e8f546f0f1d24b9af8c04848ed7
+2025-09-18 09:17:18,743 - app.routes.home - INFO - Returning phones product data: product_id=6e322586063a332353520f078a3ac9ada86ea07a31a17cbf7d1643fa570768f9
+2025-09-18 09:17:18,744 - app.routes.home - INFO - Returning phones product data: product_id=36c679675bd548d57e8c178b33188430b05351bdb210f7aafab149ad0b1c983a
+2025-09-18 09:17:18,744 - app.routes.home - INFO - Returning phones product data: product_id=d778d922a90aec48abcd4f89a73ae5265a68b5919a2a3e75616e3fa1a18ddffe
+2025-09-18 09:17:18,745 - app.routes.home - INFO - Returning phones product data: product_id=5ef5607c37a27e1f92c1e1b35dfd036d745f0c824abae58ac7b2b2b24c805d3e
+2025-09-18 09:17:18,746 - app.routes.home - INFO - Returning phones product data: product_id=1fef6d5439e1a917ccc286a7507cb7d5a2ccc17741429fef00df25f761c43de9
+2025-09-18 09:17:18,747 - app.routes.home - INFO - Returning phones product data: product_id=2a390b384b30569afb2932c80333c58eb85a54128e89f3aa34886357f0810dc1
+INFO:     127.0.0.1:45104 - "GET /category/phones?category=phones&brand=samsung HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45104 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45104 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45104 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45104 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45104 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:18:29,547 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:18:29,547 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:18:29,548 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:18:29,549 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:18:29,549 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:18:29,549 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:18:29,550 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:18:29,550 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:18:29,551 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:18:29,551 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:18:29,552 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:18:29,552 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:18:29,552 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:18:29,552 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:18:29,552 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+2025-09-18 09:18:29,584 - app.routes.home - INFO - Returning phones product data: product_id=d23e0bfa175d83a2b1bf0ed57b76f0c4907e8782388b980f366ab301dd1d858f
+2025-09-18 09:18:29,584 - app.routes.home - INFO - Returning phones product data: product_id=f6cd335e5d63f497eb3ca441d5f6862ef279a8b198b1b6c2cf40c8bcef051ac8
+2025-09-18 09:18:29,585 - app.routes.home - INFO - Returning phones product data: product_id=57894f97e9c6af97b96a43d835ff49803827a969e038b198086287ca5a2fb0ac
+2025-09-18 09:18:29,585 - app.routes.home - INFO - Returning phones product data: product_id=e9f3c457212e25807e5c891b9d5dab29f7c091661f1440b00d40a833ee599b7a
+2025-09-18 09:18:29,586 - app.routes.home - INFO - Returning phones product data: product_id=15bb6a7c9eadaef1998dba737641b26756a840d1bcd9c38072a00b22583fcc2f
+2025-09-18 09:18:29,586 - app.routes.home - INFO - Returning phones product data: product_id=d35c4001c9dc6227232c1f49c23c3c805531f9ecd8484c3b0a27fd522b0c8876
+2025-09-18 09:18:29,587 - app.routes.home - INFO - Returning phones product data: product_id=55d37700f48adf8825d8c0b4fa00fd8f480d027273de4dc97641e698f1514eea
+2025-09-18 09:18:29,588 - app.routes.home - INFO - Returning phones product data: product_id=444d08b48a7647ae0d37057b690aa197781b7bfc1a01e5c6507bd374f2002c5b
+2025-09-18 09:18:29,588 - app.routes.home - INFO - Returning phones product data: product_id=fea0b64c152749308e68ec01d24479155fcfbd033aebef47a409360479d89dbd
+2025-09-18 09:18:29,588 - app.routes.home - INFO - Returning phones product data: product_id=a7b69149295a9cc3c5b39757a7a8b6ea73b301351d73dbe3b67d0a2ee5052962
+2025-09-18 09:18:29,589 - app.routes.home - INFO - Returning phones product data: product_id=36d9596d7c66fc4292a82c06b478164b84fda9b89781b917cc0b391bf49277a6
+2025-09-18 09:18:29,589 - app.routes.home - INFO - Returning phones product data: product_id=8ca368eb09d164c6a12e849286fbee47f1ccdcfc54695d2a15e1d3e82c9934df
+2025-09-18 09:18:29,589 - app.routes.home - INFO - Returning phones product data: product_id=77ad0d8571ba7b0d834b5135db76f3d22491ed298b4af0427ed0e7f21c9fdfb9
+2025-09-18 09:18:29,590 - app.routes.home - INFO - Returning phones product data: product_id=d581e179461ff414f10afda0dd56d17fb0c1b7aeab0f6aa2bdc753fc5477a70e
+2025-09-18 09:18:29,590 - app.routes.home - INFO - Returning phones product data: product_id=5051e16457aaa9e47b8ee88ff23470864032a500da5e98a23316829a913ee08b
+2025-09-18 09:18:29,590 - app.routes.home - INFO - Returning phones product data: product_id=8dfe3ee958e957be4af62eec5573d41f981dd4a76363e5ec81bb62d19486c1a1
+2025-09-18 09:18:29,591 - app.routes.home - INFO - Returning phones product data: product_id=ce2e245121be5b830990f5fb302eb78428f6c232f42ea874aaa67ce194b2e213
+2025-09-18 09:18:29,591 - app.routes.home - INFO - Returning phones product data: product_id=0e817e73a06518f038669e3f06e073801e61288f51c3579e7131b733bb200197
+2025-09-18 09:18:29,592 - app.routes.home - INFO - Returning phones product data: product_id=54c7fec45b1b21da8ef6ce7f9b5f39468d51a639081e45e16c53d3b98f2aebc5
+2025-09-18 09:18:29,592 - app.routes.home - INFO - Returning phones product data: product_id=a86cbf7189ded25d2ac72853f55891311bdce3a368ff72ed46d8363728380ebe
+2025-09-18 09:18:29,592 - app.routes.home - INFO - Returning phones product data: product_id=33857b495354987f790f1368e64789c90a3b1df59d18ff6977d4032b99d3efa5
+2025-09-18 09:18:29,593 - app.routes.home - INFO - Returning phones product data: product_id=3ff166a3f60014e2b18eed52a088d5678cffd0fb544747553f3fd2414c4f7c75
+2025-09-18 09:18:29,593 - app.routes.home - INFO - Returning phones product data: product_id=18734bca9d5b4ace74de30609a49c11fe89a1ec4cab18cfa29da40e4e199e417
+2025-09-18 09:18:29,594 - app.routes.home - INFO - Returning phones product data: product_id=a7f6391c9561904f91587e505dc599dcd6e13a3acf61e078d6b131e425fedead
+2025-09-18 09:18:29,594 - app.routes.home - INFO - Returning phones product data: product_id=b7c521b721448e6900277bfb8bf36e5c2a6ec6be97ebff394df3f043ee9df603
+2025-09-18 09:18:29,595 - app.routes.home - INFO - Returning phones product data: product_id=2bc0b3b7a0fad76cb23376adaa5e3f756812f320aaecd224ad2b3d9a81672088
+2025-09-18 09:18:29,598 - app.routes.home - INFO - Returning phones product data: product_id=aa34a4d76972cfbf98752f85db5160c8420cdb4aeea597d86220e3342ebbc3f1
+2025-09-18 09:18:29,599 - app.routes.home - INFO - Returning phones product data: product_id=4b732462d7fef055a6d28fa3a01e6e9e32c54daeffc73304f9654cce68e632a1
+2025-09-18 09:18:29,599 - app.routes.home - INFO - Returning phones product data: product_id=af6fd79e9bb6f785d6c6702b00a141bc5b0d14807ed96251e0b070d553c9449b
+2025-09-18 09:18:29,600 - app.routes.home - INFO - Returning phones product data: product_id=2e2df7ffc220ee1e6c98bfe155b20f5dbebe17d85aac9d71087361e929a173be
+2025-09-18 09:18:29,600 - app.routes.home - INFO - Returning phones product data: product_id=7c18ee384848812ac4d6c1c15e088f2f32551bdab72908cd4b42df09ad7347d7
+2025-09-18 09:18:29,601 - app.routes.home - INFO - Returning phones product data: product_id=ad285c1cf50e97cad5e4ac24b48600285a9610d6d3d8cf5cf62e5543f37785ae
+2025-09-18 09:18:29,605 - app.routes.home - INFO - Returning phones product data: product_id=d7ec778b786e37a06272317ffdc227df656db3a890ab9da1df16d0da3b73f39a
+2025-09-18 09:18:29,610 - app.routes.home - INFO - Returning phones product data: product_id=01fb5b4ac564344b0fefcfaf19575e6b0ea5f935e9058f38683f585e61534b4c
+2025-09-18 09:18:29,613 - app.routes.home - INFO - Returning phones product data: product_id=748d04bf20dd46d4e2a5600aaf8ab336e4f4d6b8babcae45a2fd919454e6d910
+INFO:     127.0.0.1:44192 - "GET /category/phones?category=phones&brand=apple HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44192 - "GET /static/css/header.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:44192 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44202 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44200 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44192 - "GET /static/css/header/header-layout.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:44192 - "GET /static/js/header.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:44192 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44192 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44192 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+2025-09-18 09:18:31,719 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:18:31,719 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:18:31,720 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:18:31,720 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:18:31,720 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:18:31,720 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:18:31,720 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:18:31,721 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:18:31,721 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:18:31,721 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:18:31,721 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:18:31,721 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:18:31,721 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:18:31,721 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:18:31,721 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:44192 - "GET /category/phones?category=cosmetics&brand=olay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44192 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44202 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44200 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44192 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44192 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:18:37,123 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:18:37,123 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:18:37,124 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:18:37,124 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:18:37,124 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:18:37,124 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:18:37,125 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:18:37,125 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:18:37,125 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:18:37,125 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:18:37,125 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:18:37,126 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:18:37,126 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:18:37,126 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:18:37,126 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+2025-09-18 09:18:37,161 - app.routes.home - INFO - Returning phones product data: product_id=57894f97e9c6af97b96a43d835ff49803827a969e038b198086287ca5a2fb0ac
+2025-09-18 09:18:37,162 - app.routes.home - INFO - Returning phones product data: product_id=36d9596d7c66fc4292a82c06b478164b84fda9b89781b917cc0b391bf49277a6
+2025-09-18 09:18:37,163 - app.routes.home - INFO - Returning phones product data: product_id=ad285c1cf50e97cad5e4ac24b48600285a9610d6d3d8cf5cf62e5543f37785ae
+2025-09-18 09:18:37,163 - app.routes.home - INFO - Returning phones product data: product_id=55d37700f48adf8825d8c0b4fa00fd8f480d027273de4dc97641e698f1514eea
+2025-09-18 09:18:37,163 - app.routes.home - INFO - Returning phones product data: product_id=01fb5b4ac564344b0fefcfaf19575e6b0ea5f935e9058f38683f585e61534b4c
+2025-09-18 09:18:37,164 - app.routes.home - INFO - Returning phones product data: product_id=e9f3c457212e25807e5c891b9d5dab29f7c091661f1440b00d40a833ee599b7a
+2025-09-18 09:18:37,164 - app.routes.home - INFO - Returning phones product data: product_id=a7b69149295a9cc3c5b39757a7a8b6ea73b301351d73dbe3b67d0a2ee5052962
+2025-09-18 09:18:37,165 - app.routes.home - INFO - Returning phones product data: product_id=fea0b64c152749308e68ec01d24479155fcfbd033aebef47a409360479d89dbd
+2025-09-18 09:18:37,165 - app.routes.home - INFO - Returning phones product data: product_id=5051e16457aaa9e47b8ee88ff23470864032a500da5e98a23316829a913ee08b
+2025-09-18 09:18:37,165 - app.routes.home - INFO - Returning phones product data: product_id=b7c521b721448e6900277bfb8bf36e5c2a6ec6be97ebff394df3f043ee9df603
+2025-09-18 09:18:37,165 - app.routes.home - INFO - Returning phones product data: product_id=8dfe3ee958e957be4af62eec5573d41f981dd4a76363e5ec81bb62d19486c1a1
+2025-09-18 09:18:37,166 - app.routes.home - INFO - Returning phones product data: product_id=15bb6a7c9eadaef1998dba737641b26756a840d1bcd9c38072a00b22583fcc2f
+2025-09-18 09:18:37,166 - app.routes.home - INFO - Returning phones product data: product_id=ce2e245121be5b830990f5fb302eb78428f6c232f42ea874aaa67ce194b2e213
+2025-09-18 09:18:37,166 - app.routes.home - INFO - Returning phones product data: product_id=444d08b48a7647ae0d37057b690aa197781b7bfc1a01e5c6507bd374f2002c5b
+2025-09-18 09:18:37,166 - app.routes.home - INFO - Returning phones product data: product_id=54c7fec45b1b21da8ef6ce7f9b5f39468d51a639081e45e16c53d3b98f2aebc5
+2025-09-18 09:18:37,167 - app.routes.home - INFO - Returning phones product data: product_id=4b732462d7fef055a6d28fa3a01e6e9e32c54daeffc73304f9654cce68e632a1
+2025-09-18 09:18:37,167 - app.routes.home - INFO - Returning phones product data: product_id=d35c4001c9dc6227232c1f49c23c3c805531f9ecd8484c3b0a27fd522b0c8876
+2025-09-18 09:18:37,168 - app.routes.home - INFO - Returning phones product data: product_id=2e2df7ffc220ee1e6c98bfe155b20f5dbebe17d85aac9d71087361e929a173be
+2025-09-18 09:18:37,168 - app.routes.home - INFO - Returning phones product data: product_id=8ca368eb09d164c6a12e849286fbee47f1ccdcfc54695d2a15e1d3e82c9934df
+2025-09-18 09:18:37,168 - app.routes.home - INFO - Returning phones product data: product_id=d7ec778b786e37a06272317ffdc227df656db3a890ab9da1df16d0da3b73f39a
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=d581e179461ff414f10afda0dd56d17fb0c1b7aeab0f6aa2bdc753fc5477a70e
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=a86cbf7189ded25d2ac72853f55891311bdce3a368ff72ed46d8363728380ebe
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=2bc0b3b7a0fad76cb23376adaa5e3f756812f320aaecd224ad2b3d9a81672088
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=a7f6391c9561904f91587e505dc599dcd6e13a3acf61e078d6b131e425fedead
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=f6cd335e5d63f497eb3ca441d5f6862ef279a8b198b1b6c2cf40c8bcef051ac8
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=748d04bf20dd46d4e2a5600aaf8ab336e4f4d6b8babcae45a2fd919454e6d910
+2025-09-18 09:18:37,169 - app.routes.home - INFO - Returning phones product data: product_id=77ad0d8571ba7b0d834b5135db76f3d22491ed298b4af0427ed0e7f21c9fdfb9
+2025-09-18 09:18:37,170 - app.routes.home - INFO - Returning phones product data: product_id=33857b495354987f790f1368e64789c90a3b1df59d18ff6977d4032b99d3efa5
+2025-09-18 09:18:37,170 - app.routes.home - INFO - Returning phones product data: product_id=af6fd79e9bb6f785d6c6702b00a141bc5b0d14807ed96251e0b070d553c9449b
+2025-09-18 09:18:37,170 - app.routes.home - INFO - Returning phones product data: product_id=d23e0bfa175d83a2b1bf0ed57b76f0c4907e8782388b980f366ab301dd1d858f
+2025-09-18 09:18:37,170 - app.routes.home - INFO - Returning phones product data: product_id=18734bca9d5b4ace74de30609a49c11fe89a1ec4cab18cfa29da40e4e199e417
+2025-09-18 09:18:37,171 - app.routes.home - INFO - Returning phones product data: product_id=0e817e73a06518f038669e3f06e073801e61288f51c3579e7131b733bb200197
+2025-09-18 09:18:37,171 - app.routes.home - INFO - Returning phones product data: product_id=aa34a4d76972cfbf98752f85db5160c8420cdb4aeea597d86220e3342ebbc3f1
+2025-09-18 09:18:37,172 - app.routes.home - INFO - Returning phones product data: product_id=3ff166a3f60014e2b18eed52a088d5678cffd0fb544747553f3fd2414c4f7c75
+2025-09-18 09:18:37,172 - app.routes.home - INFO - Returning phones product data: product_id=7c18ee384848812ac4d6c1c15e088f2f32551bdab72908cd4b42df09ad7347d7
+INFO:     127.0.0.1:38202 - "GET /category/phones?category=laptops&brand=apple HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38202 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38214 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38218 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38202 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:38214 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:18:42,849 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:18:42,849 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:18:42,850 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:18:42,851 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:18:42,852 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:18:42,852 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:18:42,852 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:18:42,852 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:18:42,853 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:18:42,853 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:18:42,853 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:18:42,853 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:18:42,853 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:18:42,853 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:18:42,854 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:38228 - "GET /category/phones?category=shoes&brand=bata HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38228 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38228 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38228 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:38228 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:38228 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:18:48,582 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:18:48,582 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:18:48,583 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:18:48,583 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:18:48,584 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:18:48,584 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:18:48,585 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:18:48,585 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:18:48,585 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:18:48,585 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:18:48,586 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:18:48,586 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:18:48,586 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:18:48,586 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:18:48,586 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:39942 - "GET /category/phones?category=cosmetics&brand=olay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39942 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39944 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39960 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39942 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:39942 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:18:53,013 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:18:53,014 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:18:53,015 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:18:53,015 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:18:53,016 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:18:53,018 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:18:53,019 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:18:53,019 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:18:53,019 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:18:53,019 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:18:53,020 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:18:53,020 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:18:53,020 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:18:53,020 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:18:53,020 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:39942 - "GET /category/phones?category=cosmetics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39942 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39944 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39960 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39942 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:39942 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:31,792 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:31,792 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:31,794 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:31,795 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:31,795 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:31,795 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:31,796 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:31,796 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:31,796 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:31,796 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:31,797 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:31,797 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:31,797 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:52:31,797 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:52:31,797 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:40524 - "GET /category/phones?category=cosmetics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/base-modal.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40528 - "GET /static/css/header.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40548 - "GET /static/css/auth.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40544 - "GET /static/css/product.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40562 - "GET /static/css/side-panel.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40560 - "GET /static/css/price-alarm.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40544 - "GET /static/css/global.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/track-alerts.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40528 - "GET /static/css/favorites.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40548 - "GET /static/js/api-utils.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40560 - "GET /static/js/auth.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40562 - "GET /static/js/header.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/js/side-panel.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40528 - "GET /static/js/price-alarm.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40544 - "GET /static/js/track-alerts.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40560 - "GET /static/js/favorites.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/js/product.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/header/variables.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40544 - "GET /static/css/header/reset.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40562 - "GET /static/css/header/utilities.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40528 - "GET /static/css/header/header-layout.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/header/hamburger.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40560 - "GET /static/css/header/buttons.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40544 - "GET /static/css/header/responsive.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40548 - "GET /static/css/header/search.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/header/tooltips.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40528 - "GET /static/css/header/selector.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40562 - "GET /static/css/product/product-reset.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/product/product-layout.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40544 - "GET /static/css/product/product-card.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40562 - "GET /static/css/product/product-sidebar.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40528 - "GET /static/css/product/comparison-panel.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40560 - "GET /static/css/product/product-icons.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40548 - "GET /static/css/product/product-animations.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/css/product/filter-bar.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40562 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40544 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40524 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:40524 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40524 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:38,184 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:38,184 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:38,185 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:38,185 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:38,186 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:38,186 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:38,187 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:38,187 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:38,189 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:38,190 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:38,190 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:38,190 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:38,190 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:52:38,190 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:52:38,190 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:43284 - "GET /category/phones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43284 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43294 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43302 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:40,166 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:40,166 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:40,167 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:40,167 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:40,168 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:40,168 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:40,168 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:40,168 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:40,169 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:40,169 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:40,169 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:40,170 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:40,170 - app.routes.home - INFO - Selected category: cosmetics
+2025-09-18 09:52:40,170 - app.routes.home - INFO - Available brands for cosmetics: ['huda_beauty', 'neutrogena', 'loreal', 'estee_lauder', 'clinique', 'revlon', 'black_opal', 'tarte', 'elf', 'benefit', 'stila', 'essence', 'cetaphil', 'cerave', 'la_roche_posay', 'fresh', 'kiehl_s', 'olay', 'the_ordinary', 'pixi', 'aveeno', 'pantene', 'olaplex', 'moroccanoil', 'garnier', 'schwarzkopf', 'bath_body_works', 'jade_roller', 'mario_badescu', 'freeman', 'st_ives', 'bioderma', 'thayers', 'roc', 'klairs', 'clean_clear', 'lubriderm', 'nivea', 'vaseline', 'eucerin', 'dove', 'dial', 'secret', 'johnsons', 'the_body_shop', 'aloe_vera', 'tree_hut', 'palmer_s', 'argan_oil', 'shea_moisture', 'eos', 'laneige', 'cosrx', 'missha', 'old_spice', 'jane', 'claire', 'simple', 'johnson_johnson', 'lush', 'collagen', 'kiss', 'duo', 'got2b', 'differin', 'the_face_shop', 'ilia', 'tower_28', 'good_molecules', 'inkey_list', 'paula_s_choice', 'coola', 'peter_thomas_roth', 'lawless']
+2025-09-18 09:52:40,170 - app.routes.home - INFO - Cache size for cosmetics: 74 brands/models.
+INFO:     127.0.0.1:43284 - "GET /category/cosmetics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43284 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43294 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43302 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:42,827 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:42,827 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:42,828 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:42,828 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:42,829 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:42,829 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:42,829 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:42,829 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:42,829 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:42,829 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:42,830 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:42,830 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:42,830 - app.routes.home - INFO - Selected category: shoes
+2025-09-18 09:52:42,830 - app.routes.home - INFO - Available brands for shoes: ['adidas', 'nike', 'new balance', 'converse', 'vans', 'puma', 'asics', 'reebok', 'on', 'dr. martens', 'crocs', 'timberland', 'clarks', 'teva', 'jordan', 'off-white', 'rick owens', 'y-3', 'fila', 'le coq sportif', 'umbro', 'head', 'under armour', 'lacoste', 'tommy hilfiger', 'lowa', 'ferragamo', 'prada', 'dior', 'dsquared2', 'size?', 'end.', 'naked', 'bata', 'sketchers']
+2025-09-18 09:52:42,830 - app.routes.home - INFO - Cache size for shoes: 35 brands/models.
+INFO:     127.0.0.1:43284 - "GET /category/shoes HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43284 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43294 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43302 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43294 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:44,248 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:44,248 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:44,249 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:44,249 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:44,249 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:44,249 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:44,250 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:44,250 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:44,250 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:44,250 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:44,251 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:44,251 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:44,251 - app.routes.home - INFO - Selected category: sound_systems
+2025-09-18 09:52:44,251 - app.routes.home - INFO - Available brands for sound_systems: ['apple', 'sony', 'bose', 'jbl', 'samsung', 'lg', 'beats', 'yamaha', 'pioneer', 'harman kardon', 'marshall', 'anker soundcore', 'logitech', 'plantronics', 'jabra', 'philips', 'creative', 'tin hifi', 'kz', '64 audio', 'b&w', 'quad', 'blue', 'zoom']
+2025-09-18 09:52:44,251 - app.routes.home - INFO - Cache size for sound_systems: 24 brands/models.
+INFO:     127.0.0.1:43284 - "GET /category/sound_systems HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43294 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43302 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:45,449 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:45,449 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:45,450 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:45,450 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:45,450 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:45,451 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:45,452 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:45,452 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:45,452 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:45,453 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:45,453 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:45,453 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:45,453 - app.routes.home - INFO - Selected category: sound_systems
+2025-09-18 09:52:45,453 - app.routes.home - INFO - Available brands for sound_systems: ['apple', 'sony', 'bose', 'jbl', 'samsung', 'lg', 'beats', 'yamaha', 'pioneer', 'harman kardon', 'marshall', 'anker soundcore', 'logitech', 'plantronics', 'jabra', 'philips', 'creative', 'tin hifi', 'kz', '64 audio', 'b&w', 'quad', 'blue', 'zoom']
+2025-09-18 09:52:45,453 - app.routes.home - INFO - Cache size for sound_systems: 24 brands/models.
+2025-09-18 09:52:45,460 - app.routes.home - INFO - Returning sound_systems product data: product_id=2fbdcd44a8d17a1bf11891873687620df68d6a3edb90319e92762dfb59d27d6c
+2025-09-18 09:52:45,461 - app.routes.home - INFO - Returning sound_systems product data: product_id=87769206334ceb873c9f18046c1d17efdf3a7cce39bedfb2123cdbc756c8aa51
+2025-09-18 09:52:45,461 - app.routes.home - INFO - Returning sound_systems product data: product_id=7d57f5c0e230adca9f96e086f8ad930230650ec61a0bb87e149de3bee0a56be7
+2025-09-18 09:52:45,461 - app.routes.home - INFO - Returning sound_systems product data: product_id=ce47f2176e72acb9e477e8adfef1c9a81d1c3966bde56551e7f5f83a0f982ac4
+2025-09-18 09:52:45,463 - app.routes.home - INFO - Returning sound_systems product data: product_id=903c2d3861b5a5d40db62c2651707269926c14989dbe83819f64ceeff6cb8560
+2025-09-18 09:52:45,463 - app.routes.home - INFO - Returning sound_systems product data: product_id=05f6bb499140a131fbb6468d96b1b700c6d1041da7f91aea4f39184c12f348ee
+INFO:     127.0.0.1:43284 - "GET /category/sound_systems?brand=anker%20soundcore HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43294 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43302 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:47,425 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:47,425 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:47,426 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:47,426 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:47,427 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:47,427 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:47,427 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:47,427 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:47,427 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:47,428 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:47,428 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:47,428 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:52:47,428 - app.routes.home - INFO - Selected category: phones
+2025-09-18 09:52:47,428 - app.routes.home - INFO - Available brands for phones: ['apple', 'blackview', 'honor', 'hmd', 'google', 'itel', 'infinix', 'huawei', 'lg', 'oneplus', 'nokia', 'philips', 'oppo', 'samsung', 'realme', 'tecno', 'tcl', 'sony', 'vodafone', 'vivo', 'zte', 'xiaomi']
+2025-09-18 09:52:47,428 - app.routes.home - INFO - Cache size for phones: 22 brands/models.
+INFO:     127.0.0.1:43284 - "GET /category/phones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43302 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43294 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43284 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:52:59,500 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:52:59,500 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:52:59,501 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:52:59,501 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:52:59,502 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:52:59,502 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:52:59,502 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:52:59,502 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:52:59,502 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:52:59,502 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:52:59,503 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:52:59,503 - app.utils.cache - INFO - Completed loading cache for 5 categories
+INFO:     127.0.0.1:40286 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40286 - "GET /static/css/mainpage.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40286 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:40286 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 09:53:04,948 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 09:53:04,948 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 09:53:04,949 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 09:53:04,950 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 09:53:04,952 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 09:53:04,953 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 09:53:04,953 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 09:53:04,953 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 09:53:04,954 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 09:53:04,954 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 09:53:04,955 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 09:53:04,955 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 09:53:04,955 - app.routes.home - INFO - Selected category: cosmetics
+2025-09-18 09:53:04,955 - app.routes.home - INFO - Available brands for cosmetics: ['huda_beauty', 'neutrogena', 'loreal', 'estee_lauder', 'clinique', 'revlon', 'black_opal', 'tarte', 'elf', 'benefit', 'stila', 'essence', 'cetaphil', 'cerave', 'la_roche_posay', 'fresh', 'kiehl_s', 'olay', 'the_ordinary', 'pixi', 'aveeno', 'pantene', 'olaplex', 'moroccanoil', 'garnier', 'schwarzkopf', 'bath_body_works', 'jade_roller', 'mario_badescu', 'freeman', 'st_ives', 'bioderma', 'thayers', 'roc', 'klairs', 'clean_clear', 'lubriderm', 'nivea', 'vaseline', 'eucerin', 'dove', 'dial', 'secret', 'johnsons', 'the_body_shop', 'aloe_vera', 'tree_hut', 'palmer_s', 'argan_oil', 'shea_moisture', 'eos', 'laneige', 'cosrx', 'missha', 'old_spice', 'jane', 'claire', 'simple', 'johnson_johnson', 'lush', 'collagen', 'kiss', 'duo', 'got2b', 'differin', 'the_face_shop', 'ilia', 'tower_28', 'good_molecules', 'inkey_list', 'paula_s_choice', 'coola', 'peter_thomas_roth', 'lawless']
+2025-09-18 09:53:04,955 - app.routes.home - INFO - Cache size for cosmetics: 74 brands/models.
+INFO:     127.0.0.1:40286 - "GET /category/cosmetics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40286 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:33472 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:33458 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40286 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:40286 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 10:07:09,140 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 10:07:09,140 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 10:07:09,141 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 10:07:09,142 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 10:07:09,142 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 10:07:09,142 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 10:07:09,143 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 10:07:09,143 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 10:07:09,143 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 10:07:09,143 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 10:07:09,143 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 10:07:09,143 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 10:07:09,143 - app.routes.home - INFO - Selected category: cosmetics
+2025-09-18 10:07:09,143 - app.routes.home - INFO - Available brands for cosmetics: ['huda_beauty', 'neutrogena', 'loreal', 'estee_lauder', 'clinique', 'revlon', 'black_opal', 'tarte', 'elf', 'benefit', 'stila', 'essence', 'cetaphil', 'cerave', 'la_roche_posay', 'fresh', 'kiehl_s', 'olay', 'the_ordinary', 'pixi', 'aveeno', 'pantene', 'olaplex', 'moroccanoil', 'garnier', 'schwarzkopf', 'bath_body_works', 'jade_roller', 'mario_badescu', 'freeman', 'st_ives', 'bioderma', 'thayers', 'roc', 'klairs', 'clean_clear', 'lubriderm', 'nivea', 'vaseline', 'eucerin', 'dove', 'dial', 'secret', 'johnsons', 'the_body_shop', 'aloe_vera', 'tree_hut', 'palmer_s', 'argan_oil', 'shea_moisture', 'eos', 'laneige', 'cosrx', 'missha', 'old_spice', 'jane', 'claire', 'simple', 'johnson_johnson', 'lush', 'collagen', 'kiss', 'duo', 'got2b', 'differin', 'the_face_shop', 'ilia', 'tower_28', 'good_molecules', 'inkey_list', 'paula_s_choice', 'coola', 'peter_thomas_roth', 'lawless']
+2025-09-18 10:07:09,144 - app.routes.home - INFO - Cache size for cosmetics: 74 brands/models.
+INFO:     127.0.0.1:57736 - "GET /category/cosmetics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/css/base-modal.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/css/header.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57760 - "GET /static/css/auth.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /static/css/product.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57782 - "GET /static/css/side-panel.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57774 - "GET /static/css/price-alarm.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/css/track-alerts.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /static/css/favorites.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57782 - "GET /static/css/global.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57774 - "GET /static/js/auth.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57760 - "GET /static/js/header.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/js/api-utils.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/js/track-alerts.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57782 - "GET /static/js/favorites.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/js/side-panel.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /static/js/price-alarm.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57774 - "GET /static/js/product.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/css/product/product-reset.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/css/product/product-layout.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57760 - "GET /static/css/product/product-card.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /static/css/product/product-sidebar.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57782 - "GET /static/css/product/product-icons.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57774 - "GET /static/css/product/comparison-panel.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/css/product/filter-bar.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/css/product/product-animations.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57760 - "GET /static/css/header/reset.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /static/css/header/variables.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57774 - "GET /static/css/header/header-layout.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57782 - "GET /static/css/header/utilities.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/css/header/hamburger.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/css/header/buttons.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57750 - "GET /static/css/header/search.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57760 - "GET /static/css/header/tooltips.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57782 - "GET /static/css/header/selector.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/css/header/responsive.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57740 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57736 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57760 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57736 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57736 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57736 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+2025-09-18 10:07:11,730 - app.utils.cache - INFO - Loading cache for all categories: ['phones', 'cosmetics', 'laptops', 'shoes', 'sound_systems']
+2025-09-18 10:07:11,730 - app.utils.cache - INFO - Processing cache for category: phones
+2025-09-18 10:07:11,731 - app.utils.cache - INFO - Category phones: 22 brands, 323 total models
+2025-09-18 10:07:11,731 - app.utils.cache - INFO - Processing cache for category: cosmetics
+2025-09-18 10:07:11,731 - app.utils.cache - INFO - Category cosmetics: 74 brands, 152 total models
+2025-09-18 10:07:11,731 - app.utils.cache - INFO - Processing cache for category: laptops
+2025-09-18 10:07:11,731 - app.utils.cache - INFO - Category laptops: 1 brands, 4 total models
+2025-09-18 10:07:11,731 - app.utils.cache - INFO - Processing cache for category: shoes
+2025-09-18 10:07:11,732 - app.utils.cache - INFO - Category shoes: 35 brands, 72 total models
+2025-09-18 10:07:11,732 - app.utils.cache - INFO - Processing cache for category: sound_systems
+2025-09-18 10:07:11,732 - app.utils.cache - INFO - Category sound_systems: 24 brands, 56 total models
+2025-09-18 10:07:11,732 - app.utils.cache - INFO - Completed loading cache for 5 categories
+2025-09-18 10:07:11,732 - app.routes.home - INFO - Selected category: cosmetics
+2025-09-18 10:07:11,732 - app.routes.home - INFO - Available brands for cosmetics: ['huda_beauty', 'neutrogena', 'loreal', 'estee_lauder', 'clinique', 'revlon', 'black_opal', 'tarte', 'elf', 'benefit', 'stila', 'essence', 'cetaphil', 'cerave', 'la_roche_posay', 'fresh', 'kiehl_s', 'olay', 'the_ordinary', 'pixi', 'aveeno', 'pantene', 'olaplex', 'moroccanoil', 'garnier', 'schwarzkopf', 'bath_body_works', 'jade_roller', 'mario_badescu', 'freeman', 'st_ives', 'bioderma', 'thayers', 'roc', 'klairs', 'clean_clear', 'lubriderm', 'nivea', 'vaseline', 'eucerin', 'dove', 'dial', 'secret', 'johnsons', 'the_body_shop', 'aloe_vera', 'tree_hut', 'palmer_s', 'argan_oil', 'shea_moisture', 'eos', 'laneige', 'cosrx', 'missha', 'old_spice', 'jane', 'claire', 'simple', 'johnson_johnson', 'lush', 'collagen', 'kiss', 'duo', 'got2b', 'differin', 'the_face_shop', 'ilia', 'tower_28', 'good_molecules', 'inkey_list', 'paula_s_choice', 'coola', 'peter_thomas_roth', 'lawless']
+2025-09-18 10:07:11,732 - app.routes.home - INFO - Cache size for cosmetics: 74 brands/models.
+2025-09-18 10:07:11,744 - app.routes.home - INFO - Returning cosmetics product data: product_id=1fe91b33679be6362f1c1a9b2a293b5336c2be2361178ec8e5d867fefc16500a
+2025-09-18 10:07:11,745 - app.routes.home - INFO - Returning cosmetics product data: product_id=a25266f1bcf80a3dba6df74595ec07aba9408290caa12cb4f3ab578f7d2bf873
+2025-09-18 10:07:11,745 - app.routes.home - INFO - Returning cosmetics product data: product_id=9dc4d91df396f45b80e101027d9118d0db24895fefa6eeafe1f6e2e180358039
+2025-09-18 10:07:11,746 - app.routes.home - INFO - Returning cosmetics product data: product_id=a77e02b4012c6f6391ee54fb190695200ca89ba59405def072a290fcad30a4ce
+2025-09-18 10:07:11,746 - app.routes.home - INFO - Returning cosmetics product data: product_id=5acc97d1ae8bab9d8b4f2774efaec99c4449ef99038c30ac2174c83706f30a14
+2025-09-18 10:07:11,746 - app.routes.home - INFO - Returning cosmetics product data: product_id=6282ed1919fc5d48a6cd3361c48adbb46034bdd45967064fa5e6ee5c88421d9f
+2025-09-18 10:07:11,746 - app.routes.home - INFO - Returning cosmetics product data: product_id=6b0bdd2c0db23c79ce444258fe89dcd6929d0f6b0cfd358db8f3b1c549cdbd0a
+2025-09-18 10:07:11,746 - app.routes.home - INFO - Returning cosmetics product data: product_id=b59f2d141c9671001367f334d8977ac78a93a0552cb9041ad0423e818c3e79c1
+2025-09-18 10:07:11,747 - app.routes.home - INFO - Returning cosmetics product data: product_id=7e17132f89ffb4cba3bbf805622ecacd80c2121948adb007199741615a9c9601
+2025-09-18 10:07:11,747 - app.routes.home - INFO - Returning cosmetics product data: product_id=b5671013a9c6f79cd56d75f1bcc80477a0517f08a99d1d015ccaeb019d0610cb
+INFO:     127.0.0.1:57736 - "GET /category/cosmetics?brand=olay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57736 - "GET /static/img/phone-5g.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57740 - "GET /static/img/phone-android.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57760 - "GET /static/img/phone-dual-sim.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57736 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57736 - "GET /api/verify-session HTTP/1.1" 401 Unauthorized
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-09-18 10:08:12,790 - app.main - ERROR - Error shutting down APScheduler: 'NoneType' object has no attribute 'call_soon_threadsafe'
+2025-09-18 10:08:12,796 - app.main - INFO - Shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9872]

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopHub - Find Everything You Need</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>ShopHub</h1>
+                    <span class="tagline">Everything. Everywhere.</span>
+                </div>
+                
+                <nav class="nav-menu">
+                    <a href="#categories">Categories</a>
+                    <a href="#deals">Deals</a>
+                    <a href="#brands">Brands</a>
+                    <a href="#about">About</a>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" placeholder="Search for anything..." class="search-input">
+                        <button class="search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <button class="favorites-btn">
+                        <i class="far fa-heart"></i>
+                        <span class="count">3</span>
+                    </button>
+                    <button class="alerts-btn">
+                        <i class="far fa-bell"></i>
+                        <span class="count">2</span>
+                    </button>
+                    <button class="login-btn">Sign In</button>
+                </div>
+                
+                <button class="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Find the Best Deals on Everything</h1>
+                    <p>From phones to laptops, cosmetics to gadgets - compare prices across multiple stores and never miss a great deal.</p>
+                    <div class="hero-search">
+                        <input type="text" placeholder="What are you looking for today?" class="hero-search-input">
+                        <button class="hero-search-btn">Search</button>
+                    </div>
+                    <div class="popular-searches">
+                        <span>Popular:</span>
+                        <a href="#">iPhone 15</a>
+                        <a href="#">MacBook Pro</a>
+                        <a href="#">Samsung TV</a>
+                        <a href="#">Gaming Laptop</a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="floating-cards">
+                        <div class="card card-1">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Phones</span>
+                        </div>
+                        <div class="card card-2">
+                            <i class="fas fa-laptop"></i>
+                            <span>Laptops</span>
+                        </div>
+                        <div class="card card-3">
+                            <i class="fas fa-palette"></i>
+                            <span>Beauty</span>
+                        </div>
+                        <div class="card card-4">
+                            <i class="fas fa-gamepad"></i>
+                            <span>Gaming</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories" id="categories">
+        <div class="container">
+            <div class="section-header">
+                <h2>Shop by Category</h2>
+                <p>Discover amazing products across all categories</p>
+            </div>
+            
+            <div class="categories-grid">
+                <div class="category-card category-electronics">
+                    <div class="category-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Electronics</h3>
+                    <p>Phones, tablets, accessories and more</p>
+                    <span class="product-count">2,450+ products</span>
+                    <div class="category-overlay">
+                        <button class="explore-btn">Explore Now</button>
+                    </div>
+                </div>
+                
+                <div class="category-card category-computers">
+                    <div class="category-icon">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <h3>Computers</h3>
+                    <p>Laptops, desktops, components</p>
+                    <span class="product-count">1,800+ products</span>
+                    <div class="category-overlay">
+                        <button class="explore-btn">Explore Now</button>
+                    </div>
+                </div>
+                
+                <div class="category-card category-beauty">
+                    <div class="category-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3>Beauty & Health</h3>
+                    <p>Cosmetics, skincare, wellness</p>
+                    <span class="product-count">3,200+ products</span>
+                    <div class="category-overlay">
+                        <button class="explore-btn">Explore Now</button>
+                    </div>
+                </div>
+                
+                <div class="category-card category-gaming">
+                    <div class="category-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3>Gaming</h3>
+                    <p>Consoles, games, accessories</p>
+                    <span class="product-count">950+ products</span>
+                    <div class="category-overlay">
+                        <button class="explore-btn">Explore Now</button>
+                    </div>
+                </div>
+                
+                <div class="category-card category-home">
+                    <div class="category-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3>Home & Living</h3>
+                    <p>Furniture, appliances, decor</p>
+                    <span class="product-count">4,100+ products</span>
+                    <div class="category-overlay">
+                        <button class="explore-btn">Explore Now</button>
+                    </div>
+                </div>
+                
+                <div class="category-card category-fashion">
+                    <div class="category-icon">
+                        <i class="fas fa-tshirt"></i>
+                    </div>
+                    <h3>Fashion</h3>
+                    <p>Clothing, shoes, accessories</p>
+                    <span class="product-count">5,600+ products</span>
+                    <div class="category-overlay">
+                        <button class="explore-btn">Explore Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="featured-products">
+        <div class="container">
+            <div class="section-header">
+                <h2>Trending Now</h2>
+                <p>Most popular products this week</p>
+            </div>
+            
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x300/667eea/ffffff?text=iPhone+15" alt="iPhone 15">
+                        <button class="favorite-btn">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <div class="product-badges">
+                            <span class="badge trending">Trending</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">Electronics</span>
+                        <h3>iPhone 15 Pro Max</h3>
+                        <div class="price-info">
+                            <span class="current-price">$1,199</span>
+                            <span class="original-price">$1,299</span>
+                            <span class="discount">-8%</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="compare-btn">Compare</button>
+                            <button class="alert-btn">Price Alert</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x300/764ba2/ffffff?text=MacBook" alt="MacBook Pro">
+                        <button class="favorite-btn">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <div class="product-badges">
+                            <span class="badge new">New</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">Computers</span>
+                        <h3>MacBook Pro 14" M3</h3>
+                        <div class="price-info">
+                            <span class="current-price">$1,999</span>
+                            <span class="original-price">$2,199</span>
+                            <span class="discount">-9%</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="compare-btn">Compare</button>
+                            <button class="alert-btn">Price Alert</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x300/f093fb/ffffff?text=Skincare" alt="Skincare Set">
+                        <button class="favorite-btn">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <div class="product-badges">
+                            <span class="badge sale">Sale</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">Beauty</span>
+                        <h3>Premium Skincare Set</h3>
+                        <div class="price-info">
+                            <span class="current-price">$89</span>
+                            <span class="original-price">$159</span>
+                            <span class="discount">-44%</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="compare-btn">Compare</button>
+                            <button class="alert-btn">Price Alert</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://via.placeholder.com/300x300/4facfe/ffffff?text=Gaming+Laptop" alt="Gaming Laptop">
+                        <button class="favorite-btn">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <div class="product-badges">
+                            <span class="badge hot">Hot Deal</span>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">Gaming</span>
+                        <h3>ASUS ROG Gaming Laptop</h3>
+                        <div class="price-info">
+                            <span class="current-price">$1,499</span>
+                            <span class="original-price">$1,799</span>
+                            <span class="discount">-17%</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="compare-btn">Compare</button>
+                            <button class="alert-btn">Price Alert</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search-dollar"></i>
+                    </div>
+                    <h3>Price Comparison</h3>
+                    <p>Compare prices across multiple retailers to find the best deals</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3>Price Alerts</h3>
+                    <p>Get notified when your favorite products drop in price</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Wishlist</h3>
+                    <p>Save products you love and track their prices over time</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Trusted Retailers</h3>
+                    <p>Only verified and trusted online stores for safe shopping</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ShopHub</h3>
+                    <p>Your one-stop destination for comparing prices and finding the best deals online.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Categories</h4>
+                    <ul>
+                        <li><a href="#">Electronics</a></li>
+                        <li><a href="#">Computers</a></li>
+                        <li><a href="#">Beauty & Health</a></li>
+                        <li><a href="#">Gaming</a></li>
+                        <li><a href="#">Home & Living</a></li>
+                        <li><a href="#">Fashion</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Newsletter</h4>
+                    <p>Get the latest deals and updates</p>
+                    <div class="newsletter-form">
+                        <input type="email" placeholder="Enter your email">
+                        <button>Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 ShopHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

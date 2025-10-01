@@ -47,7 +47,7 @@
 }
 
 .info {
-  color: #555;
+  color: var(--text-medium);
   font-size: 0.85em;
   margin-bottom: 10px;
 }
@@ -55,16 +55,16 @@
 .brand {
   font-weight: bold;
   margin: 0;
-  color: #31353d;
+  color: var(--product-text);
 }
 
 .model {
   margin: 0;
-  color: #666;
+  color: var(--text-subtle);
 }
 
 .price {
-  color: #9bb6aa;
+  color: var(--product-accent);
   font-size: 1.5em;
   font-weight: bold;
   margin-top: 5px;

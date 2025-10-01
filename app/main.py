@@ -9,7 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routes import home, user, favorites, price_alerts
+from app.routes import home, user, favorites, price_alerts, mainpage
 from app.security.key_rotation import rotate_keys
 from app.tasks.price_monitor import monitor_price_alerts
 from app.utils.cache import get_brands_models_cache
@@ -115,7 +115,8 @@ async def set_security_headers(request: Request, call_next):
 async def healthz():
     return {"status": "ok"}
 
-app.include_router(home.router)
+app.include_router(mainpage.router)  # Main landing page
+app.include_router(home.router)      # Phones-specific page
 app.include_router(user.router)
 app.include_router(favorites.router)
 app.include_router(price_alerts.router)

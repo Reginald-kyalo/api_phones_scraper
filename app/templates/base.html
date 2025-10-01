@@ -10,7 +10,10 @@
   <!-- FontAwesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <!-- Custom CSS -->
+  <!-- Design System CSS (Load first) -->
+  <link rel="stylesheet" href="/static/css/header/variables.css" />
+  <link rel="stylesheet" href="/static/css/design-system.css" />
+  <!-- Component CSS -->
   <link rel="stylesheet" href="/static/css/base-modal.css" />
   <link rel="stylesheet" href="/static/css/header.css">
   <link rel="stylesheet" href="/static/css/product.css" />
@@ -43,7 +46,13 @@
   {% include "price-alarm.html" %}
   <!-- Embed rendered data for use by JavaScript -->
   <script type="text/javascript">
+    // Legacy for backward compatibility (current selected category data)
     modelsByBrand = {{ models_by_brand | tojson | safe }};
+    
+    // New category-based data structure
+    allCategoriesCache = {{ all_categories_cache | tojson | safe }};
+    selectedCategory = {{ selected_category | tojson | safe }};
+    categories = {{ categories | tojson | safe }};
   </script>
 
   <!-- Hidden client-side template for product card -->

@@ -34,18 +34,25 @@ const toggleMenu = () => {
 }
 
 /**
- * Initialize and configure the brands and models in the side panel
+ * Initialize and configure the categories and brands in the side panel
  */
-function initializeSidePanelBrands() {
+function initializeSidePanelCategories() {
   // Since HTML already contains the elements, just get references to them
+  const sidePanelCategorySelector = document.getElementById("sidePanelCategorySelector");
+  const sidePanelCategoriesDropdown = document.getElementById("sidePanelCategoriesDropdown");
   const sidePanelBrandSelector = document.getElementById("sidePanelBrandSelector");
   const sidePanelBrandsDropdown = document.getElementById("sidePanelBrandsDropdown");
-  const sidePanelModelSelector = document.getElementById("sidePanelModelSelector");
-  const sidePanelModelsDropdown = document.getElementById("sidePanelModelsDropdown");
-  const modelsDropdownLi = document.querySelector(".models-dropdown-li");
+  const brandsDropdownLi = document.querySelector(".brands-dropdown-li");
 
-  // Populate brands list
-  populateSidePanelBrands();
+  // Populate categories list
+  populateSidePanelCategories();
+
+  // Toggle the categories dropdown when clicked
+  sidePanelCategorySelector.addEventListener("click", (e) => {
+    e.preventDefault();
+    const expanded = sidePanelCategorySelector.getAttribute("aria-expanded") === "true";
+    sidePanelCategorySelector.setAttribute("aria-expanded", !expanded);
+  });
 
   // Toggle the brands dropdown when clicked
   sidePanelBrandSelector.addEventListener("click", (e) => {
@@ -54,11 +61,25 @@ function initializeSidePanelBrands() {
     sidePanelBrandSelector.setAttribute("aria-expanded", !expanded);
   });
 
-  // Toggle the models dropdown when clicked
-  sidePanelModelSelector.addEventListener("click", (e) => {
+  // Handle category selection from side panel
+  sidePanelCategoriesDropdown.addEventListener("click", (e) => {
+    if (e.target.tagName !== "A") return;
     e.preventDefault();
-    const expanded = sidePanelModelSelector.getAttribute("aria-expanded") === "true";
-    sidePanelModelSelector.setAttribute("aria-expanded", !expanded);
+    const selectedCategory = e.target.getAttribute("data-category");
+
+    // Navigate to selected category page using new routing
+    window.location.href = `/category/${selectedCategory.toLowerCase()}`;
+
+    // The rest of this code won't run because we're navigating away
+    sidePanelCategoriesDropdown
+      .querySelectorAll("a")
+      .forEach((a) => a.classList.remove("active"));
+    e.target.classList.add("active");
+
+    if (selectedCategory !== "all") {
+      populateSidePanelBrands(selectedCategory);
+      brandsDropdownLi.style.display = "block";
+    }
   });
 
   // Handle brand selection from side panel
@@ -66,135 +87,121 @@ function initializeSidePanelBrands() {
     if (e.target.tagName !== "A") return;
     e.preventDefault();
     const selectedBrand = e.target.getAttribute("data-brand");
-
-    // Navigate to selected brand page
-    const url = new URL(window.location);
-    url.searchParams.set("brand", selectedBrand.toLowerCase());
-    url.searchParams.delete("model");
-    url.searchParams.delete("query");
-    window.location = url;
-
-    // The rest of this code won't run because we're navigating away
-    sidePanelBrandsDropdown
-      .querySelectorAll("a")
-      .forEach((a) => a.classList.remove("active"));
-    e.target.classList.add("active");
-
-    if (selectedBrand !== "all") {
-      populateSidePanelModels(selectedBrand);
-      modelsDropdownLi.style.display = "block";
-    }
-  });
-
-  // Handle model selection from side panel
-  sidePanelModelsDropdown.addEventListener("click", (e) => {
-    if (e.target.tagName !== "A") return;
-    e.preventDefault();
-    const selectedModel = e.target.getAttribute("data-model");
-    const selectedBrand = e.target.getAttribute("data-brand");
-    const url = new URL(window.location);
-    url.searchParams.set("brand", selectedBrand);
-    url.searchParams.set("model", selectedModel);
-    url.searchParams.delete("query");
-    window.location = url;
+    const selectedCategory = e.target.getAttribute("data-category");
+    
+    // Navigate to category page with brand filter using new routing
+    window.location.href = `/category/${selectedCategory.toLowerCase()}?brand=${selectedBrand.toLowerCase()}`;
   });
 
   // Initialize dropdown state based on URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  const selectedBrand = urlParams.get("brand");
-  if (selectedBrand && selectedBrand !== "all") {
-    sidePanelBrandSelector.setAttribute("aria-expanded", "true");
-    populateSidePanelModels(selectedBrand);
-    modelsDropdownLi.style.display = "block";
+  
+  // Extract category from path (e.g., /category/phones -> phones)
+  const pathSegments = window.location.pathname.split('/');
+  const selectedCategory = (pathSegments[1] === 'category' && pathSegments[2]) 
+    ? pathSegments[2] 
+    : (window.selectedCategory || "phones");
+  if (selectedCategory && selectedCategory !== "all") {
+    sidePanelCategorySelector.setAttribute("aria-expanded", "true");
+    populateSidePanelBrands(selectedCategory);
+    brandsDropdownLi.style.display = "block";
 
-    const selectedModel = urlParams.get("model");
-    if (selectedModel) {
-      sidePanelModelSelector.setAttribute("aria-expanded", "true");
+    const selectedBrand = urlParams.get("brand");
+    if (selectedBrand) {
+      sidePanelBrandSelector.setAttribute("aria-expanded", "true");
     }
   }
 }
 
 /**
- * Populate the brands dropdown in the side panel
+ * Populate the categories dropdown in the side panel
  */
-function populateSidePanelBrands() {
-  const brandsDropdown = document.getElementById("sidePanelBrandsDropdown");
-  if (!brandsDropdown) {
-    console.error("Brands dropdown element not found");
+function populateSidePanelCategories() {
+  const categoriesDropdown = document.getElementById("sidePanelCategoriesDropdown");
+  if (!categoriesDropdown) {
+    console.error("Categories dropdown element not found");
     return;
   }
 
-  // Clear existing brands
-  brandsDropdown.innerHTML = "";
+  // Clear existing categories
+  categoriesDropdown.innerHTML = "";
 
-  // Add "All Brands" option
-  const allBrandsLi = document.createElement("li");
-  const allBrandsA = document.createElement("a");
-  allBrandsA.href = "javascript:void(0)";
-  allBrandsA.setAttribute("data-brand", "all");
-  allBrandsA.textContent = "All Brands";
-  allBrandsLi.appendChild(allBrandsA);
-  brandsDropdown.appendChild(allBrandsLi);
-
-  // Get brands and add them to the dropdown
-  const brands = Object.keys(window.modelsByBrand || {});
+  // Get categories and add them to the dropdown
+  const categories = window.categories || Object.keys(window.allCategoriesCache || {});
   
-  if (brands.length === 0) {
-    console.warn("No brands found in modelsByBrand");
+  if (categories.length === 0) {
+    console.warn("No categories found");
   } else {
-    console.log(`Found ${brands.length} brands to add`);
+    console.log(`Found ${categories.length} categories to add`);
   }
 
-  // Add individual brands
-  brands.forEach((brand) => {
+  // Sort categories with phones first, then alphabetically
+  const sortedCategories = categories.sort((a, b) => {
+    if (a === "phones") return -1;
+    if (b === "phones") return 1;
+    return a.localeCompare(b);
+  });
+
+  // Add individual categories
+  sortedCategories.forEach((category) => {
     const li = document.createElement("li");
     const a = document.createElement("a");
     a.href = "javascript:void(0)";
-    a.setAttribute("data-brand", brand.toLowerCase());
-    a.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
+    a.setAttribute("data-category", category.toLowerCase());
+    a.textContent = category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
     li.appendChild(a);
-    brandsDropdown.appendChild(li);
+    categoriesDropdown.appendChild(li);
   });
 }
 
 /**
- * Populate the models dropdown for a selected brand
- * @param {string} brand - The selected brand name
+ * Populate the brands dropdown for a selected category
+ * @param {string} category - The selected category name
  */
-function populateSidePanelModels(brand) {
-  const modelsDropdown = document.getElementById("sidePanelModelsDropdown");
+function populateSidePanelBrands(category) {
+  const brandsDropdown = document.getElementById("sidePanelBrandsDropdown");
   const urlParams = new URLSearchParams(window.location.search);
-  const selectedModel = urlParams.get("model");
+  const selectedBrand = urlParams.get("brand");
 
-  modelsDropdown.innerHTML = "";
-  const brandData = window.modelsByBrand[brand.toLowerCase()];
+  brandsDropdown.innerHTML = "";
+  const categoryData = window.allCategoriesCache[category.toLowerCase()];
   
-  if (brandData && brandData.models && brandData.models.length > 0) {
-    brandData.models.forEach((modelObj) => {
+  if (categoryData && Object.keys(categoryData).length > 0) {
+    const brands = Object.keys(categoryData);
+    // Sort brands by popularity (model count)
+    const sortedBrands = brands.sort((a, b) => {
+      const aModelsCount = categoryData[a]?.models?.length || 0;
+      const bModelsCount = categoryData[b]?.models?.length || 0;
+      return bModelsCount - aModelsCount; // Most popular first
+    });
+
+    sortedBrands.forEach((brand) => {
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = "javascript:void(0)";
-      a.setAttribute("data-model", modelObj.model.toLowerCase());
       a.setAttribute("data-brand", brand.toLowerCase());
-      a.textContent = modelObj.model;
+      a.setAttribute("data-category", category.toLowerCase());
+      a.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
       
-      if (selectedModel && selectedModel.toLowerCase() === modelObj.model.toLowerCase()) {
+      if (selectedBrand && selectedBrand.toLowerCase() === brand.toLowerCase()) {
         a.classList.add("active");
       }
       
       li.appendChild(a);
-      modelsDropdown.appendChild(li);
+      brandsDropdown.appendChild(li);
     });
   } else {
-    // If no models are available
+    // If no brands are available
     const li = document.createElement("li");
-    const noModels = document.createElement("span");
-    noModels.classList.add("no-models");
-    noModels.textContent = "No models available";
-    li.appendChild(noModels);
-    modelsDropdown.appendChild(li);
+    const noBrands = document.createElement("span");
+    noBrands.classList.add("no-brands");
+    noBrands.textContent = "No brands available";
+    li.appendChild(noBrands);
+    brandsDropdown.appendChild(li);
   }
 }
+
+// Note: Models functionality removed as per new hierarchy (Categories -> Brands)
 
 /**
  * Initialize the side panel
@@ -215,8 +222,8 @@ export function initSidePanel() {
     overlay.setAttribute("listener-added", "true");
   }
 
-  // Initialize side panel brands/models
-  initializeSidePanelBrands();
+  // Initialize side panel categories/brands
+  initializeSidePanelCategories();
   
   // Set up the side panel alarm button
   const sidePanelAlarmBtn = document.getElementById("sidePanelAlarmBtn");

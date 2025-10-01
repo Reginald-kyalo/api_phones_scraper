@@ -1,15 +1,7 @@
 /* Base Modal Styles - Common styling for all modals */
 
-:root {
-  /* Common color variables */
-  --primary-color: #9bb6aa;
-  --primary-hover: #82a598;
-  --text-color: #333;
-  --border-color: #ddd;
-  --overlay-bg: rgba(0, 0, 0, 0.6);
-  --modal-bg: #ffffff;
-  --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
+/* Import centralized design system */
+@import 'header/variables.css';
 
 /* Base Modal Container */
 .base-modal {
@@ -18,7 +10,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--overlay-bg);
+  background-color: var(--bg-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -65,12 +57,12 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #888;
+  color: var(--text-light);
   transition: color 0.2s;
 }
 
 .modal-close:hover {
-  color: #444;
+  color: var(--text-color-medium);
 }
 
 /* Footer styling if needed */

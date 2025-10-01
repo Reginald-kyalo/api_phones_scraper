@@ -1,31 +1,159 @@
 /* ===============================
-   DESIGN SYSTEM - CSS VARIABLES
+   CENTRALIZED DESIGN SYSTEM - CSS VARIABLES
+   All colors, fonts, and design tokens in one place
 =============================== */
 :root {
-  /* Primary colors with RGB values for transparency */
-  --color-primary: #9bb6aa;
-  --color-primary-rgb: 155, 182, 170;
-  --color-primary-dark: #7a9589;
-  --color-primary-dark-rgb: 122, 149, 137;
-  --color-primary-light: #c5d3cd;
+  /* ========== PRIMARY BRAND COLORS ========== */
+  --color-primary: #FF6B35;
+  --color-primary-rgb: 255, 107, 53;
+  --color-primary-dark: #E85A2B;
+  --color-primary-dark-rgb: 232, 90, 43;
+  --color-primary-light: #FFB299;
+  --color-primary-hover: #D6491F;
   
   /* Secondary/accent colors */
-  --color-accent: #66b491;
-  --color-accent-rgb: 102, 180, 145;
+  --color-accent: #2E86AB;
+  --color-accent-rgb: 46, 134, 171;
+  --color-accent-light: #5BA3C7;
+  --color-accent-dark: #1E5A75;
   
-  /* UI states */
-  --color-hover-light: #f0f8f5;
-  --color-hover-dark: #8aa699;
+  /* ========== SEMANTIC COLORS ========== */
+  /* Price and deal colors */
+  --color-price: #FF6B35;
+  --color-deal: #00C851;
+  --color-savings: #FF6B35;
+  --color-discount: #FF4444;
   
-  /* Neutrals */
-  --color-dark: #2f2f2f;
-  --color-light: #fff;
-  --color-alert: #e74c3c;
-  --color-tooltip: #31353d;
+  /* Status colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  --color-alert: #EF4444;
   
-  /* Typography */
-  --font-primary: 'Arvo', serif;
-  --font-secondary: 'Montserrat', sans-serif;
+  /* ========== NEUTRAL COLORS ========== */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-dark: #1F2937;
+  --color-light: #ffffff;
+  
+  /* Gray scale */
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #6B7280;
+  --color-gray-600: #4B5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
+  
+  /* ========== TEXT COLORS ========== */
+  --text-primary: #111827;        /* Main headings, important text */
+  --text-secondary: #6B7280;      /* Secondary text, descriptions */
+  --text-muted: #9CA3AF;          /* Placeholder text, disabled */
+  --text-inverse: #ffffff;        /* Text on dark backgrounds */
+  --text-light: #888888;          /* Light gray text */
+  --text-dark: #333333;           /* Darker text */
+  --text-medium: #555555;         /* Medium gray text */
+  --text-subtle: #666666;         /* Subtle text */
+  
+  /* Legacy text colors (to be phased out) */
+  --text-color: #333;
+  --text-color-light: #888;
+  --text-color-medium: #444;
+  
+  /* ========== BACKGROUND COLORS ========== */
+  --bg-primary: #ffffff;          /* Main backgrounds */
+  --bg-secondary: #F9FAFB;        /* Secondary backgrounds */
+  --bg-tertiary: #F3F4F6;         /* Tertiary backgrounds */
+  --bg-hover: #F5F5F5;            /* Hover backgrounds */
+  --bg-active: #E5E7EB;           /* Active backgrounds */
+  --bg-overlay: rgba(0, 0, 0, 0.6); /* Modal overlays */
+  --bg-tooltip: #374151;          /* Tooltip backgrounds */
+  
+  /* Specific background variations */
+  --bg-light-gray: #FAFAFA;
+  --bg-medium-gray: #F5F5F5;
+  --bg-card: #ffffff;
+  --bg-section: #F8F9FA;
+  
+  /* ========== BORDER COLORS ========== */
+  --border-primary: #E5E7EB;      /* Default borders */
+  --border-secondary: #D1D5DB;    /* Secondary borders */
+  --border-light: #F3F4F6;        /* Light borders */
+  --border-dark: #9CA3AF;         /* Dark borders */
+  --border-focus: #FF6B35;        /* Focus borders */
+  --border-error: #EF4444;        /* Error borders */
+  
+  /* Legacy border colors */
+  --border-color: #ddd;
+  
+  /* ========== UI STATE COLORS ========== */
+  --color-hover-light: #FFF5F2;
+  --color-hover-dark: #D6491F;
+  --color-active: #E85A2B;
+  --color-focus: #FF6B35;
+  --color-disabled: #D1D5DB;
+  
+  /* ========== LEGACY COLORS (to be phased out) ========== */
+  /* Old product colors */
+  --product-text: #31353d;
+  --product-accent: #9bb6aa;
+  --product-accent-hover: #82a598;
+  
+  /* Old modal colors */
+  --modal-bg: #ffffff;
+  --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  
+  /* Filter colors */
+  --filter-primary: #2962ff;
+  --filter-bg: #f0f7ff;
+  --filter-text: #1a1a1a;
+  
+  /* Alert status colors */
+  --alert-active-bg: #e0f2f1;
+  --alert-active-text: #009688;
+  --alert-pending-bg: #fff8e1;
+  --alert-pending-text: #ff9800;
+  
+  /* ========== TYPOGRAPHY ========== */
+  /* Font families */
+  --font-primary: 'Arvo', serif;           /* Main headings, titles */
+  --font-secondary: 'Montserrat', sans-serif; /* Body text, UI elements */
+  --font-mono: 'Monaco', 'Consolas', monospace; /* Code, technical text */
+  
+  /* Font weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  /* Font sizes - Mobile first approach */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-5xl: 3rem;      /* 48px */
+  
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  /* Letter spacing */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
   
   /* Border radius */
   --radius-sm: 4px;
@@ -47,7 +175,7 @@
   /* Shadow scale */
   --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 4px 12px rgba(122, 149, 137, 0.4);
+  --shadow-lg: 0 4px 12px rgba(255, 107, 53, 0.25);
   
   /* Consistent spacing system */
   --space-xs: 4px;

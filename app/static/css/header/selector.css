@@ -1,16 +1,25 @@
 /* ===============================
-   BRAND/MODEL SELECTOR COMPONENT
+   CATEGORY/BRAND SELECTOR COMPONENT
 =============================== */
 
 /* Import design system variables if needed */
 @import url('variables.css');
 
 /* Fixed positioning approach for consistent spacing */
-.brand-model-selector {
+.category-brand-selector {
   position: relative;
   width: 100%;
   margin: 0;
-  padding: var(--space-sm) 0 var(--space-lg);
+  padding: var(--space-sm) 0 calc(var(--space-lg) * 2);
+  margin-bottom: var(--space-lg);
+}
+
+/* Selector container wrapper - centers and constrains width */
+.selector-container-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  width: 100%;
 }
 
 .selector-container {
@@ -25,7 +34,7 @@
   gap: 0; /* Remove gap here, we'll use margins instead */
 }
 
-.models-container {
+.brands-container {
   width: 100%;
   min-height: 50px;
   max-height: 120px;
@@ -55,7 +64,7 @@
   margin: 0;
 }
 
-.selector-button.brand {
+.selector-button.category {
   background-color: var(--color-primary);
   color: var(--color-light);
   flex: 0 0 auto;
@@ -63,17 +72,39 @@
 }
 
 /* Remove the margin-right: 0 on last-child since we're using gap */
-.selector-button.brand:last-child {
+.selector-button.category:last-child {
   margin-right: var(--space-sm); /* Changed to match left margin */
 }
 
-.selector-button.brand:hover {
+.selector-button.category:hover {
   background-color: var(--color-hover-dark);
   transform: var(--elevation-hover);
   box-shadow: var(--shadow-md);
 }
 
-.selector-button.model {
+/* Home button specific styling */
+.selector-button.category.home-button {
+  padding: var(--space-md);
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-accent, #28a745);
+}
+
+.selector-button.category.home-button:hover {
+  background-color: var(--color-accent-dark, #218838);
+  transform: var(--elevation-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.selector-button.category.home-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+.selector-button.brand {
   background-color: var(--color-light);
   color: var(--color-dark);
   border: 2px solid var(--color-primary);
@@ -82,7 +113,7 @@
   white-space: nowrap;
 }
 
-.selector-button.model:hover {
+.selector-button.brand:hover {
   background-color: var(--color-hover-light);
   transform: var(--elevation-hover);
   box-shadow: var(--shadow-md);
@@ -96,7 +127,33 @@
   transform: var(--elevation-hover);
 }
 
-/* Horizontally scrollable brands container */
+/* Horizontally scrollable categories container */
+.categories-row.scrollable-categories {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  width: 100%;
+  padding: var(--space-xs) 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+  justify-content: flex-start; /* Changed from center to allow proper scrolling */
+}
+
+.categories-row.scrollable-categories::-webkit-scrollbar {
+  height: 4px;
+}
+
+.categories-row.scrollable-categories::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-light, rgba(0, 0, 0, 0.2));
+  border-radius: var(--radius-pill, 4px);
+}
+
+.categories-row .selector-button.category {
+  flex: 0 0 auto;
+}
+
+/* Horizontally scrollable brands container (for second level) */
 .brands-row.scrollable-brands {
   display: flex;
   flex-wrap: nowrap;
@@ -122,6 +179,15 @@
   flex: 0 0 auto;
 }
 
+/* Categories wrapper with arrow navigation */
+.categories-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  margin: var(--space-xs) 0;
+}
+
 /* Brands wrapper with arrow navigation */
 .brands-wrapper {
   display: flex;
@@ -132,6 +198,7 @@
 }
 
 /* Arrow buttons for horizontal scrolling */
+.category-scroll-arrow,
 .brand-scroll-arrow {
   /* Remove circular styling */
   display: flex;
@@ -151,11 +218,13 @@
   flex: 0 0 auto;
 }
 
+.category-scroll-arrow:hover,
 .brand-scroll-arrow:hover {
   color: var(--color-primary-dark); /* Change color on hover */
   transform: scale(1.2);
 }
 
+.category-scroll-arrow.hidden,
 .brand-scroll-arrow.hidden {
   opacity: 0;
   pointer-events: none;
@@ -164,6 +233,7 @@
 }
 
 /* Adjust spacing around the arrows */
+.categories-wrapper .scrollable-categories,
 .brands-wrapper .scrollable-brands {
   flex: 1;
   scroll-behavior: smooth;
@@ -176,14 +246,14 @@
 
 /* Large tablet and below (991px and below) */
 @media (max-width: 991px) {
-  .brand-model-selector {
+  .category-brand-selector {
     padding: var(--space-md) 0;
   }
 }
 
 /* Medium tablets and below (768px and below) */
 @media (max-width: 768px) {
-  .brand-model-selector {
+  .category-brand-selector {
     top: 56px; /* Match smaller header height */
   }
   
@@ -198,14 +268,17 @@
     text-align: center; /* Reinforce center alignment */
   }
   
+  .selector-button.category,
   .selector-button.brand {
     margin: 0 var(--space-xs) var(--space-xs) var(--space-xs); /* Equal margins on both sides */
   }
   
+  .selector-button.category:last-child,
   .selector-button.brand:last-child {
     margin-right: var(--space-xs); /* Match left margin */
   }
 
+  .category-scroll-arrow,
   .brand-scroll-arrow {
     min-width: 28px;
     height: 28px;
@@ -220,6 +293,7 @@
     font-size: 0.85rem;
   }
 
+  .category-scroll-arrow,
   .brand-scroll-arrow {
     min-width: 24px;
     height: 24px;

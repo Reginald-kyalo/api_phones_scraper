@@ -1,0 +1,232 @@
+/* ===============================
+   MAIN PAGE - CSS STYLES
+=============================== */
+
+.main-page-container {
+  max-width: 1200px;
+  margin: 30px auto 0;
+  padding: 40px 20px 20px;
+}
+
+.category-section {
+  margin-bottom: 50px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 10px;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+.view-all-link {
+  color: var(--color-accent, #2E86AB);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.view-all-link:hover {
+  background-color: var(--color-accent, #2E86AB);
+  color: var(--text-inverse, white);
+}
+
+.products-scroll-container {
+  position: relative;
+  overflow: hidden;
+  padding: 0 60px; /* Add more padding to ensure arrows are visible */
+  z-index: 1; /* Establish stacking context */
+}
+
+.products-grid {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 10px 0;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.products-grid::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.products-grid .product {
+  flex: 0 0 280px;
+  min-height: 400px;
+}
+
+.scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 200; /* Much higher z-index to be above everything */
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.scroll-arrow:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.scroll-arrow.left {
+  left: 10px;
+}
+
+.scroll-arrow.right {
+  right: 10px;
+}
+
+.scroll-arrow i {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.empty-section {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Hero section for main page */
+.hero-section {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  color: var(--text-inverse);
+  padding: 60px 20px;
+  text-align: center;
+  margin-bottom: 40px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-page-container {
+    padding: 15px;
+  }
+
+  .products-scroll-container {
+    padding: 0 45px; /* Adjust padding for mobile */
+  }
+
+  .section-title {
+    font-size: 1.4rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .products-grid .product {
+    flex: 0 0 250px;
+  }
+
+  .scroll-arrow {
+    width: 35px;
+    height: 35px;
+  }
+
+  .scroll-arrow i {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-scroll-container {
+    padding: 0 40px;
+  }
+
+  .scroll-arrow {
+    width: 30px;
+    height: 30px;
+  }
+
+  .scroll-arrow i {
+    font-size: 12px;
+  }
+
+  .products-grid .product {
+    flex: 0 0 220px;
+  }
+}
+
+/* ===============================
+   RESPONSIVE CONTAINER BREAKPOINTS
+=============================== */
+
+/* Extra large screens (1400px and up) */
+@media (min-width: 1400px) {
+  .main-page-container {
+    max-width: 1400px;
+    padding: 40px 60px 20px;
+  }
+}
+
+/* Large screens (1200px to 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .main-page-container {
+    padding: 40px 40px 20px;
+  }
+}
+
+/* Medium screens (992px to 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .main-page-container {
+    max-width: 100%;
+    padding: 40px 30px 20px;
+  }
+}
+
+/* Small screens (768px to 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .main-page-container {
+    padding: 40px 20px 20px;
+  }
+}
+
+/* Extra small screens (below 768px) */
+@media (max-width: 767px) {
+  .main-page-container {
+    padding: 40px 15px 20px;
+  }
+}
