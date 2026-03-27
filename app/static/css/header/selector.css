@@ -29,7 +29,7 @@
   align-items: center;
   width: 100%;
   margin: 0 auto;
-  max-width: 900px;
+  max-width: 100%;
   padding: var(--space-xs) 0;
   gap: 0; /* Remove gap here, we'll use margins instead */
 }
@@ -49,59 +49,23 @@
 }
 
 .selector-button {
-  padding: var(--space-md) calc(var(--space-lg) + var(--space-sm));
-  border: none;
-  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  border: 2px solid #d8d8d8;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all var(--transition-medium);
+  transition: all 0.2s ease;
   font-family: var(--font-secondary);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 0.95rem;
   letter-spacing: 0.3px;
-  box-shadow: var(--shadow-sm);
+  background: white;
+  color: #1a1a1a;
   position: relative;
   overflow: hidden;
   margin: 0;
-}
-
-.selector-button.category {
-  background-color: var(--color-primary);
-  color: var(--color-light);
-  flex: 0 0 auto;
-  margin: 0 var(--space-sm) var(--space-sm) var(--space-sm); /* Added left margin */
-}
-
-/* Remove the margin-right: 0 on last-child since we're using gap */
-.selector-button.category:last-child {
-  margin-right: var(--space-sm); /* Changed to match left margin */
-}
-
-.selector-button.category:hover {
-  background-color: var(--color-hover-dark);
-  transform: var(--elevation-hover);
-  box-shadow: var(--shadow-md);
-}
-
-/* Home button specific styling */
-.selector-button.category.home-button {
-  padding: var(--space-md);
-  min-width: 50px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: var(--color-accent, #28a745);
-}
-
-.selector-button.category.home-button:hover {
-  background-color: var(--color-accent-dark, #218838);
-  transform: var(--elevation-hover);
-  box-shadow: var(--shadow-md);
-}
-
-.selector-button.category.home-button svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
+  gap: 8px;
 }
 
 .selector-button.brand {

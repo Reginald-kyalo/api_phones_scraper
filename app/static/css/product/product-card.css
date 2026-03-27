@@ -7,19 +7,21 @@
 /* Individual product card (wrapper) */
 .product {
   background: transparent;
-  max-width: 300px;
+  max-width: 240px; /* Reduced from 300px */
   position: relative;
   z-index: 15;
   margin: 0 auto;
   box-shadow: none;
   box-sizing: border-box;
-  padding: 10px 40px 10px 10px; /* extra right padding for the sidebar */
+  padding: 8px 8px 8px 8px; /* Adjusted for internal sidebar */
+  overflow: hidden; /* Contain the sliding sidebar */
 }
 
 /* Inner wrapper handles internal layout */
 .product-inner {
   position: relative;
-  padding: 10px;
+  padding: 8px; /* Reduced from 10px */
+  overflow: visible; /* Allow sidebar to be visible when it slides in */
 }
 
 /* Product image and figure styling */
@@ -39,7 +41,7 @@
   position: relative;
   z-index: 15;
   background: #fff;
-  padding: 15px;
+  padding: 12px; /* Reduced from 15px */
   display: flex;
   flex-direction: column;
   align-items: left;
@@ -48,24 +50,29 @@
 
 .info {
   color: var(--text-medium);
-  font-size: 0.85em;
-  margin-bottom: 10px;
+  font-size: 0.75rem; /* Reduced from 0.85em */
+  margin-bottom: 8px;
 }
 
 .brand {
-  font-weight: bold;
+  font-weight: 600; /* Bold - this is the only bold element */
   margin: 0;
   color: var(--product-text);
+  font-size: 0.8125rem; /* 13px */
 }
 
 .model {
   margin: 0;
   color: var(--text-subtle);
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.3;
+  margin-top: 2px;
+  font-weight: 400; /* Normal weight - not bold */
 }
 
 .price {
   color: var(--product-accent);
-  font-size: 1.5em;
-  font-weight: bold;
-  margin-top: 5px;
+  font-size: 1.25rem; /* Reduced from 1.5em */
+  font-weight: 500; /* Medium weight - not bold */
+  margin-top: 6px;
 }

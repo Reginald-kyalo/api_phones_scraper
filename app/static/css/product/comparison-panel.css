@@ -28,12 +28,13 @@
 }
 
 .comparison-panel h3 {
-  margin: 0 0 10px 0;
-  font-size: 10px;
+  margin: 0 0 8px 0; /* Reduced from 10px */
+  font-size: 9px; /* Reduced from 10px */
   color: #31353d;
   text-align: center;
   text-transform: uppercase;
   line-height: 1.4;
+  font-weight: 600;
 }
 
 /* Merchant list in comparison panel: stacked layout */
@@ -50,15 +51,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 0;
-  min-height: 40px;
+  gap: 3px; /* Reduced from 4px */
+  padding: 6px 0; /* Reduced from 8px */
+  min-height: 36px; /* Reduced from 40px */
   border-bottom: 1px solid #eee;
-  cursor: pointer;
+  cursor: pointer; /* Clickable cursor */
   transition: background-color 0.2s ease;
   line-height: 1.2;
   position: relative;
   flex-wrap: nowrap;
+  font-size: 0.8125rem; /* 13px */
+}
+
+.merchant-list li:hover {
+  background-color: #f3f4f6; /* Light hover effect */
 }
 
 .external-link-icon {
@@ -69,25 +75,41 @@
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  padding: 0;
+  padding: 4px; /* Add padding for larger click area */
   height: 24px;
   min-width: 24px;
   max-width: 24px;
   box-sizing: content-box;
-  z-index: 2;
+  z-index: 10; /* Increased from 2 */
+  cursor: pointer; /* Explicit pointer cursor */
+  color: inherit;
+  text-decoration: none;
+}
+
+.external-link-icon:hover {
+  opacity: 0.7;
 }
 
 .external-link-icon svg {
   display: block;
-  margin-left: 4px;
-}
-
-.merchant-list li:hover {
-  background-color: #9bb6aa;
+  pointer-events: none; /* Let clicks pass through to the link */
 }
 
 .merchant-list li:last-child {
   border-bottom: none;
+}
+
+/* Merchant name and price styling */
+.merchant-name {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500;
+  color: #31353d;
+}
+
+.merchant-price {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  color: var(--product-accent);
 }
 
 /* Close button for comparison panel */
@@ -95,7 +117,7 @@
   position: absolute;
   top: 5px;
   left: 10px;
-  font-size: 18px;
+  font-size: 16px; /* Reduced from 18px */
   font-weight: bold;
   color: #333;
   background: transparent;

@@ -30,38 +30,21 @@
                     <span>Price Alerts</span>
                 </a>
             </li>
-            <!-- Categories dropdown -->
+            <!-- Categories section -->
             <li>
-                <a href="javascript:void(0)" class="side-panel__dropdown" id="sidePanelCategorySelector"
-                    aria-expanded="false">
-                    <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                    <span>Categories</span>
-                </a>
-                <div class="side-panel__submenu">
-                    <ul class="submenu-list categories-list" id="sidePanelCategoriesDropdown">
-                        <!-- Category items will be populated here -->
-                    </ul>
-                </div>
-            </li>
-            <!-- Brands dropdown - initially hidden -->
-            <li class="brands-dropdown-li" style="display: none;">
-                <a href="javascript:void(0)" class="side-panel__dropdown" id="sidePanelBrandSelector"
-                    aria-expanded="false">
-                    <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                    <span>Brands</span>
-                </a>
-                <div class="side-panel__submenu">
-                    <ul class="submenu-list brands-list" id="sidePanelBrandsDropdown">
-                        <!-- Brand items will be populated here -->
-                    </ul>  
+                <div class="side-panel__inner">
+                  <div class="side-panel__categories-section">
+                      <div class="side-panel__categories-header">
+                          <span>Categories</span>
+                      </div>
+                      <div class="side-panel__categories-grid" id="sidePanelCategoriesGrid">
+                          <!-- Categories will be populated here -->
+                      </div>
+                      <!-- Desktop: Subcategories panel (right side) -->
+                      <div class="side-panel__subcategories-panel hidden" id="sidePanelSubcategoriesPanel">
+                          <!-- Subcategories and products will appear here on desktop -->
+                      </div>
+                  </div>
                 </div>
             </li>
         </ul>

@@ -13,11 +13,21 @@
   position: relative;
   width: 100%;
   max-width: 440px;
-  background: var(--color-accent);
+  background: #ffffff; /* White background */
+  border: 2px solid #d8d8d8; /* Subtle gray border - 2px for crisp rendering */
   border-radius: var(--radius-pill);
   display: flex;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-medium) var(--bezier-bounce);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow for definition */
+  transition: all 0.2s ease; /* Smooth transition for focus */
+  -webkit-font-smoothing: antialiased; /* Smooth rendering */
+  -webkit-backface-visibility: hidden; /* Prevent flickering */
+  backface-visibility: hidden;
+}
+
+.search-form:focus-within {
+  border-color: #ff6b00; /* Orange border on focus */
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08); /* Glowing effect */
+  transform: scale(1.02); /* Subtle expansion on focus */
 }
 
 .search-form input,
@@ -25,21 +35,78 @@
   height: var(--search-height);
   font-family: var(--font-primary);
   border: 0;
-  color: var(--color-dark);
+  color: #333;
   font-size: 1rem;
 }
 
 .search-form input[type="search"] {
   outline: 0;
   width: 100%;
-  background: var(--color-light);
+  background: #ffffff;
   padding: 0 var(--space-lg);
   border-radius: var(--radius-pill);
   appearance: none;
-  transition: all var(--transition-medium) var(--bezier-bounce);
-  transition-property: width, border-radius;
+  transition: all 0.2s ease;
   z-index: 1;
   position: relative;
+  color: #333;
+  margin-left: 0; /* Make room for clear button */
+}
+
+/* Clear button on left side */
+.search-clear-btn {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6b00;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 2;
+  padding: 0;
+}
+
+.search-clear-btn:hover {
+  transform: translateY(-50%) scale(1.15);
+}
+
+.search-clear-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Divider line - 1px thick */
+.search-divider {
+  position: absolute;
+  left: 44px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 24px;
+  background-color: #d8d8d8;
+  z-index: 1;
+}
+
+/* Adjust input padding when clear button is visible */
+.search-form:has(#search:not(:placeholder-shown)) input[type="search"] {
+  padding-left: 54px; /* Make room for clear button + divider */
+}
+
+.search-form input[type="search"]:focus {
+  color: #111; /* Darker on focus */
+}
+
+.search-form input[type="search"]::placeholder {
+  color: #999;
 }
 
 .search-form button {
@@ -48,10 +115,10 @@
   right: 0;
   width: var(--search-btn-width);
   font-weight: bold;
-  background: var(--color-primary-dark);
+  background: transparent;
   border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
   cursor: pointer;
-  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+  transition: opacity var(--transition-fast);
   text-align: center;
   height: var(--search-height);
   display: flex;
@@ -63,7 +130,14 @@
 .search-form button svg.search-icon {
   width: 24px;
   height: 24px;
-  stroke: var(--color-light);
+  stroke: #ff6b00;
+  stroke-width: 2;
+  transition: all 0.2s ease;
+}
+
+/* Animate icon on focus */
+.search-form:focus-within button svg.search-icon {
+  transform: scale(1.1);
 }
 
 .search-form input:not(:placeholder-shown) {
@@ -97,20 +171,20 @@
   min-width: 44px;
   align-items: center;
   justify-content: center;
-  color: var(--color-light);
+  color: #ff6b00; /* Orange icon */
   border-radius: var(--radius-md);
   padding: var(--space-xs);
   transition: background-color var(--transition-fast);
 }
 
 .mobile-search-icon:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 107, 0, 0.1); /* Light orange on hover */
 }
 
 .mobile-search-icon svg {
   width: 24px;
   height: 24px;
-  stroke: var(--color-light);
+  stroke: #ff6b00; /* Orange icon */
 }
 
 .search-close {

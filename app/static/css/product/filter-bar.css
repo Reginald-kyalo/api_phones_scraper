@@ -10,11 +10,28 @@
 .page-container {
   display: flex;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1200px; /* Match header default */
   margin: 0 auto;
-  padding: 20px;
-  gap: 20px; /* Reduced from 24px */
+  padding: 20px var(--space-md, 12px); /* Match header padding */
+  gap: 20px;
   font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  /* DIAGNOSTIC: Purple border to see page container alignment */
+  outline: 3px solid purple !important;
+}
+
+/* Responsive max-width to match header */
+@media (min-width: 1400px) {
+  .page-container {
+    max-width: 1400px; /* Match header at 1400px+ */
+    padding: 20px var(--space-xl, 24px); /* Match header at 1400px+ */
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .page-container {
+    padding: 20px var(--space-lg, 16px); /* Match header 1200-1399px */
+  }
 }
 
 .filter-sidebar {

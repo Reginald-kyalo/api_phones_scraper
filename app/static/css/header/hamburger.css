@@ -6,35 +6,35 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   background: transparent;
   border: none;
   cursor: pointer;
   margin-right: var(--space-lg);
   position: relative;
   transition: background-color var(--transition-fast);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
+  padding: 12px; /* Increased padding for larger hover area */
 }
 
-.hamburger-menu:hover,
-.hamburger-menu:focus {
-  background-color: var(--color-primary-light);
+.hamburger-menu:hover {
+  background-color: rgba(255, 107, 0, 0.12);
 }
 
 .hamburger-line {
   position: absolute;
-  width: 24px;
+  width: 20px;
   height: 2px;
-  background-color: var(--color-light);
-  left: 8px; /* Explicitly position from left */
-  transform-origin: center; /* Force center transform origin */
+  background-color: #1a1a1a; /* Dark gray lines */
+  left: 2px;
+  transform-origin: center;
   transition: transform var(--transition-medium), opacity var(--transition-medium);
 }
 
 /* Position the lines with proper spacing */
 .hamburger-line:nth-child(1) {
-  top: calc(50% - 8px);
+  top: calc(50% - 6px);
 }
 
 .hamburger-line:nth-child(2) {
@@ -42,12 +42,12 @@
 }
 
 .hamburger-line:nth-child(3) {
-  top: calc(50% + 8px);
+  top: calc(50% + 6px);
 }
 
-/* Transform for the X state - completely different approach */
+/* Transform for the X state - KEEP THIS ANIMATION */
 .hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(1) {
-  top: 50%; /* Center it */
+  top: 50%;
   transform: rotate(45deg);
 }
 
@@ -56,31 +56,6 @@
 }
 
 .hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(3) {
-  top: 50%; /* Center it */
+  top: 50%;
   transform: rotate(-45deg);
-}
-
-/* Mobile-specific adjustments for proper alignment */
-@media (max-width: 768px) {
-  .hamburger-menu {
-    width: 36px; /* Slightly smaller button on mobile */
-    margin-right: var(--space-md); /* Reduce right margin on mobile */
-  }
-  
-  .hamburger-line {
-    width: 20px; /* Slightly smaller lines */
-    left: 8px; /* Adjusted position */
-  }
-}
-
-/* Small mobile devices */
-@media (max-width: 480px) {
-  .hamburger-line {
-    left: 8px; /* Center the lines within smaller button */
-  }
-  
-  .hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(1),
-  .hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(3) {
-    left: 8px; /* Ensure X remains centered */
-  }
 }

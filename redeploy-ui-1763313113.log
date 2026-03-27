@@ -1,0 +1,223 @@
+=== Quick Redeploy Script ===
+
+Getting ACR credentials...
+
+Building Docker image...
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  764.4kB
+Step 1/11 : FROM python:3.13-slim
+ ---> c706381c8c53
+Step 2/11 : WORKDIR /app
+ ---> Using cache
+ ---> 25760e07429f
+Step 3/11 : RUN apt-get update && apt-get install -y     gcc     g++     libssl-dev     && rm -rf /var/lib/apt/lists/*
+ ---> Using cache
+ ---> d997a7d2baf5
+Step 4/11 : COPY requirements.txt .
+ ---> Using cache
+ ---> 63b38b660b17
+Step 5/11 : RUN pip install --no-cache-dir -r requirements.txt
+ ---> Using cache
+ ---> ddafe7ab74bb
+Step 6/11 : COPY . .
+ ---> bea9d3977a8c
+Step 7/11 : RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+ ---> Running in 77508bfd1092
+ ---> Removed intermediate container 77508bfd1092
+ ---> 127853143cc5
+Step 8/11 : USER appuser
+ ---> Running in 320693e66a34
+ ---> Removed intermediate container 320693e66a34
+ ---> 8401bbc8b2de
+Step 9/11 : EXPOSE 10000
+ ---> Running in 30fe65c68c4d
+ ---> Removed intermediate container 30fe65c68c4d
+ ---> 9dae26d94a7f
+Step 10/11 : HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3     CMD python -c "import requests; requests.get('http://localhost:10000/healthz')"
+ ---> Running in 407e00e964d8
+ ---> Removed intermediate container 407e00e964d8
+ ---> 29e6230c90c9
+Step 11/11 : CMD ["python3", "-m", "app.main", "0.0.0.0", "--port", "10000"]
+ ---> Running in 01e1778e7f57
+ ---> Removed intermediate container 01e1778e7f57
+ ---> 776edeef669b
+Successfully built 776edeef669b
+Successfully tagged pricedealsacr.azurecr.io/price-deals-web:latest
+
+Pushing to ACR...
+WARNING! Using --password via the CLI is insecure. Use --password-stdin.
+Login Succeeded
+The push refers to repository [pricedealsacr.azurecr.io/price-deals-web]
+a76cca1213e8: Preparing
+247f2905fc30: Preparing
+670042e14ec3: Preparing
+0e428010edce: Preparing
+929a2a0da5c1: Preparing
+2af5797a92b0: Preparing
+6a98082172d1: Preparing
+6105285e4786: Preparing
+c52d478664cf: Preparing
+36d06fe0cbc6: Preparing
+6105285e4786: Waiting
+c52d478664cf: Waiting
+36d06fe0cbc6: Waiting
+2af5797a92b0: Waiting
+6a98082172d1: Waiting
+0e428010edce: Layer already exists
+670042e14ec3: Layer already exists
+929a2a0da5c1: Layer already exists
+2af5797a92b0: Layer already exists
+6105285e4786: Layer already exists
+6a98082172d1: Layer already exists
+c52d478664cf: Layer already exists
+36d06fe0cbc6: Layer already exists
+247f2905fc30: Pushed
+a76cca1213e8: Pushed
+latest: digest: sha256:981141716c36e208a08a2dc624153fe0805c66f26f6536c16c9f99b2e4d480a5 size: 2418
+
+Updating container app...
+/ Running ..| Running ..\ Running ..- Running ..[K{
+  "id": "/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg/providers/Microsoft.App/containerapps/price-deals-app",
+  "identity": {
+    "type": "None"
+  },
+  "location": "Switzerland North",
+  "name": "price-deals-app",
+  "properties": {
+    "configuration": {
+      "activeRevisionsMode": "Single",
+      "dapr": null,
+      "identitySettings": [],
+      "ingress": {
+        "additionalPortMappings": null,
+        "allowInsecure": false,
+        "clientCertificateMode": null,
+        "corsPolicy": null,
+        "customDomains": [
+          {
+            "bindingType": "SniEnabled",
+            "certificateId": "/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg/providers/Microsoft.App/managedEnvironments/price-deals-env/managedCertificates/dealsonline.ninja-price-de-251116135904",
+            "name": "dealsonline.ninja"
+          },
+          {
+            "bindingType": "SniEnabled",
+            "certificateId": "/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg/providers/Microsoft.App/managedEnvironments/price-deals-env/managedCertificates/mc-price-deals-en-www-dealsonline--5430",
+            "name": "www.dealsonline.ninja"
+          }
+        ],
+        "exposedPort": 0,
+        "external": true,
+        "fqdn": "price-deals-app.icystone-629a02e7.switzerlandnorth.azurecontainerapps.io",
+        "ipSecurityRestrictions": null,
+        "stickySessions": null,
+        "targetPort": 10000,
+        "traffic": [
+          {
+            "latestRevision": true,
+            "weight": 100
+          }
+        ],
+        "transport": "Auto"
+      },
+      "maxInactiveRevisions": 100,
+      "registries": [
+        {
+          "identity": "",
+          "passwordSecretRef": "pricedealsacrazurecrio-pricedealsacr",
+          "server": "pricedealsacr.azurecr.io",
+          "username": "pricedealsacr"
+        }
+      ],
+      "runtime": null,
+      "secrets": [
+        {
+          "name": "pricedealsacrazurecrio-pricedealsacr"
+        }
+      ],
+      "service": null
+    },
+    "customDomainVerificationId": "803C8DD39B3F1343CFFEAFCFA01C1EA6C5F443BA5F15898664910579B03B2B5B",
+    "delegatedIdentities": [],
+    "environmentId": "/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg/providers/Microsoft.App/managedEnvironments/price-deals-env",
+    "eventStreamEndpoint": "https://switzerlandnorth.azurecontainerapps.dev/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg/containerApps/price-deals-app/eventstream",
+    "latestReadyRevisionName": "price-deals-app--0000003",
+    "latestRevisionFqdn": "price-deals-app--0000003.icystone-629a02e7.switzerlandnorth.azurecontainerapps.io",
+    "latestRevisionName": "price-deals-app--0000003",
+    "managedEnvironmentId": "/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg/providers/Microsoft.App/managedEnvironments/price-deals-env",
+    "outboundIpAddresses": [
+      "20.208.27.174",
+      "20.208.28.57",
+      "20.208.27.168",
+      "20.208.28.54",
+      "20.250.185.102",
+      "20.250.185.171",
+      "20.250.185.165",
+      "20.250.185.180",
+      "20.250.185.167",
+      "20.250.185.177",
+      "20.250.128.127",
+      "20.250.79.145",
+      "20.250.128.206",
+      "20.250.79.152",
+      "4.226.31.246",
+      "4.226.31.199",
+      "4.226.24.166",
+      "4.226.31.252",
+      "4.226.31.233",
+      "4.226.31.249",
+      "20.250.190.217"
+    ],
+    "provisioningState": "Succeeded",
+    "runningStatus": "Running",
+    "template": {
+      "containers": [
+        {
+          "env": [
+            {
+              "name": "MONGO_URI"
+            },
+            {
+              "name": "REDIS_URL"
+            }
+          ],
+          "image": "pricedealsacr.azurecr.io/price-deals-web:latest",
+          "name": "price-deals-app",
+          "resources": {
+            "cpu": 0.5,
+            "ephemeralStorage": "2Gi",
+            "memory": "1Gi"
+          }
+        }
+      ],
+      "initContainers": null,
+      "revisionSuffix": "",
+      "scale": {
+        "cooldownPeriod": 300,
+        "maxReplicas": 5,
+        "minReplicas": 0,
+        "pollingInterval": 30,
+        "rules": null
+      },
+      "serviceBinds": null,
+      "terminationGracePeriodSeconds": null,
+      "volumes": null
+    },
+    "workloadProfileName": "Consumption"
+  },
+  "resourceGroup": "price-deals-rg",
+  "systemData": {
+    "createdAt": "2025-11-16T03:47:33.1966469",
+    "createdBy": "reginald.kyalo@gmail.com",
+    "createdByType": "User",
+    "lastModifiedAt": "2025-11-16T17:13:00.945041",
+    "lastModifiedBy": "reginald.kyalo@gmail.com",
+    "lastModifiedByType": "User"
+  },
+  "type": "Microsoft.App/containerApps"
+}
+
+=== Redeploy Complete! ===
+App URL: https://price-deals-app.icystone-629a02e7.switzerlandnorth.azurecontainerapps.io

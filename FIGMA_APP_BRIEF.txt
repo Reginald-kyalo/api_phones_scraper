@@ -1,0 +1,677 @@
+================================================================================
+FIGMA AI PROMPT: Product Deal Scraper & Price Comparison Platform
+================================================================================
+
+PHASE 1: COMPLETE APP OVERVIEW
+
+================================================================================
+App Type & Purpose:
+================================================================================
+A multi-category product deal aggregation and price comparison platform that 
+scrapes real-time pricing data from multiple retailers. Users can browse 
+products across categories (phones, laptops, cosmetics, shoes, sound systems), 
+compare prices, set price alerts, track favorites, and get the best deals in 
+their region.
+
+================================================================================
+Core Features (5-7 Main Functionalities):
+================================================================================
+1. Product Browse & Discovery - Category-based browsing with search functionality
+2. Price Comparison - View same product from multiple retailers with price differences
+3. Price Alerts - Set notifications when product prices drop below user threshold
+4. Favorites Management - Save and organize favorite products for later
+5. Real-time Deals - Daily featured deals with discount percentages
+6. Product Details - Comprehensive product information with specs, reviews, retailer links
+7. User Authentication - Login/signup for personalized features (favorites, alerts, plans)
+
+================================================================================
+User Flow:
+================================================================================
+User lands → Browse categories OR Search → View products/deals → Compare prices 
+→ Save to favorites OR Set price alert → Proceed to purchase via retailer link 
+→ Track alerts/favorites in account
+
+================================================================================
+Page Structures (Distinct Pages/Screens):
+================================================================================
+1. Home/Main Page - Featured deals showcase + category discovery cards
+2. Category Page - Products grid filtered by category with sorting/filtering
+3. Product Details Page - Single product view with price history, retailer list, specs
+4. Search Results Page - Dynamic results from search query
+5. Favorites Page - User's saved products (authenticated users only)
+6. Price Alerts Page - Manage active and past price alerts
+7. Account/Profile Page - User preferences, subscription plans, settings
+8. Authentication Page - Login/signup/register forms
+
+================================================================================
+
+PHASE 2: DETAILED PAGE ARCHITECTURES
+
+================================================================================
+PAGE 1: HOME/MAIN PAGE
+================================================================================
+
+Purpose: 
+Showcase top deals and enable category discovery without navigation confusion
+
+Layout Structure:
+┌─────────────────────────────────────────┐
+│          HEADER (White Background)       │
+│  [Logo] [Search Bar] [Account Dropdown]  │
+└─────────────────────────────────────────┘
+│ 📱 Phones │ 💻 Laptops │ 👗 Cosmetics │...│ (Top-level categories - functional)
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│   FEATURED CATEGORIES GRID (2x3 or 3x2) │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│  │ 📱 Phones│ │ 💻 Laptop│ │👗Cosmetic│ │
+│  │ Daily... │ │ Fresh... │ │ Beauty..│ │
+│  └──────────┘ └──────────┘ └──────────┘ │
+│  [Larger icon cards with category name] │
+│  [Shows deal count / trending indicator]│
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│      DAILY DEALS SECTION (Carousel)      │
+│  "Daily Deals - View all deals in NZ"   │
+│  [Product Card] [Product Card] [Product]│
+│  [Discount %] [Retailer] [Price] [CTA]  │
+│  ← Previous | Next →                     │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│    POPULAR PRODUCTS SECTION (Grid)       │
+│  "Trending Now in Your Region"           │
+│  [Product] [Product] [Product] [Product] │
+│  [Price] [Retailers Count] [Discount]    │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│      FOOTER (Multi-column layout)        │
+└─────────────────────────────────────────┘
+
+Key Components:
+- Header: Logo, search input (with clear button), account dropdown 
+  (Favorites, Alerts, Plans, Login)
+- Featured category cards: Icon (emoji), name, subtle hover effect
+- Deal carousel: Product image, discount %, price range, "Visit shop" CTA
+- Product grid: Thumbnail, product name, price, retailer count, rating
+
+Interactive Elements:
+- Category cards: Click → Navigate to category page
+- Search: Type → Real-time suggestions | Clear button (X) clears input
+- Deal carousel: Arrow buttons for horizontal scroll
+- Product cards: Hover → Slight elevation/shadow | Click → Product details page
+- Account dropdown: Click → Toggle menu | Select option → Navigate/Open modal
+
+Navigation:
+- Logo click → Home page
+- Category buttons → Category page with filtering
+- Search → Search results page
+- Account icon → Dropdown (Favorites/Alerts/Plans/Login)
+- Products → Product details page
+
+Content:
+- Daily featured deals with 5-15% discount indicators
+- Top 10-20 trending products
+- 5-6 featured categories with visual distinction
+- Retailer logos/names where applicable
+
+States:
+- Loading: Skeleton loaders on product cards
+- Empty: "No deals available" message with retry button
+- Error: "Failed to load deals" with error icon
+- Hover: Product cards lift with shadow, category cards border changes
+
+================================================================================
+PAGE 2: CATEGORY PAGE
+================================================================================
+
+Purpose: 
+Browse all products in a category with advanced filtering and sorting
+
+Layout Structure:
+┌─────────────────────────────────────────┐
+│      HEADER + CATEGORY NAVIGATION        │
+└─────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ SIDEBAR (Left, 25% width - Desktop only) │
+│  ┌────────────────────────────────────┐  │
+│  │ FILTERS:                            │  │
+│  │ ☐ Price Range: $0 - $5000          │  │
+│  │ ☐ Brand: [Dropdown with checkboxes]│  │
+│  │ ☐ Retailer: [Checkboxes]           │  │
+│  │ ☐ Discount: 10%+ □ 20%+ □ 30%+    │  │
+│  │ ☐ Rating: ⭐ 4+ only               │  │
+│  │ [Apply Filters] [Reset]             │  │
+│  └────────────────────────────────────┘  │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ MAIN CONTENT (75% width)                 │
+│ ┌────────────────────────────────────┐   │
+│ │ Sort by: [Price ↑↓] [Discount ↑↓] │   │
+│ │          [Rating ↑↓] [Newest]      │   │
+│ │ Results: 234 products              │   │
+│ └────────────────────────────────────┘   │
+│ ┌────────────────────────────────────┐   │
+│ │ PRODUCT GRID (4 columns desktop)    │   │
+│ │ [Product] [Product] [Product] [Prod]  │
+│ │ [Product] [Product] [Product] [Prod]  │
+│ │ ...                                    │
+│ │ [Load More] or [Pagination: 1 2 3...] │
+│ └────────────────────────────────────┘   │
+└──────────────────────────────────────────┘
+
+Key Components:
+- Sidebar filters: Price slider, brand/retailer checkboxes, discount badges, rating filter
+- Product grid cards: Image, name, price from X retailers, discount %, rating, "Compare" CTA
+- Sort dropdown: Multiple sort options
+- Pagination/Load more: For large result sets
+
+Interactive Elements:
+- Filter inputs: Change → Dynamically update grid (no page reload)
+- Sort dropdown: Select option → Re-sort grid
+- Product cards: Hover → Show "Compare Prices" button | Click → Product details
+- "Add to Favorites": Heart icon → Toggle favorite status
+- Pagination: Click page number → Load products for that page
+
+Navigation:
+- Back button or breadcrumb → Home or previous category
+- Product cards → Product details page
+- Filter tags (removable pills) → Remove filter
+
+Content:
+- 4-20 products per page based on category
+- For each product: image, name, lowest price, retailer count, avg rating
+- Filter options dynamic based on category data
+
+States:
+- Loading: Skeleton grid
+- Filtering: Slight opacity on grid while new results load
+- Empty results: "No products match your filters" message
+- Hover: Card elevation, "Compare" button appears
+- Active sort: Highlighted sort button with indicator (↑/↓)
+
+================================================================================
+PAGE 3: PRODUCT DETAILS PAGE
+================================================================================
+
+Purpose: 
+Show comprehensive product information and price comparison across retailers
+
+Layout Structure:
+┌─────────────────────────────────────────┐
+│           HEADER + NAVIGATION            │
+│  Breadcrumb: Home > Category > Product   │
+└─────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ LEFT SECTION (40% - Product Gallery)     │
+│ ┌────────────────────────────────────┐   │
+│ │   MAIN IMAGE (Large showcase)       │   │
+│ │          [Large Product Image]      │   │
+│ │  [Thumb1] [Thumb2] [Thumb3] [Thumb4]  │
+│ └────────────────────────────────────┘   │
+│ [❤️ Add to Favorites] [🔔 Price Alert]   │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ RIGHT SECTION (60% - Info & Prices)      │
+│ ┌────────────────────────────────────┐   │
+│ │ Product Name                        │   │
+│ │ ⭐⭐⭐⭐⭐ (4.5) 234 reviews          │   │
+│ │                                      │   │
+│ │ PRICING COMPARISON TABLE:            │   │
+│ │ ┌──────────┬────────┬──────────────┐│   │
+│ │ │ Retailer │ Price  │ In Stock? CTA││   │
+│ │ ├──────────┼────────┼──────────────┤│   │
+│ │ │ JB Hi-Fi │ $599.99│ ✓ Visit Shop ││   │
+│ │ │ Noel...  │ $615.00│ ✓ Visit Shop ││   │
+│ │ │ Harvey   │ $629.99│ ✓ Visit Shop ││   │
+│ │ └──────────┴────────┴──────────────┘│   │
+│ │                                      │   │
+│ │ SPECIFICATIONS:                      │   │
+│ │ • Screen: 6.1" OLED                 │   │
+│ │ • Camera: 48MP Main + 12MP Ultra   │   │
+│ │ • Storage: 256GB                    │   │
+│ │ • Color: Midnight Black             │   │
+│ │ [See Full Specs]                    │   │
+│ └────────────────────────────────────┘   │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│        PRICE HISTORY CHART (Full width)  │
+│  Last 30 Days Price Trend                │
+│   [Line chart showing price movement]    │
+└──────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│         CUSTOMER REVIEWS SECTION          │
+│  Top Reviews / Latest Reviews / Helpful   │
+│  [Review card] [Review card] [Review]    │
+│  [Load More Reviews]                      │
+└──────────────────────────────────────────┘
+
+Key Components:
+- Product gallery: Main image + thumbnail carousel
+- Pricing table: Retailer names, prices, stock status, "Visit shop" buttons
+- Specifications: Key product details in list format
+- Price history chart: Line graph of price over last 30 days
+- Reviews section: Individual review cards with rating, text, reviewer name
+
+Interactive Elements:
+- Image thumbnails: Click → Change main image
+- "Add to Favorites": Click → Toggle heart state | Show confirmation
+- "Set Price Alert": Click → Open modal with price threshold input
+- "Visit Shop" buttons: Click → Open retailer link in new tab
+- Price chart: Hover → Show exact price/date tooltip
+- Reviews: Filter by rating, sort by helpful/recent
+- Reviews: "Helpful" button → Toggle upvote
+
+Navigation:
+- Breadcrumb: Click any level → Navigate to that section
+- Back button → Category page
+- Related products sidebar: Navigate to similar products
+
+Content:
+- Product name, brand, model
+- Average rating and review count
+- Lowest to highest price across retailers
+- Full product specifications (30-50 key specs)
+- Price history over 30 days with percentage change
+- 5-10 most helpful/recent customer reviews
+- Product images (3-10 angles)
+
+States:
+- Loading: Skeleton for images, price table, reviews
+- Out of stock: Disabled "Visit Shop" button on specific retailers
+- Price alert set: Heart fills with color | Alert icon shows active status
+- Chart loading: Placeholder with animation
+- Review loading: Skeleton review cards
+
+================================================================================
+PAGE 4: FAVORITES PAGE (Authenticated Only)
+================================================================================
+
+Purpose: 
+Manage and track favorite products
+
+Layout Structure:
+┌─────────────────────────────────────────┐
+│      HEADER + AUTHENTICATION STATUS      │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  TABS: My Favorites | Shared with Me     │
+│  Sort: [Date Added ↓] [Price ↑↓]        │
+│  Filter: [All] [Under $500] [High Rated]│
+│  Search: [Search favorites...]          │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  FAVORITES GRID (4 columns)              │
+│  [Product card with remove button]       │
+│  [Product card] [Product card] [Product] │
+│  [Load More...]                          │
+└─────────────────────────────────────────┘
+
+Key Components:
+- Tab navigation: My Favorites / Shared with Me
+- Sort/filter options: Multiple ways to organize
+- Product cards: Same as category page + remove button
+
+Interactive Elements:
+- Remove button: Click → Remove from favorites (with undo)
+- Product card: Click → Product details page
+- Sort/filter: Change view dynamically
+- Share button: Share collection with friend
+
+Navigation:
+- Product → Product details page
+- Account menu → Back to account page
+
+Content:
+- User's saved products with timestamp added
+- Current prices and discount info
+- Retailer information
+
+States:
+- Empty: "No favorites yet. Start adding!" message
+- Loading: Skeleton grid
+- Item removed: Toast notification "Removed from favorites" + undo option
+
+================================================================================
+PAGE 5: PRICE ALERTS PAGE (Authenticated Only)
+================================================================================
+
+Purpose: 
+Manage price drop notifications
+
+Layout Structure:
+┌─────────────────────────────────────────┐
+│           HEADER                         │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ TABS: Active Alerts | Triggered | Past   │
+│ [Create New Alert]                      │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ ACTIVE ALERTS TABLE:                    │
+│ ┌────────────────────────────────────┐  │
+│ │ Product | Target Price | Current   │  │
+│ │         | Status       | Actions   │  │
+│ ├────────────────────────────────────┤  │
+│ │ iPhone  │ $450         │ Waiting   │  │
+│ │ 15 Pro  │ (current     │ [Edit]    │  │
+│ │         │ $599)        │ [Delete]  │  │
+│ │         │ 75% Complete│ [Pause]   │  │
+│ └────────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ TRIGGERED ALERTS TABLE:                 │
+│ [Product] [Discount %] [Current Price] [CTA]
+└─────────────────────────────────────────┘
+
+Key Components:
+- Tab navigation: Active / Triggered / Past
+- Alert list: Table format showing product, target price, current price, status
+- Action buttons: Edit, Delete, Pause alert
+- "Create New Alert" button/modal
+
+Interactive Elements:
+- "Create New Alert": Click → Open modal to set product + price threshold
+- Edit button: Click → Modify alert price or settings
+- Delete button: Click → Remove alert (with confirmation)
+- Pause button: Click → Temporarily disable notification
+- Triggered alerts: "View Deal" button → Product details page
+
+Navigation:
+- Product link → Product details page
+- Back to account → Account page
+
+Content:
+- List of user's active price alerts with thresholds
+- Current product prices and comparison to target
+- Alert status (watching, price dropped, out of stock)
+- Historical triggered alerts
+
+States:
+- Empty: "No active alerts" message with "Create Alert" CTA
+- Triggered: Highlighted row, "Price dropped!" badge
+- Paused: Grayed out row with resume option
+- Expired: Moved to "Past Alerts" section
+
+================================================================================
+PAGE 6: ACCOUNT/PROFILE PAGE (Authenticated Only)
+================================================================================
+
+Purpose: 
+Manage user preferences and subscription
+
+Layout Structure:
+┌─────────────────────────────────────────┐
+│      USER PROFILE HEADER                 │
+│  [Avatar] User Name • Edit Profile       │
+│  [User Email] • Subscription: Premium    │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ NAVIGATION TABS:                        │
+│ [Account] [Preferences] [Subscription]   │
+│ [Privacy] [Support]                     │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ ACCOUNT SECTION:                        │
+│  Name: [Text field] [Edit]              │
+│  Email: [Text field] [Edit]             │
+│  Region: [Dropdown] [Save]              │
+│  [Change Password] [Two-Factor Auth]    │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ SUBSCRIPTION SECTION:                   │
+│  Current Plan: Premium ($9.99/month)    │
+│  Next Billing: March 15, 2026           │
+│  [Upgrade Plan] [Cancel Subscription]   │
+│  Payment Methods: [Add/Manage Cards]    │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ NOTIFICATION PREFERENCES:                │
+│  ☑ Price Drop Alerts                    │
+│  ☑ Daily Deals Email                    │
+│  ☐ Weekly Newsletter                    │
+│  ☑ New Review Notifications              │
+│  [Save Preferences]                     │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ [Delete Account] [Logout]                │
+└─────────────────────────────────────────┘
+
+Key Components:
+- Profile header: Avatar, name, email, subscription status
+- Tab navigation: Different preference sections
+- Form fields: Editable profile information
+- Notification toggles: Email preference checkboxes
+- Subscription info: Current plan, billing date, upgrade option
+
+Interactive Elements:
+- "Edit Profile": Click → Enable field editing
+- Dropdown selectors: Change region, subscription tier
+- Toggle switches: Enable/disable notifications
+- "Save": Click → Persist changes with confirmation
+- "Change Password": Click → Password reset modal
+- "Upgrade Plan": Click → Subscription plans page
+
+Navigation:
+- Tabs: Switch between different settings sections
+- Subscription CTA → Upgrade page
+- Logout → Redirect to home (logged out state)
+
+Content:
+- User profile information
+- Current subscription tier and benefits
+- Billing information
+- Notification preferences
+- Account security options
+- Support/help links
+
+States:
+- Loading: Skeleton for profile fields
+- Editing: Form fields become input boxes
+- Saving: Loading state on "Save" button
+- Success: "Changes saved" toast message
+- Error: "Failed to save" with retry option
+
+================================================================================
+PAGE 7: AUTHENTICATION PAGE (Login/Register/Reset)
+================================================================================
+
+Purpose: 
+User login, registration, and password reset
+
+Layout Structure:
+┌──────────────────────────────────────────┐
+│ ┌────────────────┐  ┌─────────────────┐  │
+│ │    LOGIN       │  │    REGISTER     │  │
+│ │                │  │                 │  │
+│ │ Email: [Input] │  │ Name:   [Input] │  │
+│ │ Pass:  [Input] │  │ Email:  [Input] │  │
+│ │ [Remember Me]  │  │ Pass:   [Input] │  │
+│ │ [Forgot Pswd?] │  │ Confirm:[Input] │  │
+│ │ [LOGIN]        │  │ [By signing...]   │
+│ │                │  │ [REGISTER]      │  │
+│ │ OR             │  │ OR              │  │
+│ │ [Google Login] │  │ [Google Signup] │  │
+│ │ [GitHub Login] │  │ [GitHub Signup] │  │
+│ └────────────────┘  └─────────────────┘  │
+└──────────────────────────────────────────┘
+
+Key Components:
+- Login form: Email, password, remember me checkbox, forgot password link
+- Register form: Name, email, password, confirm password, T&C checkbox
+- OAuth buttons: Google and GitHub integration
+- Password reset modal: Email input with reset link
+
+Interactive Elements:
+- Form validation: Real-time feedback on field validity
+- "Show Password" toggle: Eye icon to reveal/hide password
+- Submit buttons: Login/Register with loading state
+- "Forgot Password": Click → Email input modal
+- OAuth buttons: Click → Third-party auth flow
+- Tab between Login/Register: Switch forms
+
+Navigation:
+- "Don't have account?" → Switch to register
+- "Already have account?" → Switch to login
+- After auth → Redirect to home or previous page
+- After logout → Redirect to home
+
+Content:
+- Form labels and placeholders
+- Error messages for validation
+- Success messages on registration
+- Terms & conditions link
+- Privacy policy link
+
+States:
+- Empty form: Disabled submit button
+- Validating: Loading spinner on field
+- Error: Red border on field + error message
+- Submitting: Loading state on submit button
+- Success: Confirmation message + redirect
+
+================================================================================
+
+PHASE 2 PART B: SHARED COMPONENTS & PATTERNS
+
+================================================================================
+Header Component (All Pages):
+================================================================================
+- Logo (clickable → home)
+- Search bar (placeholder: "Hi, what are you looking for?") with clear button (X) 
+  and divider line
+- Account dropdown menu (Favorites, Price Alerts, Plans, Login/Logout)
+- Responsive: Hamburger menu on mobile
+
+================================================================================
+Product Card Component (Reusable):
+================================================================================
+- Product image thumbnail
+- Product name (truncated on hover)
+- Price (lowest from retailers)
+- Retailer count ("From 3 retailers")
+- Discount badge (optional, "20% off")
+- Rating with star count
+- Favorite heart button (toggleable)
+- Hover effect: Slight elevation, "View Details" CTA
+
+================================================================================
+Modal/Dialog Components:
+================================================================================
+- Price Alert Modal: Set threshold + notifications
+- Authentication Modal: Login form
+- Confirmation Modal: Delete favorites/alerts
+- Success Toast: Confirmation messages
+
+================================================================================
+Filter & Sort Components:
+================================================================================
+- Checkbox filters: Brand, retailer, discount level
+- Slider filter: Price range
+- Radio buttons: Sort options
+- Dropdown: Pagination or additional options
+
+================================================================================
+Navigation Components:
+================================================================================
+- Breadcrumb: Home > Category > Product
+- Pagination: [Prev] [1] [2] [3] [Next] or "Load More"
+- Tab navigation: Active state highlighting
+- Sidebar navigation: Categories on desktop
+
+================================================================================
+
+DESIGN SYSTEM SPECIFICATIONS
+
+================================================================================
+Color Palette:
+================================================================================
+- Primary: White (#ffffff) - backgrounds
+- Text: Dark Gray (#1a1a1a) - main text
+- Accent: Orange (#ff6b00) - CTAs, highlights, borders on hover
+- Border: Light Gray (#d8d8d8) - 1px borders
+- Header: White background with dark text
+- Hover: Light orange background (rgba(255, 107, 0, 0.08))
+
+================================================================================
+Typography:
+================================================================================
+- Font: Inter (system font fallback)
+- Headings: 600-700 weight
+- Body: 400-500 weight
+- Sizes: 14px (small), 16px (body), 20px (subheading), 28px (heading)
+
+================================================================================
+Spacing System:
+================================================================================
+- xs: 4px
+- sm: 8px
+- md: 16px
+- lg: 24px
+- xl: 32px
+- Grid gaps: 16px
+
+================================================================================
+Component Heights:
+================================================================================
+- Header: 80px
+- Buttons: 44px minimum (touch-friendly)
+- Input fields: 40px
+- Product cards: Responsive (aspect ratio 1:1 for images)
+
+================================================================================
+Responsive Breakpoints:
+================================================================================
+- Mobile: < 480px
+- Tablet: 480px - 768px
+- Desktop: 768px - 1200px
+- Large Desktop: > 1400px
+
+================================================================================
+Accessibility Standards:
+================================================================================
+- All interactive elements: WCAG AA compliant
+- Color contrast: 4.5:1 minimum
+- Focus states: Visible 2px outline
+- Semantic HTML: Proper heading hierarchy, aria-labels
+- Animations: Prefer reduced motion respected
+
+================================================================================
+
+ENGINEERING BEST PRACTICES FOR IMPLEMENTATION
+
+================================================================================
+Frontend Architecture:
+================================================================================
+- Build with vanilla JavaScript (ES6 modules) + CSS Grid/Flexbox
+- No component framework (maintain lightweight)
+- Semantic HTML structure
+- Reusable CSS component library (not image-based)
+- Module-based organization (header.js, product-grid.js, etc.)
+
+================================================================================
+Performance:
+================================================================================
+- Lazy load product images
+- Pagination instead of infinite scroll where possible
+- Cache API responses appropriately
+- Minify and bundle CSS/JS
+
+================================================================================
+Code Quality:
+================================================================================
+- Maintain consistent file structure
+- Comment complex logic
+- Use descriptive class/ID names
+- Version control for CSS (query params: ?v=timestamp)
+
+================================================================================
+Security:
+================================================================================
+- Sanitize user input on client-side
+- Secure API endpoints (validate on backend)
+- Store auth tokens securely
+- HTTPS only
+
+================================================================================
+END OF FIGMA APP BRIEF
+================================================================================

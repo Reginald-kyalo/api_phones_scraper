@@ -1,0 +1,176 @@
+/* ===============================
+   CATEGORY NAVIGATION SYSTEM
+   Simplified Top-Level Categories Only
+=============================== */
+
+/* Main container - top-level categories only */
+.category-brand-selector {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-md, 1rem);
+}
+
+@media (min-width: 1400px) {
+  .category-brand-selector {
+    max-width: 1400px;
+    padding: var(--space-md, 1rem) var(--space-xl, 24px);
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .category-brand-selector {
+    max-width: 1200px;
+    padding: var(--space-md, 1rem) var(--space-lg, 16px);
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .category-brand-selector {
+    max-width: 100%;
+    padding: var(--space-md, 1rem) var(--space-md, 12px);
+  }
+}
+
+@media (max-width: 768px) {
+  .category-brand-selector {
+    padding: var(--space-md, 1rem) var(--space-sm, 8px);
+  }
+}
+
+/* Hide all nested structures - show only top-level */
+.categories-wrapper.sub-level,
+.categories-wrapper.final-level,
+.category-level-header,
+.category-level-title,
+.category-close-btn,
+.categories-row.sub-categories,
+.categories-row.final-categories,
+.category-scroll-arrow {
+  display: none !important;
+}
+
+/* Style all category buttons as top-level */
+.selector-button.main-category,
+.selector-button.sub-category,
+.selector-button.final-category,
+.selector-button.category-btn {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-secondary, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-weight: 400;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  background: #ffffff;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  min-width: fit-content;
+  -webkit-font-smoothing: antialiased;
+  backface-visibility: hidden;
+}
+
+.selector-button.main-category:hover,
+.selector-button.sub-category:hover,
+.selector-button.final-category:hover,
+.selector-button.category-btn:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+.selector-button.main-category.active,
+.selector-button.sub-category.active,
+.selector-button.final-category.active {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+/* Top-level categories container */
+.categories-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: var(--space-md, 1rem);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.categories-row.main-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm, 0.5rem);
+  width: 100%;
+}
+
+/* Top-level category buttons - search bar style */
+.selector-button.category {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-secondary, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-weight: 400;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  background: #ffffff;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  min-width: fit-content;
+  -webkit-font-smoothing: antialiased;
+  backface-visibility: hidden;
+}
+
+.selector-button.category:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+.selector-button.category.active {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+.selector-button.category.home-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selector-button.category.home-button svg {
+  stroke: currentColor;
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .selector-button.category {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .selector-button.category {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}

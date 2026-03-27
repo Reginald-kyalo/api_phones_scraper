@@ -1,0 +1,351 @@
+/**
+ * COMPREHENSIVE ICON MAPPING SYSTEM
+ * Based on actual API data structure
+ * Uses word-matching algorithm for accuracy
+ */
+
+// Main category icons (exact matches)
+export const MAIN_CATEGORY_ICONS = {
+  'automotive': '🚗',
+  'books, movies & tv': '📚',
+  'clothing & fashion': '👔',
+  'computers': '💻',
+  'electronics': '⚡',
+  'food, drink & gifts': '🎁',
+  'health & beauty': '💄',
+  'home & garden': '🏡',
+  'kids & toys': '🧸',
+  'office supplies': '📎',
+  'sports & outdoors': '⚽'
+};
+
+// Keyword-based icon mapping (order matters - more specific first)
+export const ICON_KEYWORDS = [
+  // Automotive
+  { keywords: ['car seats', 'seat'], icon: '💺' },
+  { keywords: ['suspension', 'shock'], icon: '⚙️' },
+  { keywords: ['brake', 'clutch'], icon: '🛑' },
+  { keywords: ['filter', 'air filter', 'oil filter'], icon: '🔧' },
+  { keywords: ['engine', 'motor'], icon: '⚙️' },
+  { keywords: ['wheel', 'tyre', 'tire'], icon: '🛞' },
+  { keywords: ['electrical', 'battery', 'alternator'], icon: '🔋' },
+  { keywords: ['exhaust', 'muffler'], icon: '💨' },
+  { keywords: ['cooling', 'radiator'], icon: '❄️' },
+  { keywords: ['4wd', 'towing'], icon: '🚙' },
+  { keywords: ['steering'], icon: '🎡' },
+  { keywords: ['gauge', 'meter'], icon: '📊' },
+  { keywords: ['car audio', 'car multimedia', 'amplifier', 'car speaker'], icon: '🔊' },
+  { keywords: ['dash cam', 'camera'], icon: '📹' },
+  { keywords: ['caravan', 'camper'], icon: '🚐' },
+  { keywords: ['car rack', 'roof rack'], icon: '🚗' },
+  { keywords: ['lubricant', 'oil', 'additive'], icon: '🛢️' },
+  { keywords: ['exterior', 'car body'], icon: '🚗' },
+  { keywords: ['interior', 'car interior'], icon: '🪑' },
+  { keywords: ['car care', 'wash', 'polish'], icon: '🧽' },
+  { keywords: ['car security', 'alarm'], icon: '🔒' },
+  { keywords: ['motorbike', 'motorcycle'], icon: '🏍️' },
+  { keywords: ['quad', 'buggy', 'atv'], icon: '🏎️' },
+  { keywords: ['auto part'], icon: '🔧' },
+  { keywords: ['car accessory', 'car accessories'], icon: '🚙' },
+  
+  // Books, Movies, Music
+  { keywords: ['ebook', 'e-book'], icon: '📱' },
+  { keywords: ['educational book'], icon: '📖' },
+  { keywords: ['fiction book'], icon: '📖' },
+  { keywords: ['religion book'], icon: '✝️' },
+  { keywords: ['history book'], icon: '📜' },
+  { keywords: ['book'], icon: '📚' },
+  { keywords: ['blues music'], icon: '🎷' },
+  { keywords: ['world music'], icon: '🌍' },
+  { keywords: ['classical music'], icon: '🎼' },
+  { keywords: ['vinyl', 'record'], icon: '💿' },
+  { keywords: ['music'], icon: '🎵' },
+  { keywords: ['television series', 'tv series'], icon: '📺' },
+  { keywords: ['documentary'], icon: '🎥' },
+  { keywords: ['concert'], icon: '🎤' },
+  { keywords: ['movie', 'film'], icon: '🎬' },
+  { keywords: ['comic'], icon: '📕' },
+  { keywords: ['magazine'], icon: '📰' },
+  { keywords: ['poster'], icon: '🖼️' },
+  { keywords: ['autograph'], icon: '✍️' },
+  
+  // Clothing & Fashion
+  { keywords: ['swimwear', 'swimming'], icon: '👙' },
+  { keywords: ['maternity'], icon: '🤰' },
+  { keywords: ["women's activewear", 'ladies activewear'], icon: '🏃‍♀️' },
+  { keywords: ["women's top", 'ladies top', 'blouse'], icon: '👚' },
+  { keywords: ['dress', 'dresses'], icon: '👗' },
+  { keywords: ["women's clothing", "ladies clothing", "women's wear"], icon: '👗' },
+  { keywords: ["men's top", 'mens shirt'], icon: '👔' },
+  { keywords: ["men's pants", 'mens trouser'], icon: '👖' },
+  { keywords: ["men's swimwear"], icon: '🩱' },
+  { keywords: ["men's sock"], icon: '🧦' },
+  { keywords: ["men's coat", "men's jacket"], icon: '🧥' },
+  { keywords: ["men's clothing", "mens wear"], icon: '👔' },
+  { keywords: ['sunglass', 'shades'], icon: '🕶️' },
+  { keywords: ['bag', 'handbag', 'purse'], icon: '👜' },
+  { keywords: ['watch', 'timepiece'], icon: '⌚' },
+  { keywords: ['hat', 'cap', 'beanie'], icon: '🎩' },
+  { keywords: ['wallet', 'cardholder'], icon: '👛' },
+  { keywords: ["men's sneaker"], icon: '👟' },
+  { keywords: ["women's sneaker"], icon: '👟' },
+  { keywords: ["women's sandal", 'thong', 'flip flop'], icon: '👡' },
+  { keywords: ["women's boot"], icon: '👢' },
+  { keywords: ["men's casual shoe"], icon: '👞' },
+  { keywords: ['shoe', 'footwear'], icon: '👟' },
+  { keywords: ['earring'], icon: '💍' },
+  { keywords: ['necklace'], icon: '📿' },
+  { keywords: ['bracelet'], icon: '📿' },
+  { keywords: ['ring'], icon: '💍' },
+  { keywords: ['gemstone', 'diamond'], icon: '💎' },
+  { keywords: ['jewellery', 'jewelry'], icon: '💍' },
+  { keywords: ['clothing accessory', 'fashion accessory'], icon: '👜' },
+  
+  // Computers
+  { keywords: ['laptop', 'notebook'], icon: '💻' },
+  { keywords: ['tablet', 'ipad'], icon: '📱' },
+  { keywords: ['printer'], icon: '🖨️' },
+  { keywords: ['monitor', 'display', 'screen'], icon: '🖥️' },
+  { keywords: ['scanner'], icon: '🖨️' },
+  { keywords: ['game console', 'playstation', 'xbox', 'nintendo'], icon: '🎮' },
+  { keywords: ['game controller', 'gamepad'], icon: '🎮' },
+  { keywords: ['video game', 'gaming'], icon: '🎮' },
+  { keywords: ['computer cable', 'hdmi', 'usb cable'], icon: '🔌' },
+  { keywords: ['ram', 'memory'], icon: '💾' },
+  { keywords: ['graphics card', 'gpu', 'video card'], icon: '🎮' },
+  { keywords: ['cpu', 'processor'], icon: '🧮' },
+  { keywords: ['computer case', 'chassis'], icon: '🖥️' },
+  { keywords: ['solid state', 'ssd'], icon: '💾' },
+  { keywords: ['hard drive', 'hdd'], icon: '💾' },
+  { keywords: ['floppy', 'tape drive', 'removable media'], icon: '💾' },
+  { keywords: ['printer accessory', 'toner', 'ink'], icon: '🖨️' },
+  { keywords: ['laptop bag', 'computer bag'], icon: '💼' },
+  { keywords: ['printer paper'], icon: '📄' },
+  { keywords: ['monitor accessory'], icon: '🖥️' },
+  { keywords: ['tablet accessory'], icon: '📱' },
+  { keywords: ['hardware'], icon: '🖥️' },
+  { keywords: ['component'], icon: '🔧' },
+  { keywords: ['storage', 'media'], icon: '💾' },
+  { keywords: ['computer accessory'], icon: '🖱️' },
+  
+  // Electronics
+  { keywords: ['mobile phone', 'smartphone', 'iphone'], icon: '📱' },
+  { keywords: ['smartwatch', 'apple watch'], icon: '⌚' },
+  { keywords: ['mobile accessory', 'phone case', 'screen protector'], icon: '📱' },
+  { keywords: ['power bank', 'portable charger'], icon: '🔋' },
+  { keywords: ['digital camera', 'dslr'], icon: '📷' },
+  { keywords: ['camera lens', 'lens'], icon: '📷' },
+  { keywords: ['camera accessory', 'tripod'], icon: '📷' },
+  { keywords: ['drone', 'quadcopter'], icon: '🚁' },
+  { keywords: ['video camera', 'camcorder'], icon: '📹' },
+  { keywords: ['television', 'tv', 'smart tv'], icon: '📺' },
+  { keywords: ['media streaming', 'roku', 'chromecast'], icon: '📺' },
+  { keywords: ['projector'], icon: '📽️' },
+  { keywords: ['blu-ray', 'dvd player'], icon: '💿' },
+  { keywords: ['headphone', 'headset'], icon: '🎧' },
+  { keywords: ['speaker', 'sound'], icon: '🔊' },
+  { keywords: ['home theatre', 'home theater'], icon: '🎬' },
+  { keywords: ['radio', 'fm'], icon: '📻' },
+  { keywords: ['hi-fi', 'stereo'], icon: '🎵' },
+  { keywords: ['bluetooth speaker', 'portable speaker'], icon: '🔊' },
+  { keywords: ['ereader', 'kindle'], icon: '📖' },
+  { keywords: ['boombox'], icon: '📻' },
+  { keywords: ['cd player', 'cassette'], icon: '💿' },
+  
+  // Food, Drink & Gifts
+  { keywords: ['beer'], icon: '🍺' },
+  { keywords: ['spirit', 'vodka', 'whiskey', 'rum'], icon: '🥃' },
+  { keywords: ['wine'], icon: '🍷' },
+  { keywords: ['model', 'collectable', 'collectible'], icon: '🏺' },
+  { keywords: ['gift for him'], icon: '🎁' },
+  { keywords: ['gift for her'], icon: '🎁' },
+  { keywords: ['corporate gift'], icon: '💼' },
+  { keywords: ['souvenir'], icon: '🗿' },
+  { keywords: ['aqua gift', 'water'], icon: '🌊' },
+  { keywords: ['driving gift', 'racing'], icon: '🏎️' },
+  { keywords: ['family gift'], icon: '👨‍👩‍👧‍👦' },
+  { keywords: ['feel good', 'wellness'], icon: '😊' },
+  { keywords: ['high flyer', 'flight'], icon: '✈️' },
+  { keywords: ['balloon'], icon: '🎈' },
+  { keywords: ['plant'], icon: '🌱' },
+  { keywords: ['arrangement', 'bouquet', 'flower'], icon: '💐' },
+  { keywords: ['gift basket'], icon: '🧺' },
+  { keywords: ['dessert', 'sweet', 'candy'], icon: '🍰' },
+  { keywords: ['pamper'], icon: '💆' },
+  { keywords: ['experience gift'], icon: '🎟️' },
+  
+  // Health & Beauty
+  { keywords: ['skin care', 'skincare'], icon: '🧴' },
+  { keywords: ['hair care', 'shampoo', 'conditioner'], icon: '💇' },
+  { keywords: ['shaving', 'razor', 'hair removal'], icon: '🪒' },
+  { keywords: ['oral care', 'toothbrush', 'dental'], icon: '🦷' },
+  { keywords: ['bath', 'shower', 'soap'], icon: '🛁' },
+  { keywords: ["women's perfume", 'ladies perfume'], icon: '🌸' },
+  { keywords: ["men's cologne"], icon: '🌲' },
+  { keywords: ['unisex fragrance'], icon: '🌸' },
+  { keywords: ['fragrance gift'], icon: '🎁' },
+  { keywords: ['kid fragrance', "children's fragrance"], icon: '🧸' },
+  { keywords: ['face makeup', 'foundation', 'concealer'], icon: '💄' },
+  { keywords: ['eye makeup', 'mascara', 'eyeshadow'], icon: '👁️' },
+  { keywords: ['lip makeup', 'lipstick'], icon: '💄' },
+  { keywords: ['makeup accessory', 'brush'], icon: '💄' },
+  { keywords: ['nail', 'manicure'], icon: '💅' },
+  { keywords: ['cosmetic'], icon: '💄' },
+  { keywords: ['vitamin', 'supplement'], icon: '💊' },
+  { keywords: ['medical supply', 'first aid'], icon: '🏥' },
+  { keywords: ['digestion', 'stomach'], icon: '💊' },
+  { keywords: ['eye', 'ear'], icon: '👁️' },
+  { keywords: ['foot care'], icon: '🦶' },
+  { keywords: ['baby food', "children's food"], icon: '🍼' },
+  { keywords: ['fruit', 'vegetable'], icon: '🥕' },
+  { keywords: ['juice', 'drink'], icon: '🧃' },
+  { keywords: ['pickle', 'canned'], icon: '🥫' },
+  { keywords: ['tea', 'coffee'], icon: '☕' },
+  { keywords: ['grooming', 'toiletry'], icon: '🧴' },
+  { keywords: ['health'], icon: '❤️' },
+  
+  // Home & Garden
+  { keywords: ['vacuum cleaner', 'vacuum'], icon: '🧹' },
+  { keywords: ['refrigerator', 'fridge'], icon: '🧊' },
+  { keywords: ['washing machine', 'washer'], icon: '🧺' },
+  { keywords: ['oven', 'stove'], icon: '🍳' },
+  { keywords: ['dishwasher'], icon: '🍽️' },
+  { keywords: ['coffee machine', 'espresso'], icon: '☕' },
+  { keywords: ['blender', 'mixer'], icon: '🥤' },
+  { keywords: ['ice cream maker'], icon: '🍦' },
+  { keywords: ['toaster'], icon: '🍞' },
+  { keywords: ['kettle'], icon: '🫖' },
+  { keywords: ['hair tool', 'dryer', 'straightener'], icon: '💇' },
+  { keywords: ['electric fan', 'fan'], icon: '💨' },
+  { keywords: ['iron', 'steam'], icon: '👔' },
+  { keywords: ['air purifier'], icon: '💨' },
+  { keywords: ['shaver', 'electric razor'], icon: '🪒' },
+  { keywords: ['dog supply', 'dog'], icon: '🐕' },
+  { keywords: ['cat supply', 'cat'], icon: '🐈' },
+  { keywords: ['fish supply', 'aquarium'], icon: '🐠' },
+  { keywords: ['bird supply', 'bird'], icon: '🐦' },
+  { keywords: ['small animal'], icon: '🐹' },
+  { keywords: ['kitchen supply', 'kitchen'], icon: '🍳' },
+  { keywords: ['dinnerware', 'serveware', 'plate'], icon: '🍽️' },
+  { keywords: ['cookware', 'pot', 'pan'], icon: '🍳' },
+  { keywords: ['lunch box', 'water bottle'], icon: '🥤' },
+  { keywords: ['bbq', 'grill', 'barbecue'], icon: '🍖' },
+  { keywords: ['whitegoods', 'appliance'], icon: '🏠' },
+  { keywords: ['small appliance'], icon: '🔌' },
+  { keywords: ['pet supply', 'pet'], icon: '🐾' },
+  { keywords: ['kitchen accessory'], icon: '🍴' },
+  
+  // Kids & Toys
+  { keywords: ['puzzle', 'jigsaw'], icon: '🧩' },
+  { keywords: ['educational toy', 'learning'], icon: '📚' },
+  { keywords: ['building set', 'lego', 'blocks'], icon: '🧱' },
+  { keywords: ['baby toy', 'infant'], icon: '🍼' },
+  { keywords: ['outside', 'active', 'outdoor toy'], icon: '🏀' },
+  { keywords: ['baby care', 'nappy', 'diaper'], icon: '👶' },
+  { keywords: ['toy', 'game'], icon: '🧸' }
+];
+
+/**
+ * Get icon using comprehensive keyword matching
+ */
+export function getIconByKeywords(name, isMainCategory = false) {
+  if (!name) return '📦';
+  
+  const normalized = name.toLowerCase().trim();
+  
+  // Check main categories first
+  if (isMainCategory) {
+    return MAIN_CATEGORY_ICONS[normalized] || '📦';
+  }
+  
+  // Check keyword matches (most specific first due to array order)
+  for (const { keywords, icon } of ICON_KEYWORDS) {
+    for (const keyword of keywords) {
+      if (normalized === keyword || normalized.includes(keyword)) {
+        return icon;
+      }
+    }
+  }
+  
+  return '📦'; // Default
+}
+
+/**
+ * Get placeholder image - using a reliable service
+ */
+export function getStockImage(subcategoryName) {
+  if (!subcategoryName) return '';
+  
+  const name = subcategoryName.toLowerCase();
+  
+  // Map to appropriate image categories
+  const categoryMap = {
+    'automotive': 'car',
+    'car': 'car',
+    'vehicle': 'car',
+    'motorbike': 'motorcycle',
+    'motorcycle': 'motorcycle',
+    
+    'book': 'books',
+    'music': 'music',
+    'movie': 'cinema',
+    'film': 'cinema',
+    
+    'clothing': 'fashion',
+    'fashion': 'fashion',
+    'dress': 'dress',
+    'shirt': 'fashion',
+    'shoes': 'shoes',
+    'jewelry': 'jewelry',
+    'jewellery': 'jewelry',
+    'watch': 'watch',
+    'bag': 'bag',
+    
+    'computer': 'technology',
+    'laptop': 'laptop',
+    'gaming': 'gaming',
+    'hardware': 'technology',
+    
+    'phone': 'smartphone',
+    'mobile': 'smartphone',
+    'camera': 'camera',
+    'tv': 'television',
+    'audio': 'headphones',
+    'speaker': 'speakers',
+    'headphone': 'headphones',
+    
+    'food': 'food',
+    'drink': 'drinks',
+    'wine': 'wine',
+    'beer': 'beer',
+    'gift': 'gift',
+    
+    'beauty': 'beauty',
+    'cosmetic': 'cosmetics',
+    'makeup': 'makeup',
+    'skincare': 'skincare',
+    'health': 'health',
+    
+    'kitchen': 'kitchen',
+    'furniture': 'furniture',
+    'garden': 'garden',
+    'home': 'home',
+    'pet': 'pets',
+    
+    'toy': 'toys',
+    'game': 'games',
+    'baby': 'baby'
+  };
+  
+  // Find matching category
+  let imageCategory = 'product';
+  for (const [key, value] of Object.entries(categoryMap)) {
+    if (name.includes(key)) {
+      imageCategory = value;
+      break;
+    }
+  }
+  
+  // Use placeholder.com - more reliable than Unsplash for consistent images
+  return `https://via.placeholder.com/400x150/4A90E2/FFFFFF?text=${encodeURIComponent(subcategoryName)}`;
+}

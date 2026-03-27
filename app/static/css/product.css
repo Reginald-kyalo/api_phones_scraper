@@ -3,14 +3,15 @@
 =============================== */
 
 /* Product reset (add this first) */
-@import 'product/product-reset.css';
+@import 'product/product-reset.css?v=1737820000';
 
 /* Product components */
-@import 'product/product-layout.css';
-@import 'product/product-card.css';
-@import 'product/product-sidebar.css';
-@import 'product/comparison-panel.css';
-@import 'product/product-icons.css';
-@import 'product/product-animations.css';
-@import 'product/filter-bar.css';@import 'product/filter-bar.css';
+@import 'product/product-layout.css?v=1737820000';
+@import 'product/product-card.css?v=1737820000';
+@import 'product/product-sidebar.css?v=1737820000';
+@import 'product/comparison-panel.css?v=1737820000';
+@import 'product/product-icons.css?v=1737820000';
+@import 'product/product-animations.css?v=1737820000';
+@import 'product/filter-bar.css?v=1737820000';
+
 

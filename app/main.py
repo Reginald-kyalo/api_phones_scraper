@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -10,6 +11,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.config import settings
 from app.database import init_db, close_db
 from app.routes import home, user, favorites, price_alerts, mainpage
+from app.routes import payment, categories
 from app.security.key_rotation import rotate_keys
 from app.tasks.price_monitor import monitor_price_alerts
 from app.utils.cache import get_brands_models_cache
@@ -33,9 +35,22 @@ async def lifespan(app: FastAPI):
     #    except Exception as e:
     #        logger.error(f"Failed to rotate keys: {e}")
     #
-    # Startup: Initialize caches and databases
+    # Startup: Initialize databases
     await init_db()
-    await get_brands_models_cache()
+    
+    # Load cache in background (don't block startup)
+    async def load_cache_background():
+        try:
+            logger.info("Loading brands/models cache in background...")
+            await get_brands_models_cache()
+            logger.info("Cache loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading cache: {e}")
+    
+    # Start cache loading in background
+    import asyncio
+    asyncio.create_task(load_cache_background())
+    
     # Setup APScheduler for price monitoring
     #try:
     #    # Add job to run every hour (adjust the interval as needed)
@@ -60,13 +75,15 @@ async def lifespan(app: FastAPI):
     #except Exception as e:
     #    logger.error(f"Failed to start APScheduler: {e}")
     
-    try:
-        logger.info("Starting initial price monitoring...")
-        await monitor_price_alerts()
-    except Exception as e:
-        logger.error(f"Error during initial price monitoring: {e}")
+    # Don't run price monitoring on startup - it's too slow
+    # Let it run on schedule instead
+    #try:
+    #    logger.info("Starting initial price monitoring...")
+    #    await monitor_price_alerts()
+    #except Exception as e:
+    #    logger.error(f"Error during initial price monitoring: {e}")
     
-    logger.info("Startup complete")
+    logger.info("Startup complete - app is ready!")
     
     yield  # Application runs here
     
@@ -87,6 +104,8 @@ app.add_middleware(
     allow_origins=[
         "https://localhost:8000",
         "https://127.0.0.1:8000",
+        "https://www.dealsonline.ninja",
+        "https://dealsonline.ninja",
         ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -95,6 +114,19 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
+@app.middleware("http")
+async def redirect_to_www(request: Request, call_next):
+    """Redirect non-www domain to www subdomain"""
+    host = request.headers.get("host", "")
+    
+    # Redirect dealsonline.ninja to www.dealsonline.ninja
+    if host == "dealsonline.ninja" or host.startswith("dealsonline.ninja:"):
+        url = request.url.replace(scheme="https", netloc="www.dealsonline.ninja")
+        return RedirectResponse(url=str(url), status_code=301)
+    
+    response = await call_next(request)
+    return response
 
 @app.middleware("http")
 async def set_security_headers(request: Request, call_next):
@@ -120,6 +152,8 @@ app.include_router(home.router)      # Phones-specific page
 app.include_router(user.router)
 app.include_router(favorites.router)
 app.include_router(price_alerts.router)
+app.include_router(payment.router)   # Payment and subscriptions
+app.include_router(categories.router)  # Category navigation API
 
 if __name__ == "__main__":
     import uvicorn

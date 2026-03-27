@@ -3,15 +3,32 @@ import { secureApiCall } from './api-utils.js';
 import { attachProductEventListeners } from './product.js';
 
 // DOM Elements
-const favoritesModal = document.getElementById('favorites-modal');
-const favoritesContainer = document.getElementById('favorites-container');
-const favoritesCountEl = document.getElementById('favorites-count');
-const closeModalBtn = document.querySelector('.fav-close-modal');
+let favoritesModal;
+let favoritesContainer;
+let favoritesCountEl;
+let closeModalBtn;
+
+// Function to get DOM elements (called after DOM is ready)
+function getDOMElements() {
+  favoritesModal = document.getElementById('favorites-modal');
+  favoritesContainer = document.getElementById('favorites-container');
+  favoritesCountEl = document.getElementById('favorites-count');
+  closeModalBtn = document.querySelector('.fav-close-modal');
+  console.log("DOM elements initialized:", {
+    modal: !!favoritesModal,
+    container: !!favoritesContainer,
+    count: !!favoritesCountEl,
+    closeBtn: !!closeModalBtn
+  });
+}
 
 /**
  * Initialize favorites functionality
  */
 export function initFavorites() {
+    // Get DOM elements first
+    getDOMElements();
+    
     // Close modal when clicking the X
     closeModalBtn?.addEventListener('click', () => {
         hideFavoritesModal();
@@ -26,7 +43,7 @@ export function initFavorites() {
 
     // Handle ESC key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && favoritesModal && favoritesModal.style.display === 'block') {
+        if (e.key === 'Escape' && favoritesModal && !favoritesModal.classList.contains('hidden')) {
             hideFavoritesModal();
         }
     });
@@ -66,9 +83,11 @@ function handleFavoriteDeleted(productId) {
  * Show the favorites modal
  */
 function showFavoritesModal() {
+    console.log("showFavoritesModal called, modal:", !!favoritesModal);
     if (favoritesModal) {
         favoritesModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+        console.log("Modal class after remove hidden:", favoritesModal.className);
     }
 }
 
@@ -76,8 +95,9 @@ function showFavoritesModal() {
  * Hide the favorites modal
  */
 function hideFavoritesModal() {
+    console.log("hideFavoritesModal called, modal:", !!favoritesModal);
     if (favoritesModal) {
-        favoritesModal.classList.add('hidden');;
+        favoritesModal.classList.add('hidden');
         document.body.style.overflow = ''; // Restore scrolling
     }
 }
@@ -87,30 +107,68 @@ function hideFavoritesModal() {
  */
 export async function loadAndShowFavorites() {
     try {
-        const response = await secureApiCall("favorites");
-
-        if (!response.ok) {
-            // If unauthorized, handle gracefully
-            if (response.status === 401) {
-                showAuthModal();
-                return;
-            }
-            throw new Error(`Failed to load favorites: ${response.status}`);
+        console.log("loadAndShowFavorites called");
+        
+        // CRITICAL: Always reinitialize DOM elements - they may not exist yet
+        getDOMElements();
+        console.log("DOM elements after reinit:", {
+            modal: !!favoritesModal,
+            container: !!favoritesContainer,
+            count: !!favoritesCountEl
+        });
+        
+        if (!favoritesModal || !favoritesContainer) {
+            console.error("Critical: favorites modal or container not found in DOM");
+            return;
         }
+        
+        // Get localStorage favorites first
+        const localFavorites = JSON.parse(localStorage.getItem("localFavorites") || "[]");
+        console.log("LocalStorage favorites count:", localFavorites.length);
+        
+        // Try to get server favorites
+        let serverFavorites = [];
+        try {
+            const response = await secureApiCall("favorites");
+            console.log("API response status:", response.status);
 
-        const favorites = await response.json();
+            if (response.ok) {
+                serverFavorites = await response.json();
+                console.log("Server favorites loaded, count:", serverFavorites.length);
+            } else if (response.status !== 401) {
+                // Only throw if it's not an auth error
+                console.warn("Failed to load server favorites:", response.status);
+            }
+        } catch (error) {
+            console.warn("Could not fetch server favorites:", error);
+        }
+        
+        // Merge favorites: server favorites + localStorage favorites (deduplicated)
+        const mergedFavorites = [...serverFavorites];
+        const serverIds = new Set(serverFavorites.map(f => f.product_id || f._id));
+        
+        for (const localFav of localFavorites) {
+            const favId = localFav.product_id || localFav._id;
+            if (!serverIds.has(favId)) {
+                mergedFavorites.push({ ...localFav, isLocal: true });
+            }
+        }
+        
+        console.log("Merged favorites total:", mergedFavorites.length);
 
         // Update favorites count
         if (favoritesCountEl) {
-            favoritesCountEl.textContent = favorites.length;
+            favoritesCountEl.textContent = mergedFavorites.length;
         }
 
         // Render favorites and show modal
-        renderFavorites(favorites);
+        renderFavorites(mergedFavorites);
+        console.log("About to call showFavoritesModal, modal element:", favoritesModal?.id);
         showFavoritesModal();
+        console.log("showFavoritesModal completed");
 
     } catch (error) {
-        console.error("Failed to load favorites:", error);
+        console.error("Failed to load favorites - Error details:", error);
         showGlobalMessage("Failed to load favorites", true);
     }
 }
@@ -151,12 +209,15 @@ function renderFavorites(favorites) {
  * @returns {HTMLElement} The created product card
  */
 function renderProductCard(product) {
+    // Get price from either cheapest_price (server) or current_price (localStorage)
+    const price = product.cheapest_price || product.current_price || 0;
+    
     // Sanitize all product data before rendering
     const sanitizedProduct = {
-        _id: sanitizeInput(product._id),
+        _id: sanitizeInput(product._id || product.product_id),
         brand: sanitizeInput(product.brand),
         model: sanitizeInput(product.model),
-        cheapest_price: sanitizeInput(String(product.cheapest_price)),
+        cheapest_price: sanitizeInput(String(price)),
         model_image: product.model_image // URLs handled separately
     };
 

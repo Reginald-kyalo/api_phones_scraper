@@ -14,15 +14,33 @@
   <link rel="stylesheet" href="/static/css/header/variables.css" />
   <link rel="stylesheet" href="/static/css/design-system.css" />
   <!-- Component CSS -->
-  <link rel="stylesheet" href="/static/css/base-modal.css" />
-  <link rel="stylesheet" href="/static/css/header.css">
-  <link rel="stylesheet" href="/static/css/product.css" />
-  <link rel="stylesheet" href="/static/css/auth.css" />
-  <link rel="stylesheet" href="/static/css/price-alarm.css">
-  <link rel="stylesheet" href="/static/css/side-panel.css" />
-  <link rel="stylesheet" href="/static/css/track-alerts.css" />
-  <link rel="stylesheet" href="/static/css/favorites.css" />
-  <link rel="stylesheet" href="/static/css/global.css" />
+  <link rel="stylesheet" href="/static/css/base-modal.css?v=1737825000" />
+  <link rel="stylesheet" href="/static/css/header.css?v=1737825000">
+  <link rel="stylesheet" href="/static/css/product.css?v=1737825000" />
+  <link rel="stylesheet" href="/static/css/auth.css?v=1737825000" />
+  <link rel="stylesheet" href="/static/css/price-alarm.css?v=1737825000">
+  <link rel="stylesheet" href="/static/css/side-panel.css?v=1737825000" />
+  <link rel="stylesheet" href="/static/css/track-alerts.css?v=1737825000" />
+  <link rel="stylesheet" href="/static/css/favorites.css?v=1737825000" />
+  <link rel="stylesheet" href="/static/css/header/category-navigator.css?v=1737840000" />
+  <link rel="stylesheet" href="/static/css/global.css?v=1737825000" />
+  
+  <!-- DIAGNOSTIC: Inline script to verify page loaded and check CSS -->
+  <script>
+    console.log("🔍 BASE.HTML LOADED - Timestamp:", new Date().toISOString());
+    console.log("🔍 Cache version in use: v=1737820000");
+    window.addEventListener('DOMContentLoaded', () => {
+      const headerContainer = document.querySelector('.header__container');
+      if (headerContainer) {
+        const styles = window.getComputedStyle(headerContainer);
+        console.log("🔍 Header container border:", styles.border);
+        console.log("🔍 Header container max-width:", styles.maxWidth);
+        console.log("🔍 Header container padding:", styles.padding);
+      } else {
+        console.error("❌ Header container NOT FOUND!");
+      }
+    });
+  </script>
 </head>
 
 <body>
@@ -44,6 +62,7 @@
   {% include "auth.html" %}
   {% include "track-alerts.html" %}
   {% include "price-alarm.html" %}
+  {% include "subscription.html" %}
   <!-- Embed rendered data for use by JavaScript -->
   <script type="text/javascript">
     // Legacy for backward compatibility (current selected category data)
@@ -63,11 +82,13 @@
   <script type="module" src="/static/js/api-utils.js"></script>
   <script type="module" src="/static/js/auth.js"></script>
   <script type="module" src="/static/js/header.js"></script>
+  <script type="module" src="/static/js/category-navigator.js"></script>
   <script type="module" src="/static/js/side-panel.js"></script>
   <script type="module" src="/static/js/price-alarm.js"></script>
   <script type="module" src="/static/js/track-alerts.js"></script>
   <script type="module" src="/static/js/favorites.js"></script>
   <script type="module" src="/static/js/product.js"></script>
+  <script type="module" src="/static/js/payment.js"></script>
 </body>
 
 </html>

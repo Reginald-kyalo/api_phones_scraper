@@ -17,6 +17,10 @@ const signUpError = document.getElementById("signUpError");
 
 // Header buttons
 let loginBtn = document.querySelector(".btn-login");
+// If not found (old button), try new dropdown button
+if (!loginBtn) {
+  loginBtn = document.getElementById("accDropLoginBtn");
+}
 // Store original login button HTML to preserve SVG icon
 let originalLoginBtnHTML = loginBtn ? loginBtn.innerHTML : '';
 
@@ -102,9 +106,159 @@ export function updateLogInBtn(username) {
   };
 }
 
+/**
+ * Migrate localStorage favorites and price alerts to server on login
+ */
+async function migrateLocalStorageToServer() {
+  try {
+    console.log("Starting localStorage migration...");
+    
+    // Migrate favorites
+    const localFavorites = JSON.parse(localStorage.getItem("localFavorites") || "[]");
+    console.log(`Found ${localFavorites.length} local favorites to migrate`);
+    
+    if (localFavorites.length > 0) {
+      for (const favorite of localFavorites) {
+        try {
+          const response = await secureApiCall("favorites", {
+            method: "POST",
+            body: JSON.stringify({ product: favorite }),
+          });
+          
+          if (response.ok) {
+            console.log(`Migrated favorite: ${favorite.product_id || favorite._id}`);
+          } else if (response.status === 400) {
+            // Likely already exists, that's okay
+            console.log(`Favorite already exists: ${favorite.product_id || favorite._id}`);
+          } else {
+            console.warn(`Failed to migrate favorite: ${response.status}`);
+          }
+        } catch (error) {
+          console.error("Error migrating favorite:", error);
+        }
+      }
+      
+      // Clear localStorage favorites after successful migration
+      localStorage.removeItem("localFavorites");
+      console.log("Favorites migration complete");
+      showGlobalMessage("Your favorites have been synced!");
+    }
+    
+    // Migrate price alerts
+    const localAlerts = JSON.parse(localStorage.getItem("localPriceAlerts") || "[]");
+    console.log(`Found ${localAlerts.length} local price alerts to migrate`);
+    
+    if (localAlerts.length > 0) {
+      // Get existing server alerts to avoid duplicates AND get current count
+      let existingServerAlerts = [];
+      try {
+        const existingResponse = await secureApiCall("price-alerts?page=1&filter=all&sort=date-desc");
+        if (existingResponse.ok) {
+          const data = await existingResponse.json();
+          existingServerAlerts = data.alerts || [];
+          console.log(`Found ${existingServerAlerts.length} existing server alerts`);
+        }
+      } catch (error) {
+        console.warn("Could not fetch existing alerts:", error);
+      }
+      
+      // Create a set of existing product IDs
+      const existingProductIds = new Set(
+        existingServerAlerts.map(a => a.product?.product_id || a.product?._id).filter(Boolean)
+      );
+      
+      // Calculate how many alerts we can migrate
+      // Use actual server count instead of subscription API (which may fail during login)
+      const currentCount = existingServerAlerts.length;
+      const limit = 5; // Free tier default
+      const availableSlots = Math.max(0, limit - currentCount);
+      console.log(`Available alert slots: ${availableSlots} (current: ${currentCount}, limit: ${limit})`);
+      
+      let migratedCount = 0;
+      let skippedCount = 0;
+      let limitReached = false;
+      
+      for (const alert of localAlerts) {
+        // Check if we've reached the limit
+        if (availableSlots !== -1 && migratedCount >= availableSlots) {
+          console.log(`Alert limit reached, stopping migration at ${migratedCount}/${availableSlots}`);
+          limitReached = true;
+          break;
+        }
+        
+        // Skip if alert already exists on server
+        if (existingProductIds.has(alert.product_id)) {
+          console.log(`Skipping migration - alert already exists on server: ${alert.product_id}`);
+          skippedCount++;
+          continue;
+        }
+        
+        try {
+          const response = await secureApiCall("price-alerts", {
+            method: "POST",
+            body: JSON.stringify({
+              product_id: alert.product_id,
+              target_price: alert.target_price,
+              alternate_email: alert.email || null
+            }),
+          });
+          
+          if (response.ok) {
+            console.log(`Migrated price alert: ${alert.product_id}`);
+            migratedCount++;
+          } else if (response.status === 400) {
+            // Already exists, that's okay
+            console.log(`Price alert already exists: ${alert.product_id}`);
+            skippedCount++;
+          } else {
+            console.warn(`Failed to migrate price alert: ${response.status}`);
+          }
+        } catch (error) {
+          console.error("Error migrating price alert:", error);
+        }
+      }
+      
+      // Clear localStorage alerts after migration attempt
+      localStorage.removeItem("localPriceAlerts");
+      
+      const notMigrated = localAlerts.length - migratedCount - skippedCount;
+      console.log(`Price alerts migration complete: ${migratedCount} migrated, ${skippedCount} skipped, ${notMigrated} not migrated due to limit`);
+      
+      if (migratedCount > 0) {
+        showGlobalMessage(`${migratedCount} price alert${migratedCount > 1 ? 's' : ''} synced!`);
+      }
+      
+      if (limitReached && notMigrated > 0) {
+        showGlobalMessage(`${notMigrated} alert${notMigrated > 1 ? 's' : ''} could not be synced - upgrade your plan to sync more`, 'warning');
+      }
+      
+      // Notify UI to refresh
+      setTimeout(() => {
+        if (window.updateAlertsBadge) {
+          window.updateAlertsBadge();
+        }
+        if (window.refreshAlertsList) {
+          window.refreshAlertsList();
+        }
+        // Reload subscription to get updated counts
+        if (window.PaymentController && window.PaymentController.loadUserSubscription) {
+          window.PaymentController.loadUserSubscription();
+        }
+      }, 500);
+    }
+    
+    console.log("localStorage migration complete");
+  } catch (error) {
+    console.error("Error during localStorage migration:", error);
+  }
+}
+
 // Update the handlePendingRequests function
 async function handlePendingRequests() {
   try {
+    // Migrate localStorage favorites and alerts to server
+    await migrateLocalStorageToServer();
+    
     // Handle pending price alarms (from both storage mechanisms)
     
     // Check localStorage implementation
@@ -202,10 +356,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Attach event listener for heart icons in the main product view
 });
 
-// Event listener for login button in header
-loginBtn.addEventListener("click", () => {
-  showAuthModal();
-});
+// Event listener for login button in header (if it exists)
+if (loginBtn) {
+  loginBtn.addEventListener("click", () => {
+    showAuthModal();
+  });
+}
 
 // Modal close event listeners
 modalClose.addEventListener("click", () => {

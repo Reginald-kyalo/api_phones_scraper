@@ -108,7 +108,24 @@ function renderAlertItem(alert) {
         
         // Set badge
         const badge = alertItem.querySelector('.alert-badge span');
-        if (badge) {
+        const imageBadge = alertItem.querySelector('.image-badge');
+        
+        if (alert.isLocal) {
+            // For local alerts, place badge under the image instead of top-right
+            if (imageBadge) {
+                const localBadge = document.createElement('span');
+                localBadge.className = 'badge-local';
+                localBadge.textContent = 'Local Only - Sign in to track';
+                localBadge.title = 'This alert is saved locally. Sign in to enable official price tracking and notifications.';
+                imageBadge.appendChild(localBadge);
+            }
+            
+            // Hide the top-right badge for local alerts
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        } else if (badge) {
+            // For server alerts, show status in the top-right badge
             if (alert.triggered) {
                 badge.textContent = 'Price dropped!';
                 badge.className = 'badge-triggered';
@@ -130,13 +147,18 @@ function renderAlertItem(alert) {
         const deleteBtn = alertItem.querySelector('.btn-delete');
         const viewLink = alertItem.querySelector('.btn-view');
         
+        // Use _id for server alerts, id for local alerts
+        const alertId = alert._id || alert.id || alert.alert_id;
+        
         if (editBtn) {
-            editBtn.setAttribute('data-alert-id', alert.alert_id);
+            editBtn.setAttribute('data-alert-id', alertId);
             editBtn.setAttribute('data-alert-data', JSON.stringify(alert));
+            editBtn.setAttribute('data-is-local', alert.isLocal ? 'true' : 'false');
         }
         
         if (deleteBtn) {
-            deleteBtn.setAttribute('data-alert-id', alert.alert_id);
+            deleteBtn.setAttribute('data-alert-id', alertId);
+            deleteBtn.setAttribute('data-is-local', alert.isLocal ? 'true' : 'false');
         }
         
         if (viewLink) {
@@ -183,30 +205,115 @@ async function loadUserAlerts(page = 1) {
         const sort = document.getElementById('alertsSort')?.value || 'newest';
         const mappedSort = mapSortValue(sort);
         
-        // Clear cache for fresh data
-        clearCacheByPattern(`price-alerts?page=${page}`);
+        // Get localStorage alerts first
+        const localAlerts = JSON.parse(localStorage.getItem("localPriceAlerts") || "[]");
+        console.log("LocalStorage alerts count:", localAlerts.length);
         
-        // Use secureApiCall instead of checking for token
-        const response = await secureApiCall(`price-alerts?page=${page}&filter=${filter}&sort=${mappedSort}`);
+        // Try to get server alerts
+        let serverAlerts = [];
+        let totalPages = 1;
+        let currentServerPage = 1;
         
-        if (!response.ok) {
-            if (response.status === 401) {
-                // Show auth modal for unauthorized access
-                showAuthModal();
+        try {
+            // Clear cache for fresh data
+            clearCacheByPattern(`price-alerts?page=${page}`);
+            
+            // Use secureApiCall instead of checking for token
+            const response = await secureApiCall(`price-alerts?page=${page}&filter=${filter}&sort=${mappedSort}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                serverAlerts = data.alerts || [];
+                totalPages = data.totalPages || 1;
+                currentServerPage = data.currentPage || 1;
+                console.log("Server alerts loaded, count:", serverAlerts.length);
+            } else if (response.status !== 401) {
+                console.warn("Failed to load server alerts:", response.status);
             }
-            throw new Error(response.status === 401 ? "Authentication required" : "Failed to load alerts");
+        } catch (error) {
+            console.warn("Could not fetch server alerts:", error);
         }
         
-        const data = await response.json();
+        // Transform localStorage alerts to match server format
+        const transformedLocalAlerts = localAlerts.map(alert => ({
+            _id: alert.id,
+            product: {
+                _id: alert.product_id,
+                brand: alert.product_brand || 'Unknown',
+                model: alert.product_model || 'Unknown',
+                model_image: alert.product_image || '',
+                price_comparison: []
+            },
+            targetPrice: alert.target_price,
+            currentPrice: alert.current_price || 0,
+            originalPrice: alert.current_price || 0,
+            email: alert.email,
+            createdAt: alert.created_at,
+            isTriggered: false,
+            isLocal: true // Mark as localStorage alert
+        }));
+        
+        // Merge alerts: server alerts + localStorage alerts (deduplicated)
+        const mergedAlerts = [...serverAlerts];
+        const serverProductIds = new Set(serverAlerts.map(a => a.product._id || a.product.product_id));
+        
+        for (const localAlert of transformedLocalAlerts) {
+            const alertProductId = localAlert.product._id || localAlert.product.product_id;
+            if (!serverProductIds.has(alertProductId)) {
+                mergedAlerts.push(localAlert);
+            }
+        }
+        
+        console.log("Merged alerts total:", mergedAlerts.length);
         
         // Clear aria-busy state
         alertsList.removeAttribute('aria-busy');
         
         // Clear previous alerts
         alertsList.innerHTML = '';
-        console.log('Alerts data:', data);
         
-        if (!data.alerts || data.alerts.length === 0) {
+        // Check if there are any local-only alerts
+        const hasLocalAlerts = mergedAlerts.some(alert => alert.isLocal);
+        
+        // Show info banner if there are local alerts
+        if (hasLocalAlerts) {
+            const infoBanner = document.createElement('div');
+            infoBanner.className = 'local-alerts-info-banner';
+            infoBanner.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Local Alerts Notice:</strong> 
+                    Some alerts are saved locally on this device only. 
+                    <a href="#" class="info-link sign-in-trigger">Sign in</a> to enable official price tracking, 
+                    email notifications, and sync across devices.
+                </div>
+            `;
+            
+            // Add click handler for sign-in link
+            const signInLink = infoBanner.querySelector('.sign-in-trigger');
+            if (signInLink) {
+                signInLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Set pending action to return to track alerts modal
+                    localStorage.setItem('pendingTrackAlerts', 'true');
+                    
+                    // Close track alerts modal
+                    if (trackAlertsModal) {
+                        trackAlertsModal.classList.add('hidden');
+                    }
+                    
+                    // Open auth modal
+                    if (window.showAuthModal) {
+                        window.showAuthModal();
+                    }
+                });
+            }
+            
+            alertsList.appendChild(infoBanner);
+        }
+        
+        if (mergedAlerts.length === 0) {
             // Display empty state
             const emptyState = document.createElement('div');
             emptyState.className = 'empty-state';
@@ -229,10 +336,10 @@ async function loadUserAlerts(page = 1) {
             updatePaginationUI(1, 1);
         } else {
             // Render alerts
-            data.alerts.forEach(alert => renderAlertItem(alert));
+            mergedAlerts.forEach(alert => renderAlertItem(alert));
             
             // Update pagination
-            updatePaginationUI(data.currentPage || 1, data.totalPages || 1);
+            updatePaginationUI(currentServerPage, totalPages);
             
             // Set up event delegation for alert actions
             setupAlertEventListeners();
@@ -325,52 +432,82 @@ async function deleteAlert(alert_id) {
     if (confirm('Are you sure you want to delete this price alert?')) {
         try {
             // Show loading state
-            const alertItem = document.querySelector(`[data-alert-id="${alert_id}"]`)?.closest('.alert-item');
+            const deleteBtn = document.querySelector(`[data-alert-id="${alert_id}"]`);
+            const isLocal = deleteBtn?.getAttribute('data-is-local') === 'true';
+            const alertItem = deleteBtn?.closest('.alert-item');
+            
             if (alertItem) {
                 alertItem.classList.add('deleting');
-                alertItem.innerHTML += '<div class="overlay-loading">Deleting...</div>';
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay-loading';
+                overlay.textContent = 'Deleting...';
+                alertItem.appendChild(overlay);
             }
             
-            // Use secureApiCall instead of checking for token
-            const response = await secureApiCall(`price-alerts/${alert_id}`, {
-                method: 'DELETE',
-            });
+            // Check if this is a localStorage alert
+            const localAlerts = JSON.parse(localStorage.getItem("localPriceAlerts") || "[]");
+            const localIndex = localAlerts.findIndex(alert => alert.id === alert_id);
             
-            if (response.ok) {
-                // Clear all alert-related cache entries
-                clearCacheByPattern('price-alerts');
-                
-                // Show success message
-                const successMsg = document.createElement('div');
-                successMsg.className = 'success-message';
-                successMsg.textContent = 'Alert deleted successfully';
-                successMsg.setAttribute('role', 'status');
-                
-                if (alertsList) {
-                    alertsList.prepend(successMsg);
-                    setTimeout(() => {
-                        if (successMsg.parentNode) {
-                            successMsg.parentNode.removeChild(successMsg);
-                        }
-                    }, 3000);
+            let deletedFromServer = false;
+            
+            // Only try server delete if not marked as local-only
+            if (!isLocal) {
+                try {
+                    const response = await secureApiCall(`price-alerts/${alert_id}`, {
+                        method: 'DELETE',
+                    });
+                    
+                    if (response.ok) {
+                        deletedFromServer = true;
+                        // Clear all alert-related cache entries
+                        clearCacheByPattern('price-alerts');
+                    }
+                } catch (error) {
+                    console.warn("Could not delete from server:", error);
                 }
-                
-                // Refresh the alerts list
-                loadUserAlerts(currentAlertsPage);
-                
-                // Update the badge count
-                if (window.updateAlertsBadge) {
-                    window.updateAlertsBadge();
-                }
-            } else {
-                throw new Error('Failed to delete alert');
             }
+            
+            // Remove from localStorage if present
+            if (localIndex !== -1) {
+                localAlerts.splice(localIndex, 1);
+                localStorage.setItem("localPriceAlerts", JSON.stringify(localAlerts));
+                console.log("Deleted from localStorage, remaining:", localAlerts.length);
+            }
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'success-message';
+            successMsg.textContent = isLocal 
+                ? 'Local alert deleted successfully' 
+                : 'Alert deleted successfully';
+            successMsg.setAttribute('role', 'status');
+            
+            if (alertsList) {
+                alertsList.prepend(successMsg);
+                setTimeout(() => {
+                    if (successMsg.parentNode) {
+                        successMsg.parentNode.removeChild(successMsg);
+                    }
+                }, 3000);
+            }
+            
+            // Refresh the alerts list
+            loadUserAlerts(currentAlertsPage);
+            
+            // Update the badge count
+            if (window.updateAlertsBadge) {
+                window.updateAlertsBadge();
+            }
+            
+            // Dispatch event for other components
+            document.dispatchEvent(new CustomEvent('priceAlertsUpdated'));
+            
         } catch (error) {
             logError(error, 'deleteAlert');
             alert('Failed to delete the price alert. Please try again.');
             
             // Remove loading state if still present
-            const alertItem = document.querySelector(`[data-alert-id="${id}"]`)?.closest('.alert-item');
+            const alertItem = document.querySelector(`[data-alert-id="${alert_id}"]`)?.closest('.alert-item');
             if (alertItem) {
                 alertItem.classList.remove('deleting');
                 const overlay = alertItem.querySelector('.overlay-loading');
@@ -466,24 +603,42 @@ function updateAlertsBadge() {
         return;
     }
 
+    // Get localStorage alerts count
+    const localAlerts = JSON.parse(localStorage.getItem("localPriceAlerts") || "[]");
+    const localAlertsCount = localAlerts.length;
+
     // Fetch alerts count from API using secureApiCall
     secureApiCall('price-alerts/count')
         .then(response => {
             if (!response.ok) {
+                // If not authenticated, use only localStorage count
+                if (response.status === 401) {
+                    alertsState.total = localAlertsCount;
+                    alertsState.triggered = 0;
+                    alertsState.lastUpdated = Date.now();
+                    updateBadgeUI(localAlertsCount > 0 ? localAlertsCount : 0);
+                    return Promise.reject(new Error('Not authenticated'));
+                }
                 throw new Error('Failed to fetch alerts count');
             }
             return response.json();
         })
         .then(data => {
+            // Combine server count with localStorage count
+            const totalCount = (data.totalCount || 0) + localAlertsCount;
+            const triggeredCount = (data.triggeredCount || 0);
+            
             // Update state
-            alertsState.total = data.totalCount || 0;
-            alertsState.triggered = data.triggeredCount || 0;
+            alertsState.total = totalCount;
+            alertsState.triggered = triggeredCount;
             alertsState.lastUpdated = Date.now();
 
-            updateBadgeUI(data.triggeredCount || 0);
+            updateBadgeUI(triggeredCount > 0 ? triggeredCount : (totalCount > 0 ? totalCount : 0));
         })
         .catch(err => {
-            logError(err, 'updateAlertsBadge');
+            if (err.message !== 'Not authenticated') {
+                logError(err, 'updateAlertsBadge');
+            }
             // Don't clear existing badge on error
         });
 }
@@ -586,6 +741,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadUserAlerts(newPage);
             }
         });
+    });
+    
+    // Listen for price alert updates (from localStorage saves)
+    document.addEventListener('priceAlertsUpdated', function() {
+        console.log("Price alerts updated, refreshing list...");
+        // Refresh the alerts list if modal is open
+        if (trackAlertsModal && !trackAlertsModal.classList.contains('hidden')) {
+            loadUserAlerts(currentAlertsPage);
+        }
+        // Update badge count
+        if (window.updateAlertsBadge) {
+            window.updateAlertsBadge();
+        }
     });
     
     // Initialize badge by checking session instead of token

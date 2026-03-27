@@ -3,17 +3,17 @@
 =============================== */
 
 /* Core systems */
-@import 'header/variables.css';
-@import 'header/reset.css';
-@import 'header/utilities.css';
+@import 'header/variables.css?v=1737835000';
+@import 'header/reset.css?v=1737835000';
+@import 'header/utilities.css?v=1737835000';
 
 /* Components */
-@import 'header/header-layout.css';
-@import 'header/hamburger.css';
-@import 'header/buttons.css';
-@import 'header/search.css';
-@import 'header/tooltips.css';
-@import 'header/selector.css';
+@import 'header/header-layout.css?v=1737835000';
+@import 'header/hamburger.css?v=1737835000';
+@import 'header/buttons.css?v=1737835000';
+@import 'header/search.css?v=1737835000';
+@import 'header/tooltips.css?v=1737835000';
+@import 'header/selector.css?v=1737835000';
 
 /* Responsive */
-@import 'header/responsive.css';
+@import 'header/responsive.css?v=1737835000';

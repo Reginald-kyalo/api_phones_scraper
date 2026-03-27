@@ -2,61 +2,89 @@
  * Product Sidebar Styles
  * 
  * Contains styling for sidebar and its buttons
+ * REDESIGNED: Buttons slide INTO card from right edge
  */
 
-/* Sidebar positioned adjacent to the product card */
+/* Sidebar positioned INSIDE the product card right edge */
 .product-sidebar {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   color: #31353d;
-  width: 40px;
+  width: 44px;
   position: absolute;
-  top: 10px;
-  right: 10px; /* positioned within padded area so it appears attached */
+  top: 50%;
+  right: 0; /* Positioned at the right edge */
+  transform: translateY(-50%) translateX(44px); /* Hidden: pushed fully to the right */
   z-index: 30;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 0;
   align-items: center;
-  border-radius: 0 0 0 2px;
-  /* Default hidden state: positioned 10px to right and fully transparent */
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  /* Default hidden state: translated to the right, transparent */
   opacity: 0;
-  transform: translateX(10px);
-  /* Transition for the default state when hover is removed */
-  transition: transform 0.4s ease, opacity 0.4s ease;
+  /* Transition for smooth slide-in effect */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none; /* Disable interaction when hidden */
 }
 
 /* Sidebar buttons */
 .product-sidebar button {
   border: none;
   color: #31353d;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   background-color: transparent;
   cursor: pointer;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.4s ease;
+  transition: all 0.2s ease;
+  border-radius: 6px;
 }
 
 .product-sidebar button:hover {
-  background-color: #9bb6aa;
+  background-color: rgba(255, 107, 0, 0.15); /* Orange highlight */
+  transform: scale(1.05);
 }
 
-/* Tooltip tag appears below the button, centered */
+.product-sidebar button:active {
+  background-color: rgba(0, 123, 255, 0.2); /* Blue on click */
+}
+
+/* Tooltip tag appears to the left of the button */
 .product-sidebar button .button-tag {
   display: none;
   position: absolute;
-  top: calc(100% + 5px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.75);
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.85);
   color: #ffffff;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
-  font-size: 15px;
+  font-size: 12px;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Arrow pointing right */
+.product-sidebar button .button-tag::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid rgba(0, 0, 0, 0.85);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
 }
 
 .product-sidebar button:hover .button-tag {

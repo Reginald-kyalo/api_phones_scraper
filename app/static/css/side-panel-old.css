@@ -1,0 +1,356 @@
+/* ===============================
+   SIDE PANEL
+=============================== */
+.side-panel {
+  position: fixed;
+  top: var(--header-height, 58px);
+  left: -320px; /* Increased width to accommodate larger content */
+  height: auto;
+  max-height: calc(100vh - var(--header-height, 58px));
+  background-color: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: left 0.3s ease;
+  z-index: 998;
+  padding: 24px 0;
+  width: 320px; /* Increased width for better spacing */
+  overflow-y: auto;
+}
+
+.side-panel.open {
+  left: 0;
+}
+
+.side-panel__nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.side-panel__item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px; /* Added horizontal padding */
+  color: black;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.side-panel__item:hover {
+  background-color: #b8d1c7; /* Lighter shade for better aesthetics */
+}
+
+.side-panel__item svg {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+/* Side panel dropdown styles */
+.side-panel__dropdown {
+  display: flex;
+  align-items: center;
+  /* Your existing styles */
+}
+
+.side-panel__dropdown[aria-expanded="true"] .chevron-icon {
+  transform: rotate(90deg);
+}
+
+.side-panel__submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.side-panel__dropdown[aria-expanded="true"] .side-panel__submenu {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Side panel submenu items */
+.side-panel__submenu ul {
+  list-style: none;
+  padding: 0;
+}
+
+.side-panel__submenu ul li {
+  margin: 0;
+  padding: 0;
+}
+
+.side-panel__submenu ul li a {
+  display: block;
+  padding: 8px 16px 8px 30px; /* Extra left padding for indentation */
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.side-panel__submenu ul li a:hover {
+  background-color: #b8d1c7;
+}
+
+.side-panel__submenu ul li a.active {
+  background-color: #9bb6aa;
+  color: white;
+  font-weight: 500;
+}
+
+.side-panel__submenu ul li .no-models {
+  display: block;
+  padding: 8px 16px 8px 30px;
+  color: #777;
+  font-style: italic;
+}
+
+/* ===============================
+     OVERLAY
+  =============================== */
+.side-panel-overlay {
+  position: fixed;
+  top: var(--header-height, 57px);
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - var(--header-height, 57px));
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  z-index: 997;
+}
+
+.side-panel-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Remove hyperlink styling and fix alignment */
+.side-panel__nav a {
+  text-decoration: none;
+  color: #333;
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  width: 100%;
+}
+
+/* Ensure consistent alignment of all items */
+.side-panel__dropdown,
+.side-panel__item {
+  display: flex;
+  align-items: center;
+}
+
+/* Fix icon alignment */
+.side-panel__dropdown svg,
+.side-panel__item svg {
+  min-width: 20px;
+  margin-right: 12px;
+}
+
+/* Fix chevron icon positioning */
+.chevron-icon {
+  margin-right: 12px !important;
+}
+
+/* Make sure submenu is visible when expanded */
+.side-panel__dropdown[aria-expanded="true"] + .side-panel__submenu {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Add these styles to your side-panel.css file */
+
+/* Hover effect for main dropdown items (Brands/Models buttons) */
+.side-panel__dropdown:hover,
+.side-panel__item:hover {
+  background-color: #f0f8f5; /* Light green background on hover */
+  color: #417c64; /* Darker green text on hover */
+  transition: all 0.2s ease;
+}
+
+/* Hover effect for submenu items (individual brands/models) */
+.side-panel__submenu ul li a:hover {
+  background-color: #f0f8f5; /* Light green background */
+  color: #417c64; /* Darker green text */
+  border-left: 3px solid #9bb6aa; /* Green left border for visual indication */
+  padding-left: 27px; /* Adjust padding to account for border */
+}
+
+/* Active state styling */
+.side-panel__submenu ul li a.active {
+  background-color: #e0efe9; /* Slightly darker than hover */
+  color: #417c64;
+  font-weight: 500;
+  border-left: 3px solid #417c64; /* Darker border for active item */
+  padding-left: 27px;
+}
+
+/* For fill-based icons like Bootstrap Icons */
+.side-panel__item:hover svg {
+  fill: #417c64;
+}
+
+/* For actual stroke-based icons, like custom line icons */
+.side-panel__dropdown:hover .chevron-icon {
+  stroke: #417c64;
+}
+
+
+/* Add a subtle transition for smooth hover effects */
+.side-panel__dropdown,
+.side-panel__item,
+.side-panel__submenu ul li a {
+  transition: all 0.2s ease;
+}
+
+/* ===============================
+   SIDE PANEL CATEGORIES GRID
+=============================== */
+
+/* Categories section container */
+.side-panel__categories-section {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.side-panel__categories-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Main grid container */
+.side-panel__categories-grid {
+  padding: 12px;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+}
+
+/* Individual category item */
+.side-panel__category-item {
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #fafafa;
+  overflow: hidden;
+}
+
+/* Main category button */
+.side-panel__category-main {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: #ffffff;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  transition: background-color 0.15s ease;
+  line-height: 1.4;
+}
+
+.side-panel__category-main:hover {
+  background-color: #f5f5f5;
+}
+
+.side-panel__category-main .category-icon {
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+/* Subcategories container */
+.side-panel__subcategories {
+  display: none;
+  padding: 10px;
+  background-color: #fafafa;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+}
+
+.side-panel__category-item.expanded .side-panel__subcategories {
+  max-height: 500px;
+}
+
+/* Subcategory button */
+.side-panel__subcategory {
+  padding: 8px 10px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  min-height: 32px;
+  word-wrap: break-word;
+}
+
+.side-panel__subcategory:hover {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.side-panel__subcategory .subcategory-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Error and no-categories messages */
+.no-categories,
+.error-message {
+  padding: 16px;
+  text-align: center;
+  color: #777;
+  font-size: 13px;
+}
+
+.error-message {
+  color: #d32f2f;
+}
+
+/* Scrollbar styling for categories grid */
+.side-panel__categories-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.side-panel__categories-grid::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.side-panel__categories-grid::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.side-panel__categories-grid::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}

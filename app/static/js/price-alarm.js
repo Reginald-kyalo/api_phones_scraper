@@ -2,35 +2,36 @@ import { showGlobalMessage } from './auth.js';
 import { secureApiCall } from './api-utils.js';
 
 // Export this function so it can be imported in product.js
-export function showPriceAlarmModal(productData) {
-  // First, check if user is authenticated without making an API call
-  const hasUsername = localStorage.getItem("username");
-  
-  if (!hasUsername) {
-    // Verify with the server as a fallback
-    secureApiCall("verify-session")
-      .then(response => {
-        if (response.ok) {
-          // User is authenticated, proceed to show modal
-          _displayPriceAlarmModal(productData);
-        } else {
-          // User is not authenticated, show login modal
-          showAuthModal();
-          // Store the product data for later
-          localStorage.setItem("pendingPriceAlarm", JSON.stringify(productData));
-        }
-      })
-      .catch(error => {
-        console.error("Session verification error:", error);
-        showAuthModal();
-        localStorage.setItem("pendingPriceAlarm", JSON.stringify(productData));
-      });
-  } else {
-    // User appears to be logged in based on localStorage, show the modal
-    console.log('calling _displayPriceAlarmModal');
-
-    _displayPriceAlarmModal(productData);
+export async function showPriceAlarmModal(productData) {
+  // Check if user can create alerts BEFORE showing the modal
+  if (window.PaymentController && typeof window.PaymentController.canCreateAlert === 'function') {
+    // If user just logged in, wait a bit for migration to complete
+    // Check if migration is in progress by seeing if localStorage still has alerts
+    const localAlerts = JSON.parse(localStorage.getItem('localPriceAlerts') || '[]');
+    if (localAlerts.length > 0) {
+      // Migration might still be in progress, wait a bit
+      console.log('[price-alarm] Waiting for migration to complete...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    const canCreate = await window.PaymentController.canCreateAlert();
+    
+    if (!canCreate) {
+      // User has reached their limit - show subscription modal instead
+      console.log('[price-alarm] User has reached alert limit, showing subscription modal');
+      
+      if (typeof window.PaymentController.showLimitReachedModal === 'function') {
+        window.PaymentController.showLimitReachedModal();
+      } else {
+        window.PaymentController.showSubscriptionModal();
+      }
+      return; // Don't show the price alarm modal
+    }
   }
+  
+  // User can create alerts - show the modal
+  console.log('calling _displayPriceAlarmModal');
+  _displayPriceAlarmModal(productData);
 }
 
 // Extract the actual modal display logic to a separate function
@@ -279,14 +280,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Determine which email to use
     const userEmail = localStorage.getItem("userEmail");
-    let emailToUse = userEmail;
+    let emailToUse = userEmail || '';
 
     if (alternateEmailSection && alternateEmailSection.style.display !== 'none') {
       const altEmail = document.getElementById('alertEmail').value;
       if (altEmail) {
         emailToUse = altEmail;
-      } else {
-        showGlobalMessage('Please enter an email address or use your account email', true);
+      } else if (!userEmail) {
+        showGlobalMessage('Please enter an email address', true);
         return;
       }
     }
@@ -296,6 +297,55 @@ document.addEventListener('DOMContentLoaded', function () {
       this.disabled = true;
       this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isEdit ? 'Updating' : 'Setting'} Alert...`;
 
+      // Check if user is authenticated
+      const authCheckResponse = await secureApiCall("verify-session");
+      
+      if (!authCheckResponse.ok) {
+        // User is NOT authenticated - save to localStorage instead
+        console.log("User not authenticated, saving price alert to localStorage");
+        
+        // Get existing alerts from localStorage
+        const localAlerts = JSON.parse(localStorage.getItem("localPriceAlerts") || "[]");
+        
+        // Create alert object
+        const alertData = {
+          id: Date.now().toString(), // Temporary ID
+          product_id: productId,
+          target_price: targetPrice,
+          email: emailToUse,
+          created_at: new Date().toISOString(),
+          // Store product details for display
+          product_brand: priceAlarmModal.querySelector('.product-brand')?.textContent,
+          product_model: priceAlarmModal.querySelector('.product-title')?.textContent,
+          product_image: priceAlarmModal.querySelector('.product-image img')?.src,
+          current_price: parseFloat(priceAlarmModal.querySelector('.price-value').textContent.replace(/[^0-9.]/g, ''))
+        };
+        
+        // Check if alert already exists for this product
+        const existingIndex = localAlerts.findIndex(alert => alert.product_id === productId);
+        if (existingIndex !== -1) {
+          // Update existing alert
+          localAlerts[existingIndex] = alertData;
+          showGlobalMessage('Price alert updated locally! Sign in to sync across devices.');
+        } else {
+          // Add new alert
+          localAlerts.push(alertData);
+          showGlobalMessage('Price alert saved locally! Sign in to sync across devices.');
+        }
+        
+        localStorage.setItem("localPriceAlerts", JSON.stringify(localAlerts));
+        closePriceAlarmModal();
+        
+        // Notify track-alerts.js that alerts were updated
+        document.dispatchEvent(new CustomEvent('priceAlertsUpdated'));
+        
+        // Reset button
+        this.disabled = false;
+        this.innerHTML = isEdit ? 'Update Price Alert' : 'Set Price Alert';
+        return;
+      }
+
+      // User IS authenticated - save to server
       const response = await secureApiCall(
         isEdit ? `price-alerts/${alertId}` : 'price-alerts', 
         {

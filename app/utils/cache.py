@@ -1,5 +1,6 @@
 import json
 import asyncio
+import re
 from typing import Dict, Any, Optional
 from app.database import redis_client, get_brands_models_collection, get_products_collection, PRODUCT_CATEGORIES
 import logging
@@ -116,9 +117,11 @@ async def _build_cache_from_db(category: str = "phones") -> Dict[str, Any]:
             
         # Check if product exists in the category's product collection
         try:
+            # Escape special regex characters in model name to avoid regex errors
+            escaped_model_name = re.escape(model_name)
             product_exists = await products_collection.find_one({
                 "brand": brand.lower(),
-                "model": {"$regex": f"^{model_name}$", "$options": "i"}
+                "model": {"$regex": f"^{escaped_model_name}$", "$options": "i"}
             })
             if product_exists:
                 result = {"model": model_name, "model_image": model_image}

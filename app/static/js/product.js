@@ -35,7 +35,12 @@ export function attachProductEventListeners(productCard, isFavorite = false) {
   // 2. Merchant list items click handling - Add URL sanitization
   const merchantItems = productCard.querySelectorAll('.merchant-list li');
   merchantItems.forEach(item => {
-    item.addEventListener('click', function () {
+    item.addEventListener('click', function (e) {
+      // Don't handle click if it's on the external link icon
+      if (e.target.closest('.external-link-icon')) {
+        return; // Let the link handle its own click
+      }
+      
       const url = this.dataset.url;
       if (url) {
         // Validate URL to prevent malicious redirects
@@ -64,22 +69,8 @@ export function attachProductEventListeners(productCard, isFavorite = false) {
         return;
       }
 
-      // Check if user is authenticated - use session verification instead of token
-      checkAuthenticated().then(isAuthenticated => {
-        if (!isAuthenticated) {
-          // Store product data before showing auth modal
-          localStorage.setItem("pendingPriceAlarmProduct", JSON.stringify(productData));
-          localStorage.setItem("showPriceAlarmAfterLogin", "true");
-
-          showAuthModal();
-          return;
-        }
-        // Show price alarm modal if authenticated
-        showPriceAlarmModal(productData);
-      }).catch(err => {
-        console.error("Auth check failed:", err);
-        showAuthModal();
-      });
+      // Show price alarm modal directly without authentication check
+      showPriceAlarmModal(productData);
     });
   }
 
@@ -111,17 +102,40 @@ export function attachProductEventListeners(productCard, isFavorite = false) {
  */
 export async function addToFavorites(productData, heartIcon) {
   try {
-    // First check if user is authenticated
+    // Check if user is authenticated
     const authCheckResponse = await secureApiCall("verify-session");
 
     if (!authCheckResponse.ok) {
-      // User is not authenticated - store pending favorite and show auth modal
-      localStorage.setItem("pendingFavorite", JSON.stringify(productData));
-      showAuthModal();
+      // User is NOT authenticated - save to localStorage instead
+      console.log("User not authenticated, saving to localStorage");
+      
+      // Get existing favorites from localStorage
+      const localFavorites = JSON.parse(localStorage.getItem("localFavorites") || "[]");
+      
+      // Check if already exists
+      const alreadyExists = localFavorites.some(fav => fav.product_id === productData.product_id);
+      if (alreadyExists) {
+        showGlobalMessage("Already in your favorites!", true);
+        return;
+      }
+      
+      // Add to localStorage
+      localFavorites.push(productData);
+      localStorage.setItem("localFavorites", JSON.stringify(localFavorites));
+      
+      if (heartIcon) {
+        heartIcon.classList.add("favorited");
+      }
+      showGlobalMessage("Favorite saved locally! Sign in to sync across devices.");
+      
+      // Notify favorites.js that a new favorite was added
+      document.dispatchEvent(new CustomEvent('favoriteAdded', {
+        detail: { product: productData }
+      }));
       return;
     }
 
-    // User is authenticated - proceed with adding to favorites
+    // User IS authenticated - save to server
     const response = await secureApiCall("favorites", {
       method: "POST",
       body: JSON.stringify({ product: productData }),
@@ -153,35 +167,56 @@ export async function addToFavorites(productData, heartIcon) {
  */
 export async function deleteFavorite(productId, productCard) {
   try {
-    const response = await secureApiCall(`favorites/${productId}`, {
-      method: "DELETE",
-    });
+    // Check if this is a localStorage-only favorite
+    const localFavorites = JSON.parse(localStorage.getItem("localFavorites") || "[]");
+    const localIndex = localFavorites.findIndex(fav => (fav.product_id || fav._id) === productId);
+    
+    let isLocalOnly = localIndex !== -1;
+    
+    // Try to delete from server
+    try {
+      const response = await secureApiCall(`favorites/${productId}`, {
+        method: "DELETE",
+      });
 
-    if (response.ok) {
-      // Remove the card with animation
-      productCard.classList.add('fade-out');
-      
-      // Wait for animation to complete before removing
-      setTimeout(() => {
-        productCard.remove();
-        
-        // Notify favorites.js that an item was deleted (using custom event)
-        document.dispatchEvent(new CustomEvent('favoriteDeleted', {
-          detail: { productId }
-        }));
-      }, 300);
-      
-      // Update heart icons for this product in all other views
-      document.querySelectorAll(`.product[data-product-id="${productId}"] .heart-icon`)
-        .forEach(heartIcon => {
-          heartIcon.classList.remove('favorited');
-        });
-      
-      showGlobalMessage("Favorite removed!");
-    } else {
-      const data = await response.json();
-      showGlobalMessage(data.detail || "Failed to remove favorite", true);
+      if (response.ok) {
+        isLocalOnly = false; // Successfully deleted from server
+      } else if (response.status === 401) {
+        // Not authenticated, must be localStorage only
+        isLocalOnly = true;
+      }
+    } catch (error) {
+      console.warn("Could not delete from server:", error);
+      // Assume localStorage only
     }
+    
+    // Remove from localStorage if present
+    if (localIndex !== -1) {
+      localFavorites.splice(localIndex, 1);
+      localStorage.setItem("localFavorites", JSON.stringify(localFavorites));
+    }
+    
+    // Remove the card with animation
+    productCard.classList.add('fade-out');
+    
+    // Wait for animation to complete before removing
+    setTimeout(() => {
+      productCard.remove();
+      
+      // Notify favorites.js that an item was deleted (using custom event)
+      document.dispatchEvent(new CustomEvent('favoriteDeleted', {
+        detail: { productId }
+      }));
+    }, 300);
+    
+    // Update heart icons for this product in all other views
+    document.querySelectorAll(`.product[data-product-id="${productId}"] .heart-icon`)
+      .forEach(heartIcon => {
+        heartIcon.classList.remove('favorited');
+      });
+    
+    showGlobalMessage("Favorite removed!");
+    
   } catch (error) {
     console.error("Error removing favorite:", error);
     showGlobalMessage("An error occurred", true);
@@ -227,6 +262,8 @@ export function getProductDataFromCard(productEl, isFavorite = false) {
   const price = productEl.querySelector(".price")?.innerText || "";
   const image = productEl.querySelector(".product-image")?.src || "";
   
+  console.log("getProductDataFromCard - raw price:", price);
+  
   // Initialize price_comparison outside the if block
   let price_comparison = [];
   
@@ -245,11 +282,16 @@ export function getProductDataFromCard(productEl, isFavorite = false) {
     }
   }
   
+  // Parse price: extract numeric value, removing currency and commas
+  const cleanedPrice = price.replace(/[^\d.,]/g, '').replace(',', '');
+  const parsedPrice = parseFloat(cleanedPrice) || 0;
+  console.log("Price parsing:", { raw: price, cleaned: cleanedPrice, parsed: parsedPrice });
+  
   return {
     product_id: sanitizeInput(productId),
     brand: sanitizeInput(brand),
     model: sanitizeInput(model),
-    current_price: sanitizeInput(price.replace('Ksh ', '')),
+    current_price: parsedPrice,
     model_image: image, // URLs should be validated separately
     price_comparison: price_comparison
   };

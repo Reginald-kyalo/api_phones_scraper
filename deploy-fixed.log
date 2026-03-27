@@ -1,0 +1,22 @@
+=== Azure Container Apps Deployment Script ===
+Resource Group: price-deals-rg
+Location: Switzerland North
+Container App: price-deals-app
+
+Checking Azure login status...
+Already logged in to Azure
+
+Creating resource group...
+{
+  "id": "/subscriptions/39318995-d595-4a66-b397-565e85b49b4d/resourceGroups/price-deals-rg",
+  "location": "switzerlandnorth",
+  "managedBy": null,
+  "name": "price-deals-rg",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": null,
+  "type": "Microsoft.Resources/resourceGroups"
+}
+
+Creating Azure Container Registry...

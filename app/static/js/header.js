@@ -20,21 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
   alertsBtn?.addEventListener("click", async () => {
     console.log("Price alerts button clicked");
     
-    // Use the cookie-based authentication check
-    const isAuthenticated = await checkAuthenticated();
-    
-    if (!isAuthenticated) {
-      console.log("User not authenticated, showing auth modal");
-      // Set flag to show track alerts after login
-      localStorage.setItem("pendingTrackAlerts", "true");
-      
-      // Show auth modal
-      showAuthModal();
-      return;
-    }
-    
-    console.log("User is authenticated, showing track alerts modal");
-    // User is logged in, show the track alerts modal
+    // Show track alerts modal directly without authentication check
+    console.log("Showing track alerts modal");
     if (window.openTrackAlertsModal) {
       window.openTrackAlertsModal();
     }
@@ -74,6 +61,80 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location = url;
   });
 
+  // ---------------
+  // Search Clear Button Handler
+  // ---------------
+  const searchClearBtn = document.getElementById("search-clear");
+  const searchInputField = document.getElementById("search");
+  
+  if (searchClearBtn && searchInputField) {
+    searchClearBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      searchInputField.value = "";
+      searchInputField.focus();
+      // Trigger any change listeners if needed
+      searchInputField.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  // ---------------
+  // Account Dropdown Handler
+  // ---------------
+  const accountBtn = document.querySelector(".btn-account");
+  const accountDropdown = document.querySelector(".account-dropdown");
+  
+  if (accountBtn) {
+    accountBtn.addEventListener("click", () => {
+      const isExpanded = accountBtn.getAttribute("aria-expanded") === "true";
+      accountBtn.setAttribute("aria-expanded", !isExpanded);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!accountDropdown?.contains(e.target)) {
+        accountBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+    
+    // Handle dropdown item clicks
+    const dropdownItems = document.querySelectorAll(".account-dropdown-item");
+    dropdownItems.forEach(item => {
+      item.addEventListener("click", () => {
+        accountBtn.setAttribute("aria-expanded", "false");
+      });
+    });
+  }
+
+  // ---------------
+  // Account Dropdown Item Handlers
+  // ---------------
+  const accDropFavBtn = document.getElementById("accDropFavBtn");
+  const accDropAlarmBtn = document.getElementById("accDropAlarmBtn");
+  const accDropLoginBtn = document.getElementById("accDropLoginBtn");
+  
+  if (accDropFavBtn) {
+    accDropFavBtn.addEventListener("click", async () => {
+      await loadAndShowFavorites();
+    });
+  }
+  
+  if (accDropAlarmBtn) {
+    accDropAlarmBtn.addEventListener("click", () => {
+      if (window.openTrackAlertsModal) {
+        window.openTrackAlertsModal();
+      }
+    });
+  }
+  
+  if (accDropLoginBtn) {
+    accDropLoginBtn.addEventListener("click", async () => {
+      const isAuth = await checkAuthenticated();
+      if (!isAuth) {
+        showAuthModal();
+      }
+    });
+  }
+
 
   // ---------------
   // Sticky Header Functionality
@@ -99,16 +160,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------
   // Favorites Button Handler
   // ---------------
-  favBtn?.addEventListener("click", async () => {    
-    // Use the cookie-based authentication check
-    const isAuthenticated = await checkAuthenticated();
-    
-    if (!isAuthenticated) {
-      console.log("User not authenticated, showing auth modal");
-      //localStorage.setItem("pendingFavorites");
-      showAuthModal();
-      return;
-    }
+  favBtn?.addEventListener("click", async () => {
+    // Show favorites modal directly without authentication check
     loadAndShowFavorites();
   });
 
@@ -164,7 +217,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ---------------
     // Categories & Brands Selector (Main Page)
+    // NOTE: This legacy system is now replaced by category-navigator.js
+    // Keeping this code commented for reference/backward compatibility
     // ---------------
+    /*
     function displayCategories() {
       const container = document.getElementById("selector-container");
       if (!container) {
@@ -344,6 +400,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("selector-container")) {
       displayCategories();
     }
+    */
+    // End of legacy category selector code
+    
     initSidePanel();
 
     // ---------------

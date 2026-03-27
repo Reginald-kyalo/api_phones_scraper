@@ -81,9 +81,11 @@
   }
 }
 
-/* Animation triggers */
+/* Animation triggers - Slide IN from right */
 .product:hover .product-sidebar {
-  animation: slideIn 0.4s forwards;
+  opacity: 1;
+  transform: translateY(-50%) translateX(0); /* Slide into view */
+  pointer-events: auto; /* Enable interaction when visible */
 }
 
 .scales-button:hover .scales-bar {

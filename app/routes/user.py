@@ -77,11 +77,12 @@ async def validate_password(password: str) -> str:
 async def check_rate_limit(ip: str, email: str = None):
     """Redis-based rate limiting"""
     key = f"login_attempts:{ip}"
-    count = redis_client.get(key)
+    count = await redis_client.get(key)
     
+    # count is already a string due to decode_responses=True
     if count and int(count) >= MAX_LOGIN_ATTEMPTS:
         # Check if we're still in lockout period
-        ttl = redis_client.ttl(key)
+        ttl = await redis_client.ttl(key)
         if ttl > 0:
             minutes_left = int(ttl / 60) + 1
             raise HTTPException(
@@ -90,10 +91,10 @@ async def check_rate_limit(ip: str, email: str = None):
             )
     
     # Increment counter with expiration
-    pipe = redis_client.pipeline()
-    pipe.incr(key)
-    pipe.expire(key, LOCKOUT_PERIOD * 60)  # Convert minutes to seconds
-    pipe.execute()
+    async with redis_client.pipeline(transaction=True) as pipe:
+        pipe.incr(key)
+        pipe.expire(key, LOCKOUT_PERIOD * 60)  # Convert minutes to seconds
+        await pipe.execute()
 
 async def detect_suspicious_activity(user_id: str, request: Request) -> bool:
     """Detect potentially suspicious login activity"""
@@ -191,16 +192,16 @@ async def signup(user_data: AuthRequest, response: Response):
 async def login(user_data: AuthRequest, request: Request, response: Response):
     client_ip = request.client.host
     
-    # Rate limiting check
-    await check_rate_limit(client_ip)
+    # Rate limiting check - DISABLED for development, re-enable for production
+    # await check_rate_limit(client_ip)
     
     # Validate and sanitize inputs
     try:
         email = await validate_email(user_data.email)
     except HTTPException:
-        # Increment failed attempt counter using Redis instead of in-memory dict
-        redis_client.incr(f"login_attempts:{client_ip}")
-        redis_client.expire(f"login_attempts:{client_ip}", LOCKOUT_PERIOD * 60)
+        # Increment failed attempt counter - DISABLED for development
+        # await redis_client.incr(f"login_attempts:{client_ip}")
+        # await redis_client.expire(f"login_attempts:{client_ip}", LOCKOUT_PERIOD * 60)
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Find user - don't leak if email exists or not
@@ -218,9 +219,9 @@ async def login(user_data: AuthRequest, request: Request, response: Response):
                 {"$inc": {"failed_login_attempts": 1}}
             )
         
-        # Increment rate limiting counter in Redis
-        redis_client.incr(f"login_attempts:{client_ip}")
-        redis_client.expire(f"login_attempts:{client_ip}", LOCKOUT_PERIOD * 60)
+        # Increment rate limiting counter in Redis - DISABLED for development
+        # await redis_client.incr(f"login_attempts:{client_ip}")
+        # await redis_client.expire(f"login_attempts:{client_ip}", LOCKOUT_PERIOD * 60)
             
         # Don't reveal which part of credentials is wrong
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -244,8 +245,8 @@ async def login(user_data: AuthRequest, request: Request, response: Response):
     
     log_security_event("Successful login", {"email": email}, request)
     
-    # Reset rate limiting counter on successful login
-    redis_client.delete(f"login_attempts:{client_ip}")
+    # Reset rate limiting counter on successful login - DISABLED for development
+    # await redis_client.delete(f"login_attempts:{client_ip}")
     
     # Detect suspicious activity
     await detect_suspicious_activity(str(user["_id"]), request)
@@ -292,7 +293,7 @@ async def logout(
     if jti:
         # Add token to blacklist with the same expiry as the token
         exp_time = datetime.fromtimestamp(token_data["exp"]) - datetime.now()
-        redis_client.setex(f"revoked_token:{jti}", int(exp_time.total_seconds()), 1)
+        await redis_client.setex(f"revoked_token:{jti}", int(exp_time.total_seconds()), 1)
     
     # Clear cookies
     clear_auth_cookies(response)
@@ -332,7 +333,7 @@ async def refresh_token(
                 jti = payload.get("jti")
                 if jti:
                     exp_time = datetime.fromtimestamp(payload["exp"]) - datetime.now()
-                    redis_client.setex(f"revoked_token:{jti}", int(exp_time.total_seconds()), 1)
+                    await redis_client.setex(f"revoked_token:{jti}", int(exp_time.total_seconds()), 1)
                     
                 return {"message": "Token refreshed successfully"}
             except jwt.PyJWTError:

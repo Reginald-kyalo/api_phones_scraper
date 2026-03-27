@@ -14,12 +14,28 @@ async def add_favorite(item: dict, payload: dict = Depends(verify_token)):
     product_data = item.get("product")
     if not product_data:
         raise HTTPException(status_code=400, detail="Product data required")
+    # Normalize product identifier: accept either incoming `_id` or `product_id`
+    pid = product_data.get("_id") or product_data.get("product_id")
+    if not pid:
+        # If we don't have a stable id from the client, reject — we need it to deduplicate
+        raise HTTPException(status_code=400, detail="Product identifier required for favorites")
+
+    # Ensure the stored favorite has a stable `_id` field (use product_id if that's what client sent)
+    if "_id" not in product_data:
+        product_data["_id"] = pid
+
+    # Look for an existing favorite by either `_id` or `product_id` to handle previous variants
     existing_fav = await db["users"].find_one({
         "_id": ObjectId(user_id),
-        "favorites._id": product_data.get("_id")
+        "$or": [
+            {"favorites._id": pid},
+            {"favorites.product_id": pid}
+        ]
     })
+
     if existing_fav:
         raise HTTPException(status_code=400, detail="Item might already be in favorites")
+
     result = await db["users"].update_one(
         {"_id": ObjectId(user_id)},
         {"$push": {"favorites": product_data}}

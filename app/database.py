@@ -8,7 +8,9 @@ import os
 load_dotenv()
 
 redis_url = os.getenv("REDIS_URL")
+redis_password = os.getenv("REDIS_PASSWORD", "")
 mongo_uri = os.getenv("MONGO_URI")
+
 # MongoDB client and database
 client: AsyncIOMotorClient = AsyncIOMotorClient(mongo_uri, serverSelectionTimeoutMS=5000)
 db: AsyncIOMotorDatabase = client[settings.DB_NAME]
@@ -17,6 +19,7 @@ cosmetics_db: AsyncIOMotorDatabase = client["cosmetics_db"]
 laptops_db: AsyncIOMotorDatabase = client["laptops_db"]
 shoes_db: AsyncIOMotorDatabase = client["shoes_db"]
 sound_systems_db: AsyncIOMotorDatabase = client["sound_systems_db"]
+getprice_db: AsyncIOMotorDatabase = client["getprice_db"]  # Categories and metadata
 
 # Product categories mapping
 PRODUCT_CATEGORIES = {
@@ -27,7 +30,9 @@ PRODUCT_CATEGORIES = {
     "sound_systems": {"db": sound_systems_db, "collection": "sound_systems"}
 }
 
-# Redis client
+# Redis client with password support
+# Note: Redis.from_url() automatically extracts credentials from the URL
+# so we don't need to pass password separately
 redis_client: Redis = Redis.from_url(
     redis_url,
     decode_responses=True,

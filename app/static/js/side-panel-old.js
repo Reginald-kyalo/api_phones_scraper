@@ -1,0 +1,388 @@
+// side-panel.js
+import { loadAndShowFavorites } from "./favorites.js";
+import { checkAuthenticated } from "./api-utils.js";
+/**
+ * Toggle the side panel and overlay visibility
+ */
+const toggleMenu = () => {
+  const hamburgerMenu = document.querySelector(".hamburger-menu");
+  const sidePanel = document.querySelector(".side-panel");
+  const overlay = document.querySelector(".side-panel-overlay");
+  
+  // Get current state
+  const isExpanded = hamburgerMenu.getAttribute("aria-expanded") === "true";
+  
+  // Toggle state
+  const newState = !isExpanded;
+  hamburgerMenu.setAttribute("aria-expanded", newState);
+  
+  if (newState) {
+    // Open the panel
+    sidePanel.classList.add("open");
+    sidePanel.setAttribute("aria-hidden", "false");
+    overlay.classList.add("visible");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  } else {
+    // Close the panel
+    sidePanel.classList.remove("open");
+    sidePanel.setAttribute("aria-hidden", "true");
+    overlay.classList.remove("visible");
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+}
+
+/**
+ * Initialize and configure the categories in the side panel
+ */
+async function initializeSidePanelCategories() {
+  const categoriesGrid = document.getElementById("sidePanelCategoriesGrid");
+  
+  if (!categoriesGrid) {
+    console.error("Categories grid element not found");
+    return;
+  }
+
+  try {
+    // Fetch categories from API
+    const response = await fetch('/api/categories');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const categories = data.categories || [];
+    
+    if (!categories || categories.length === 0) {
+      categoriesGrid.innerHTML = '<div class="no-categories">No categories available</div>';
+      return;
+    }
+
+    // Render all categories in grid layout
+    renderSidePanelCategories(categories, categoriesGrid);
+    
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    categoriesGrid.innerHTML = '<div class="error-message">Failed to load categories</div>';
+  }
+}
+
+/**
+ * Get icon for a main category
+ */
+function getCategoryIcon(categoryName) {
+  const icons = {
+    'computers & laptops': '💻',
+    'electronics': '📱',
+    'health & beauty': '💄',
+    'home & garden': '🏡',
+    'sports & outdoors': '⚽',
+    'fashion & accessories': '👗',
+    'toys & games': '🎮',
+    'books & media': '📚',
+    'automotive': '🚗',
+    'office supplies': '📎',
+    'pet supplies': '🐾'
+  };
+  
+  const normalizedName = categoryName.toLowerCase().trim();
+  return icons[normalizedName] || '📦';
+}
+
+/**
+ * Get icon for a subcategory
+ */
+function getSubCategoryIcon(subCategoryName) {
+  const icons = {
+    // Computer accessories
+    'mouse & keyboards': '🖱️',
+    'storage devices': '💾',
+    'printers & scanners': '🖨️',
+    'monitors': '🖥️',
+    'networking': '🌐',
+    'cables & adapters': '🔌',
+    'laptop accessories': '💻',
+    'computer components': '🔧',
+    
+    // Electronics
+    'cameras': '📷',
+    'mobile phones': '📱',
+    'audio equipment': '🔊',
+    'headphones': '🎧',
+    'televisions': '📺',
+    'gaming consoles': '🎮',
+    'smartwatches': '⌚',
+    'tablets': '📱',
+    'speakers': '🔊',
+    
+    // Home & Garden
+    'furniture': '🛋️',
+    'kitchenware': '🍳',
+    'lighting': '💡',
+    'garden tools': '🌿',
+    'home decor': '🖼️',
+    'power tools': '🔨',
+    'appliances': '🏠',
+    
+    // Health & Beauty
+    'skincare': '🧴',
+    'makeup': '💄',
+    'hair care': '💇',
+    'fragrances': '🌸',
+    'personal care': '🧖',
+    'vitamins & supplements': '💊',
+    
+    // Fashion & Accessories
+    'clothing': '👕',
+    'shoes': '👟',
+    'bags': '👜',
+    'jewelry': '💍',
+    'watches': '⌚',
+    'sunglasses': '🕶️',
+    
+    // Sports & Outdoors
+    'sports equipment': '⚽',
+    'fitness': '🏋️',
+    'camping': '⛺',
+    'cycling': '🚴',
+    'water sports': '🏊',
+    
+    // Office Supplies
+    'stationery': '📝',
+    'desk accessories': '🪑',
+    'filing & organization': '📁',
+    'writing instruments': '✒️'
+  };
+  
+  const normalizedName = subCategoryName.toLowerCase().trim();
+  return icons[normalizedName] || '•';
+}
+
+/**
+ * Render categories in grid layout
+ */
+function renderSidePanelCategories(categories, container) {
+  container.innerHTML = '';
+  
+  categories.forEach(category => {
+    const categoryItem = document.createElement('div');
+    categoryItem.className = 'side-panel__category-item';
+    
+    const icon = getCategoryIcon(category.name);
+    const displayName = category.name.charAt(0).toUpperCase() + category.name.slice(1);
+    
+    // Main category button
+    const mainButton = document.createElement('button');
+    mainButton.className = 'side-panel__category-main';
+    mainButton.innerHTML = `<span class="category-icon">${icon}</span><span>${displayName}</span>`;
+    mainButton.setAttribute('data-slug', category.slug);
+    
+    categoryItem.appendChild(mainButton);
+    
+    // Subcategories container
+    if (category.subcategories && category.subcategories.length > 0) {
+      const subContainer = document.createElement('div');
+      subContainer.className = 'side-panel__subcategories';
+      
+      category.subcategories.forEach(sub => {
+        const subButton = document.createElement('button');
+        subButton.className = 'side-panel__subcategory';
+        
+        const subIcon = getSubCategoryIcon(sub.name);
+        const subDisplayName = sub.name.charAt(0).toUpperCase() + sub.name.slice(1);
+        
+        subButton.innerHTML = `<span class="subcategory-icon">${subIcon}</span><span>${subDisplayName}</span>`;
+        subButton.setAttribute('data-parent-slug', category.slug);
+        subButton.setAttribute('data-slug', sub.slug);
+        
+        // Add click handler for subcategory
+        subButton.addEventListener('click', () => {
+          // You can implement navigation or filtering logic here
+          console.log('Subcategory clicked:', category.slug, sub.slug);
+          // Example: window.location.href = `/category/${category.slug}/${sub.slug}`;
+        });
+        
+        subContainer.appendChild(subButton);
+      });
+      
+      categoryItem.appendChild(subContainer);
+    }
+    
+    // Add click handler for main category
+    mainButton.addEventListener('click', () => {
+      // Toggle subcategories visibility
+      categoryItem.classList.toggle('expanded');
+      
+      // You can implement navigation here
+      console.log('Main category clicked:', category.slug);
+      // Example: window.location.href = `/category/${category.slug}`;
+    });
+    
+    container.appendChild(categoryItem);
+  });
+}
+
+/**
+ * Populate the categories dropdown in the side panel (legacy function - kept for compatibility)
+ */
+function populateSidePanelCategories() {
+  const categoriesDropdown = document.getElementById("sidePanelCategoriesDropdown");
+  if (!categoriesDropdown) {
+    console.warn("Legacy categories dropdown element not found");
+    return;
+  }
+
+  // Clear existing categories
+  categoriesDropdown.innerHTML = "";
+
+  // Get categories and add them to the dropdown
+  const categories = window.categories || Object.keys(window.allCategoriesCache || {});
+  
+  if (categories.length === 0) {
+    console.warn("No categories found");
+  } else {
+    console.log(`Found ${categories.length} categories to add`);
+  }
+
+  // Sort categories with phones first, then alphabetically
+  const sortedCategories = categories.sort((a, b) => {
+    if (a === "phones") return -1;
+    if (b === "phones") return 1;
+    return a.localeCompare(b);
+  });
+
+  // Add individual categories
+  sortedCategories.forEach((category) => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = "javascript:void(0)";
+    a.setAttribute("data-category", category.toLowerCase());
+    a.textContent = category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
+    li.appendChild(a);
+    categoriesDropdown.appendChild(li);
+  });
+}
+
+/**
+ * Populate the brands dropdown for a selected category
+ * @param {string} category - The selected category name
+ */
+function populateSidePanelBrands(category) {
+  const brandsDropdown = document.getElementById("sidePanelBrandsDropdown");
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectedBrand = urlParams.get("brand");
+
+  brandsDropdown.innerHTML = "";
+  const categoryData = window.allCategoriesCache[category.toLowerCase()];
+  
+  if (categoryData && Object.keys(categoryData).length > 0) {
+    const brands = Object.keys(categoryData);
+    // Sort brands by popularity (model count)
+    const sortedBrands = brands.sort((a, b) => {
+      const aModelsCount = categoryData[a]?.models?.length || 0;
+      const bModelsCount = categoryData[b]?.models?.length || 0;
+      return bModelsCount - aModelsCount; // Most popular first
+    });
+
+    sortedBrands.forEach((brand) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = "javascript:void(0)";
+      a.setAttribute("data-brand", brand.toLowerCase());
+      a.setAttribute("data-category", category.toLowerCase());
+      a.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
+      
+      if (selectedBrand && selectedBrand.toLowerCase() === brand.toLowerCase()) {
+        a.classList.add("active");
+      }
+      
+      li.appendChild(a);
+      brandsDropdown.appendChild(li);
+    });
+  } else {
+    // If no brands are available
+    const li = document.createElement("li");
+    const noBrands = document.createElement("span");
+    noBrands.classList.add("no-brands");
+    noBrands.textContent = "No brands available";
+    li.appendChild(noBrands);
+    brandsDropdown.appendChild(li);
+  }
+}
+
+// Note: Models functionality removed as per new hierarchy (Categories -> Brands)
+
+/**
+ * Initialize the side panel
+ * Called from header.js
+ */
+export function initSidePanel() {
+  // Set up hamburger menu toggle without rebuilding it
+  const hamburgerMenu = document.querySelector(".hamburger-menu");
+  if (hamburgerMenu && !hamburgerMenu.hasAttribute("listener-added")) {
+    hamburgerMenu.addEventListener("click", toggleMenu);
+    hamburgerMenu.setAttribute("listener-added", "true");
+  }
+
+  // Add click handler to the overlay element that already exists in HTML
+  const overlay = document.querySelector(".side-panel-overlay");
+  if (overlay && !overlay.hasAttribute("listener-added")) {
+    overlay.addEventListener("click", toggleMenu);
+    overlay.setAttribute("listener-added", "true");
+  }
+
+  // Initialize side panel categories/brands
+  initializeSidePanelCategories();
+  
+  // Set up the side panel alarm button
+  const sidePanelAlarmBtn = document.getElementById("sidePanelAlarmBtn");
+  if (sidePanelAlarmBtn && !sidePanelAlarmBtn.hasAttribute("listener-added")) {
+    sidePanelAlarmBtn.addEventListener("click", () => {
+      // Show track alerts modal directly without authentication check
+      if (window.openTrackAlertsModal) {
+        window.openTrackAlertsModal();
+      }
+      
+      toggleMenu();
+    });
+    sidePanelAlarmBtn.setAttribute("listener-added", "true");
+  }
+
+  const favBtn = document.getElementById("sidePanelFavBtn");
+  console.log("Favorites button found:", favBtn); // Debug if button exists
+  
+  if (favBtn && !favBtn.hasAttribute("listener-added")) {
+    console.log("Adding click listener to favorites button");
+    
+    favBtn.addEventListener("click", async (event) => {
+      console.log("Favorites button clicked!"); // Debug if click event fires
+      event.preventDefault();
+      
+      try {
+        console.log("Loading favorites without authentication check");
+        await loadAndShowFavorites();
+        console.log("Favorites loaded and displayed");
+      } catch (error) {
+        console.error("Error in favorites button handler:", error);
+      }
+    });
+    
+    favBtn.setAttribute("listener-added", "true");
+    console.log("Listener added to favorites button");
+  } else {
+    console.log("Favorites button not found or already has listener");
+  }
+}
+
+// Close side panel when clicking outside
+document.addEventListener("click", (e) => {
+  const sidePanel = document.querySelector(".side-panel");
+  const hamburgerMenu = document.querySelector(".hamburger-menu");
+
+  if (sidePanel && sidePanel.classList.contains("open")) {
+    if (!sidePanel.contains(e.target) && (!hamburgerMenu || !hamburgerMenu.contains(e.target))) {
+      toggleMenu();
+    }
+  }
+});

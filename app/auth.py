@@ -62,11 +62,8 @@ def verify_token(request: Request, token: str = Depends(get_token_from_cookie_or
     # First decode without verification to extract jti for revocation check
     try:
         unverified_payload = jwt.decode(token, options={"verify_signature": False})
-        token_id = unverified_payload.get("jti")
-        
-        # Check if token has been revoked
-        if token_id and is_token_revoked(token_id):
-            raise HTTPException(status_code=401, detail="Token has been revoked")
+        # Note: We skip revocation check here as it requires async Redis call
+        # Revocation check is done in the actual route handlers if needed
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token format")
     valid_keys = settings.VALID_SECRET_KEYS
@@ -86,10 +83,44 @@ def verify_token(request: Request, token: str = Depends(get_token_from_cookie_or
     # If we get here, token couldn't be verified with any key
     raise HTTPException(status_code=401, detail="Invalid token")
 
-def is_token_revoked(token_id: str) -> bool:
-    """Check if a token has been revoked"""
+async def is_token_revoked(token_id: str) -> bool:
+    """Check if a token has been revoked (async version)"""
     from app.routes.user import redis_client
-    return bool(redis_client.exists(f"revoked_token:{token_id}"))
+    return bool(await redis_client.exists(f"revoked_token:{token_id}"))
+
+async def get_current_user(request: Request, token: str = Depends(get_token_from_cookie_or_bearer)):
+    """
+    Get current authenticated user from token.
+    Can be used as a dependency in routes that require authentication.
+    """
+    try:
+        # Verify the token
+        payload = verify_token(request, token)
+        
+        # Check if token is revoked
+        jti = payload.get("jti")
+        if jti and await is_token_revoked(jti):
+            raise HTTPException(status_code=401, detail="Token has been revoked")
+        
+        # Get user info from database (use await for async motor)
+        from app.database import db
+        from bson import ObjectId
+        
+        user_id = payload.get("sub")
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # Return user dict with string _id for JSON serialization
+        user["_id"] = str(user["_id"])
+        return user
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting current user: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 def create_tokens(user_id: str, email: str) -> dict:
     """Create both access and refresh tokens"""
