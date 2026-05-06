@@ -20,6 +20,8 @@ laptops_db: AsyncIOMotorDatabase = client["laptops_db"]
 shoes_db: AsyncIOMotorDatabase = client["shoes_db"]
 sound_systems_db: AsyncIOMotorDatabase = client["sound_systems_db"]
 getprice_db: AsyncIOMotorDatabase = client["getprice_db"]  # Categories and metadata
+pricerunner_db: AsyncIOMotorDatabase = client["pricerunner_db"]
+taxonomy_db: AsyncIOMotorDatabase = client["taxonomy_db"]
 
 # Product categories mapping
 PRODUCT_CATEGORIES = {

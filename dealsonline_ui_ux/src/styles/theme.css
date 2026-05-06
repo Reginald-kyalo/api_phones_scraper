@@ -1,0 +1,256 @@
+:root {
+  --font-size: 14px;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* ── Core palette (PriceRunner-aligned) ── */
+  --background: #FFFFFF;
+  --foreground: #0f172a;
+  --card: #FFFFFF;
+  --card-foreground: #0f172a;
+  --popover: #FFFFFF;
+  --popover-foreground: #0f172a;
+  --primary: #1B1340;
+  --primary-foreground: #FFFFFF;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1B1340;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #1B1340;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --input-background: #f8fafc;
+  --switch-background: #cbd5e1;
+  --ring: #1B1340;
+
+  /* ── Semantic tokens ── */
+  --hero-bg: #1B1340;
+  --hero-gradient: linear-gradient(135deg, #1B1340 0%, #2D1B69 100%);
+  --badge-discount: #E8364F;
+  --badge-success: #16A34A;
+  --badge-warning: #F59E0B;
+  --price-color: #1B1340;
+  --price-old: #94a3b8;
+  --link-color: #2563EB;
+  --link-hover: #1D4ED8;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --surface-alt: #f8fafc;
+  --category-strip-bg: #FFFFFF;
+  --category-strip-border: #e2e8f0;
+
+  /* ── Chart colors ── */
+  --chart-1: #1B1340;
+  --chart-2: #2563EB;
+  --chart-3: #16A34A;
+  --chart-4: #F59E0B;
+  --chart-5: #E8364F;
+
+  /* ── Radius (PriceRunner: sharp/minimal) ── */
+  --radius: 0.5rem;
+
+  /* ── Font weights ── */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+
+  /* ── Sidebar (keep for shadcn compatibility) ── */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #1B1340;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #1B1340;
+}
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Semantic color aliases for Tailwind utilities */
+  --color-hero-bg: var(--hero-bg);
+  --image-hero-gradient: var(--hero-gradient);
+  --color-badge-discount: var(--badge-discount);
+  --color-badge-success: var(--badge-success);
+  --color-badge-warning: var(--badge-warning);
+  --color-price: var(--price-color);
+  --color-price-old: var(--price-old);
+  --color-link: var(--link-color);
+  --color-link-hover: var(--link-hover);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-surface-alt: var(--surface-alt);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family);
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* ── PriceRunner-aligned typography scale ── */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--foreground);
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--foreground);
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* ── Utility classes ── */
+
+  .price-text {
+    font-weight: 700;
+    color: var(--price-color);
+  }
+
+  .price-old {
+    text-decoration: line-through;
+    color: var(--price-old);
+  }
+
+  .discount-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--badge-discount);
+    color: #FFFFFF;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* ── Ultra Design Utilities ── */
+  .ultra-border {
+    border: 1px solid var(--border);
+    box-shadow: none !important;
+    transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+  }
+  
+  .ultra-border:hover {
+    border-color: var(--muted-foreground);
+    background-color: var(--surface-alt);
+  }
+
+  .microcopy-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--muted-foreground);
+  }
+
+  .scroll-hint-x {
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  }
+}

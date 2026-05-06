@@ -1,3 +1,4 @@
 {
-    "livePreview.defaultPreviewPath": "/app/templates/base.html"
+    "livePreview.defaultPreviewPath": "/app/templates/base.html",
+    "git.ignoreLimitWarning": true
 }

@@ -12,6 +12,8 @@ from app.config import settings
 from app.database import init_db, close_db
 from app.routes import home, user, favorites, price_alerts, mainpage
 from app.routes import payment, categories
+from app.api.routes.products import router as products_api_router
+from app.api.routes.pricerunner import router as pricerunner_api_router, ensure_indexes as pr_ensure_indexes
 from app.security.key_rotation import rotate_keys
 from app.tasks.price_monitor import monitor_price_alerts
 from app.utils.cache import get_brands_models_cache
@@ -37,6 +39,7 @@ async def lifespan(app: FastAPI):
     #
     # Startup: Initialize databases
     await init_db()
+    await pr_ensure_indexes()
     
     # Load cache in background (don't block startup)
     async def load_cache_background():
@@ -99,14 +102,24 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Phone Price Comparison API", version="2.0.0", lifespan=lifespan)
 
+_origins = [
+    "https://localhost:8000",
+    "https://127.0.0.1:8000",
+    "https://www.dealsonline.ninja",
+    "https://dealsonline.ninja",
+]
+
+# Allow Vite dev server in development
+if settings.DEBUG or True:  # TODO: set to `settings.DEBUG` only once .env is configured
+    _origins += [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://localhost:8000",
-        "https://127.0.0.1:8000",
-        "https://www.dealsonline.ninja",
-        "https://dealsonline.ninja",
-        ],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,6 +160,8 @@ async def set_security_headers(request: Request, call_next):
 async def healthz():
     return {"status": "ok"}
 
+app.include_router(products_api_router)  # React SPA product API (before legacy routes to avoid path conflicts)
+app.include_router(pricerunner_api_router)  # PriceRunner category browser API
 app.include_router(mainpage.router)  # Main landing page
 app.include_router(home.router)      # Phones-specific page
 app.include_router(user.router)

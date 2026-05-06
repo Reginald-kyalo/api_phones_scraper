@@ -15,7 +15,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Cookie settings
 COOKIE_NAME = "access_token"
 REFRESH_COOKIE_NAME = "refresh_token"
-SECURE_COOKIES = True  # Set to False in development, True in production
+SECURE_COOKIES = not settings.DEBUG  # False when DEBUG=True (development), True in production
 
 def set_auth_cookies(response: Response, tokens: dict):
     """Set authentication cookies with proper security flags"""
