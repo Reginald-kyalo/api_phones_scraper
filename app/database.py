@@ -22,6 +22,7 @@ sound_systems_db: AsyncIOMotorDatabase = client["sound_systems_db"]
 getprice_db: AsyncIOMotorDatabase = client["getprice_db"]  # Categories and metadata
 pricerunner_db: AsyncIOMotorDatabase = client["pricerunner_db"]
 taxonomy_db: AsyncIOMotorDatabase = client["taxonomy_db"]
+product_matching_db: AsyncIOMotorDatabase = client["product_matching_db"]  # cross-store product clusters
 
 # Product categories mapping
 PRODUCT_CATEGORIES = {

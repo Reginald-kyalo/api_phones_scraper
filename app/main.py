@@ -14,6 +14,7 @@ from app.routes import home, user, favorites, price_alerts, mainpage
 from app.routes import payment, categories
 from app.api.routes.products import router as products_api_router
 from app.api.routes.pricerunner import router as pricerunner_api_router, ensure_indexes as pr_ensure_indexes
+from app.api.routes.clusters import router as clusters_api_router
 from app.security.key_rotation import rotate_keys
 from app.tasks.price_monitor import monitor_price_alerts
 from app.utils.cache import get_brands_models_cache
@@ -162,6 +163,7 @@ async def healthz():
 
 app.include_router(products_api_router)  # React SPA product API (before legacy routes to avoid path conflicts)
 app.include_router(pricerunner_api_router)  # PriceRunner category browser API
+app.include_router(clusters_api_router)  # Cross-store price-comparison clusters API
 app.include_router(mainpage.router)  # Main landing page
 app.include_router(home.router)      # Phones-specific page
 app.include_router(user.router)
