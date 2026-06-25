@@ -23,6 +23,14 @@ router = APIRouter(prefix="/api/clusters", tags=["clusters"])
 
 CLUSTERS = product_matching_db["product_clusters"]
 _SLUGS = {"mobile-phones", "laptops", "tablets", "headphones", "monitors"}
+# Categories where cross-store comparison actually works with the deterministic identity
+# engine. Accessories (headphones/monitors) are structurally non-comparable: only ~0.66% /
+# ~3% of their clusters are multi-store, and even branded items (JBL/Anker/Apple) fragment
+# across stores because accessory model naming is inconsistent ("JBL Tune 510BT" vs "JBL
+# T510BT"). They remain searchable, but the curated deals surface is restricted to these
+# real comparison categories. The genuine fix for accessories is a near-duplicate
+# (embedding/lexical) matcher, not a deterministic key — deferred to the learned path.
+COMPARISON_SLUGS = {"mobile-phones", "laptops", "tablets"}
 
 # Serving-layer trust guards. The engine's outlier price-band only applies to clusters
 # with >=3 prices, so 2-listing clusters can carry a mis-parsed junk price (e.g. a "354
@@ -77,6 +85,9 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "cluster_id": d.get("cluster_id"),
         "title": d.get("representative_title"),
         "category": d.get("canonical_category_slug"),
+        # accessories (headphones/monitors) are not a reliable cross-store comparison
+        # category — the frontend should not headline them as price comparisons.
+        "comparison_grade": d.get("canonical_category_slug") in COMPARISON_SLUGS,
         "brand": d.get("brand"),
         "canonical_name": d.get("canonical_name"),
         "n_listings": d.get("n_listings"),
@@ -152,8 +163,12 @@ async def best_deals(
         "like_for_like_spread_pct": {"$gt": 0, "$lte": MAX_DEAL_SPREAD_PCT},
         "best_price": {"$gte": MIN_PLAUSIBLE_PRICE},
     }
+    # Default deals to the real comparison categories; accessories are still reachable by
+    # explicit slug= but are thin/structurally non-comparable (see COMPARISON_SLUGS).
     if slug:
         query["canonical_category_slug"] = slug
+    else:
+        query["canonical_category_slug"] = {"$in": sorted(COMPARISON_SLUGS)}
     rows = await CLUSTERS.find(query).sort("like_for_like_spread_pct", -1).to_list(length=limit)
     return {"count": len(rows), "results": [_cluster_view(d) for d in rows]}
 
