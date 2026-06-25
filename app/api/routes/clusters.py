@@ -38,6 +38,11 @@ MIN_PLAUSIBLE_PRICE = 500
 
 
 def _data_warning(d: dict) -> str | None:
+    # Channel first: when the cluster has no confident new-retail member, the headline
+    # best_price is a likely-used fallback (a classifieds/refurb asking price), not a
+    # retail price — say so explicitly rather than letting it look like a normal deal.
+    if d.get("condition_basis") == "likely_used":
+        return "no confident retail price — cheapest is a classifieds/refurb asking price"
     bp = d.get("best_price")
     if isinstance(bp, (int, float)) and 0 < bp < MIN_PLAUSIBLE_PRICE:
         return "implausibly low best price — likely a mis-parsed listing"
@@ -78,9 +83,17 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "n_stores": d.get("n_stores"),
         "stores": d.get("stores"),
         "is_multi_store": d.get("is_multi_store"),
+        # two-tier price: best_price/cheapest_store is the CONFIDENT new-retail headline;
+        # likely_used_best_price is the classifieds/refurb "asking" tier, shown separately so
+        # it never headlines. condition_basis="likely_used" means even the headline is a
+        # fallback (no confident retail member) — see data_warning.
         "best_price": d.get("best_price"),
         "cheapest_store": d.get("cheapest_store"),
         "condition_basis": d.get("condition_basis", "new"),
+        "n_confident": d.get("n_confident"),
+        "n_likely_used": d.get("n_likely_used", d.get("n_used", 0)),
+        "likely_used_best_price": d.get("likely_used_best_price", d.get("used_best_price")),
+        # back-compat aliases (deprecated; equal to the *_likely_used fields above)
         "n_used": d.get("n_used", 0),
         "used_best_price": d.get("used_best_price"),
         # like-for-like (same config) is the honest spread; cross_store conflates configs
