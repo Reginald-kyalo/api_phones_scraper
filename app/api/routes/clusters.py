@@ -71,9 +71,14 @@ def _by_store(raw: dict, full: bool) -> dict:
 
 def _cluster_view(d: dict, full: bool = False) -> dict:
     """Consumer-facing projection of a cluster doc. `full` adds store URLs (detail view)."""
+    # Idealo-style feature variants: `configs` are split on the category PRIMARY facet
+    # (storage for phones/tablets, CPU for laptops). facet_label is the chip text the UI
+    # shows ("256GB", "Intel Core i5"); storage_gb is kept for back-compat.
     configs = []
     for c in d.get("configs") or []:
         configs.append({
+            "facet_label": c.get("facet_label") or (f"{c['storage_gb']}GB" if c.get("storage_gb") else None),
+            "facet_value": c.get("facet_value", c.get("storage_gb")),
             "storage_gb": c.get("storage_gb"),
             "best_price": c.get("best_price"),
             "cheapest_store": c.get("cheapest_store"),
@@ -83,8 +88,15 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         })
     return {
         "cluster_id": d.get("cluster_id"),
-        "title": d.get("representative_title"),
+        # clean brand+model title (features go in the facet chips, not the title): prefer the
+        # built display_name, then the canonical name, then the raw listing as a last resort.
+        # canonical_name stays available separately as the "verified as" reference.
+        "title": d.get("display_name") or d.get("canonical_name") or d.get("representative_title"),
+        "display_name": d.get("display_name"),
+        "representative_title": d.get("representative_title"),
         "category": d.get("canonical_category_slug"),
+        # which feature the variants/prices are split on (storage | cpu)
+        "primary_facet": d.get("primary_facet"),
         # accessories (headphones/monitors) are not a reliable cross-store comparison
         # category — the frontend should not headline them as price comparisons.
         "comparison_grade": d.get("canonical_category_slug") in COMPARISON_SLUGS,
