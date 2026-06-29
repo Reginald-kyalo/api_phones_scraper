@@ -97,6 +97,9 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "category": d.get("canonical_category_slug"),
         # which feature the variants/prices are split on (storage | cpu)
         "primary_facet": d.get("primary_facet"),
+        # secondary feature variants (display/filter chips, not price-split): the distinct
+        # RAM / storage / connectivity present — e.g. {"ram":["8GB","16GB"],"storage":[...]}.
+        "spec_facets": d.get("spec_facets") or {},
         # accessories (headphones/monitors) are not a reliable cross-store comparison
         # category — the frontend should not headline them as price comparisons.
         "comparison_grade": d.get("canonical_category_slug") in COMPARISON_SLUGS,
