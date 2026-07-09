@@ -12,12 +12,16 @@ import {
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import SearchBar from '../../features/search/components/SearchBar';
+import Logo from './Logo';
 
 export default function Header() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const onBrowse = pathname === '/browse' || pathname.startsWith('/browse/');
+  // The homepage has its own large search bar in the hero — don't duplicate it
+  // in the header (matches PriceRunner: header search only on inner pages).
+  const isHome = pathname === '/';
   const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
@@ -43,14 +47,7 @@ export default function Header() {
             {/* ── Left: Logo + Nav links ── */}
             <div className="flex items-center gap-6">
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-                <div className="w-7 h-7 bg-primary rounded flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-xs">D</span>
-                </div>
-                <span className="font-semibold text-[15px] text-foreground hidden sm:block">
-                  DealsOnline
-                </span>
-              </Link>
+              <Logo size={30} className="gap-2" />
 
               {/* Desktop nav links */}
               <nav className="hidden lg:flex items-center gap-1">
@@ -66,9 +63,9 @@ export default function Header() {
                 </button>
                 <Link
                   to="/deals"
-                  className="px-3 py-2 text-sm font-semibold text-destructive hover:text-destructive/80 rounded-md hover:bg-red-50 transition-colors"
+                  className="px-3 py-2 text-sm font-medium text-teal hover:text-teal-deep rounded-md hover:bg-teal/5 transition-colors"
                 >
-                  Sale
+                  Deals
                 </Link>
                 <Link
                   to="/contact"
@@ -81,21 +78,25 @@ export default function Header() {
 
             {/* ── Right: Search + Auth ── */}
             <div className="flex items-center gap-3">
-              {/* Desktop Search */}
-              <SearchBar
-                className="hidden md:block w-[300px] lg:w-[350px]"
-                variant="compact"
-                placeholder="Search products..."
-              />
+              {/* Desktop Search — hidden on homepage (hero owns search there) */}
+              {!isHome && (
+                <SearchBar
+                  className="hidden md:block w-[300px] lg:w-[350px]"
+                  variant="compact"
+                  placeholder="Search products..."
+                />
+              )}
 
               {/* Mobile search toggle */}
-              <button
-                className="md:hidden p-2 rounded-md hover:bg-gray-50 transition-colors"
-                onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5 text-muted-foreground" />
-              </button>
+              {!isHome && (
+                <button
+                  className="md:hidden p-2 rounded-md hover:bg-gray-50 transition-colors"
+                  onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+                  aria-label="Search"
+                >
+                  <Search className="w-5 h-5 text-muted-foreground" />
+                </button>
+              )}
 
               {/* Desktop auth area */}
               <div className="hidden md:flex items-center gap-2">
@@ -138,11 +139,9 @@ export default function Header() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Link to="/auth">
-                    <Button variant="outline" size="sm" className="gap-1.5 rounded-lg text-sm">
-                      Sign in
-                    </Button>
-                  </Link>
+                  <Button asChild variant="outline" size="sm" className="gap-1.5 rounded-lg text-sm">
+                    <Link to="/auth">Sign in</Link>
+                  </Button>
                 )}
               </div>
 
@@ -150,8 +149,8 @@ export default function Header() {
               <div className="md:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9">
-                      <Menu className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open menu">
+                      <Menu aria-hidden="true" className="w-5 h-5" />
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-72 p-0">

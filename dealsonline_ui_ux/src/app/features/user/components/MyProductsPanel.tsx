@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useLocalFavorites, useLocalPRAlerts } from '../../../hooks/useLocalStorage';
 import { useRecentlyViewed } from '../../../hooks/useRecentlyViewed';
+import { formatPrice } from '../../../lib/format';
 import { ChevronUp, ChevronDown, Heart, Bell, Clock, Package, Star, X } from 'lucide-react';
 
 type PanelTab = 'lists' | 'alerts' | 'recent';
@@ -21,7 +22,7 @@ export default function MyProductsPanel() {
       {/* Collapsed bar */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-900 text-white rounded-t-xl hover:bg-gray-800 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-canvas-ink text-white rounded-t-xl hover:bg-canvas-ink-2 transition-colors"
       >
         <span className="text-sm font-medium">My products</span>
         <div className="flex items-center gap-2">
@@ -98,8 +99,8 @@ export default function MyProductsPanel() {
                         image={alert.image}
                         subtitle={
                           alert.triggered
-                            ? `✓ Target £${alert.targetPrice.toFixed(2)} reached!`
-                            : `Target: £${alert.targetPrice.toFixed(2)}`
+                            ? `✓ Target ${formatPrice(alert.targetPrice)} reached!`
+                            : `Target: ${formatPrice(alert.targetPrice)}`
                         }
                         highlight={alert.triggered}
                       />

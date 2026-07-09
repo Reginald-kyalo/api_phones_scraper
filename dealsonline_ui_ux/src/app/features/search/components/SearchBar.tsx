@@ -107,9 +107,12 @@ export default function SearchBar({
       <div ref={containerRef} className={`relative ${className}`}>
         <form onSubmit={handleSubmit}>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
-              type="text"
+              type="search"
+              name="q"
+              autoComplete="off"
+              aria-label="Search products"
               placeholder={placeholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -119,7 +122,7 @@ export default function SearchBar({
             <button
               type="submit"
               aria-label="Search"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center gap-1.5 hover:bg-primary/90 transition-colors text-sm font-medium"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 rounded-full bg-teal text-white flex items-center justify-center gap-1.5 hover:bg-teal-deep transition-colors text-sm font-medium"
             >
               <Search className="w-4 h-4" />
               <span className="hidden sm:inline">Search</span>
@@ -135,9 +138,12 @@ export default function SearchBar({
     <div ref={containerRef} className={`relative ${className}`}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            type="text"
+            type="search"
+            name="q"
+            autoComplete="off"
+            aria-label="Search products"
             placeholder={placeholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}

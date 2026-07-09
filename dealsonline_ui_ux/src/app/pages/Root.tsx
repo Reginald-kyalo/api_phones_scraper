@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from 'react-router';
 import { useEffect, Suspense } from 'react';
+import { LazyMotion, domAnimation } from 'motion/react';
 import Header from '../components/layout/Header';
-import CategoryStrip from '../components/layout/CategoryStrip';
 import Footer from '../components/layout/Footer';
 import { Toaster } from '../components/ui/sonner';
 import { AuthProvider } from '../context/AuthContext';
@@ -36,26 +36,26 @@ function PageFallback() {
 }
 
 export default function Root() {
-  const { pathname } = useLocation();
-  const isHome = pathname === '/';
-
   return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col bg-white">
-        <ScrollToTop />
-        <Header />
-        {isHome && <CategoryStrip />}
-        <main className="flex-1">
-          <ErrorBoundary>
-            <Suspense fallback={<PageFallback />}>
-              <Outlet />
-            </Suspense>
-          </ErrorBoundary>
-        </main>
-        <Footer />
-        <MyProductsPanel />
-        <Toaster position="top-right" />
-      </div>
+      {/* LazyMotion + `m` components keep only the dom-animation feature set in
+          the bundle (vs the full `motion` import). All app motion uses `m`. */}
+      <LazyMotion features={domAnimation}>
+        <div className="min-h-screen flex flex-col bg-white">
+          <ScrollToTop />
+          <Header />
+          <main className="flex-1">
+            <ErrorBoundary>
+              <Suspense fallback={<PageFallback />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
+          </main>
+          <Footer />
+          <MyProductsPanel />
+          <Toaster position="top-right" />
+        </div>
+      </LazyMotion>
     </AuthProvider>
   );
 }

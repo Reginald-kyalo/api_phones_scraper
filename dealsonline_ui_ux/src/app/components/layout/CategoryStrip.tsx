@@ -44,7 +44,7 @@ const SHORT_LABELS: Record<string, string> = {
   kids_family: 'Kids',
   toys_hobbies: 'Toys',
   gaming_entertainment: 'Gaming',
-  computing: 'Electronics',
+  computing: 'Computing',
   phones_wearables: 'Phones',
   sound_vision: 'Sound & TV',
   photography: 'Photography',
@@ -71,19 +71,19 @@ export default function CategoryStrip() {
   return (
     <nav className="bg-white border-b border-border">
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6">
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-3 scrollbar-hide scroll-hint-x">
+        <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide scroll-hint-x lg:justify-between lg:gap-0 lg:overflow-visible lg:[mask-image:none] lg:[-webkit-mask-image:none]">
           {prTypes.map((pt) => {
             const Icon = prIconMap[pt.id] || Package;
             return (
               <Link
                 key={pt.id}
                 to={`/browse/${pt.id}`}
-                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap group min-w-[56px]"
+                className="group flex flex-col items-center gap-2 px-3 py-1.5 text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap min-w-[76px]"
               >
-                <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                  <Icon className="w-4 h-4 flex-shrink-0 group-hover:text-primary transition-colors" />
+                <div className="w-12 h-12 rounded-xl ultra-border flex items-center justify-center group-hover:border-teal group-hover:bg-teal/5 transition-colors">
+                  <Icon className="w-5 h-5 flex-shrink-0 group-hover:text-teal transition-colors" strokeWidth={1.75} />
                 </div>
-                <span className="text-[11px] font-medium">{SHORT_LABELS[pt.id] || pt.label}</span>
+                <span className="text-xs font-medium">{SHORT_LABELS[pt.id] || pt.label}</span>
               </Link>
             );
           })}
