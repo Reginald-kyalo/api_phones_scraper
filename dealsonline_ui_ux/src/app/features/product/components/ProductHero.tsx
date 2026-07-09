@@ -78,7 +78,7 @@ export function ProductHero({ product, ratingData, onScrollToSection, onSetAlert
             reviews: [],
           } as any)}
           className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all ultra-border ${
-            isFav ? 'bg-red-50 text-red-500 border-red-200' : 'bg-white text-gray-400 hover:text-red-500'
+            isFav ? 'bg-teal/10 text-teal-deep border-primary/30' : 'bg-white text-gray-400 hover:text-teal-deep'
           }`}
         >
           <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />

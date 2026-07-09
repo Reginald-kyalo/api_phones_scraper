@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { LoginForm } from '../features/auth/components/LoginForm';
 import { RegisterForm } from '../features/auth/components/RegisterForm';
+import Logo from '../components/layout/Logo';
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();
@@ -12,9 +13,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-semibold text-xl">D</span>
-          </div>
+          <Logo showWordmark={false} size={56} className="mb-4" />
           <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to DealsOnline</h1>
           <p className="text-sm text-muted-foreground">Sign in to sync your data across devices</p>
         </div>

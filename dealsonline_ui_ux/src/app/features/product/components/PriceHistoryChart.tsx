@@ -14,7 +14,7 @@ interface PRPriceHistoryChartProps {
 const chartConfig: ChartConfig = {
   price: {
     label: 'Price',
-    color: 'hsl(221, 83%, 53%)',
+    color: 'var(--primary)',
   },
 };
 

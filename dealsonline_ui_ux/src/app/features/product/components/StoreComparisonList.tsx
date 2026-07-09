@@ -33,7 +33,7 @@ export function StoreComparisonList({ product, stores }: StoreComparisonListProp
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm text-foreground">{store.name}</span>
               {idx === 0 && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-teal/10 text-teal-deep border-primary/20">
                   Best price
                 </Badge>
               )}
