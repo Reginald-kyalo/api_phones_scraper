@@ -26,7 +26,7 @@ export function ClusterDealCard({ cluster }: { cluster: ClusterSummary }) {
           </span>
         )}
       </div>
-      <h3 className="font-semibold text-sm text-foreground mt-1 line-clamp-2">{name}</h3>
+      <p className="font-semibold text-sm text-foreground mt-1 line-clamp-2">{name}</p>
       <div className="mt-3 flex items-baseline gap-2">
         <span className="price-num text-lg font-bold text-foreground">{formatPrice(cluster.best_price)}</span>
         <span className="text-xs text-muted-foreground">
