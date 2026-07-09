@@ -3,6 +3,7 @@ import { type GeneratedStore } from '../../../data/mockServices';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Truck, ShieldCheck, ExternalLink } from 'lucide-react';
+import { formatPrice } from '../../../lib/format';
 
 interface StoreComparisonListProps {
   product: PRProductDetail;
@@ -52,8 +53,8 @@ export function StoreComparisonList({ product, stores }: StoreComparisonListProp
 
           {/* Price + CTA */}
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <span className="text-lg font-bold text-foreground">
-              £{store.price.toFixed(2)}
+            <span className="text-lg font-bold text-foreground price-num">
+              {formatPrice(store.price)}
             </span>
             <a
               href={product.productUrl || '#'}

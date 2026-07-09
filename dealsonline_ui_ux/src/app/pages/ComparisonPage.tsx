@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useLocalComparison } from '../hooks/useLocalStorage';
+import { formatPrice } from '../lib/format';
 import { type PRProduct } from '../lib/api';
 import { Button } from '../components/ui/button';
 import {
@@ -189,7 +190,7 @@ export default function ComparisonPage() {
 
                   {/* Price */}
                   <p className="text-base font-bold text-primary">
-                    {item.price > 0 ? `£${item.price.toFixed(2)}` : 'N/A'}
+                    {item.price > 0 ? formatPrice(item.price) : 'N/A'}
                   </p>
                 </div>
               </div>

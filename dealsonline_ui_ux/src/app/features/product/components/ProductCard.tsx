@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router';
 import { type PRProduct } from '../../../lib/api';
+import { formatPrice } from '../../../lib/format';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Package, Store, GitCompareArrows, Heart } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
@@ -73,10 +74,8 @@ export function PRProductCard({ product }: { product: PRProduct }) {
               </div>
               <div className="flex items-end justify-between mt-3">
                 <div>
-                  <span className="text-lg font-bold text-foreground">
-                    {product.price > 0
-                      ? `£${product.price.toFixed(2)}`
-                      : 'Price N/A'}
+                  <span className="text-lg font-bold text-foreground price-num">
+                    {formatPrice(product.price)}
                   </span>
                 </div>
                 {product.numStores > 0 && (
@@ -173,10 +172,8 @@ export function PRProductCardGrid({ product }: { product: PRProduct }) {
                 {product.name}
               </h4>
               <div className="flex items-center justify-between pt-1">
-                <span className="font-bold text-base text-foreground">
-                  {product.price > 0
-                    ? `£${product.price.toFixed(2)}`
-                    : 'Price N/A'}
+                <span className="font-bold text-base text-foreground price-num">
+                  {formatPrice(product.price)}
                 </span>
                 {product.numStores > 0 && (
                   <Badge variant="secondary" className="text-xs gap-1 ultra-border">

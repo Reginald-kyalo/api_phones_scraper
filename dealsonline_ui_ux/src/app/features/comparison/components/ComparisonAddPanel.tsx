@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { pricerunnerApi, type PRProduct } from '../../../lib/api';
+import { formatPrice } from '../../../lib/format';
 import { type LocalComparisonItem } from '../../../hooks/useLocalStorage';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -160,7 +161,7 @@ export function ComparisonAddPanel({
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <p className="text-sm font-bold">
-                    {p.price > 0 ? `£${p.price.toFixed(2)}` : 'N/A'}
+                    {p.price > 0 ? formatPrice(p.price) : 'N/A'}
                   </p>
                   {alreadyAdded && (
                     <span className="text-xs text-muted-foreground">Added</span>

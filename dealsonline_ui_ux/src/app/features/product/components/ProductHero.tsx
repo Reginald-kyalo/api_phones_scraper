@@ -3,6 +3,7 @@ import { type PRProductDetail } from '../../../lib/api';
 import { Package, Store, Bell, GitCompareArrows, ChevronRight, Heart } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { useLocalComparison, useLocalFavorites } from '../../../hooks/useLocalStorage';
+import { formatPrice } from '../../../lib/format';
 
 export function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
   const full = Math.floor(rating);
@@ -114,8 +115,8 @@ export function ProductHero({ product, ratingData, onScrollToSection, onSetAlert
         <div className="bg-gray-50 rounded-xl p-4 mb-4 inline-flex flex-col ultra-border">
           <p className="microcopy-label mb-0.5">Best price</p>
           <div className="flex items-end gap-3">
-            <span className="text-3xl font-bold text-foreground">
-              {product.price > 0 ? `£${product.price.toFixed(2)}` : 'Price N/A'}
+            <span className="text-3xl font-bold text-foreground price-num">
+              {formatPrice(product.price)}
             </span>
             {product.numStores > 0 && (
               <span className="text-sm text-muted-foreground mb-1">

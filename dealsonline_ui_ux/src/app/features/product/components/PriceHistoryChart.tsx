@@ -4,6 +4,7 @@ import { type PricePoint } from '../../../data/mockServices';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../../../components/ui/chart';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import { formatPrice } from '../../../lib/format';
 
 interface PRPriceHistoryChartProps {
   product: PRProductDetail;
@@ -82,12 +83,12 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
             axisLine={false}
             tickMargin={8}
             fontSize={12}
-            tickFormatter={(v: number) => `£${v}`}
+            tickFormatter={(v: number) => formatPrice(v)}
             domain={['dataMin - 10', 'dataMax + 10']}
           />
           <ChartTooltip
             content={<ChartTooltipContent indicator="line" />}
-            formatter={(value: number) => [`£${value.toFixed(2)}`, 'Price']}
+            formatter={(value: number) => [formatPrice(value), 'Price']}
           />
           <Area
             type="monotone"
@@ -108,7 +109,7 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
               <span className="microcopy-label">Lowest price</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-foreground">£{historyStats.min.toFixed(2)}</span>
+              <span className="text-xl font-bold text-foreground price-num">{formatPrice(historyStats.min)}</span>
               <span className="text-sm text-muted-foreground">in {historyStats.minMonth}</span>
             </div>
           </div>
@@ -118,7 +119,7 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
               <span className="microcopy-label">Highest price</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-foreground">£{historyStats.max.toFixed(2)}</span>
+              <span className="text-xl font-bold text-foreground price-num">{formatPrice(historyStats.max)}</span>
               <span className="text-sm text-muted-foreground">in {historyStats.maxMonth}</span>
             </div>
           </div>
@@ -128,7 +129,7 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
               <span className="microcopy-label">Average price</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-foreground">£{historyStats.avg.toFixed(2)}</span>
+              <span className="text-xl font-bold text-foreground price-num">{formatPrice(historyStats.avg)}</span>
             </div>
           </div>
         </div>

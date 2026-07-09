@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Edit2, Trash2 } from 'lucide-react';
 import { type LocalPriceAlert } from '../../../hooks/useLocalStorage';
+import { formatPrice } from '../../../lib/format';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import {
@@ -68,11 +69,11 @@ export function PriceAlertRow({
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <p className="text-sm text-muted-foreground">Target Price</p>
-          <p className="text-xl font-semibold text-foreground">£{alert.targetPrice.toLocaleString()}</p>
+          <p className="text-xl font-semibold text-foreground price-num">{formatPrice(alert.targetPrice)}</p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Current Price</p>
-          <p className="text-xl font-semibold text-foreground">£{alert.currentPrice.toLocaleString()}</p>
+          <p className="text-xl font-semibold text-foreground price-num">{formatPrice(alert.currentPrice)}</p>
         </div>
       </div>
 
@@ -80,7 +81,7 @@ export function PriceAlertRow({
         <div className="bg-muted/50 rounded-lg p-3 mb-4">
           <p className="text-sm text-muted-foreground">
             {alert.currentPrice > alert.targetPrice
-              ? `£${(alert.currentPrice - alert.targetPrice).toLocaleString()} away from target`
+              ? `${formatPrice(alert.currentPrice - alert.targetPrice)} away from target`
               : 'Target price reached!'}
           </p>
         </div>
@@ -89,7 +90,7 @@ export function PriceAlertRow({
       {alert.triggered && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
           <p className="text-green-800 text-sm font-medium">
-            Price dropped to £{alert.currentPrice.toLocaleString()}!
+            Price dropped to {formatPrice(alert.currentPrice)}!
           </p>
         </div>
       )}
@@ -110,7 +111,7 @@ export function PriceAlertRow({
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="editPrice">Target Price (£)</Label>
+                  <Label htmlFor="editPrice">Target price (KES)</Label>
                   <Input
                     id="editPrice"
                     type="number"
@@ -119,7 +120,7 @@ export function PriceAlertRow({
                     className="mt-2"
                   />
                   <p className="text-sm text-gray-500 mt-2">
-                    Current price: £{alert.currentPrice.toLocaleString()}
+                    Current price: {formatPrice(alert.currentPrice)}
                   </p>
                 </div>
                 <Button onClick={onSaveEdit} className="w-full">

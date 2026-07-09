@@ -12,6 +12,7 @@ import { Slider } from '../../../components/ui/slider';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Package } from 'lucide-react';
 import { useLocalPRAlerts } from '../../../hooks/useLocalStorage';
+import { formatPrice } from '../../../lib/format';
 import { toast } from 'sonner';
 
 interface PriceAlertDialogProps {
@@ -40,7 +41,7 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
     const price = mode === 'drop' ? product.price - 1 : targetPrice;
     addPRAlert(product, Math.max(minPrice, price));
     toast.success('Price alert created', {
-      description: `We'll notify you when ${product.name} drops to £${Math.max(minPrice, price).toFixed(2)}`,
+      description: `We'll notify you when ${product.name} drops to ${formatPrice(Math.max(minPrice, price))}`,
     });
     onOpenChange(false);
   };
@@ -64,7 +65,7 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground line-clamp-1">{product.name}</p>
-            <p className="text-sm text-muted-foreground">£{product.price.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground price-num">{formatPrice(product.price)}</p>
           </div>
         </div>
 
@@ -115,9 +116,9 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
                       max={maxPrice}
                       value={targetPrice}
                       onChange={(e) => setTargetPrice(Math.max(minPrice, Math.min(maxPrice, Number(e.target.value) || 0)))}
-                      className="pr-8 pt-4 h-12"
+                      className="pr-12 pt-4 h-12"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">£</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">KES</span>
                   </div>
                 </div>
 
@@ -159,9 +160,9 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
                 min={1}
                 value={reduceBy}
                 onChange={(e) => setReduceBy(Math.max(1, Number(e.target.value) || 1))}
-                className="pr-8"
+                className="pr-12"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">£</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">KES</span>
             </div>
           )}
         </div>
