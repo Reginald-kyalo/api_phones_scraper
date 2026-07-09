@@ -361,4 +361,107 @@ export const pricerunnerApi = {
     ),
 };
 
+// ---------------------------------------------------------------------------
+// Cross-store price-comparison clusters  (GET /api/clusters/*)
+//
+// This is the matching engine's own output: one cluster = one product family
+// grouped across marketplaces by the deterministic model_identity_key. Prefer
+// these endpoints over the generator mocks (mockServices.ts) for the store list
+// and price comparison — they carry the HONEST-price contract the mocks cannot:
+//   • best_price / cheapest_store  — the confident NEW-retail headline
+//   • condition_basis              — "new" | "likely_used"; if "likely_used" even
+//                                    the headline is a classifieds/refurb fallback
+//   • likely_used_best_price       — the used/refurb "asking" tier, shown separately
+//   • data_warning                 — non-null ⇒ render a caveat, never a clean headline
+//   • comparison_grade             — false for accessories (headphones/monitors):
+//                                    searchable but NOT a reliable cross-store deal
+//   • like_for_like_spread_pct     — same-config saving (the honest one); prefer over
+//                                    cross_store_spread_pct which conflates configs
+//   • configs[]                    — per-facet (storage/CPU) like-for-like price splits
+// Summary views (search/deals) map by_store → price; the detail view adds url+title.
+// ---------------------------------------------------------------------------
+
+export interface ClusterStore {
+  price: number | null;
+  url: string;
+  title: string;
+}
+
+export interface ClusterConfig<Store = number> {
+  facet_label: string | null;
+  facet_value: string | number | null;
+  storage_gb: number | null;
+  best_price: number | null;
+  cheapest_store: string | null;
+  n_stores: number | null;
+  spread_pct: number | null;
+  by_store: Record<string, Store>;
+}
+
+export interface ClusterView<Store = number> {
+  cluster_id: string;
+  title: string;
+  display_name: string | null;
+  representative_title: string | null;
+  category: string | null;
+  primary_facet: string | null;
+  spec_facets: Record<string, string[]>;
+  /** false for accessories — searchable but not a reliable cross-store comparison. */
+  comparison_grade: boolean;
+  brand: string | null;
+  canonical_name: string | null;
+  n_listings: number | null;
+  n_stores: number | null;
+  stores: string[] | null;
+  is_multi_store: boolean;
+  best_price: number | null;
+  cheapest_store: string | null;
+  /** "new" | "likely_used" — "likely_used" ⇒ headline is a classifieds/refurb fallback. */
+  condition_basis: string;
+  n_confident: number | null;
+  n_likely_used: number | null;
+  likely_used_best_price: number | null;
+  /** @deprecated back-compat aliases equal to the *_likely_used fields */
+  n_used: number;
+  used_best_price: number | null;
+  like_for_like_spread_pct: number | null;
+  cross_store_spread_pct: number | null;
+  configs: ClusterConfig<Store>[];
+  best_by_store: Record<string, Store>;
+  /** non-null ⇒ show a caveat; do NOT headline the price as a clean deal. */
+  data_warning: string | null;
+}
+
+/** Summary rows (search/deals) carry price-only store maps. */
+export type ClusterSummary = ClusterView<number>;
+/** Detail view (single cluster) carries {price,url,title} per store for click-through. */
+export type ClusterDetail = ClusterView<ClusterStore>;
+
+export const clustersApi = {
+  /** Best REAL like-for-like cross-store deals (NEW-priced, multi-store, honest spread). */
+  getDeals: (options?: { slug?: string; limit?: number; minStores?: number }) => {
+    const params = new URLSearchParams();
+    if (options?.slug) params.set('slug', options.slug);
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.minStores) params.set('min_stores', String(options.minStores));
+    return request<{ count: number; results: ClusterSummary[] }>(
+      `/clusters/deals?${params}`,
+    );
+  },
+
+  search: (q: string, options?: { slug?: string; multiStoreOnly?: boolean; limit?: number }) => {
+    const params = new URLSearchParams({ q });
+    if (options?.slug) params.set('slug', options.slug);
+    if (options?.multiStoreOnly) params.set('multi_store_only', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    return request<{ query: string; count: number; results: ClusterSummary[] }>(
+      `/clusters/search?${params}`,
+    );
+  },
+
+  /** Full comparison for one product, including per-store click-through URLs. */
+  getDetail: (clusterId: string) =>
+    request<ClusterDetail>(`/clusters/${encodeURIComponent(clusterId)}`),
+};
+
 export { ApiError };
