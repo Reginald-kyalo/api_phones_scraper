@@ -13,6 +13,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const DealsPage = lazy(() => import("./pages/DealsPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const ComparisonPage = lazy(() => import("./pages/ComparisonPage"));
+const ClusterPricesPage = lazy(() => import("./pages/ClusterPricesPage"));
 const StyleGuidePage = lazy(() => import("./pages/StyleGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: "product/pr/:productId", Component: ProductDetailsPage },
       
       { path: "deals", Component: DealsPage },
+      { path: "prices/:clusterId", Component: ClusterPricesPage },
       { path: "favorites", Component: FavoritesPage },
       { path: "alerts", Component: PriceAlertsPage },
       { path: "account", Component: AccountPage },
