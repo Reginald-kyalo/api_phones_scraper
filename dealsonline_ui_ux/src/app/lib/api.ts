@@ -301,7 +301,10 @@ export interface PRProductDetail extends PRProduct {
 
 export const pricerunnerApi = {
   getProductTypes: () =>
-    request<{ productTypes: PRProductType[] }>('/pr/product-types'),
+    request<{ productTypes: PRProductType[] }>('/pr/product-types').then((res) => ({
+      // The backend feed contains a junk row with empty id/label — never render it.
+      productTypes: res.productTypes.filter((t) => t.id?.trim() && t.label?.trim()),
+    })),
 
   getCategoryTree: (productType: string) =>
     request<{ productType: string; label: string; tree: PRTreeNode[] }>(
