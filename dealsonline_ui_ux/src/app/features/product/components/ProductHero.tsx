@@ -63,6 +63,8 @@ export function ProductHero({ product, ratingData, onScrollToSection, onSetAlert
           <Package className="h-20 w-20 text-gray-300" />
         )}
         <button
+          aria-label={isFav ? 'Remove from favorites' : 'Save to favorites'}
+          aria-pressed={isFav}
           onClick={() => toggleFavorite({
             id: product.id,
             name: product.name,
@@ -169,14 +171,12 @@ export function ProductHero({ product, ratingData, onScrollToSection, onSetAlert
             <GitCompareArrows className="h-4 w-4" />
             Compare
           </Button>
-          <Link
-            to={`/browse/${product.productType}?cat=${encodeURIComponent(product.categoryUrl)}`}
-          >
-            <Button variant="outline" size="lg" className="gap-1 ultra-border">
+          <Button asChild variant="outline" size="lg" className="gap-1 ultra-border">
+            <Link to={`/browse/${product.productType}?cat=${encodeURIComponent(product.categoryUrl)}`}>
               More in {product.categoryName}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </Link>
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

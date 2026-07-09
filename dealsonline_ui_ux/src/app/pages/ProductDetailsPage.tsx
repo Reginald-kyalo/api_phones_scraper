@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react';
 import { useParams, Link } from 'react-router';
 import { useProductDetail } from '../features/product/hooks/useProductData';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
@@ -159,7 +159,7 @@ export default function ProductDetailsPage() {
               <BreadcrumbLink asChild><Link to="/">Home</Link></BreadcrumbLink>
             </BreadcrumbItem>
             {product.categoryPath.map((segment: string, i: number) => (
-              <span key={i} className="contents">
+              <Fragment key={i}>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   {i === 0 && product.productType ? (
@@ -172,7 +172,7 @@ export default function ProductDetailsPage() {
                     <BreadcrumbPage>{segment}</BreadcrumbPage>
                   )}
                 </BreadcrumbItem>
-              </span>
+              </Fragment>
             ))}
           </BreadcrumbList>
         </Breadcrumb>

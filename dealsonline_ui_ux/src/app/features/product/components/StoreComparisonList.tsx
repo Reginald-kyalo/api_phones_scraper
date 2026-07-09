@@ -21,10 +21,7 @@ export function StoreComparisonList({ product, stores }: StoreComparisonListProp
           }`}
         >
           {/* Store logo */}
-          <div
-            className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-            style={{ backgroundColor: store.color }}
-          >
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-foreground text-background font-bold text-sm">
             {store.logo}
           </div>
 
@@ -56,16 +53,12 @@ export function StoreComparisonList({ product, stores }: StoreComparisonListProp
             <span className="text-lg font-bold text-foreground price-num">
               {formatPrice(store.price)}
             </span>
-            <a
-              href={product.productUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="sm" className="text-xs h-8 px-4">
+            <Button asChild size="sm" className="text-xs h-8 px-4">
+              <a href={product.productUrl || '#'} target="_blank" rel="noopener noreferrer">
                 Go to shop
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </Button>
-            </a>
+                <ExternalLink className="h-3 w-3 ml-1" aria-hidden="true" />
+              </a>
+            </Button>
           </div>
         </div>
       ))}
