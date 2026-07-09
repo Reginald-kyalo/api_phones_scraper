@@ -58,7 +58,7 @@ export function generateStores(product: PRProductDetail): GeneratedStore[] {
 
   for (let i = 0; i < Math.min(count, STORE_POOL.length); i++) {
     const pool = STORE_POOL[i];
-    const variance = 0.85 + rand() * 0.3; // 0.85 – 1.15x
+    const variance = 1 + rand() * 0.3; // 1.00 – 1.30x — never undercut the real best price
     const price = Math.round(product.price * variance * 100) / 100;
     const shipIdx = Math.floor(rand() * SHIPPING_OPTIONS.length);
     const ship = SHIPPING_OPTIONS[shipIdx];
