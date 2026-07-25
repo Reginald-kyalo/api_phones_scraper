@@ -1,0 +1,1080 @@
+================================================================================
+FIGMA AI PROMPT (READY-TO-PASTE)
+Product Deal Scraper & Price Comparison Platform
+Design Sentiment: Understated Confidence, Utility-First Elegance, Quiet Professionalism
+================================================================================
+
+DESIGN PRINCIPLES & SENTIMENT FRAMEWORK
+================================================================================
+
+Before building the interface, adopt these design sentiments to guide all visual 
+and interaction decisions:
+
+PRIMARY DESIGN SENTIMENTS (Apply consistently):
+1. UNDERSTATED CONFIDENCE
+   - What it means: Calm, minimal, trustful; whitespace-forward; muted accents
+   - How to apply: Remove loud color usage; prioritize breathing room; reduce 
+     oversized elements; use accent color sparingly (only primary CTAs)
+   - Visual traits: 1px borders, 6–8px radius, subtle shadows, restrained type scale
+
+2. UTILITY-FIRST ELEGANCE
+   - What it means: Functional and efficient UI with subtle polish; prioritize 
+     clarity over ornamentation
+   - How to apply: Remove duplicated controls; make CTAs clear and consistent; 
+     eliminate visual noise; organize content with clear hierarchy
+   - Visual traits: Consistent button scale (40–44px), uniform spacing rhythm, 
+     clean card layouts, single-purpose icons
+
+3. QUIET PROFESSIONALISM
+   - What it means: Mature and reliable; reduce visual saturation; design for 
+     trust and confidence
+   - How to apply: Swap full-saturation colors for 60–80% opacity; avoid heavy 
+     or oversized elements; use consistent type weights; favor grayscale with 
+     accent only on primary actions
+   - Visual traits: Dark gray text (#1a1a1a), light gray borders (#d8d8d8), 
+     accent (#ff6b00) reserved for visit/purchase CTAs only
+
+4. SOFT PRECISION
+   - What it means: Refined, intentional; small micro-interactions signal care
+   - How to apply: Unify spacing, borders, and radii; use consistent 80–120ms 
+     transitions; add subtle hover lifts; improve accessibility with focus states
+   - Visual traits: 2px focus outline, -2px translateY on hover, fade-in modals, 
+     consistent component heights
+
+DESIGN PRINCIPLES:
+- "Respect whitespace" — use it to separate sections, reduce cognitive load, 
+  and create visual rhythm.
+- "One color accent" — orange (#ff6b00) used only for primary CTAs, active 
+  states, or small badges; never saturate full backgrounds.
+- "Unify scale" — buttons 40–44px, body text 14–16px, headings 18–24px, 
+  consistent padding/margin via spacing tokens (4, 8, 16, 24, 32px).
+- "Subtle elevation" — shadows only when necessary; prefer thin 1px borders 
+  and light backgrounds for separation.
+- "Micro-interactions as polish" — 60–120ms easing, small transforms (-2px lift), 
+  refined focus states; no jarring or oversized animations.
+
+================================================================================
+
+DESIGN SYSTEM TOKENS
+
+================================================================================
+
+COLOR PALETTE:
+- Primary Background: #ffffff (white)
+- Text Primary: #1a1a1a (dark gray)
+- Text Secondary: #6b6b6b (muted gray)
+- Border: #d8d8d8 (light gray, 1px always)
+- Accent: #ff6b00 (orange — primary CTA only)
+- Accent Muted: rgba(255, 107, 0, 0.08) (very subtle background)
+- Hover Overlay: rgba(0, 0, 0, 0.02) (almost transparent)
+- Header Border: #f0f0f0 (barely visible separator)
+
+TYPOGRAPHY:
+- Font Family: Inter (system fallback: -apple-system, BlinkMacSystemFont, 
+  "Segoe UI", Roboto, sans-serif)
+- Body: 16px, weight 400, line-height 1.5
+- Small: 14px, weight 400, line-height 1.4
+- Subheading: 18–20px, weight 500–600, line-height 1.4
+- Heading (H2): 20–24px, weight 600, line-height 1.3
+- Label: 14px, weight 500, text-transform uppercase (optional), letter-spacing 0.3px
+- Avoid: Heavy weights (700+) on body text; scale should feel natural, not imposing
+
+SPACING RHYTHM (use consistently):
+- xs: 4px
+- sm: 8px
+- md: 16px
+- lg: 24px
+- xl: 32px
+Grid gaps: 16px
+Section margins: 32px vertical, 0 horizontal (on large screens)
+
+BORDER & RADIUS:
+- Border: Always 1px solid, color #d8d8d8
+- Radius: 6–8px (small), 8px (medium), 4px (tight, e.g., input)
+- Avoid: 2px borders except for focus outlines
+
+COMPONENT HEIGHTS (touch-friendly):
+- Header: 80px
+- Buttons: 40–44px (never smaller)
+- Input fields: 40px
+- Navigation items: 44px minimum tap target
+
+SHADOWS (minimal and subtle):
+- Flat (no shadow): border 1px #d8d8d8
+- Hover: 0 6px 14px rgba(0, 0, 0, 0.06)
+- Elevated CTA: 0 6px 18px rgba(255, 107, 0, 0.06) (accent only)
+- Modal overlay: 0 20px 60px rgba(0, 0, 0, 0.1)
+
+RESPONSIVE BREAKPOINTS:
+- Mobile: < 480px
+- Tablet: 480–768px
+- Desktop: 768–1200px
+- Large Desktop: > 1200px
+Container max-width: 1200px (1400px for ultra-wide)
+
+MICRO-INTERACTIONS:
+- Hover: transform translateY(-2px), box-shadow subtle, duration 80–120ms, easing ease-out
+- Focus (keyboard): 2px solid rgba(255, 107, 0, 0.14) outline or equivalent
+- Modal In: opacity 0 → 1, duration 160ms, easing ease-in-out
+- Button Press: subtle scale down (0.96–0.98), duration 60ms
+- Transition default: all 0.12s ease
+
+ACCESSIBILITY:
+- Color contrast: 4.5:1 minimum (WCAG AA)
+- Focus states: Always visible 2px outline or border change
+- Touch targets: Minimum 44×44px for buttons
+- Semantic HTML: Use proper heading hierarchy, aria-labels, role attributes
+
+================================================================================
+
+FULL APP ARCHITECTURE & PAGES
+
+================================================================================
+
+Based on our complete app brief, design the following pages with the above 
+sentiment framework:
+
+PAGE 1: HOME/MAIN PAGE
+─────────────────────────────────────────────────────────────────
+
+Purpose: Showcase top deals and enable category discovery without navigation 
+confusion.
+
+Key Sentiment Adjustments for THIS page:
+- Remove oversized category navigation buttons from header; move category 
+  discovery into page content as featured cards.
+- Use white background with subtle top border (1px #f0f0f0) on header.
+- Search bar: 44px height, 1px border #e6e6e6, very subtle focus shadow only.
+- Account dropdown: Compact icon-only (24px circle icon), menu opens on click 
+  with smooth fade-in (160ms), items have 1px bottom dividers.
+
+Layout:
+┌─────────────────────────────────────────────────────────────────┐
+│   HEADER (white, 80px, border-bottom 1px #f0f0f0)               │
+│  [Logo 24px] [Search 44px max-w 640px] [Account Dropdown 40px]  │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ FEATURED CATEGORIES SECTION (2×3 grid on desktop, 1 col mobile) │
+│  Padding: 32px horizontal, 32px vertical                        │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │
+│  │ 📱 PHONES   │ │ 💻 LAPTOPS  │ │ 👗 COSMETIC │              │
+│  │             │ │             │ │             │              │
+│  │ [20px icon] │ │ [20px icon] │ │ [20px icon] │              │
+│  │ Featured... │ │ Fresh...    │ │ Beauty...   │              │
+│  │ Cards       │ │ Deals       │ │ Trending    │              │
+│  │ Border: 1px │ │ Border: 1px │ │ Border: 1px │              │
+│  │ Radius: 8px │ │ Radius: 8px │ │ Radius: 8px │              │
+│  │ Padding:12px│ │ Padding:12px│ │ Padding:12px│              │
+│  └─────────────┘ └─────────────┘ └─────────────┘              │
+│  INTERACTION: Hover → subtle border color to #1a1a1a (not orange),  │
+│  translateY(-2px), shadow 0 6px 14px rgba(0,0,0,0.06), 100ms   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ DAILY DEALS SECTION (Carousel)                                  │
+│  Title: "Daily Deals — View all deals in NZ" (20px, weight 600) │
+│  Padding: 32px horizontal, 24px vertical                        │
+│  ← [Product Card] [Product Card] [Product Card] →              │
+│  Product cards: 180px wide, 1px border, 8px radius             │
+│  Discount badge: small, 14px, use accent only                  │
+│  INTERACTION: Carousel scroll smooth, arrow buttons fade in     │
+│  on hover (opacity 0.4 → 1, 100ms), clickable areas 44px min    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ POPULAR PRODUCTS SECTION (4-column grid on desktop)             │
+│  Title: "Trending Now in Your Region"                           │
+│  Padding: 32px horizontal, 24px vertical                        │
+│  [Product Grid] - same card style as category cards             │
+│  Cards: responsive width, 1px border, 8px radius, no shadow     │
+│  INTERACTION: Hover → lift -2px, subtle shadow, border no change│
+└─────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS (Home Page):
+- Category cards: 12px padding (not 24px); icon size 20px (not 32px); 
+  text 16px body, not bold
+- Deal carousel: Product image 180×180px, title 14px, price 18px bold, 
+  retailer count 12px muted, discount badge 12px small orange
+- Heading "Daily Deals": 20px, weight 600, margin-bottom 16px
+- Subheading "Trending Now": 18px, weight 500, margin-bottom 16px
+- CTA "View all deals": inline link, color #ff6b00, underline on hover (not bold)
+
+KEY UX FIX FOR HOME PAGE:
+Remove the category selection buttons/tabs from the header entirely. Do not 
+duplicate categories. Instead, make featured category cards the primary 
+discovery mechanism. If users want to browse a specific category, they click 
+a category card → navigates to Category Page.
+
+================================================================================
+
+PAGE 2: CATEGORY PAGE
+─────────────────────────────────────────────────────────────────
+
+Purpose: Browse all products in a category with advanced filtering and sorting.
+
+Key Sentiment Adjustments for THIS page:
+- Sidebar filters: Keep labels 14px weight 500; checkboxes small (16×16px); 
+  reduce filter card padding to 16px.
+- Product grid: 4 columns on desktop, consistent 16px gap, cards 1px border 
+  8px radius, no shadow.
+- Sort controls: 14px labels, dropdown 40px height, minimal styling.
+- Results count: 14px muted gray.
+
+Layout:
+┌─────────────────────────────────────────────────────────────────┐
+│   HEADER + CATEGORY BREADCRUMB                                  │
+│  Home > Category > Search or filter feedback                    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ SIDEBAR (25% width on desktop, 100% on mobile as collapsible)    │
+│  Padding: 16px (reduced from 24px)                              │
+│  Title "Filters": 16px, weight 600                              │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ Filter Group (margin-bottom 16px):                         │  │
+│  │ Label: 14px, weight 500                                   │  │
+│  │ Input: 40px height, 1px border, 4px radius                │  │
+│  │ • Price Range [Slider visual, not input]                  │  │
+│  │ • Brand [Checkboxes, 16×16px, left-aligned]               │  │
+│  │ • Retailer [Checkboxes, 16×16px]                          │  │
+│  │ • Discount Level [Checkboxes]                             │  │
+│  │ • Rating [Radio buttons or stars]                         │  │
+│  │                                                             │  │
+│  │ [Apply Filters] (40–44px button, accent primary)           │  │
+│  │ [Reset] (40–44px button, secondary white + border)         │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ MAIN CONTENT (75% width on desktop)                              │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ Sort Controls (margin-bottom 16px):                        │  │
+│  │ Label: "Sort by" 14px weight 500                          │  │
+│  │ Dropdowns: [Price ↑↓] [Discount ↑↓] [Rating ↑↓] [Newest] │  │
+│  │ Results: "234 products" 14px muted                        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  PRODUCT GRID (4 columns, 16px gap):                             │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────┐ │
+│  │   Product    │ │   Product    │ │   Product    │ │Product │ │
+│  │ Card 1       │ │ Card 2       │ │ Card 3       │ │Card 4  │ │
+│  │ Border: 1px  │ │ Border: 1px  │ │ Border: 1px  │ │        │ │
+│  │ Radius: 8px  │ │ Radius: 8px  │ │ Radius: 8px  │ │        │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ Image 1:1    │ │ Image 1:1    │ │ Image 1:1    │ │        │ │
+│  │ [Name 14px]  │ │ [Name 14px]  │ │ [Name 14px]  │ │        │ │
+│  │ [Price 16px] │ │ [Price 16px] │ │ [Price 16px] │ │        │ │
+│  │ [From N ret] │ │ [From N ret] │ │ [From N ret] │ │        │ │
+│  │ Discount %   │ │ Discount %   │ │ Discount %   │ │        │ │
+│  │ Rating ⭐    │ │ Rating ⭐    │ │ Rating ⭐    │ │        │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ HOVER:       │ │              │ │              │ │        │ │
+│  │ -2px lift,   │ │              │ │              │ │        │ │
+│  │ shadow,      │ │              │ │              │ │        │ │
+│  │ "Compare"    │ │              │ │              │ │        │ │
+│  │ button fade  │ │              │ │              │ │        │ │
+│  │ in (opacity) │ │              │ │              │ │        │ │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └────────┘ │
+│                                                                   │
+│  [Load More] or [Pagination: 1 2 3 ... 10] (centered, 14px)     │
+└──────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS (Category Page):
+- Filter labels: 14px, weight 500 (not bold)
+- Filter input fields: 40px height, 1px border, 4px radius
+- Buttons: 40–44px, consistent styling (primary accent for Apply, secondary 
+  white for Reset)
+- Sort dropdowns: 40px height, 1px border, 14px text
+- Product card padding: 12px (image 1:1, text 12px card-padding)
+- Discount badge: 12px, small, accent only
+- "Compare" button on hover: 40–44px, secondary style, fade in (opacity 0.7 → 1, 100ms)
+
+INTERACTION DETAILS:
+- Hovering product card: translateY(-2px), shadow 0 6px 14px rgba(0,0,0,0.06), 
+  border color no change, 100ms ease-out
+- Clicking a product card: Navigate to Product Details Page
+- Filter inputs: subtle glow on focus (box-shadow 0 8px 28px rgba(255,107,0,0.08))
+
+================================================================================
+
+PAGE 3: PRODUCT DETAILS PAGE
+─────────────────────────────────────────────────────────────────
+
+Purpose: Show comprehensive product information and price comparison across 
+retailers.
+
+Key Sentiment Adjustments for THIS page:
+- Product gallery: Restrained, image-first (40% on desktop, full width on mobile).
+- Pricing table: Clear, concise, 1px borders, 14–16px text, accent CTA only.
+- Specs: Simple bulleted list, 14px, not overwhelming.
+- Price history chart: Minimal grid lines, subtle colors.
+- Reviews: 14–16px text, star ratings, 1px cards.
+
+Layout (Desktop):
+┌─────────────────────────────────────────────────────────────────┐
+│   BREADCRUMB: Home > Category > Product Name                    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ┌──────────────────────────┐  ┌────────────────────────────────┐ │
+│ │  PRODUCT GALLERY (40%)   │  │  PRODUCT INFO (60%)            │ │
+│ │                          │  │                                │ │
+│ │  [Main Product Image]    │  │ Product Name (24px, weight 600)│ │
+│ │  1:1 aspect ratio        │  │ Brand / Model (14px, muted)    │ │
+│ │  Padding: 12px           │  │                                │ │
+│ │  Border: 1px             │  │ ⭐⭐⭐⭐⭐ (4.5) 234 reviews     │ │
+│ │                          │  │ (14px, small)                  │ │
+│ │  [Thumbnails Row]        │  │                                │ │
+│ │  [Thumb] [Thumb] ...     │  │ ────────────────────────────── │ │
+│ │  Thumbnail size: 60×60px │  │ PRICING COMPARISON TABLE:      │ │
+│ │  Gap: 8px                │  │                                │ │
+│ │  Interaction: Click      │  │ Table styling:                 │ │
+│ │  thumb → swap main image │  │ • Row height: 44px             │ │
+│ │  (no animation, instant) │  │ • Column borders: 1px #e8e8e8  │ │
+│ │                          │  │ • Font: 14px body              │ │
+│ │ ──────────────────────── │  │ • Header row: weight 600, 14px │ │
+│ │                          │  │                                │ │
+│ │ [❤️ Add to Favorites]    │  │ │ Retailer │ Price  │ Stock│CTA││ │
+│ │ (secondary button, 40px) │  │ ├──────────┼────────┼──────┼───┤ │
+│ │                          │  │ │ JB Hi-Fi │ $599.99│ ✓    │ ✓ ││ │
+│ │ [🔔 Set Price Alert]     │  │ │ Noel Leeming │$615 │ ✓ │ ✓ ││ │
+│ │ (secondary button, 40px) │  │ │ Harvey Norman│$629 │ ✓ │ ✓ ││ │
+│ │                          │  │ ├──────────┴────────┴──────┴───┤ │
+│ │                          │  │ CTA buttons: "Visit Shop" (40px,│ │
+│ │                          │  │ primary accent, orange)         │ │
+│ │                          │  │                                │ │
+│ │                          │  │ ────────────────────────────── │ │
+│ │                          │  │ SPECIFICATIONS:                │ │
+│ │                          │  │                                │ │
+│ │                          │  │ Key Specs List (14px):         │ │
+│ │                          │  │ • Screen: 6.1" OLED            │ │
+│ │                          │  │ • Camera: 48MP main + 12MP     │ │
+│ │                          │  │ • Storage: 256GB               │ │
+│ │                          │  │ • Color: Midnight Black        │ │
+│ │                          │  │ • Processor: A17 Pro           │ │
+│ │                          │  │                                │ │
+│ │                          │  │ [See Full Specs] (link, 14px)  │ │
+│ └──────────────────────────┘  └────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ PRICE HISTORY CHART (Full Width)                                 │
+│  Title: "Last 30 Days Price Trend" (18px, weight 600)            │
+│  Padding: 24px (all sides)                                       │
+│  Border: 1px #e8e8e8, radius 8px                                 │
+│  Chart: Line chart, minimal gridlines (very faint gray),         │
+│  tooltip on hover showing date/price (14px, dark bg with white)  │
+│  Current price highlighted with accent color                    │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ CUSTOMER REVIEWS SECTION                                         │
+│  Title: "Customer Reviews" (20px, weight 600)                    │
+│  Tabs: [Top Reviews] [Latest Reviews] [Helpful First]            │
+│  Tab styling: underline active, 14px text                        │
+│  Review Cards (1px border, 8px radius, padding 16px):            │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ User Name (14px, weight 500) | Date (12px, muted)         │  │
+│  │ ⭐⭐⭐⭐⭐ Rating (14px)                                    │  │
+│  │                                                             │  │
+│  │ Review title (16px, weight 500)                            │  │
+│  │ Review text (14px, line-height 1.6)                        │  │
+│  │                                                             │  │
+│  │ [Helpful (X)] [Reply]    [Report Abuse]                    │  │
+│  │ (12px links, interact → highlight in subtle accent muted)  │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  [Load More Reviews] (secondary button, 40px, centered)         │
+└──────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS (Product Details Page):
+- Thumbnail carousel: 60×60px, 1px border, 8px radius, 8px gap
+- Main image: 1:1 or 4:3 ratio, 1px border, 8px radius, padding 12px
+- "Add to Favorites" button: 40px, secondary style (white + 1px border)
+- "Set Price Alert" button: 40px, secondary style
+- "Visit Shop" buttons: 40px, primary accent (orange), subtle shadow
+- Pricing table: 44px rows, 1px borders, 14px text, no shadow
+- Chart: Line graph minimal grid, colors #ff6b00 for current price, #e8e8e8 gridlines
+- Review cards: 16px padding, 1px border #e8e8e8, 8px radius, no shadow
+- Review text: 14px, line-height 1.6, color #1a1a1a
+- Review date: 12px, weight 400, color #6b6b6b
+
+INTERACTIONS (Product Details):
+- "Add to Favorites" click: Heart icon fills with accent color, toast "Added to 
+  Favorites" (fade-in 160ms, auto-hide after 3s)
+- "Set Price Alert" click: Modal opens (fade-in 160ms, overlay 0.5 opacity dark)
+- "Visit Shop" click: Opens in new tab (no animation)
+- Thumbnail hover: Border color to #1a1a1a, cursor pointer, opacity 1
+- Chart hover: Tooltip appears (fade-in 60ms) showing exact price/date
+- Review "Helpful" button: Toggles upvote state (accent color on active), count increments
+
+================================================================================
+
+PAGE 4: FAVORITES PAGE (Authenticated Only)
+─────────────────────────────────────────────────────────────────
+
+Purpose: Manage and track favorite products.
+
+Key Sentiment Adjustments for THIS page:
+- Tab navigation: 14px, underline active state, 8px gap
+- Sort/filter controls: Compact, 40px dropdowns, 14px labels
+- Product grid: 4 columns on desktop, same card style as category page
+
+Layout:
+┌─────────────────────────────────────────────────────────────────┐
+│   HEADER                                                        │
+│   Heading: "My Favorites" (24px, weight 600)                   │
+│   Status: "234 products saved" (14px, muted)                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ CONTROLS ROW (margin-bottom 24px):                              │
+│  [My Favorites | Shared with Me] (tabs, underline active)      │
+│  Sort: [Date Added ↓] Dropdown (40px)                          │
+│  Filter: [All] [Under $500] [High Rated] (buttons, secondary)  │
+│  Search: [Search favorites...] (input 40px, 1px border)        │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ FAVORITES GRID (4 columns, 16px gap on desktop)                │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────┐ │
+│  │   Product    │ │   Product    │ │   Product    │ │Product │ │
+│  │   Card       │ │   Card       │ │   Card       │ │ Card   │ │
+│  │ Border: 1px  │ │ Border: 1px  │ │ Border: 1px  │ │        │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ [Image 1:1]  │ │ [Image 1:1]  │ │ [Image 1:1]  │ │        │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ [Name]       │ │ [Name]       │ │ [Name]       │ │        │ │
+│  │ [Price]      │ │ [Price]      │ │ [Price]      │ │        │ │
+│  │ [❤️ Remove]  │ │ [❤️ Remove]  │ │ [❤️ Remove]  │ │        │ │
+│  │ (hover only) │ │ (hover only) │ │ (hover only) │ │        │ │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └────────┘ │
+│  [Load More...]                                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS:
+- Tab styling: 14px, weight 500, underline on active (2px solid accent)
+- Product cards: Same as Category Page (12px padding, 1px border, 8px radius)
+- Remove button: Small ❤️ icon (20px), appears on card hover, color transitions 
+  to accent on click
+- Pagination: Centered, 14px, simple [< 1 2 3 >] or "Load More" button
+
+================================================================================
+
+PAGE 5: PRICE ALERTS PAGE (Authenticated Only)
+─────────────────────────────────────────────────────────────────
+
+Purpose: Manage price drop notifications.
+
+Key Sentiment Adjustments for THIS page:
+- Tab styling: Consistent with Favorites page
+- Alert table: 1px borders, 14px text, 44px row height
+- Buttons: 40–44px, primary for "Create Alert", secondary for Edit/Delete/Pause
+
+Layout:
+┌─────────────────────────────────────────────────────────────────┐
+│   HEADER                                                        │
+│   Heading: "Price Alerts" (24px, weight 600)                   │
+│   Status: "5 active alerts" (14px, muted)                      │
+│   [Create New Alert] (primary accent button, 40–44px)           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ TAB NAVIGATION:                                                 │
+│  [Active Alerts | Triggered | Past] (underline active, 14px)   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ ACTIVE ALERTS TABLE (Border: 1px #e8e8e8, radius 8px):          │
+│ ┌────────────────────────────────────────────────────────────┐  │
+│ │ Product │ Target Price │ Current │ Status │ Actions        │  │
+│ ├────────────────────────────────────────────────────────────┤  │
+│ │ iPhone  │ $450        │ $599    │ 75%    │ [Edit] [Pause] │  │
+│ │ 15 Pro  │             │         │ remain │ [Delete]       │  │
+│ │         │             │         │        │                │  │
+│ │ Samsung │ $300        │ $400    │ 25%    │ [Edit] [Pause] │  │
+│ │ A55     │             │         │ remain │ [Delete]       │  │
+│ │         │             │         │        │                │  │
+│ └────────────────────────────────────────────────────────────┘  │
+│ TABLE STYLING:                                                  │
+│  • Cell padding: 12px vertical, 16px horizontal                 │
+│  • Header row: weight 600, 14px, background #f8f8f8 (barely     │
+│    visible), border-bottom 1px solid                            │
+│  • Row height: 60–64px                                          │
+│  • Action buttons: Small (36px), secondary style, gap 8px       │
+│  • Progress bar: 4px height, background #e8e8e8, filled 
+      color accent, subtle animation (no flash)
+│  • Status text: 12px, muted gray                                │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ TRIGGERED ALERTS (similar table layout):                        │
+│  Same format, but row background slightly tinted (accent 0.04   │
+│  opacity), and "View Deal" CTA visible in actions               │
+└─────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS:
+- Create New Alert button: 40–44px, primary accent
+- Edit/Delete/Pause buttons: Small (36px), secondary style (white + 1px border)
+- Progress bar: 4px height, background #e8e8e8, filled color #ff6b00, 
+  border-radius 2px
+- Modal (Create Alert): 160ms fade-in, overlay 0.5 opacity, content max-width 400px
+
+================================================================================
+
+PAGE 6: ACCOUNT/PROFILE PAGE (Authenticated Only)
+─────────────────────────────────────────────────────────────────
+
+Purpose: Manage user preferences and subscription.
+
+Key Sentiment Adjustments for THIS page:
+- Profile header: Subtle, 16–18px text, no oversized avatar
+- Tabs: Underline active state, 14px
+- Form fields: 40px height, 1px border, 4px radius
+- Toggle switches: Small (28px width), smooth animation 120ms
+
+Layout:
+┌─────────────────────────────────────────────────────────────────┐
+│   PROFILE HEADER (border-bottom 1px #e8e8e8, padding 24px)      │
+│  [Avatar 48px circle] User Name (18px, weight 600)              │
+│  user@email.com (14px, muted) | [Edit Profile] (link)          │
+│  Subscription: Premium ($9.99/mo) (14px)                        │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ TAB NAVIGATION (14px, underline active):                        │
+│  [Account] [Preferences] [Subscription] [Privacy] [Support]    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ ACCOUNT SECTION (padding 24px):                                 │
+│  Form Layout:                                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ Label: "Full Name" (14px, weight 500)                      │ │
+│  │ Input: "John Doe" (40px, 1px border, 4px radius)          │ │
+│  │ [Edit button hover → input becomes editable]              │ │
+│  │                                                             │ │
+│  │ Label: "Email Address" (14px, weight 500)                  │ │
+│  │ Input: "john@example.com" (40px)                           │ │
+│  │ [Edit]                                                      │ │
+│  │                                                             │ │
+│  │ Label: "Region" (14px, weight 500)                         │ │
+│  │ Dropdown: "New Zealand" (40px, 1px border)                 │ │
+│  │                                                             │ │
+│  │ [Change Password] (secondary button, 40px)                 │ │
+│  │ [Enable Two-Factor Auth] (secondary button, 40px)          │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ NOTIFICATION PREFERENCES SECTION (padding 24px):                │
+│  Label: "Notification Settings" (16px, weight 600, margin-bottom 16px)
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ ☑ Price Drop Alerts (toggle switch 28px, smooth animation)│ │
+│  │ Description: "Notify when price drops below threshold"    │ │
+│  │ (12px, muted, margin-top 4px)                             │ │
+│  │                                                             │ │
+│  │ ☑ Daily Deals Email                                        │ │
+│  │ Description: "Receive daily deal highlights"              │ │
+│  │                                                             │ │
+│  │ ☐ Weekly Newsletter                                        │ │
+│  │ Description: "Weekly product recommendations"             │ │
+│  │                                                             │ │
+│  │ ☑ New Review Notifications                                │ │
+│  │ Description: "Notify when reviews posted on favorites"    │ │
+│  │                                                             │ │
+│  │ [Save Preferences] (primary button, 40–44px)              │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ SUBSCRIPTION SECTION (padding 24px):                            │
+│  Current Plan: "Premium ($9.99/mo)" (16px, weight 600)         │
+│  Next Billing: "March 15, 2026" (14px, muted)                  │
+│  [Upgrade Plan] [Cancel Subscription] (buttons 40px, margin-right 8px)
+│  [Manage Payment Methods] (secondary button 40px)               │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ DANGER ZONE (padding 24px, border-top 1px #fdd):                │
+│  [Delete Account] [Logout] (secondary buttons 40px)             │
+└─────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS:
+- Form fields: 40px height, 1px border #e6e6e6, 4px radius
+- Toggle switches: 28px width, smooth animation 120ms ease, accent color #ff6b00 
+  when active
+- Labels: 14px, weight 500
+- Descriptions: 12px, weight 400, color #6b6b6b
+- Buttons: 40–44px, consistent styling
+
+================================================================================
+
+PAGE 7: AUTHENTICATION PAGE (Login/Register)
+─────────────────────────────────────────────────────────────────
+
+Purpose: User login, registration, and password reset.
+
+Key Sentiment Adjustments for THIS page:
+- Center card layout, max-width 400px
+- Form fields: 40px height, 1px border, 4px radius
+- Labels: 14px, weight 500
+- Input errors: Red text 12px, not oversized
+
+Layout:
+┌──────────────────────────────────────────────────────────────────┐
+│              CENTERED AUTH CARD (max-width 400px)                │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ Logo (48px) centered at top                               │  │
+│  │                                                             │  │
+│  │ [LOGIN TAB] [REGISTER TAB] (underline active, 14px)        │  │
+│  │ ────────────────────────────────────────────────────────── │  │
+│  │                                                             │  │
+│  │ LOGIN FORM:                                                │  │
+│  │ Label: "Email Address" (14px, weight 500)                 │  │
+│  │ Input: [Placeholder] (40px, 1px border, 4px radius)       │  │
+│  │ Focus: box-shadow 0 8px 28px rgba(255,107,0,0.08)         │  │
+│  │                                                             │  │
+│  │ Label: "Password" (14px, weight 500)                      │  │
+│  │ Input: [Placeholder] (40px, 1px border, eye icon toggle)  │  │
+│  │                                                             │  │
+│  │ [Remember Me] (checkbox 16×16px + label 14px)             │  │
+│  │                                                             │  │
+│  │ [Forgot Password?] (link, 12px, color accent)             │  │
+│  │                                                             │  │
+│  │ [LOGIN] (primary button 40–44px, full width, accent)      │  │
+│  │                                                             │  │
+│  │ ─── OR ─── (divider, 12px muted text)                     │  │
+│  │                                                             │  │
+│  │ [Google Login] (secondary button 40px, full width, Google  │  │
+│  │ logo icon 16px left-aligned)                              │  │
+│  │ [GitHub Login] (secondary button 40px, full width)         │  │
+│  │                                                             │  │
+│  │ "Don't have account?" [Sign Up] (14px text + link)         │  │
+│  │                                                             │  │
+│  │ REGISTER FORM (shown on tab click):                        │  │
+│  │ Label: "Full Name" (14px, weight 500)                      │  │
+│  │ Input: (40px)                                              │  │
+│  │                                                             │  │
+│  │ Label: "Email Address" (14px, weight 500)                 │  │
+│  │ Input: (40px)                                              │  │
+│  │                                                             │  │
+│  │ Label: "Password" (14px, weight 500)                      │  │
+│  │ Input: (40px, eye icon toggle)                             │  │
+│  │                                                             │  │
+│  │ Label: "Confirm Password" (14px, weight 500)              │  │
+│  │ Input: (40px, eye icon toggle)                             │  │
+│  │                                                             │  │
+│  │ ☐ I agree to Terms & Conditions (checkbox + label 12px)    │  │
+│  │                                                             │  │
+│  │ [REGISTER] (primary button 40–44px, full width, accent)    │  │
+│  │                                                             │  │
+│  │ "Already have account?" [Login] (14px text + link)         │  │
+│  │                                                             │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+
+COMPONENT DETAILS:
+- Auth card: border 1px #e8e8e8, radius 12px, padding 32px, max-width 400px, 
+  centered on screen
+- Form field focus: box-shadow 0 8px 28px rgba(255,107,0,0.08), border color #ff6b00 
+  (optional subtle change)
+- Error state: Input border-color #d32f2f (red), error text 12px red below field
+- Password visibility toggle: Eye icon 16px, right-aligned in input, cursor pointer
+- OAuth buttons: Secondary style, with brand logos 16px left-aligned
+- Tab styling: Underline active (2px solid accent), transition 100ms
+
+INTERACTIONS:
+- Email validation: Show error if invalid format (real-time, 12px red text)
+- Password strength: Optional; show feedback (12px, weak/medium/strong)
+- Submit button: Disabled until form valid; loading state when submitting (spinner)
+- OAuth flow: Click → opens popup or redirect to provider
+- Tab switch: Content fade transition (opacity 0.8 → 1, 100ms)
+- "Forgot Password" click: Modal with email input, "Send Reset Link" CTA
+
+================================================================================
+
+SHARED COMPONENTS & GLOBAL STYLES
+
+================================================================================
+
+BUTTONS (Global Style Guide):
+─────────────────────────────────────────────────────────────────
+
+Primary Button (Primary CTA):
+- Height: 40–44px
+- Padding: 0 16px
+- Background: #ff6b00 (accent)
+- Color: #ffffff (white text)
+- Border: transparent
+- Border-radius: 6px
+- Font: 15px, weight 500
+- Box-shadow: 0 6px 18px rgba(255,107,0,0.06) (subtle)
+- Transition: all 0.12s ease
+- Hover: translateY(-2px), box-shadow 0 8px 24px rgba(255,107,0,0.12), duration 100ms
+- Active: scale(0.98), duration 60ms
+- Focus: 2px outline rgba(255,107,0,0.14)
+- Disabled: opacity 0.5, cursor not-allowed
+
+Secondary Button (Default):
+- Height: 40–44px
+- Padding: 0 16px
+- Background: #ffffff (white)
+- Color: #1a1a1a (dark text)
+- Border: 1px solid #d8d8d8
+- Border-radius: 6px
+- Font: 15px, weight 500
+- Box-shadow: none
+- Transition: all 0.12s ease
+- Hover: border-color #1a1a1a, box-shadow 0 6px 14px rgba(0,0,0,0.06), 
+         translateY(-2px), duration 100ms
+- Active: scale(0.98), duration 60ms
+- Focus: 2px outline rgba(255,107,0,0.14)
+
+Text Link Button (Minimal):
+- Height: auto
+- Padding: 0
+- Background: transparent
+- Color: #ff6b00 (accent) or #1a1a1a on hover
+- Border: none
+- Font: 14px, weight 500
+- Transition: color 0.08s ease, text-decoration 0.08s ease
+- Hover: color #1a1a1a (if dark), add underline
+- Focus: 2px outline
+
+Icon Button (Compact):
+- Height: 36–40px (square)
+- Width: 36–40px
+- Padding: 0 (centered via flex)
+- Background: transparent or #f8f8f8 on hover
+- Border: 1px solid #e8e8e8 (optional)
+- Border-radius: 6px
+- Icon size: 20px
+- Hover: background #f8f8f8, border-color #d8d8d8, duration 80ms
+
+================================================================================
+
+CARDS & MODULES (Global Style Guide):
+─────────────────────────────────────────────────────────────────
+
+Product Card:
+- Border: 1px solid #d8d8d8
+- Border-radius: 8px
+- Background: #ffffff
+- Padding: 12px
+- Box-shadow: none (use border only)
+- Aspect ratio (image): 1:1 (square)
+- Typography inside:
+  * Product name: 14px, weight 500
+  * Price: 16px, weight 600, color #1a1a1a
+  * Retailer count: 12px, weight 400, color #6b6b6b
+  * Discount badge: 12px, weight 600, color #ff6b00 (not full-saturation background)
+- Hover state: translateY(-2px), box-shadow 0 6px 14px rgba(0,0,0,0.06), 
+  duration 100ms ease-out, border-color no change
+
+Featured Category Card (Home page):
+- Border: 1px solid #d8d8d8
+- Border-radius: 8px
+- Background: #ffffff
+- Padding: 12px (not 24px)
+- Icon size: 20px (not 32px)
+- Text: 16px body, weight 500 (not bold)
+- Hover state: border-color #1a1a1a, translateY(-2px), shadow 0 6px 14px 
+  rgba(0,0,0,0.06), duration 100ms
+
+Modal/Dialog:
+- Border: none
+- Border-radius: 12px
+- Background: #ffffff
+- Padding: 32px
+- Box-shadow: 0 20px 60px rgba(0,0,0,0.1)
+- Overlay: background rgba(0,0,0,0.5), opacity animation fade-in 160ms
+- Max-width: 400–500px on desktop, 90vw on mobile
+- Animation: opacity 0 → 1, scale 0.95 → 1, duration 160ms ease-out
+- Close button: 28px icon-button, top-right corner
+
+Badge (Small status indicator):
+- Padding: 2px 6px
+- Border-radius: 4px
+- Font: 12px, weight 600
+- Background: rgba(255,107,0,0.08) (very muted)
+- Color: #ff6b00
+- Never use full saturation background
+
+================================================================================
+
+FORM ELEMENTS (Global Style Guide):
+─────────────────────────────────────────────────────────────────
+
+Text Input:
+- Height: 40px
+- Padding: 12px 16px
+- Border: 1px solid #e6e6e6
+- Border-radius: 4px
+- Background: #ffffff
+- Font: 16px, weight 400
+- Color: #1a1a1a
+- Placeholder: #999999, font-weight 400
+- Transition: border 0.12s ease, box-shadow 0.12s ease
+- Focus: border-color #ff6b00 (optional), box-shadow 0 8px 28px rgba(255,107,0,0.08), 
+         outline none
+- Error state: border-color #d32f2f, box-shadow 0 8px 28px rgba(211,47,47,0.08)
+- Error text below: 12px, color #d32f2f, weight 400
+
+Checkbox:
+- Size: 16×16px
+- Border: 1px solid #d8d8d8
+- Border-radius: 4px
+- Background: #ffffff when unchecked; #ff6b00 when checked
+- Icon (✓): 12px, white, centered
+- Transition: all 0.12s ease
+- Hover: border-color #1a1a1a, cursor pointer
+- Focus: 2px outline rgba(255,107,0,0.14)
+
+Radio Button:
+- Size: 16×16px
+- Border: 1px solid #d8d8d8
+- Border-radius: 50% (circle)
+- Background: #ffffff when unchecked; #ff6b00 when checked
+- Dot: 8px, white, centered (when checked)
+- Transition: all 0.12s ease
+- Hover: border-color #1a1a1a, cursor pointer
+
+Toggle Switch:
+- Width: 28px (unchecked) + padding
+- Height: 16px
+- Border: none
+- Border-radius: 8px (pill-shaped)
+- Background: #e0e0e0 when off; #ff6b00 when on
+- Indicator: 12px circle, white, positioned left (off) or right (on)
+- Transition: all 0.12s ease
+- Hover: cursor pointer, opacity 0.8
+- Focus: 2px outline rgba(255,107,0,0.14)
+
+Slider (Price Range):
+- Height (track): 4px
+- Border-radius: 2px
+- Background: #e8e8e8
+- Thumb: 20px diameter, background #ff6b00, border 1px solid #f0f0f0, 
+         box-shadow 0 2px 8px rgba(0,0,0,0.1)
+- Transition: box-shadow 0.08s ease
+- Hover: thumb box-shadow 0 4px 12px rgba(0,0,0,0.12)
+- Cursor: grab (hover), grabbing (dragging)
+
+Dropdown/Select:
+- Height: 40px
+- Padding: 12px 16px
+- Border: 1px solid #e6e6e6
+- Border-radius: 4px
+- Background: #ffffff
+- Font: 16px, weight 400
+- Color: #1a1a1a
+- Arrow: 12px, color #6b6b6b, positioned right 12px
+- Transition: border 0.12s ease, box-shadow 0.12s ease
+- Focus: border-color #ff6b00, box-shadow 0 8px 28px rgba(255,107,0,0.08)
+- Open state: arrow rotates 180° (duration 100ms ease-out), menu appears 
+  below with fade-in (160ms)
+- Menu items: 40px height, 16px padding, hover background #f8f8f8, 
+  selected item background #f0f0f0 + left accent border 3px #ff6b00
+
+================================================================================
+
+NAVIGATION & TABS (Global Style Guide):
+─────────────────────────────────────────────────────────────────
+
+Tab Navigation:
+- Tab height: 44px (clickable area)
+- Text size: 14px, weight 500
+- Color (inactive): #6b6b6b
+- Color (active): #1a1a1a
+- Active indicator: 2px solid border-bottom #ff6b00 (or full-width underline)
+- Gap between tabs: 24px (horizontal)
+- Transition: color 0.12s ease, border 0.12s ease
+- Hover: color #1a1a1a
+- Focus: 2px outline
+- Mobile: Tabs scroll horizontally if overflow
+
+Breadcrumb:
+- Font: 14px, weight 400
+- Color: #6b6b6b
+- Separator: "/" (12px, color #d8d8d8)
+- Active/current item: color #1a1a1a, weight 500 (not link)
+- Link items: color #ff6b00, underline on hover
+- Transition: color 0.08s ease
+
+Pagination:
+- Button height: 36px
+- Button width: 36px (square for numbers)
+- Border: 1px solid #d8d8d8
+- Border-radius: 4px
+- Font: 14px, weight 500
+- Background: #ffffff (inactive)
+- Color: #1a1a1a (inactive)
+- Active button: background #ff6b00, color #ffffff
+- Hover: border-color #1a1a1a, background #f8f8f8
+- Disabled: opacity 0.5, cursor not-allowed
+- Gap: 4px
+- Transition: all 0.12s ease
+
+================================================================================
+
+GLOBAL INTERACTION RULES
+
+================================================================================
+
+Hover States:
+- Small cards/elements: translateY(-2px), box-shadow 0 6px 14px rgba(0,0,0,0.06), 
+  duration 100ms ease-out
+- Buttons: translateY(-2px), slight shadow increase, duration 80–120ms
+- Links: underline or color change, no transform
+- Interactive icons: opacity 0.8 or color to accent, no transform (usually)
+
+Focus States (Keyboard Navigation):
+- All interactive elements: 2px solid outline, color rgba(255,107,0,0.14) 
+  (or equivalent neutral gray for accessibility)
+- Outline offset: 2px (to avoid overlap)
+- Transition: none (instant for accessibility)
+
+Active/Pressed States:
+- Buttons: scale(0.96–0.98), duration 60ms ease
+- Inputs: border-color accent, maintained on input
+
+Transitions & Animations:
+- Default transition: all 0.12s ease
+- Hover lifting: 80–120ms ease-out
+- Modal/panel: 160ms ease-in-out (fade + optional slide)
+- Loading spinner: 1s linear infinite
+- Fade-in content: 160ms ease-out
+- No sudden/jarring animations; easing should feel natural
+
+Loading States:
+- Skeleton loader: Gradient animation (left-to-right sweep), 1s ease-in-out infinite
+- Spinner: Rotating icon, 1s linear, accent color
+- Button loading: Disabled state + spinner 16px inside button (centered)
+
+Error States:
+- Input border: #d32f2f (red)
+- Error message: 12px, color #d32f2f, positioned below input, appears with 
+  fade-in (100ms)
+- Toast (error): background #d32f2f, text white, padding 12px 16px, 
+  border-radius 6px, appears bottom-right with slide-up + fade-in (160ms)
+
+Success States:
+- Toast (success): background #2e7d32 (green), text white, padding 12px 16px, 
+  border-radius 6px, appears bottom-right with slide-up + fade-in (160ms), 
+  auto-hide after 3s (fade-out 160ms)
+- Checkmark icon: Optional, 20px, green
+
+Empty States:
+- Icon: 64px, light gray (#d8d8d8)
+- Title: "No results" or context-specific (16px, weight 600)
+- Description: 14px, muted gray, 2–3 lines
+- CTA button: Optional (40–44px, secondary or primary style)
+
+================================================================================
+
+RESPONSIVE DESIGN RULES
+
+================================================================================
+
+Mobile (< 480px):
+- Header: 70px height (slightly reduced)
+- Logo: 20px (reduced from 24px)
+- Search bar: 36px, full width with small margins (8px left/right)
+- Account dropdown: Icon-only, 24px
+- Buttons: 40px (no reduction, touch-friendly)
+- Product grid: 1 column, full width
+- Sidebar: Collapse into hamburger menu or stacked below content
+- Font sizes: Reduce by 1–2px if space is tight (e.g., body 15px, small 13px)
+- Spacing: Use sm/md rhythm (8px, 16px); avoid large 24px/32px gaps
+- Cards: Full width with small margins
+
+Tablet (480–768px):
+- Header: 80px
+- Product grid: 2 columns, 8px gap
+- Sidebar: Visible, narrower (20% width)
+- Buttons: 40–44px
+- Font sizes: standard (16px body, 14px small)
+- Spacing: Standard (md 16px, lg 24px)
+
+Desktop (768–1200px):
+- Header: 80px
+- Product grid: 3–4 columns, 16px gap
+- Sidebar: 25% width
+- Max container width: 1200px
+- Full spacing rhythm applied
+
+Large Desktop (> 1200px):
+- Header: 80px
+- Product grid: 4 columns, 16px gap
+- Sidebar: 25% width
+- Max container width: 1400px (optional super-wide breakpoint)
+- Full spacing rhythm + generous whitespace
+
+Touch Targets:
+- All clickable elements: Minimum 44×44px
+- Small buttons (icon-only): 36–40px acceptable if padding provided
+
+Breakpoint Variables (CSS):
+--breakpoint-mobile: 480px
+--breakpoint-tablet: 768px
+--breakpoint-desktop: 1200px
+--breakpoint-large-desktop: 1400px
+--container-max-width: 1200px
+
+================================================================================
+
+FINAL IMPLEMENTATION CHECKLIST
+
+================================================================================
+
+Before handing to development, verify:
+☐ All borders are 1px solid #d8d8d8 (no exceptions unless focus/error)
+☐ All button heights are 40–44px (touch-friendly)
+☐ Button styles are consistent: primary (accent bg), secondary (white bg + border)
+☐ Accent color #ff6b00 used ONLY for primary CTAs, badges, active states, 
+  and focus outlines
+☐ All form fields are 40px height with 1px border and 4px radius
+☐ All hover states have translateY(-2px) and subtle shadow (duration 100ms)
+☐ Modal fade-in is 160ms, overlay opacity 0.5
+☐ Toggle switches are 28px width with 16px height
+☐ Focus outlines are 2px solid, color rgba(255,107,0,0.14)
+☐ Typography scale: body 16px, small 14px, subhead 18–20px, heading 20–24px
+☐ No shadows except for: hovers, CTAs, modals (all subtle, 0.04–0.1 opacity)
+☐ Border-radius consistency: 4px (inputs), 6–8px (cards/buttons), 12px (modals)
+☐ Spacing rhythm: 4, 8, 16, 24, 32px only (no other values)
+☐ Tab underlines are 2px solid accent on active
+☐ Dropdowns show arrow icon, rotate on open, menu items 40px height
+☐ Cards use 1px border + no shadow (border isolation only)
+☐ Icons sized: 12px (small), 16px (label), 20px (product card), 24px (header), 
+  36–48px (large features)
+☐ Micro-interactions are subtle: no over-sized transforms, durations 60–160ms
+☐ Responsive breakpoints are 480, 768, 1200, 1400px with appropriate adaptations
+☐ All text uses Inter font with system fallbacks
+☐ Accessibility: WCAG AA contrast, focus states, semantic HTML
+☐ Remove all color duplication: accent used sparingly, grays consistent
+☐ Reduce "loud" feeling: whitespace increased, oversized elements scaled down, 
+  heavy weights removed from body copy
+
+================================================================================
+
+USE THIS PROMPT AS-IS IN FIGMA MAKE
+
+================================================================================
+
+Paste this entire document (or sections) directly into Figma AI Make. It contains:
+1. Design sentiment framework (apply to ALL pages)
+2. Design system tokens (color, type, spacing, shadows, etc.)
+3. Detailed page layouts with ASCII diagrams and exact styling rules
+4. Global component guides (buttons, cards, forms, navigation)
+5. Interaction & animation rules
+6. Responsive design breakpoints
+7. Implementation checklist
+
+This ensures your Figma prototype is cohesive, professional, and aligns with 
+PriceSpy/PriceRunner's "understated confidence" aesthetic.
+
+================================================================================
+END OF FIGMA AI PROMPT
+================================================================================
