@@ -13,6 +13,7 @@ The `_cluster_view` projection is a faithful copy of
 the engine's own read view (asserted by the cross-check test).
 """
 
+import os
 import re
 
 from fastapi import APIRouter, HTTPException, Query
@@ -21,8 +22,8 @@ from app.database import product_matching_db
 
 router = APIRouter(prefix="/api/clusters", tags=["clusters"])
 
-CLUSTERS = product_matching_db["product_clusters"]
-_SLUGS = {"mobile-phones", "laptops", "tablets", "headphones", "monitors"}
+CLUSTERS = product_matching_db[os.getenv("CLUSTERS_COLLECTION", "product_clusters")]
+_SLUGS = {"mobile-phones", "laptops", "tablets", "headphones", "monitors", "groceries"}
 # Categories where cross-store comparison actually works with the deterministic identity
 # engine. Accessories (headphones/monitors) are structurally non-comparable: only ~0.66% /
 # ~3% of their clusters are multi-store, and even branded items (JBL/Anker/Apple) fragment
@@ -30,7 +31,12 @@ _SLUGS = {"mobile-phones", "laptops", "tablets", "headphones", "monitors"}
 # T510BT"). They remain searchable, but the curated deals surface is restricted to these
 # real comparison categories. The genuine fix for accessories is a near-duplicate
 # (embedding/lexical) matcher, not a deterministic key — deferred to the learned path.
-COMPARISON_SLUGS = {"mobile-phones", "laptops", "tablets"}
+# ⭐ `groceries` belongs here on the same evidence the accessories were excluded on. Measured
+# 2026-07-25: 3,712 of 39,731 grocery clusters are multi-store (9.3%) — the LARGEST multi-store
+# pool in the corpus, bigger than phones + laptops + tablets combined (2,078) — versus 0.4% for
+# headphones and 3.3% for monitors. FMCG is also the first B2B surface. Supermarket titles carry
+# a real brand + pack size, so they key far more consistently than accessory model names do.
+COMPARISON_SLUGS = {"mobile-phones", "laptops", "tablets", "groceries"}
 
 # Serving-layer trust guards. The engine's outlier price-band only applies to clusters
 # with >=3 prices, so 2-listing clusters can carry a mis-parsed junk price (e.g. a "354
@@ -39,10 +45,21 @@ COMPARISON_SLUGS = {"mobile-phones", "laptops", "tablets"}
 # engine fixes small-cluster hygiene, we (a) keep such clusters OUT of the curated deals view
 # and (b) flag them so the frontend never headlines a suspect price.
 MAX_DEAL_SPREAD_PCT = 80.0
-# KES floor for a plausible new-device price. Set below the cheapest real feature phones
-# (Nokia 105/106, Itel basics sit at ~900-1000) but above the single-listing mis-parses
-# seen in the data (~269-429), so legit cheap phones are neither warned nor hidden.
-MIN_PLAUSIBLE_PRICE = 500
+# KES floor for a plausible price — PER CATEGORY, because one global floor cannot work.
+# 500 is right for a device: below the cheapest real feature phones (Nokia 105/106, Itel
+# basics at ~900-1000) but above the single-listing mis-parses in the data (~269-429).
+# ⛔ Applied to groceries that same 500 was silently hiding 78% of the catalogue (2,887 of
+# 3,712 multi-store clusters; measured best_price p25=105, p50=215) and cut the grocery deals
+# surface from 1,724 to 361. A 500 KES floor on a shop where the median product costs 215 is
+# not a trust guard, it is a category filter. 20 KES is below any real FMCG unit price
+# (cheapest sachets/sweets sit at ~30-50) while still catching zero/near-zero mis-parses.
+DEFAULT_MIN_PLAUSIBLE_PRICE = 500
+MIN_PLAUSIBLE_PRICE_BY_SLUG = {"groceries": 20}
+
+
+def min_plausible_price(slug: str | None) -> float:
+    """The floor below which a best_price is treated as a likely mis-parse, per category."""
+    return MIN_PLAUSIBLE_PRICE_BY_SLUG.get(slug, DEFAULT_MIN_PLAUSIBLE_PRICE)
 
 
 def _data_warning(d: dict) -> str | None:
@@ -52,7 +69,7 @@ def _data_warning(d: dict) -> str | None:
     if d.get("condition_basis") == "likely_used":
         return "no confident retail price — cheapest is a classifieds/refurb asking price"
     bp = d.get("best_price")
-    if isinstance(bp, (int, float)) and 0 < bp < MIN_PLAUSIBLE_PRICE:
+    if isinstance(bp, (int, float)) and 0 < bp < min_plausible_price(d.get("canonical_category_slug")):
         return "implausibly low best price — likely a mis-parsed listing"
     sp = d.get("like_for_like_spread_pct")
     if isinstance(sp, (int, float)) and sp > MAX_DEAL_SPREAD_PCT:
@@ -176,14 +193,17 @@ async def best_deals(
         "n_stores": {"$gte": min_stores},
         # plausible same-config saving only — excludes junk-low/outlier-driven fake "deals"
         "like_for_like_spread_pct": {"$gt": 0, "$lte": MAX_DEAL_SPREAD_PCT},
-        "best_price": {"$gte": MIN_PLAUSIBLE_PRICE},
     }
     # Default deals to the real comparison categories; accessories are still reachable by
     # explicit slug= but are thin/structurally non-comparable (see COMPARISON_SLUGS).
-    if slug:
-        query["canonical_category_slug"] = slug
-    else:
-        query["canonical_category_slug"] = {"$in": sorted(COMPARISON_SLUGS)}
+    # The price floor is per-category, so it is expressed as (slug AND its own floor) rather
+    # than one global best_price bound — a single bound would apply the 500 KES device floor
+    # to groceries and silently drop 78% of them.
+    slugs = [slug] if slug else sorted(COMPARISON_SLUGS)
+    query["$or"] = [
+        {"canonical_category_slug": s, "best_price": {"$gte": min_plausible_price(s)}}
+        for s in slugs
+    ]
     rows = await CLUSTERS.find(query).sort("like_for_like_spread_pct", -1).to_list(length=limit)
     return {"count": len(rows), "results": [_cluster_view(d) for d in rows]}
 
