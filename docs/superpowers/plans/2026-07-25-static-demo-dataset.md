@@ -225,18 +225,30 @@ Leave `COMPARISON_SLUGS` exactly as it is.
 Run: `apienv/bin/python -m pytest app/tests/test_clusters_slugs.py -v`
 Expected: 2 passed.
 
-- [ ] **Step 5: Verify the previously-400ing categories now return data**
+- [ ] **Step 5: Verify the previously-400ing categories are reachable**
 
-Run:
+Note `pkill -f "uvicorn app.main:app"` kills the shell running it, because the command
+string itself matches the pattern. Kill and start in separate calls.
+
 ```bash
 cd /home/reginaldkyalo/codes/api_phones_scraper
 CLUSTERS_COLLECTION=product_clusters_mvp apienv/bin/uvicorn app.main:app --port 10000 --host 127.0.0.1 &
-sleep 12
+sleep 15
 for s in audio-systems wearables speakers routers desktop-computers; do
-  echo -n "$s: "; curl -s "http://127.0.0.1:10000/api/clusters/deals?slug=$s&limit=5" | head -c 60; echo
+  printf "%-20s " "$s"; curl -s "http://127.0.0.1:10000/api/clusters/search?q=a&slug=$s&limit=2" | head -c 45; echo
 done
 ```
-Expected: each prints `{"count":` with a non-zero count — not `{"detail":"unknown slug`.
+
+Expected: each returns `{"query":"a","count":…` — **not** `{"detail":"unknown slug`.
+
+⚠️ **`/deals` correctly returns 0 for all of these, and that is the right answer.**
+Measured 2026-07-25: `like_for_like_spread_pct` is null for every cluster in all seven
+non-comparison categories, because a like-for-like spread needs the same *config* at 2+
+stores and accessories produce no config facets. Some do have a config-blind
+`cross_store_spread_pct` (audio-systems 22, monitors 3, wearables 2, speakers 1,
+headphones 0) — which is exactly the weaker signal `/deals` is designed to exclude.
+Unlocking makes these categories searchable and browsable; it does not, and should not,
+manufacture deals for them.
 
 - [ ] **Step 6: Commit**
 

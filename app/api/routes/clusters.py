@@ -23,7 +23,15 @@ from app.database import product_matching_db
 router = APIRouter(prefix="/api/clusters", tags=["clusters"])
 
 CLUSTERS = product_matching_db[os.getenv("CLUSTERS_COLLECTION", "product_clusters")]
-_SLUGS = {"mobile-phones", "laptops", "tablets", "headphones", "monitors", "groceries"}
+# Every canonical slug holding >=2 multi-store clusters (measured 2026-07-25 against
+# product_clusters_mvp). A slug missing here 400s the whole category, which is how
+# groceries stayed invisible before 7226de12 — audio-systems (120 multi-store),
+# wearables (59), speakers (19), desktop-computers (2) and routers (2) were hidden the
+# same way. Reachability is cheap and reversible; comparability is COMPARISON_SLUGS below.
+_SLUGS = {
+    "mobile-phones", "laptops", "tablets", "headphones", "monitors", "groceries",
+    "audio-systems", "wearables", "speakers", "desktop-computers", "routers",
+}
 # Categories where cross-store comparison actually works with the deterministic identity
 # engine. Accessories (headphones/monitors) are structurally non-comparable: only ~0.66% /
 # ~3% of their clusters are multi-store, and even branded items (JBL/Anker/Apple) fragment
