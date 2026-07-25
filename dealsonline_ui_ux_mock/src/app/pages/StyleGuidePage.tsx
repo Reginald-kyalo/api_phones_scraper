@@ -3,7 +3,6 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { PRProductCardGrid } from '../features/product/components/ProductCard';
-import { StarRating } from '../features/product/components/ProductHero';
 import { Package, Store, Bell, GitCompareArrows, Heart, Search, TrendingDown, Tag } from 'lucide-react';
 
 const MOCK_PRODUCT = {
@@ -142,10 +141,6 @@ export default function StyleGuidePage() {
               <Badge variant="secondary">Secondary Badge</Badge>
               <Badge variant="outline">Outline Badge</Badge>
               <Badge variant="destructive">Price Drop</Badge>
-              <div className="flex items-center gap-1">
-                <StarRating rating={4.5} />
-                <span className="text-xs text-muted-foreground">(4.5)</span>
-              </div>
             </div>
           </section>
 

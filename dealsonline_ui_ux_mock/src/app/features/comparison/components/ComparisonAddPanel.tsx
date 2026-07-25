@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { pricerunnerApi, type PRProduct } from '../../../lib/api';
+import { clustersApi, type ClusterSummary } from '../../../lib/api';
 import { formatPrice } from '../../../lib/format';
 import { type LocalComparisonItem } from '../../../hooks/useLocalStorage';
 import { Button } from '../../../components/ui/button';
@@ -9,7 +9,7 @@ import { Package, X, ArrowLeft, Search } from 'lucide-react';
 interface ComparisonAddPanelProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (product: PRProduct) => void;
+  onAdd: (product: ClusterSummary) => void;
   comparisonItems: LocalComparisonItem[];
 }
 
@@ -20,8 +20,8 @@ export function ComparisonAddPanel({
   comparisonItems,
 }: ComparisonAddPanelProps) {
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<PRProduct[]>([]);
-  const [similar, setSimilar] = useState<PRProduct[]>([]);
+  const [searchResults, setSearchResults] = useState<ClusterSummary[]>([]);
+  const [similar, setSimilar] = useState<ClusterSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,13 +36,10 @@ export function ComparisonAddPanel({
     setLoadingSimilar(true);
     (async () => {
       try {
-        const res = await pricerunnerApi.getProducts(scopedProductType, {
-          categoryUrl: scopedCategoryUrl || undefined,
-          limit: 30,
-        });
+        const res = await clustersApi.getCategoryPage(scopedProductType, 0);
         if (!cancelled) {
           const ids = new Set(comparisonItems.map(c => c.product_id));
-          setSimilar(res.products.filter(p => !ids.has(p.id)));
+          setSimilar(res.results.filter(p => !ids.has(p.cluster_id)).slice(0, 30));
         }
       } catch {
         // ignore
@@ -60,14 +57,21 @@ export function ComparisonAddPanel({
     }
     setLoading(true);
     try {
-      const res = scopedProductType
-        ? await pricerunnerApi.getProducts(scopedProductType, {
-            categoryUrl: scopedCategoryUrl || undefined,
-            q: q.trim(),
-            limit: 20,
-          })
-        : await pricerunnerApi.search(q, undefined, 1, 15);
-      setSearchResults(res.products);
+      const hits = await clustersApi.search(q.trim(), {
+        slug: scopedProductType || undefined,
+        limit: 15,
+      });
+      const rows = await Promise.all(
+        hits.results.map((h) =>
+          clustersApi
+            .getDetail(h.id)
+            // Detail carries {price,url,title} per store; the panel only reads
+            // summary fields, so narrow it rather than widen the row type.
+            .then((d): ClusterSummary => ({ ...d, best_by_store: {}, configs: [] }))
+            .catch(() => null),
+        ),
+      );
+      setSearchResults(rows.filter((r): r is ClusterSummary => r !== null));
     } catch {
       setSearchResults([]);
     } finally {
@@ -139,10 +143,10 @@ export function ComparisonAddPanel({
           )}
 
           {!loading && displayList.map((p) => {
-            const alreadyAdded = existingIds.has(p.id);
+            const alreadyAdded = existingIds.has(p.cluster_id);
             return (
               <button
-                key={p.id}
+                key={p.cluster_id}
                 onClick={() => { if (!alreadyAdded) onAdd(p); }}
                 disabled={alreadyAdded}
                 className={`w-full flex items-center gap-3 py-2.5 px-1 border-b border-gray-50 text-left transition-colors ${
@@ -157,11 +161,11 @@ export function ComparisonAddPanel({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium line-clamp-2 leading-snug">{p.name}</p>
+                  <p className="text-sm font-medium line-clamp-2 leading-snug">{p.display_name ?? p.title}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <p className="text-sm font-bold">
-                    {p.price > 0 ? formatPrice(p.price) : 'N/A'}
+                    {formatPrice(p.best_price)}
                   </p>
                   {alreadyAdded && (
                     <span className="text-xs text-muted-foreground">Added</span>

@@ -4,7 +4,11 @@ import { clustersApi, type ClusterDetail } from '../lib/api';
 import { formatPrice, shopLabel } from '../lib/format';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Loader2, ExternalLink, AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Loader2, ExternalLink, AlertTriangle, ArrowLeft, RefreshCw, Package } from 'lucide-react';
+import { storeName, storeInitial } from '../lib/storeIdentity';
+import { ImageWithFallback } from '../components/common/ImageWithFallback';
+import { MatchProvenance } from '../features/clusters/components/MatchProvenance';
+import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
 
 /**
  * Live cross-store price comparison for one cluster (the matching engine's
@@ -95,6 +99,21 @@ export default function ClusterPricesPage() {
           </div>
         )}
 
+        {cluster.image && (
+          <div className="mb-4 flex h-56 items-center justify-center rounded-xl bg-white p-4 ultra-border">
+            {/* Store images 404 often enough that a bare <img> leaves an empty
+                framed box; fall back to the same neutral mark the cards use. */}
+            <ImageWithFallback
+              src={cluster.image}
+              alt=""
+              className="max-h-full max-w-full object-contain"
+              fallback={<Package className="h-10 w-10 text-muted-foreground/30" aria-hidden="true" />}
+            />
+          </div>
+        )}
+
+        <MatchProvenance cluster={cluster} />
+
         {!cluster.comparison_grade && (
           <div className="flex items-start gap-2 rounded-lg ultra-border p-3 mb-4 text-sm text-muted-foreground">
             <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -134,19 +153,19 @@ export default function ClusterPricesPage() {
         {/* Store rows — real prices, real click-through */}
         <h2 className="text-lg font-semibold text-foreground mb-3">Price comparison</h2>
         <div className="space-y-3 mb-8">
-          {rows.map(([storeName, offer], idx) => (
+          {rows.map(([rawStore, offer], idx) => (
             <div
-              key={storeName}
+              key={rawStore}
               className={`flex items-center gap-4 rounded-xl p-4 transition-colors ultra-border hover:bg-gray-50 ${
                 idx === 0 ? 'border-primary/20' : 'border-border'
               }`}
             >
               <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-foreground text-background font-bold text-sm">
-                {storeName[0].toUpperCase()}
+                {storeInitial(rawStore)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-foreground">{storeName}</span>
+                  <span className="font-semibold text-sm text-foreground">{storeName(rawStore)}</span>
                   {idx === 0 && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-teal/10 text-teal-deep border-primary/20">
                       Best price
@@ -192,6 +211,14 @@ export default function ClusterPricesPage() {
               ))}
             </div>
           </>
+        )}
+
+        {/* Real history only — 3,595 of 62,668 clusters have >=2 captured points,
+            and groceries have none. Never synthesised to fill the slot. */}
+        {cluster.price_history && cluster.price_history.length >= 2 && (
+          <div className="mt-8">
+            <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
+          </div>
         )}
       </div>
     </div>

@@ -1,13 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { formatPrice, shopLabel } from '../lib/format';
-import {
-  mockDeals,
-  mockPopular,
-  mockPhones,
-  mockComputing,
-  mockSoundVision,
-  type MockProduct,
-} from '../data/homepageMock';
+import { clustersApi, type ClusterSummary } from '../lib/api';
+import type { DemoManifest } from '../lib/demoTypes';
+import { ClusterCard } from '../features/clusters/components/ClusterCard';
+import { categoryLabel } from './CatalogueCategoriesPage';
 import HeroSection from '../components/layout/HeroSection';
 import CategoryStrip from '../components/layout/CategoryStrip';
 import HowItWorks from '../components/layout/HowItWorks';
@@ -24,256 +21,28 @@ import {
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
-// Single discount token: a calm teal "▼ %" — never a red sale tag.
-// See BEHAVIORAL_PRINCIPLES.md §7 and DESIGN_HANDOFF.md (discount = teal down-arrow).
-function DiscountBadge({ percent, className = '' }: { percent: number; className?: string }) {
-  if (percent <= 0) return null;
-  return (
-    <span
-      className={`inline-flex items-center gap-0.5 rounded-md bg-teal/10 text-teal text-xs font-bold px-1.5 py-1 ${className}`}
-    >
-      <ArrowDown aria-hidden="true" className="w-3 h-3" strokeWidth={2.5} />
-      {percent}%
-    </span>
-  );
-}
-
-function discountOf(product: MockProduct): number {
-  return product.oldPrice && product.oldPrice > product.price
-    ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
-    : 0;
-}
-
-// Compact product card for homepage rails. Flat, border-only, snappy —
-// no scaling or drop-shadow hovers (see DESIGN_HANDOFF.md design notes).
-function HomeProductCard({ product }: { product: MockProduct; large?: boolean }) {
-  const discount = discountOf(product);
-
-  return (
-    <Link
-      to={`/product/${product.id}`}
-      className="group block min-w-[180px] max-w-[210px] flex-shrink-0 snap-start bg-card ultra-border rounded-lg overflow-hidden"
-    >
-      <div className="relative aspect-square bg-surface-alt overflow-hidden flex items-center justify-center">
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-contain p-4"
-            loading="lazy"
-          />
-        ) : (
-          <Package className="h-10 w-10 text-muted-foreground" />
-        )}
-        <DiscountBadge percent={discount} className="absolute top-2 left-2" />
-      </div>
-      <div className="p-3">
-        <p className="text-sm text-foreground line-clamp-2 leading-snug min-h-[2.6em] group-hover:text-primary transition-colors">
-          {product.name}
-        </p>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="price-num text-base font-bold text-price">{formatPrice(product.price)}</span>
-          {product.oldPrice && (
-            <span className="price-num price-old text-xs">{formatPrice(product.oldPrice)}</span>
-          )}
-        </div>
-        {product.numStores > 0 && (
-          <p className="microcopy-label mt-1">{shopLabel(product.numStores)}</p>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-// Richer deal card — drop badge, savings line, filled CTA — for the deals rail
-// where the discount is the story (PriceSpy daily-deals pattern, in our
-// teal/mono identity). `large` gives the first rail a bigger, hero-rail feel.
-function DealCard({ product, large = false }: { product: MockProduct; large?: boolean }) {
-  const discount = discountOf(product);
-  const savings = product.oldPrice ? product.oldPrice - product.price : 0;
-  const brand = product.name.split(' ')[0];
-
-  // Two targets: the card body opens our product page (internal); "View deal"
-  // opens the vendor's product page (external, new tab). They're siblings — not
-  // nested anchors — so each click goes exactly where intended.
-  return (
-    <div
-      className={`flex flex-col flex-shrink-0 snap-start bg-card ultra-border rounded-lg overflow-hidden ${
-        large ? 'min-w-[240px] max-w-[270px]' : 'min-w-[200px] max-w-[220px]'
-      }`}
-    >
-      <Link to={`/product/${product.id}`} className="group flex flex-col flex-1">
-        <div className="relative aspect-square bg-surface-alt flex items-center justify-center">
-          {product.image ? (
-            <img
-              src={product.image}
-              alt={product.name}
-              className={`w-full h-full object-contain ${large ? 'p-5' : 'p-4'}`}
-              loading="lazy"
-            />
-          ) : (
-            <Package className="h-10 w-10 text-muted-foreground" />
-          )}
-          <DiscountBadge percent={discount} className="absolute top-2 left-2" />
-        </div>
-        <div className="px-3 pt-3 flex flex-col flex-1">
-          <p className="microcopy-label">{brand}</p>
-          <p className="text-sm text-foreground line-clamp-2 leading-snug min-h-[2.6em] mt-1 group-hover:text-primary transition-colors">
-            {product.name}
-          </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className={`price-num font-bold text-price ${large ? 'text-lg' : 'text-base'}`}>
-              {formatPrice(product.price)}
-            </span>
-            {product.oldPrice && (
-              <span className="price-num price-old text-xs">{formatPrice(product.oldPrice)}</span>
-            )}
-          </div>
-          {savings > 0 && (
-            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-teal">
-              <ArrowDown aria-hidden="true" className="w-3 h-3" strokeWidth={2.5} /> Save {formatPrice(savings)}
-            </p>
-          )}
-          <p className="microcopy-label mt-1">{shopLabel(product.numStores)}</p>
-        </div>
-      </Link>
-
-      {/* External CTA → vendor's product page (new tab). Always visible; fills teal on hover. */}
-      <div className="px-3 pt-2.5 pb-3">
-        <a
-          href={product.vendorUrl ?? '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`View ${product.name} deal at the vendor (opens in a new tab)`}
-          className="group/btn flex items-center justify-center gap-1.5 h-9 rounded-lg bg-teal text-white text-sm font-semibold hover:bg-teal-deep transition-colors"
-        >
-          View deal
-          <ArrowUpRight aria-hidden="true" className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-        </a>
-      </div>
-    </div>
-  );
-}
-
-// "Deal of the day" — a single curated featured deal that breaks the rail run
-// and reuses the hero's price-spread bar. Editorial rhythm so the page reads as
-// a curated front page, not a feed. See HOMEPAGE_AUDIT.md (revertable).
-function FeaturedDeal({ product }: { product: MockProduct }) {
-  const discount = discountOf(product);
-  const savings = product.oldPrice ? product.oldPrice - product.price : 0;
-  const brand = product.name.split(' ')[0];
-  const highest =
-    product.oldPrice && product.oldPrice > product.price
-      ? product.oldPrice
-      : Math.round(product.price * 1.12);
-
-  return (
-    <Reveal className="mb-12">
-      <section className="ultra-border rounded-2xl overflow-hidden hover:border-border">
-        <div className="grid md:grid-cols-2 items-stretch">
-          {/* Left: image well (links to our product page) */}
-          <Link
-            to={`/product/${product.id}`}
-            className="group relative bg-surface-alt flex items-center justify-center p-8 md:p-10 min-h-[260px]"
-          >
-            <span className="microcopy-label absolute top-4 left-4 text-teal">Deal of the day</span>
-            <DiscountBadge percent={discount} className="absolute top-4 right-4" />
-            {product.image ? (
-              <img
-                src={product.image}
-                alt={product.name}
-                className="max-h-[260px] w-auto object-contain"
-                loading="lazy"
-              />
-            ) : (
-              <Package className="h-16 w-16 text-muted-foreground" />
-            )}
-          </Link>
-
-          {/* Right: the pricing story */}
-          <div className="p-6 md:p-10 flex flex-col justify-center">
-            <p className="microcopy-label">{brand}</p>
-            <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground mt-1 mb-3 leading-tight">
-              {product.name}
-            </h3>
-
-            <div className="flex items-baseline gap-3 mb-1">
-              <span className="price-num text-2xl md:text-3xl font-bold text-price">
-                {formatPrice(product.price)}
-              </span>
-              {product.oldPrice && (
-                <span className="price-num price-old text-sm">{formatPrice(product.oldPrice)}</span>
-              )}
-            </div>
-            {savings > 0 && (
-              <p className="inline-flex items-center gap-1 text-sm font-semibold text-teal mb-5">
-                <ArrowDown aria-hidden="true" className="w-3.5 h-3.5" strokeWidth={2.5} /> Save{' '}
-                {formatPrice(savings)}
-              </p>
-            )}
-
-            {/* Signature price-spread bar (lowest ● ── ○ highest) */}
-            <div className="flex items-center gap-3 mb-6 max-w-md">
-              <span className="price-num text-sm font-semibold text-teal">{formatPrice(product.price)}</span>
-              <div className="relative h-1.5 flex-1 rounded-full bg-border">
-                <span
-                  className="absolute -top-1 left-0 w-3.5 h-3.5 rounded-full bg-teal"
-                  style={{ boxShadow: '0 0 0 4px rgba(14,124,139,0.15)' }}
-                />
-                <span className="absolute -top-1 right-0 w-3.5 h-3.5 rounded-full bg-muted-foreground/40" />
-              </div>
-              <span className="price-num text-sm text-muted-foreground">{formatPrice(highest)}</span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-              <a
-                href={product.vendorUrl ?? '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`View ${product.name} deal at the vendor (opens in a new tab)`}
-                className="group/btn inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-lg bg-teal text-white text-sm font-semibold hover:bg-teal-deep transition-colors"
-              >
-                View deal
-                <ArrowUpRight aria-hidden="true" className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-              </a>
-              <Link
-                to={`/product/${product.id}`}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:text-link-hover"
-              >
-                Compare {shopLabel(product.numStores)} <ArrowRight aria-hidden="true" className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    </Reveal>
-  );
-}
-
 function Rail({
   title,
   subtitle,
   href,
   linkLabel,
   products,
-  CardComponent = HomeProductCard,
-  large = false,
+  CardComponent = ClusterCard,
   reveal = false,
 }: {
   title: string;
   subtitle: string;
   href: string;
   linkLabel: string;
-  products: MockProduct[];
-  CardComponent?: ComponentType<{ product: MockProduct; large?: boolean }>;
-  large?: boolean;
+  products: ClusterSummary[];
+  CardComponent?: ComponentType<{ cluster: ClusterSummary }>;
   reveal?: boolean;
 }) {
   if (products.length === 0) return null;
   const row = (
     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x scroll-hint-x items-stretch">
       {products.map((product) => (
-        <CardComponent key={`${title}-${product.id}`} product={product} large={large} />
+        <CardComponent key={`${title}-${product.cluster_id}`} cluster={product} />
       ))}
     </div>
   );
@@ -317,62 +86,100 @@ const TRUST_POINTS = [
 ];
 
 export default function HomePage() {
-  // DESIGN PASS: rails are driven by static mock data. See homepageMock.ts for
-  // the TODO(wire-data) notes on swapping in live endpoints.
+  // Every figure and every card on this page comes from the captured catalogue
+  // in public/demo/ — there is no mock data left. Rails are the comparison-grade
+  // categories, in real size order.
+  const [manifest, setManifest] = useState<DemoManifest | null>(null);
+  const [deals, setDeals] = useState<ClusterSummary[]>([]);
+  const [rails, setRails] = useState<{ slug: string; rows: ClusterSummary[] }[]>([]);
+  const [showcase, setShowcase] = useState<ClusterSummary | null>(null);
+  const [aside, setAside] = useState<ClusterSummary | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [m, d] = await Promise.all([
+          clustersApi.getManifest(),
+          clustersApi.getDeals({ limit: 12 }),
+        ]);
+        if (cancelled) return;
+        setManifest(m);
+        setDeals(d.results);
+
+        // Hero showcase: a recognisable device carried by several stores with a
+        // real photo. Deals are spread-ranked, so the head of the list is
+        // dominated by high-spread grocery items — good data, but a spaghetti
+        // packet does not read as "know the real price" in a phone mockup.
+        const showcaseworthy = (c: ClusterSummary) =>
+          Boolean(c.image) && (c.n_stores ?? 0) >= 3 && !c.data_warning;
+        const device = (c: ClusterSummary) =>
+          ['mobile-phones', 'laptops', 'tablets'].includes(c.category ?? '');
+        const hero =
+          d.results.find((c) => showcaseworthy(c) && device(c)) ??
+          d.results.find(showcaseworthy) ??
+          d.results.find((c) => c.image) ??
+          d.results[0] ??
+          null;
+        setShowcase(hero);
+        setAside(
+          d.results.find(
+            (c) => c.image && c.cluster_id !== hero?.cluster_id && (c.n_stores ?? 0) >= 2,
+          ) ?? null,
+        );
+
+        const featured = m.categories.filter((c) => c.comparison_grade).slice(0, 4);
+        const pages = await Promise.all(
+          featured.map((c) => clustersApi.getCategoryPage(c.slug, 0)),
+        );
+        if (cancelled) return;
+        setRails(featured.map((c, i) => ({ slug: c.slug, rows: pages[i].results.slice(0, 6) })));
+      } catch {
+        // Static build: a missing fixture leaves the rails empty rather than
+        // breaking the page. Rail already returns null for an empty list.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const categoryCount = (slug: string) =>
+    manifest?.categories.find((c) => c.slug === slug)?.count ?? 0;
+
   return (
     <div className="bg-white">
-      <HeroSection productCount={921800} variant="light" />
+      <HeroSection productCount={manifest?.total_clusters} variant="light" showcase={showcase} aside={aside} />
       <div className="mt-5">
         <CategoryStrip />
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
-        <FeaturedDeal product={mockDeals[0]} />
-
         <Rail
-          title="Top deals today"
-          subtitle="The biggest price drops we're tracking right now"
+          title="Biggest price gaps today"
+          subtitle={
+            manifest
+              ? `${manifest.deals.count.toLocaleString()} products cost measurably less at one store than another`
+              : 'The largest like-for-like savings across stores'
+          }
           href="/deals"
           linkLabel="See all deals"
-          products={mockDeals}
-          CardComponent={DealCard}
-          large
+          products={deals.slice(0, 6)}
           reveal
-        />
-        <Rail
-          title="Popular right now"
-          subtitle="Most compared products this week"
-          href="/browse"
-          linkLabel="Browse all"
-          products={mockPopular}
         />
 
         <HowItWorks />
 
-        <Rail
-          title="Trending in Phones & Wearables"
-          subtitle="Top picks carried by the most shops"
-          href="/browse/phones_wearables"
-          linkLabel="See all phones"
-          products={mockPhones}
-        />
-        <Rail
-          title="Top in Computing"
-          subtitle="Laptops, desktops and more"
-          href="/browse/computing"
-          linkLabel="See all computing"
-          products={mockComputing}
-        />
-
-        <AlertsBanner />
-
-        <Rail
-          title="Popular in Sound & Vision"
-          subtitle="TVs, speakers and home cinema"
-          href="/browse/sound_vision"
-          linkLabel="See all sound & vision"
-          products={mockSoundVision}
-        />
+        {rails.map(({ slug, rows }, i) => (
+          <div key={slug}>
+            <Rail
+              title={categoryLabel(slug)}
+              subtitle={`${categoryCount(slug).toLocaleString()} products tracked across Kenyan stores`}
+              href={`/browse/${slug}`}
+              linkLabel={`Browse ${categoryLabel(slug).toLowerCase()}`}
+              products={rows}
+            />
+            {i === 1 && <AlertsBanner example={showcase} />}
+          </div>
+        ))}
 
         {/* Trust close — the page ends on why to trust us, not a signup ask.
             Keeps the gradient; drops the "create an account" pressure.

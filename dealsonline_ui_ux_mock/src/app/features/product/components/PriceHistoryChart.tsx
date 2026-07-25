@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
-import { type PRProductDetail } from '../../../lib/api';
-import { type PricePoint } from '../../../data/mockServices';
+import { type PricePoint } from '../../../lib/api';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../../../components/ui/chart';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { formatPrice } from '../../../lib/format';
 
 interface PRPriceHistoryChartProps {
-  product: PRProductDetail;
+  title: string;
   priceHistory: PricePoint[];
 }
 
@@ -18,7 +17,7 @@ const chartConfig: ChartConfig = {
   },
 };
 
-export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryChartProps) {
+export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChartProps) {
   const [historyPeriod, setHistoryPeriod] = useState<'3m' | '6m' | '1y' | 'all'>('1y');
 
   const filteredHistory = useMemo(() => {
@@ -32,8 +31,8 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const minMonth = filteredHistory.find(p => p.price === min)?.month ?? '';
-    const maxMonth = filteredHistory.find(p => p.price === max)?.month ?? '';
+    const minMonth = filteredHistory.find(p => p.price === min)?.t ?? '';
+    const maxMonth = filteredHistory.find(p => p.price === max)?.t ?? '';
     return { min, max, avg: Math.round(avg * 100) / 100, minMonth, maxMonth };
   }, [filteredHistory]);
 
@@ -41,7 +40,7 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
     <div>
       <h2 className="text-xl font-bold text-foreground mb-1">Price history</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Track how the price of {product.name} has changed over time
+        Track how the price of {title} has changed over time
       </p>
 
       {/* Period selector */}
@@ -72,7 +71,7 @@ export function PRPriceHistoryChart({ product, priceHistory }: PRPriceHistoryCha
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
-            dataKey="month"
+            dataKey="t"
             tickLine={false}
             axisLine={false}
             tickMargin={8}

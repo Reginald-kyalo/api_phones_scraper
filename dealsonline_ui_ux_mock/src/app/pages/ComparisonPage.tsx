@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useLocalComparison } from '../hooks/useLocalStorage';
 import { formatPrice } from '../lib/format';
-import { type PRProduct } from '../lib/api';
+import { type ClusterSummary } from '../lib/api';
 import { Button } from '../components/ui/button';
 import {
   Package, Star, X, ArrowLeft, Search, ChevronLeft, ChevronRight, Plus,
@@ -29,16 +29,16 @@ export default function ComparisonPage() {
   }, [clearComparison]);
 
   const handleAddFromPanel = useCallback(
-    (product: PRProduct) => {
+    (product: ClusterSummary) => {
       addToComparison({
-        id: product.id,
-        name: product.name,
-        image: product.image,
-        price: product.price,
-        numStores: product.numStores,
-        categoryName: product.categoryName,
-        categoryUrl: product.categoryUrl,
-        productType: product.productType,
+        id: product.cluster_id,
+        name: product.display_name ?? product.title,
+        image: product.image ?? '',
+        price: product.best_price ?? 0,
+        numStores: product.n_stores ?? 0,
+        categoryName: product.category ?? '',
+        categoryUrl: '',
+        productType: product.category ?? '',
       });
     },
     [addToComparison],
@@ -149,7 +149,7 @@ export default function ComparisonPage() {
 
                 <div className="p-3 text-center">
                   {/* Image */}
-                  <Link to={`/product/${item.product_id}`}>
+                  <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>
                     <div className="aspect-square bg-gray-50 rounded-lg flex items-center justify-center mb-2 border border-gray-100">
                       {item.image ? (
                         <img
@@ -165,7 +165,7 @@ export default function ComparisonPage() {
                   </Link>
 
                   {/* Name */}
-                  <Link to={`/product/${item.product_id}`}>
+                  <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>
                     <h3 className="text-sm font-medium line-clamp-3 leading-snug mb-2 hover:text-primary transition-colors text-left">
                       {item.name}
                     </h3>

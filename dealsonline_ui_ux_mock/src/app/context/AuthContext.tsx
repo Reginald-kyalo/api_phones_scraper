@@ -15,10 +15,24 @@ interface AuthContextValue extends AuthState {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * This build ships as static files with no API behind it (see demoSource.ts).
+ * Every server-backed auth call is therefore a guaranteed failure.
+ */
+const STATIC_DEMO = true;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
 
   const checkSession = useCallback(async () => {
+    // Static demo build: there is no auth backend, so probing /api/verify-session
+    // only produces a failed request in every visitor's console on every page
+    // load. Resolve straight to signed-out; favourites, alerts and comparison all
+    // run on localStorage and work unchanged.
+    if (STATIC_DEMO) {
+      setState({ user: null, loading: false });
+      return;
+    }
     try {
       const info = await authApi.verifySession();
       setState({ user: info, loading: false });

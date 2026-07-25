@@ -9,7 +9,11 @@ The helpers encode measured facts about the corpus (2026-07-25):
 The sizing helpers exist so the dataset is never truncated for size: pages and
 shards absorb a bigger corpus instead of a cap dropping rows.
 """
+import json
 import math
+from pathlib import Path
+
+import pytest
 
 from scripts.capture_demo_dataset import (
     MAX_BUCKETS,
@@ -207,3 +211,44 @@ def test_cluster_with_no_history_returns_none():
 
 def test_minimum_is_two_points():
     assert MIN_HISTORY_POINTS == 2
+
+
+@pytest.fixture
+def demo_dir() -> Path:
+    """The captured dataset. Skips when it has not been generated yet."""
+    out = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock" / "public" / "demo"
+    if not (out / "manifest.json").exists():
+        pytest.skip("demo dataset not captured; run scripts.capture_demo_dataset")
+    return out
+
+
+def test_detail_shards_carry_store_urls(demo_dir):
+    """Detail views must use the full projection, not the summary one.
+
+    `_cluster_view(doc)` defaults to full=False, which writes best_by_store as
+    {store: price}. The page still renders — prices show, layout is fine — but
+    every "Go to store" link loses its href, silently removing the click-through
+    the comparison exists to provide. Proven red by reverting to full=False.
+    """
+    shards = sorted((demo_dir / "clusters").glob("*.json"))
+    assert shards, "no detail shards captured"
+
+    checked = 0
+    for shard in shards[:12]:
+        for cluster in json.loads(shard.read_text()).values():
+            offers = cluster.get("best_by_store") or {}
+            if not offers:
+                continue
+            for store, offer in offers.items():
+                assert isinstance(offer, dict), (
+                    f"{cluster['cluster_id']} store {store!r} is a bare price "
+                    f"({offer!r}) — captured with the summary projection, so the "
+                    f"store URL is gone"
+                )
+                assert str(offer.get("url", "")).startswith("http"), (
+                    f"{cluster['cluster_id']} store {store!r} has no usable url"
+                )
+            checked += 1
+            if checked >= 200:
+                return
+    assert checked, "no priced clusters found to check"

@@ -1,11 +1,11 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, redirect } from "react-router";
 import { lazy } from "react";
 import Root from "./pages/Root";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
-const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
-const BrowsePage = lazy(() => import("./pages/BrowsePage"));
-const ProductDetailsPage = lazy(() => import("./pages/ProductDetailsPage"));
+const CatalogueCategoriesPage = lazy(() => import("./pages/CatalogueCategoriesPage"));
+const CatalogueBrowsePage = lazy(() => import("./pages/CatalogueBrowsePage"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
@@ -23,16 +23,22 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: HomePage },
-      { path: "browse", Component: CategoriesPage },
-      { path: "browse/:productType", Component: BrowsePage },
-      { path: "product/:productId", Component: ProductDetailsPage },
-      // Redirect or alias legacy routes
-      { path: "category/:categoryId", Component: BrowsePage }, 
-      { path: "search", Component: BrowsePage },
-      { path: "product/pr/:productId", Component: ProductDetailsPage },
-      
+
+      // Catalogue — every captured cluster, served from public/demo/.
+      { path: "browse", Component: CatalogueCategoriesPage },
+      { path: "browse/:productType", Component: CatalogueBrowsePage },
+      { path: "search", Component: SearchPage },
       { path: "deals", Component: DealsPage },
       { path: "prices/:clusterId", Component: ClusterPricesPage },
+
+      // The PriceRunner-backed product page is retired in the static build: it
+      // had no backend here, and it rendered GBP catalogue prices as KES next to
+      // generated stores, reviews and price history. /prices/:clusterId is the
+      // real comparison page. Old links land on the catalogue rather than 404.
+      { path: "product/:productId", loader: () => redirect("/browse") },
+      { path: "product/pr/:productId", loader: () => redirect("/browse") },
+      { path: "category/:categoryId", loader: () => redirect("/browse") },
+
       { path: "favorites", Component: FavoritesPage },
       { path: "alerts", Component: PriceAlertsPage },
       { path: "account", Component: AccountPage },

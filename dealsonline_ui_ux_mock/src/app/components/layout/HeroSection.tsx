@@ -1,9 +1,19 @@
-import { Check } from 'lucide-react';
+import { Check, Package } from 'lucide-react';
 import SearchBar from '../../features/search/components/SearchBar';
 import { Reveal } from '../common/Reveal';
+import type { ClusterSummary } from '../../lib/api';
+import { formatPrice } from '../../lib/format';
 
 interface HeroSectionProps {
   productCount?: number;
+  /**
+   * A real captured cluster with >=2 stores. The spread strip and the device
+   * showcase both render from it, so every figure in the hero is one the
+   * dataset can defend. Falls back to the static frame while it loads.
+   */
+  showcase?: ClusterSummary | null;
+  /** Second real cluster, for the hero's floating card. */
+  aside?: ClusterSummary | null;
   /** 'dark' = ink canvas (Linear-style); 'light' = airy canvas (Stripe-style). */
   variant?: 'dark' | 'light';
 }
@@ -19,8 +29,33 @@ const SCREEN_ROWS = [
   { bar: 'w-9', price: 'KES 42,300', lowest: false },
 ];
 
-export default function HeroSection({ productCount = 921800, variant = 'dark' }: HeroSectionProps) {
+export default function HeroSection({ productCount, variant = 'dark', showcase, aside }: HeroSectionProps) {
   const dark = variant === 'dark';
+  // Listing rows carry no best_by_store (it is detail-only, to keep the feed
+  // small), so the top of the spread is derived from the spread itself:
+  // spread_pct = (high - low) / low * 100.
+  const prices = Object.values(showcase?.best_by_store ?? {}).filter(
+    (v): v is number => typeof v === 'number',
+  );
+  const spreadPct = showcase?.like_for_like_spread_pct ?? null;
+  const highest = prices.length
+    ? Math.max(...prices)
+    : showcase?.best_price != null && spreadPct != null
+      ? Math.round(showcase.best_price * (1 + spreadPct / 100))
+      : null;
+  const saving =
+    highest != null && showcase?.best_price != null ? highest - showcase.best_price : null;
+  // Real per-store offers, cheapest first. Stores stay anonymous by design — a
+  // redacted bar, not a brand name: no store gets free placement in the hero.
+  const offerRows = [...prices]
+    .sort((a, b) => a - b)
+    .slice(0, 6)
+    .map((price, i) => ({
+      bar: ['w-12', 'w-8', 'w-14', 'w-10', 'w-12', 'w-9'][i % 6],
+      price: formatPrice(price),
+      lowest: i === 0,
+    }));
+  const rowsForScreen = offerRows.length ? offerRows : SCREEN_ROWS;
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-6 pt-6">
@@ -75,20 +110,24 @@ export default function HeroSection({ productCount = 921800, variant = 'dark' }:
                 dark ? 'text-white/40' : 'text-muted-foreground'
               }`}
             >
-              {productCount.toLocaleString()}+ products · live prices · free alerts
+              {/* Exact, not "62,668+": the capture is a closed snapshot, and
+                  "live prices" would overclaim for a static dataset. */}
+              {productCount != null
+                ? `${productCount.toLocaleString()} products · real prices · free alerts`
+                : 'Real prices from Kenyan stores · free alerts'}
             </p>
           </div>
 
           {/* Right: phone showcase with ambient light (desktop) */}
           <div className="hidden lg:flex justify-center">
-            <PhoneShowcase />
+            <PhoneShowcase showcase={showcase} aside={aside} rows={rowsForScreen} />
           </div>
 
           {/* Mobile/tablet: a frameless comparison card so the signature
               "every offer, lowest in teal" visual reaches the mobile-first
               audience too (the phone showcase is desktop-only). */}
           <div className="lg:hidden">
-            <MobileOffers dark={dark} />
+            <MobileOffers dark={dark} showcase={showcase} rows={rowsForScreen} />
           </div>
         </div>
 
@@ -108,13 +147,13 @@ export default function HeroSection({ productCount = 921800, variant = 'dark' }:
                 Price spread
               </span>
               <span className={`text-sm font-semibold ${dark ? 'text-white' : 'text-ink'}`}>
-                Wireless headphones
+                {showcase ? (showcase.display_name ?? showcase.title) : 'Loading…'}
               </span>
             </div>
 
             <div className="flex items-center gap-3 flex-1 min-w-[280px]">
               <span className={`price-num text-sm font-semibold ${dark ? 'text-teal-bright' : 'text-teal'}`}>
-                KES 34,499
+                {formatPrice(showcase?.best_price ?? null)}
               </span>
               <div
                 className={`relative h-1.5 flex-1 rounded-full ${dark ? 'bg-white/10' : 'bg-border'}`}
@@ -130,7 +169,7 @@ export default function HeroSection({ productCount = 921800, variant = 'dark' }:
                 />
               </div>
               <span className={`price-num text-sm ${dark ? 'text-white/45' : 'text-muted-foreground'}`}>
-                KES 38,200
+                {formatPrice(highest)}
               </span>
             </div>
 
@@ -139,7 +178,8 @@ export default function HeroSection({ productCount = 921800, variant = 'dark' }:
                 dark ? 'bg-teal-bright/15 text-teal-bright' : 'bg-teal/10 text-teal'
               }`}
             >
-              Save KES 3,700 <span className="opacity-60">·</span> 9%
+              Save {formatPrice(saving)} <span className="opacity-60">·</span>{' '}
+              {Math.round(showcase?.like_for_like_spread_pct ?? 0)}%
             </span>
           </Reveal>
         </div>
@@ -150,22 +190,37 @@ export default function HeroSection({ productCount = 921800, variant = 'dark' }:
 
 /* A clean, device-agnostic SCREEN (no notch, no buttons, no app branding)
    showing the comparison moment — generic product, anonymous offers. */
-function PhoneShowcase() {
+function PhoneShowcase({
+  showcase,
+  aside,
+  rows: rowsForScreen,
+}: {
+  showcase?: ClusterSummary | null;
+  /** Second real cluster for the floating card — never a stock photo. */
+  aside?: ClusterSummary | null;
+  rows: { bar: string; price: string; lowest: boolean }[];
+}) {
   return (
     <div className="relative w-[270px]">
       {/* Floating mini deal (behind, top-left) — generic, no brand */}
       <div className="absolute -left-12 top-12 w-32 bg-card rounded-xl shadow-xl ultra-border p-2.5 z-0">
         <div className="aspect-square bg-surface-alt rounded-lg overflow-hidden mb-2">
-          <img
-            src="https://owp.klarna.com/product/232x232/3207276118/LG-OLED55C56LB-55-OLED-Smart-Television.jpg"
-            alt=""
-            className="w-full h-full object-contain p-1.5"
-            loading="lazy"
-          />
+          {aside?.image ? (
+            <img
+              src={aside.image}
+              alt=""
+              className="w-full h-full object-contain p-1.5"
+              loading="lazy"
+            />
+          ) : (
+            <Package className="w-5 h-5 m-auto text-muted-foreground/40" aria-hidden="true" />
+          )}
         </div>
-        <p className="text-[11px] font-semibold text-foreground leading-tight">4K OLED TV</p>
+        <p className="text-[11px] font-semibold text-foreground leading-tight line-clamp-2">
+          {aside ? (aside.display_name ?? aside.title) : 'Loading…'}
+        </p>
         <div className="flex items-center justify-between mt-1">
-          <span className="price-num text-xs font-bold text-ink">KES 159,999</span>
+          <span className="price-num text-xs font-bold text-ink">{formatPrice(aside?.best_price ?? null)}</span>
           <span className="rounded bg-teal/10 text-teal text-[9px] font-bold px-1.5 py-0.5">-14%</span>
         </div>
       </div>
@@ -178,18 +233,22 @@ function PhoneShowcase() {
           <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-muted-foreground/25" />
           <div className="px-4 pt-2 flex flex-col flex-1 min-h-0">
             <div className="aspect-square w-20 mx-auto bg-surface-alt rounded-xl overflow-hidden mb-2.5 flex-shrink-0">
-              <img
-                src="https://owp.klarna.com/product/232x232/3265537896/0353-Wireless-Headband-Headphones-Gray.jpg"
-                alt=""
-                className="w-full h-full object-contain p-2"
-                loading="lazy"
-              />
+              {showcase?.image ? (
+                <img
+                  src={showcase.image}
+                  alt=""
+                  className="w-full h-full object-contain p-2"
+                  loading="lazy"
+                />
+              ) : (
+                <Package className="w-6 h-6 m-auto text-muted-foreground/40" aria-hidden="true" />
+              )}
             </div>
             <p className="text-sm font-semibold text-foreground leading-tight text-center mb-0.5 flex-shrink-0">
-              Wireless headphones
+              {showcase ? (showcase.display_name ?? showcase.title) : 'Wireless headphones'}
             </p>
             <p className="font-mono text-[10px] text-muted-foreground text-center mb-3 tracking-wide flex-shrink-0">
-              8 OFFERS
+              {showcase?.n_stores ?? 0} OFFERS
             </p>
             {/* Offer list intentionally overflows the bottom edge — the last row
                 clips + fades to hint there are more offers below. */}
@@ -200,7 +259,7 @@ function PhoneShowcase() {
                 WebkitMaskImage: 'linear-gradient(to bottom, #000 76%, transparent)',
               }}
             >
-              {SCREEN_ROWS.map((row, i) => (
+              {rowsForScreen.map((row, i) => (
                 <div
                   key={i}
                   className={`flex items-center justify-between rounded-lg px-2.5 py-2 ${
@@ -240,8 +299,16 @@ function PhoneShowcase() {
 /* Compact, frameless version of the comparison moment for mobile/tablet —
    same anonymized offers + lowest-in-teal story as the phone, without the
    device chrome (a phone-inside-a-phone reads odd on a real phone). */
-function MobileOffers({ dark }: { dark: boolean }) {
-  const rows = SCREEN_ROWS.slice(0, 3);
+function MobileOffers({
+  dark,
+  showcase,
+  rows: allRows,
+}: {
+  dark: boolean;
+  showcase?: ClusterSummary | null;
+  rows: { bar: string; price: string; lowest: boolean }[];
+}) {
+  const rows = allRows.slice(0, 3);
   return (
     <div
       className={`w-full max-w-md mx-auto rounded-2xl p-4 ${
@@ -250,23 +317,27 @@ function MobileOffers({ dark }: { dark: boolean }) {
     >
       <div className="flex items-center gap-3 mb-3">
         <div className="w-12 h-12 rounded-lg bg-surface-alt overflow-hidden flex-shrink-0 flex items-center justify-center">
-          <img
-            src="https://owp.klarna.com/product/232x232/3265537896/0353-Wireless-Headband-Headphones-Gray.jpg"
-            alt=""
-            className="w-full h-full object-contain p-1.5"
-            loading="lazy"
-          />
+          {showcase?.image ? (
+            <img
+              src={showcase.image}
+              alt=""
+              className="w-full h-full object-contain p-1.5"
+              loading="lazy"
+            />
+          ) : (
+            <Package className="w-5 h-5 text-muted-foreground/40" aria-hidden="true" />
+          )}
         </div>
         <div className="min-w-0">
           <p className={`text-sm font-semibold leading-tight ${dark ? 'text-white' : 'text-foreground'}`}>
-            Wireless headphones
+            {showcase ? (showcase.display_name ?? showcase.title) : 'Wireless headphones'}
           </p>
           <p
             className={`font-mono text-[10px] tracking-wide mt-0.5 ${
               dark ? 'text-white/45' : 'text-muted-foreground'
             }`}
           >
-            8 OFFERS · LOWEST KES 34,499
+            {(showcase?.n_stores ?? 0)} OFFERS · LOWEST {formatPrice(showcase?.best_price ?? null)}
           </p>
         </div>
       </div>

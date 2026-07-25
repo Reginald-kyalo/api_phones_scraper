@@ -1,0 +1,6 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>DealsOnline</title>
+<!-- GitHub Pages has no rewrite rule, so it serves 404.html for unknown paths.
+     Hand the original URL back to the SPA router instead of showing an error. -->
+<script>sessionStorage.setItem('spa-redirect', location.href); location.replace('/');</script>

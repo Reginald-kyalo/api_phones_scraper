@@ -196,7 +196,12 @@ def main() -> None:
 
     views = []
     for doc in docs:
-        view = _cluster_view(doc)
+        # full=True is what puts {price,url,title} in best_by_store instead of a
+        # bare price. Without it the detail shards carry no store URLs at all and
+        # every "Go to store" button on the comparison page is a dead link — the
+        # one thing the whole comparison exists to provide. Listings are written
+        # from _summary(), so they stay small regardless.
+        view = _cluster_view(doc, full=True)
         view["image"] = pick_image(doc, device_images)
         view["price_history"] = build_history(doc, histories)
         # Demoted, never dropped: the row stays browsable and its detail page still
