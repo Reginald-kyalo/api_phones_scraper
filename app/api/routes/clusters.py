@@ -10,7 +10,16 @@ shown as the "new" headline.
 
 The `_cluster_view` projection is a faithful copy of
 `product_identity/lookup_prices.cluster_view` so the served data cannot drift from
-the engine's own read view (asserted by the cross-check test).
+the engine's own read view (asserted by the cross-check test in the engine repo,
+`product_identity/tests/test_api_projection_contract.py`).
+
+Responses are typed by `app.api.schemas.clusters`, so every field's meaning —
+which price is a retail headline, which is a refurb asking price, which spread is
+honest — is published in the OpenAPI schema at /docs rather than living only in
+the comments below. ⚠️ A `response_model` FILTERS the response: a field missing
+from the model vanishes from the API with no error anywhere, so
+`tests/test_cluster_schemas.py` asserts the models stay a superset of this
+projection.
 """
 
 import os
@@ -18,6 +27,11 @@ import re
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.api.schemas.clusters import (
+    ClusterDealsResponse,
+    ClusterSearchResponse,
+    ClusterView,
+)
 from app.database import product_matching_db
 
 router = APIRouter(prefix="/api/clusters", tags=["clusters"])
@@ -168,7 +182,7 @@ def _check_slug(slug: str | None) -> None:
         raise HTTPException(status_code=400, detail=f"unknown slug; expected one of {sorted(_SLUGS)}")
 
 
-@router.get("/search")
+@router.get("/search", response_model=ClusterSearchResponse)
 async def search_clusters(
     q: str = Query(..., min_length=1, description="free-text product query, e.g. 'galaxy a55'"),
     slug: str | None = Query(None, description="restrict to a category slug"),
@@ -190,7 +204,7 @@ async def search_clusters(
     return {"query": q, "count": len(rows), "results": [_cluster_view(d) for d in rows]}
 
 
-@router.get("/deals")
+@router.get("/deals", response_model=ClusterDealsResponse)
 async def best_deals(
     slug: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
@@ -223,7 +237,7 @@ async def best_deals(
     return {"count": len(rows), "results": [_cluster_view(d) for d in rows]}
 
 
-@router.get("/{cluster_id:path}")
+@router.get("/{cluster_id:path}", response_model=ClusterView)
 async def cluster_detail(cluster_id: str):
     """Full comparison for one product, including per-store URLs to click through."""
     d = await CLUSTERS.find_one({"_id": cluster_id})
