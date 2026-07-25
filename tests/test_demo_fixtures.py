@@ -15,6 +15,7 @@ Two failure modes this exists for, both silent:
 Skips cleanly when the capture has not been run.
 """
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -37,10 +38,32 @@ def _manifest():
 # ----------------------------------------------------- cross-language contract
 
 def test_typescript_pads_shard_suffixes_to_the_same_width():
-    """`const PAD = 3` in demoSource.ts must equal SHARD_DIGITS here."""
+    """The TS zero-pad width must equal SHARD_DIGITS, or bucket 100 collides with
+    bucket 00 and every detail page in a large category 404s.
+
+    Checks the VALUE, not a spelling: `padStart(3, '0')` and `padStart(PAD, '0')`
+    with `const PAD = 3` are both fine. An earlier version asserted the literal
+    string `const PAD = 3;` and went red when the constant was inlined — a real
+    false positive, since the behaviour was identical.
+    """
     if not DEMO_SOURCE_TS.exists():
         pytest.skip("frontend not present")
-    assert f"const PAD = {SHARD_DIGITS};" in DEMO_SOURCE_TS.read_text()
+    source = DEMO_SOURCE_TS.read_text()
+
+    calls = re.findall(r"padStart\(\s*([A-Za-z_$][\w$]*|\d+)\s*,", source)
+    assert calls, "demoSource.ts no longer zero-pads shard suffixes at all"
+
+    widths = set()
+    for arg in calls:
+        if arg.isdigit():
+            widths.add(int(arg))
+            continue
+        const = re.search(rf"\b{re.escape(arg)}\s*=\s*(\d+)", source)
+        assert const, f"padStart({arg}, …) but {arg} has no numeric definition"
+        widths.add(int(const.group(1)))
+
+    assert widths == {SHARD_DIGITS}, \
+        f"TS pads to {sorted(widths)}, capture pads to {SHARD_DIGITS}"
 
 
 def test_typescript_uses_the_same_fnv1a_constants():

@@ -491,8 +491,8 @@ export const clustersApi = {
   /** Dataset totals and the category table — drives homepage rails and browse. */
   getManifest: () => demoSource.getManifest(),
 
-  /** Every cluster in one category, spread-ranked. */
-  getCategory: (slug: string, page = 0) => demoSource.getCategory(slug, page),
+  /** One page of a category listing (0-based); the catalogue is too big to load whole. */
+  getCategoryPage: (slug: string, page = 0) => demoSource.getCategoryPage(slug, page),
 };
 
 export { ApiError };
