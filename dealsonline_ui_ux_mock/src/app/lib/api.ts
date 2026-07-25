@@ -2,7 +2,11 @@
  * API client for the FastAPI backend.
  * All calls go through the Vite proxy (/api → localhost:10000).
  * Cookies are sent automatically (credentials: 'include').
+ *
+ * NOTE: in this statically-hosted demo build, `clustersApi` (bottom of file) is
+ * served from committed fixtures instead — see `demoSource.ts`.
  */
+import * as demoSource from './demoSource';
 
 const BASE = '/api';
 
@@ -433,6 +437,23 @@ export interface ClusterView<Store = number> {
   best_by_store: Record<string, Store>;
   /** non-null ⇒ show a caveat; do NOT headline the price as a clean deal. */
   data_warning: string | null;
+
+  // --- capture-time additions (see docs/superpowers/plans/2026-07-25-static-demo-dataset.md)
+  /** One real member image, chosen stably per cluster. 6,590/6,592 covered. */
+  image?: string | null;
+  /** Only present where >=2 real points exist (798 clusters); never synthesised. */
+  price_history?: PricePoint[] | null;
+  /** True for every cluster rebuilt through the MVP path — NOT a merge signal. */
+  mvp_generated?: boolean;
+  mvp_rule?: string | null;
+  /** >1 ⇒ this cluster is the union of several engine clusters: the only merge signal. */
+  mvp_n_merged?: number | null;
+}
+
+export interface PricePoint {
+  /** ISO date string */
+  t: string;
+  price: number;
 }
 
 /** Summary rows (search/deals) carry price-only store maps. */
@@ -440,31 +461,31 @@ export type ClusterSummary = ClusterView<number>;
 /** Detail view (single cluster) carries {price,url,title} per store for click-through. */
 export type ClusterDetail = ClusterView<ClusterStore>;
 
+/**
+ * Cluster data source.
+ *
+ * This build is statically hosted, so clusters come from the committed capture
+ * in `public/demo/` rather than `/api/clusters/*`. The fixtures are produced by
+ * the API's own `_cluster_view`, and capture-time verification showed zero field
+ * mismatches against the live endpoint — so the shapes below are unchanged and
+ * consumers do not care which side served them.
+ */
 export const clustersApi = {
   /** Best REAL like-for-like cross-store deals (NEW-priced, multi-store, honest spread). */
-  getDeals: (options?: { slug?: string; limit?: number; minStores?: number }) => {
-    const params = new URLSearchParams();
-    if (options?.slug) params.set('slug', options.slug);
-    if (options?.limit) params.set('limit', String(options.limit));
-    if (options?.minStores) params.set('min_stores', String(options.minStores));
-    return request<{ count: number; results: ClusterSummary[] }>(
-      `/clusters/deals?${params}`,
-    );
-  },
+  getDeals: (options?: { slug?: string; limit?: number; page?: number }) =>
+    demoSource.getDeals(options ?? {}),
 
-  search: (q: string, options?: { slug?: string; multiStoreOnly?: boolean; limit?: number }) => {
-    const params = new URLSearchParams({ q });
-    if (options?.slug) params.set('slug', options.slug);
-    if (options?.multiStoreOnly) params.set('multi_store_only', 'true');
-    if (options?.limit) params.set('limit', String(options.limit));
-    return request<{ query: string; count: number; results: ClusterSummary[] }>(
-      `/clusters/search?${params}`,
-    );
-  },
+  search: (q: string, options?: { slug?: string; limit?: number }) =>
+    demoSource.search(q, options ?? {}),
 
   /** Full comparison for one product, including per-store click-through URLs. */
-  getDetail: (clusterId: string) =>
-    request<ClusterDetail>(`/clusters/${encodeURIComponent(clusterId)}`),
+  getDetail: (clusterId: string) => demoSource.getDetail(clusterId),
+
+  /** Dataset totals and the category table — drives homepage rails and browse. */
+  getManifest: () => demoSource.getManifest(),
+
+  /** Every cluster in one category, spread-ranked. */
+  getCategory: (slug: string, page = 0) => demoSource.getCategory(slug, page),
 };
 
 export { ApiError };

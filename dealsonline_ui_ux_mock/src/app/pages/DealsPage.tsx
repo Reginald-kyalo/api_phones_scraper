@@ -15,22 +15,44 @@ const SPREAD_FILTERS = [
 export default function DealsPage() {
   const [clusters, setClusters] = useState<ClusterSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
   const [minSpread, setMinSpread] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [pages, setPages] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      // Backend caps limit at 50; minStores 2 ⇒ every row is a real comparison.
-      const res = await clustersApi.getDeals({ limit: 50, minStores: 2 });
+      // The captured feed is already multi-store, new-condition and
+      // floor-filtered — it reproduces /api/clusters/deals exactly. It is
+      // paginated rather than capped, so the first page is a page, not the lot.
+      const res = await clustersApi.getDeals();
       setClusters(res.results);
+      setTotal(res.count);
+      setPages(res.pages);
+      setPage(res.page);
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true);
+    try {
+      const res = await clustersApi.getDeals({ page: page + 1 });
+      setClusters((prev) => [...prev, ...res.results]);
+      setPage(res.page);
+    } catch {
+      setError(true);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page]);
 
   useEffect(() => {
     load();
@@ -60,6 +82,9 @@ export default function DealsPage() {
           </div>
           <p className="text-sm text-muted-foreground">
             Same product, different stores — ranked by how much the price varies for the same configuration.
+            {total > 0 && (
+              <> {total.toLocaleString()} cross-store deals found.</>
+            )}
           </p>
         </div>
 
@@ -91,11 +116,24 @@ export default function DealsPage() {
             </div>
 
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                {filtered.map((c) => (
-                  <ClusterDealCard key={c.cluster_id} cluster={c} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {filtered.map((c) => (
+                    <ClusterDealCard key={c.cluster_id} cluster={c} />
+                  ))}
+                </div>
+                {page < pages - 1 && (
+                  <div className="flex flex-col items-center gap-2 mt-8">
+                    <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="gap-2">
+                      {loadingMore && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                      {loadingMore ? 'Loading' : 'Load more deals'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Showing {clusters.length.toLocaleString()} of {total.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-16 text-muted-foreground">
                 <p>

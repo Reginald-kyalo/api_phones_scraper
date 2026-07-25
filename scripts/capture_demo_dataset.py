@@ -1,8 +1,8 @@
 """Capture the MVP demo dataset into static JSON for the hosted demo.
 
 Reads `product_matching_db.product_clusters_mvp` (never writes), projects every
-multi-store cluster through the API's own `_cluster_view` so fixtures match the
-live contract by construction, and shards the result into
+cluster through the API's own `_cluster_view` so fixtures match the live
+contract by construction, and shards the result into
 `dealsonline_ui_ux_mock/public/demo/`.
 
 Usage:
@@ -10,11 +10,22 @@ Usage:
 
 Mongo and the API module are imported inside main() so the pure helpers below
 stay unit-testable without a database.
+
+⭐ NOTHING HERE CAPS THE DATASET FOR SIZE. The first capture took only
+`n_stores >= 2` (6,592 of 66,406 clusters) and the top 400 deals. Both were
+arbitrary, and the first cost real fidelity: tvs, printers and digital-cameras
+have zero multi-store clusters, so three whole categories were missing from a
+demo whose corpus actually contains them. The whole catalogue now ships, and
+the only filters left are the ones the live API itself applies (`_is_deal`).
+Everything that used to be a cap is now a *shard boundary* instead — sizing,
+not selection, is what SHARD_TARGET_BYTES and PAGE_SIZE control.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import math
+import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -22,13 +33,48 @@ from pathlib import Path
 SOURCE_COLLECTION = "product_clusters_mvp"
 OUT = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock" / "public" / "demo"
 
-TOP_DEALS = 400
+# 1 = the entire catalogue, single-store clusters included. A single-store
+# cluster is still a real product page (one store, no comparison) and is what
+# makes the corpus look its true size; a comparison site that only lists
+# already-compared products looks ~10x emptier than it is.
+#
+# The floor is 1 rather than 0 on QUALITY, not size: all 3,738 clusters at
+# n_stores == 0 have `stores: []` AND `best_price: None` (verified 2026-07-25 —
+# zero exceptions), so they would render as a card with no price and no store to
+# click. The count is reported in the manifest so the exclusion stays visible.
+MIN_STORES = int(os.getenv("DEMO_MIN_STORES", "1"))
+
+# Category listings and the deals feed are paginated, never truncated.
+PAGE_SIZE = 500
 
 # Detail shards are addressed by a hash of the cluster_id rather than a lookup
 # map: a 6,592-entry shard_of map cost 550 KB in manifest.json, which every
 # visitor paid on first paint just to open one product. The frontend recomputes
 # this exact function in demoSource.ts — keep the two in lockstep.
-DETAIL_BUCKETS = 16
+#
+# Bucket COUNT is per category and derived from measured bytes, so opening one
+# product costs roughly the same whether it is a router (2 clusters) or a
+# grocery item (33k). A fixed 16 would have made one grocery shard ~2.7 MB.
+SHARD_TARGET_BYTES = 400_000
+MIN_BUCKETS = 4
+MAX_BUCKETS = 999          # shard suffix is zero-padded to 3 digits, both sides
+SHARD_DIGITS = 3
+
+
+def pages_for(n_rows: int, page_size: int = PAGE_SIZE) -> int:
+    """Pages a listing of `n_rows` occupies. Always >=1 so an empty category
+    still has a fetchable page 0 rather than a 404."""
+    return max(1, math.ceil(n_rows / page_size))
+
+
+def buckets_for(total_bytes: int, target: int = SHARD_TARGET_BYTES) -> int:
+    """Detail shards for one category, sized from its ACTUAL serialized bytes.
+
+    Measured rather than assumed: grocery details average ~1.3 KB and device
+    details differ enough that a per-doc constant would misplan both.
+    """
+    return max(MIN_BUCKETS, min(MAX_BUCKETS, math.ceil(total_bytes / target))) \
+        if total_bytes > 0 else MIN_BUCKETS
 
 
 def fnv1a(text: str) -> int:
@@ -39,21 +85,21 @@ def fnv1a(text: str) -> int:
     return h
 
 
-def shard_for(cluster_id: str, slug: str) -> str:
-    return f"{slug}-{fnv1a(cluster_id) % DETAIL_BUCKETS:02d}"
+def shard_for(cluster_id: str, slug: str, buckets: int) -> str:
+    return f"{slug}-{fnv1a(cluster_id) % buckets:0{SHARD_DIGITS}d}"
 
 # cleanshelf listings usually carry no image, and are unreliable when they do.
 EXCLUDED_IMAGE_SITES = {"cleanshelf"}
 
-# Measured 2026-07-25: only 798 of 6,592 clusters (12.1%) have >=2 real points,
-# and groceries have none. A one-point "trend" is not a trend, so the chart is
-# omitted rather than padded.
+# Measured 2026-07-25: only 798 of 6,592 multi-store clusters (12.1%) have >=2
+# real points, and groceries have none. A one-point "trend" is not a trend, so
+# the chart is omitted rather than padded.
 MIN_HISTORY_POINTS = 2
 
 SUMMARY_FIELDS = [
     "cluster_id", "display_name", "title", "brand", "category", "best_price",
     "n_stores", "n_listings", "cheapest_store", "like_for_like_spread_pct",
-    "condition_basis", "data_warning", "comparison_grade",
+    "condition_basis", "data_warning", "comparison_grade", "is_multi_store",
     "mvp_generated", "mvp_n_merged", "image",
 ]
 
@@ -110,9 +156,13 @@ def _fold(text) -> str:
     return " ".join(str(text or "").lower().split())
 
 
-def main() -> None:
-    import os
+def _write(path: Path, payload) -> int:
+    text = json.dumps(payload, separators=(",", ":"))
+    path.write_text(text)
+    return len(text)
 
+
+def main() -> None:
     os.environ.setdefault("CLUSTERS_COLLECTION", SOURCE_COLLECTION)
     from pymongo import MongoClient
 
@@ -124,8 +174,10 @@ def main() -> None:
     )
 
     db = MongoClient("mongodb://localhost:27017", serverSelectionTimeoutMS=8000)["product_matching_db"]
-    docs = list(db[SOURCE_COLLECTION].find({"n_stores": {"$gte": 2}}))
-    print(f"clusters: {len(docs)}")
+    source = db[SOURCE_COLLECTION]
+    docs = list(source.find({"n_stores": {"$gte": MIN_STORES}}))
+    unpriced = source.count_documents({"n_stores": {"$not": {"$gte": MIN_STORES}}})
+    print(f"clusters: {len(docs)} (min_stores={MIN_STORES}, {unpriced} unpriced skipped)")
 
     member_ids = [m.get("product_id") for d in docs for m in (d.get("members") or [])]
     device_images: dict = {}
@@ -151,21 +203,53 @@ def main() -> None:
     for view in views:
         by_cat[view.get("category") or "other"].append(view)
 
-    (OUT / "categories").mkdir(parents=True, exist_ok=True)
-    (OUT / "clusters").mkdir(parents=True, exist_ok=True)
+    for sub in ("categories", "clusters", "search"):
+        (OUT / sub).mkdir(parents=True, exist_ok=True)
+    # A re-capture with different bucket counts leaves the previous run's shards
+    # behind; stale files would still be served and could shadow a moved cluster.
+    for sub in ("categories", "clusters", "search"):
+        for old in (OUT / sub).glob("*.json"):
+            old.unlink()
+    # Pre-pagination layout: single deals.json / search.json at the root.
+    for old in list(OUT.glob("deals*.json")) + list(OUT.glob("search.json")):
+        old.unlink()
 
+    cat_meta: dict = {}
     for slug, rows in by_cat.items():
+        # Comparable products first: spread ranks the multi-store ones, and
+        # single-store clusters (spread None -> 0) fall to the tail.
         rows.sort(key=lambda r: -(r.get("like_for_like_spread_pct") or 0))
-        (OUT / "categories" / f"{slug}.json").write_text(
-            json.dumps([_summary(r) for r in rows], separators=(",", ":"))
-        )
-        buckets: dict = defaultdict(dict)
+
+        pages = pages_for(len(rows))
+        for page in range(pages):
+            chunk = rows[page * PAGE_SIZE:(page + 1) * PAGE_SIZE]
+            _write(OUT / "categories" / f"{slug}-{page:0{SHARD_DIGITS}d}.json",
+                   [_summary(r) for r in chunk])
+
+        detail_bytes = sum(len(json.dumps(r, separators=(",", ":"))) for r in rows)
+        n_buckets = buckets_for(detail_bytes)
+        shards: dict = defaultdict(dict)
         for row in rows:
-            buckets[shard_for(row["cluster_id"], slug)][row["cluster_id"]] = row
-        for name, chunk in buckets.items():
-            (OUT / "clusters" / f"{name}.json").write_text(
-                json.dumps(chunk, separators=(",", ":"))
-            )
+            shards[shard_for(row["cluster_id"], slug, n_buckets)][row["cluster_id"]] = row
+        for name, group in shards.items():
+            _write(OUT / "clusters" / f"{name}.json", group)
+
+        # Search index sharded by category so a category-scoped search pays only
+        # for its own slice; a global search fetches the shards in parallel.
+        _write(OUT / "search" / f"{slug}.json", [
+            {"id": r["cluster_id"], "t": _fold(r.get("display_name") or r.get("title")),
+             "c": r.get("category"), "p": r.get("best_price")}
+            for r in rows
+        ])
+
+        cat_meta[slug] = {
+            "slug": slug,
+            "count": len(rows),
+            "multi_store": sum(1 for r in rows if r.get("is_multi_store")),
+            "comparison_grade": slug in COMPARISON_SLUGS,
+            "pages": pages,
+            "buckets": n_buckets,
+        }
 
     # Reproduce /api/clusters/deals exactly. Shape fidelity is not enough: without
     # the same guards the fixture surfaces rows the live API filters out — the first
@@ -182,48 +266,39 @@ def main() -> None:
             and (v.get("best_price") or 0) >= min_plausible_price(v.get("category"))
         )
 
+    # Every qualifying deal, paginated — not a top-N slice. 400 was an arbitrary
+    # number that hid 88% of the real deals the same filter accepts.
     deals = sorted(
         (v for v in views if _is_deal(v)),
         key=lambda r: -(r.get("like_for_like_spread_pct") or 0),
-    )[:TOP_DEALS]
-    (OUT / "deals.json").write_text(json.dumps([_summary(r) for r in deals], separators=(",", ":")))
-
-    (OUT / "search.json").write_text(json.dumps(
-        [
-            {
-                "id": v["cluster_id"],
-                "t": _fold(v.get("display_name") or v.get("title")),
-                "c": v.get("category"),
-                "p": v.get("best_price"),
-            }
-            for v in views
-        ],
-        separators=(",", ":"),
-    ))
+    )
+    deal_pages = pages_for(len(deals))
+    for page in range(deal_pages):
+        _write(OUT / f"deals-{page:0{SHARD_DIGITS}d}.json",
+               [_summary(r) for r in deals[page * PAGE_SIZE:(page + 1) * PAGE_SIZE]])
 
     manifest = {
         "captured_at": datetime.now().isoformat(timespec="seconds"),
         "source_collection": SOURCE_COLLECTION,
+        "min_stores": MIN_STORES,
+        "page_size": PAGE_SIZE,
         "total_clusters": len(views),
+        "multi_store_clusters": sum(1 for v in views if v.get("is_multi_store")),
+        # Skipped for having no price and no store, never for size. See MIN_STORES.
+        "excluded_unpriced": unpriced,
         "total_stores": len({s for v in views for s in (v.get("stores") or [])}),
         "with_image": sum(1 for v in views if v.get("image")),
         "with_history": sum(1 for v in views if v.get("price_history")),
         "merged": sum(1 for v in views if (v.get("mvp_n_merged") or 0) > 1),
-        "deals": len(deals),
-        "detail_buckets": DETAIL_BUCKETS,
-        "categories": sorted(
-            (
-                {"slug": s, "count": len(r), "comparison_grade": s in COMPARISON_SLUGS}
-                for s, r in by_cat.items()
-            ),
-            key=lambda c: -c["count"],
-        ),
+        "deals": {"count": len(deals), "pages": deal_pages},
+        "categories": sorted(cat_meta.values(), key=lambda c: -c["count"]),
     }
-    (OUT / "manifest.json").write_text(json.dumps(manifest, separators=(",", ":")))
+    _write(OUT / "manifest.json", manifest)
     print(
-        f"wrote {len(views)} clusters, {manifest['with_image']} images, "
-        f"{manifest['with_history']} histories, {manifest['merged']} merged, "
-        f"{len(deals)} deals"
+        f"wrote {len(views)} clusters "
+        f"({manifest['multi_store_clusters']} multi-store), "
+        f"{manifest['with_image']} images, {manifest['with_history']} histories, "
+        f"{manifest['merged']} merged, {len(deals)} deals over {deal_pages} pages"
     )
 
 

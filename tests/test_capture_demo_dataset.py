@@ -1,16 +1,28 @@
 """Pure-function tests for the demo dataset capture.
 
-Both helpers encode measured facts about the corpus (2026-07-25):
+The helpers encode measured facts about the corpus (2026-07-25):
   - groceries carry images inline on members[]; devices carry none there and
     resolve through compiled_products instead. Both paths are required.
   - cleanshelf listings usually have no image, and are unreliable when they do.
-  - only 798 of 6,592 clusters (12.1%) have >=2 real price points.
+  - only 798 of 6,592 multi-store clusters (12.1%) have >=2 real price points.
+
+The sizing helpers exist so the dataset is never truncated for size: pages and
+shards absorb a bigger corpus instead of a cap dropping rows.
 """
+import math
+
 from scripts.capture_demo_dataset import (
-    DETAIL_BUCKETS,
+    MAX_BUCKETS,
+    MIN_BUCKETS,
     MIN_HISTORY_POINTS,
+    MIN_STORES,
+    PAGE_SIZE,
+    SHARD_DIGITS,
+    SHARD_TARGET_BYTES,
     build_history,
+    buckets_for,
     fnv1a,
+    pages_for,
     pick_image,
     shard_for,
 )
@@ -27,18 +39,74 @@ def test_fnv1a_matches_known_vectors():
 
 
 def test_shard_name_is_slug_prefixed_and_zero_padded():
-    name = shard_for("groceries::aerosol+axe+excite", "groceries")
+    name = shard_for("groceries::aerosol+axe+excite", "groceries", 16)
     assert name.startswith("groceries-")
-    assert len(name.split("-")[-1]) == 2
+    assert len(name.split("-")[-1]) == SHARD_DIGITS
+
+
+def test_padding_is_wide_enough_for_the_largest_bucket_count():
+    """groceries needs ~110 buckets; a 2-digit suffix would collide 100 with 00."""
+    assert len(str(MAX_BUCKETS)) == SHARD_DIGITS
+    assert shard_for("groceries::x", "groceries", 999).split("-")[-1].isdigit()
 
 
 def test_shard_is_deterministic():
-    assert shard_for("laptops::hp::x", "laptops") == shard_for("laptops::hp::x", "laptops")
+    assert shard_for("laptops::hp::x", "laptops", 8) == shard_for("laptops::hp::x", "laptops", 8)
 
 
 def test_shards_spread_across_buckets():
-    names = {shard_for(f"groceries::item{i}", "groceries") for i in range(400)}
-    assert len(names) == DETAIL_BUCKETS
+    names = {shard_for(f"groceries::item{i}", "groceries", 16) for i in range(400)}
+    assert len(names) == 16
+
+
+def test_bucket_count_changes_the_shard_a_cluster_lands_in():
+    """Guards the manifest contract: the frontend MUST read the per-category
+    bucket count, because the same id addresses a different file without it."""
+    differ = [i for i in range(50)
+              if shard_for(f"g::{i}", "g", 16) != shard_for(f"g::{i}", "g", 110)]
+    assert differ, "bucket count must participate in shard addressing"
+
+
+# ------------------------------------------------- sizing, not capping
+
+def test_the_whole_catalogue_is_captured():
+    """MIN_STORES=1. The first capture used 2 and silently dropped 59,814
+    clusters plus three entire categories (tvs, printers, digital-cameras)."""
+    assert MIN_STORES == 1
+
+
+def test_pages_cover_every_row():
+    for n in (0, 1, PAGE_SIZE - 1, PAGE_SIZE, PAGE_SIZE + 1, 33_692):
+        assert pages_for(n) * PAGE_SIZE >= n
+
+
+def test_an_empty_category_still_has_one_page():
+    assert pages_for(0) == 1
+
+
+def test_a_full_page_does_not_allocate_an_empty_extra():
+    assert pages_for(PAGE_SIZE) == 1
+    assert pages_for(PAGE_SIZE + 1) == 2
+
+
+def test_buckets_keep_a_shard_near_the_target_size():
+    total = 44_000_000                      # measured grocery detail bytes, near enough
+    n = buckets_for(total)
+    assert total / n <= SHARD_TARGET_BYTES
+
+
+def test_tiny_categories_get_a_floor_not_one_giant_bucket():
+    assert buckets_for(10) == MIN_BUCKETS
+    assert buckets_for(0) == MIN_BUCKETS
+
+
+def test_bucket_count_is_bounded_by_the_filename_width():
+    assert buckets_for(10**12) == MAX_BUCKETS
+    assert MAX_BUCKETS <= 10 ** SHARD_DIGITS - 1
+
+
+def test_buckets_scale_with_size():
+    assert buckets_for(SHARD_TARGET_BYTES * 100) == math.ceil(100)
 
 
 # ---------------------------------------------------------------- images

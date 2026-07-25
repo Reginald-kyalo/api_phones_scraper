@@ -63,6 +63,42 @@ Devices have **no** `members[].image`; groceries resolve into `compiled_products
 
 **Store identity is inconsistent:** 39 distinct store values mixing bare names (`carrefour`, `naivas`, `eastmatt`, `cleanshelf`) with domains (`jumia.co.ke`, `kilimall.com`), and `carrefour` (9,270 listings) coexists with `carrefour.ke` (29) as separate identities.
 
+---
+
+## ⭐ AMENDMENT (2026-07-25, later): the capture is no longer size-capped
+
+The dataset above describes the **first** capture, which took `n_stores >= 2` and the top 400 deals. Both were caps chosen for convenience, and both cost real fidelity. They are gone. Nothing in `capture_demo_dataset.py` now truncates for size — what used to be a cap is a **shard boundary**.
+
+| | first capture | now |
+|---|---:|---:|
+| clusters | 6,592 | **62,668** |
+| categories with data | 11 | **14** |
+| deals | 400 | **3,189** |
+| stores represented | 39 | **43** |
+| clusters with an image | 6,590 | **47,719** |
+| clusters with price history | 798 | **3,595** |
+| on disk | 14 MB | **117 MB** (any single fetch ≤ 34 KB gzipped) |
+
+**What the `n_stores >= 2` filter was actually costing.** It is defensible for a *comparison* surface, but it was applied to the whole capture, so it also decided what the catalogue contained. `tvs` (687), `printers` (342) and `digital-cameras` (129) have **zero** multi-store clusters — three entire categories were absent from a demo whose corpus holds them. Every other category was ~10× thinner than the real data. The 6,592 comparable clusters are still exactly the ones `/deals` surfaces; they are now the comparable subset of a real catalogue instead of the whole of a small one.
+
+**The one exclusion that remains is quality, not size.** `MIN_STORES = 1` skips 3,738 clusters at `n_stores == 0`. All 3,738 have `stores: []` **and** `best_price: None` — zero exceptions, verified — so they would render as a card with no price and nothing to click. The count ships in the manifest as `excluded_unpriced` so the exclusion stays visible rather than silent.
+
+### What made lifting the caps possible
+
+Capping was the easy way to keep files small. Removing it needed sizing to become a property of the layout:
+
+- **Listings are paginated, never truncated** — `categories/<slug>-<page>.json`, 500 rows per page, `pages` per category in the manifest. Groceries is 68 pages; as one file it would have been 15 MB.
+- **Detail shards are sized from measured bytes.** `buckets_for()` divides a category's actual serialized size by a 400 KB target, so opening one product costs about the same for a router (4 buckets) as for a grocery item (117). A fixed 16 would have made one grocery shard 2.7 MB.
+- **The shard suffix widened to 3 digits.** At 117 buckets a 2-digit suffix would have made bucket 100 collide with bucket 00 — silently, in both languages. `SHARD_DIGITS` and `const PAD` are now asserted equal by a test.
+- **The search index shards per category**, so a category-scoped search pays for its slice only; a global search fetches the shards in parallel (7 MB raw / 1.4 MB gzipped, lazily, on first query).
+- **Re-captures clear the previous run's files first.** Bucket counts move as the corpus grows, so a stale shard would still be served while the frontend addressed a different one.
+
+### The contract this created, and how it is held
+
+The frontend must now read `pages` and `buckets` **per category from the manifest** — the same cluster id addresses a different file under a different bucket count. `tests/test_demo_fixtures.py` holds it: every promised page exists, page contents sum to the category count, every cluster id resolves into a shard that contains it, no orphaned shard survives a re-capture, and `demoSource.ts` still carries the matching `PAD` and FNV constants. Each of those five was **proven to fail** against an injected fault before being trusted. A separate node run confirmed the TypeScript `shardFor` resolves 560 real ids across all 14 categories into the committed shards.
+
+**Still true and unchanged:** ~1 in 6 grocery merges joins something a human called a `variant`; single-store clusters are honest product pages, not comparisons (`is_multi_store` is now in the summary projection so the UI can say which is which).
+
 ### Design consequence: what each ambitious slot is fed by
 
 | design slot | real source | action |
