@@ -128,6 +128,13 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         # accessories (headphones/monitors) are not a reliable cross-store comparison
         # category — the frontend should not headline them as price comparisons.
         "comparison_grade": d.get("canonical_category_slug") in COMPARISON_SLUGS,
+        # Demo-dataset provenance (product_clusters_mvp). Absent on product_clusters, so
+        # these are False/None there and the UI disclosure disappears by itself.
+        # mvp_n_merged > 1 is the ONLY field implying merge risk: mvp_generated is True for
+        # all 4,272 grocery clusters, but 2,256 of those are untouched pass-throughs.
+        "mvp_generated": bool(d.get("mvp_generated", False)),
+        "mvp_rule": d.get("mvp_rule"),
+        "mvp_n_merged": d.get("mvp_n_merged"),
         "brand": d.get("brand"),
         "canonical_name": d.get("canonical_name"),
         "n_listings": d.get("n_listings"),
