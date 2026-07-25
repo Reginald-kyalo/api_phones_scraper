@@ -415,6 +415,13 @@ export interface ClusterView<Store = number> {
   spec_facets: Record<string, string[]>;
   /** false for accessories — searchable but not a reliable cross-store comparison. */
   comparison_grade: boolean;
+  /**
+   * The title says this is an accessory, not the product its category claims —
+   * a phone case filed under `headphones`. Category slugs come from the store's
+   * own category page, so this happens. Such rows are demoted to the end of a
+   * listing and kept out of deals, never removed.
+   */
+  off_category?: boolean;
   brand: string | null;
   canonical_name: string | null;
   n_listings: number | null;

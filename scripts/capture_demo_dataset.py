@@ -30,6 +30,8 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from scripts.category_purity import is_off_category
+
 SOURCE_COLLECTION = "product_clusters_mvp"
 OUT = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock" / "public" / "demo"
 
@@ -100,7 +102,7 @@ SUMMARY_FIELDS = [
     "cluster_id", "display_name", "title", "brand", "category", "best_price",
     "n_stores", "n_listings", "cheapest_store", "like_for_like_spread_pct",
     "condition_basis", "data_warning", "comparison_grade", "is_multi_store",
-    "mvp_generated", "mvp_n_merged", "image",
+    "off_category", "mvp_generated", "mvp_n_merged", "image",
 ]
 
 
@@ -197,6 +199,10 @@ def main() -> None:
         view = _cluster_view(doc)
         view["image"] = pick_image(doc, device_images)
         view["price_history"] = build_history(doc, histories)
+        # Demoted, never dropped: the row stays browsable and its detail page still
+        # resolves. Category slugs come straight from the store's own category page,
+        # so a phone case really can arrive filed as `headphones`.
+        view["off_category"] = is_off_category(view.get("title"), view.get("category"))
         views.append(view)
 
     by_cat: dict = defaultdict(list)
@@ -217,8 +223,24 @@ def main() -> None:
     cat_meta: dict = {}
     for slug, rows in by_cat.items():
         # Comparable products first: spread ranks the multi-store ones, and
-        # single-store clusters (spread None -> 0) fall to the tail.
-        rows.sort(key=lambda r: -(r.get("like_for_like_spread_pct") or 0))
+        # single-store clusters (spread None -> 0) fall to the tail. Off-category
+        # rows sort below everything. cluster_id breaks ties so page N holds the
+        # same products on every rebuild — Mongo's scan order is not guaranteed,
+        # and without this a re-capture silently reshuffles every listing page.
+        # Ranked on signal, then made deterministic. Sorting by cluster_id alone put
+        # the alphabetically-first titles on page 1 — which are exactly the worst
+        # ones ("14 43", "28 Holes Scarf"), because a junk title tends to start with
+        # a number. cluster_id survives only as the final tie-break, because Mongo's
+        # scan order is not guaranteed and a re-capture would otherwise reshuffle
+        # every listing page under the reader.
+        rows.sort(key=lambda r: (
+            bool(r.get("off_category")),           # demoted rows last
+            not r.get("image"),                    # a card with no image looks broken
+            -(r.get("like_for_like_spread_pct") or 0),   # real cross-store savings
+            -(r.get("n_stores") or 0),
+            -(r.get("n_listings") or 0),           # well-represented products first
+            r.get("cluster_id") or "",
+        ))
 
         pages = pages_for(len(rows))
         for page in range(pages):
@@ -258,6 +280,7 @@ def main() -> None:
         spread = v.get("like_for_like_spread_pct")
         return (
             bool(v.get("comparison_grade"))
+            and not v.get("off_category")
             and bool(v.get("is_multi_store"))
             and v.get("condition_basis") == "new"
             and (v.get("n_stores") or 0) >= 2
@@ -270,7 +293,7 @@ def main() -> None:
     # number that hid 88% of the real deals the same filter accepts.
     deals = sorted(
         (v for v in views if _is_deal(v)),
-        key=lambda r: -(r.get("like_for_like_spread_pct") or 0),
+        key=lambda r: (-(r.get("like_for_like_spread_pct") or 0), r.get("cluster_id") or ""),
     )
     deal_pages = pages_for(len(deals))
     for page in range(deal_pages):
@@ -290,6 +313,8 @@ def main() -> None:
         "with_image": sum(1 for v in views if v.get("image")),
         "with_history": sum(1 for v in views if v.get("price_history")),
         "merged": sum(1 for v in views if (v.get("mvp_n_merged") or 0) > 1),
+        # Demoted by the title gate, not removed. See scripts/category_purity.py.
+        "off_category": sum(1 for v in views if v.get("off_category")),
         "deals": {"count": len(deals), "pages": deal_pages},
         "categories": sorted(cat_meta.values(), key=lambda c: -c["count"]),
     }
