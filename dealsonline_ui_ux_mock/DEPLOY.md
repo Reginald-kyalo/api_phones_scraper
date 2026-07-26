@@ -130,9 +130,44 @@ every "Go to store" link.
 
 ## Cloudflare Pages + CI/CD
 
-Connect the repo in the Pages dashboard: build `npm run build`, output `dist`,
-Node 20. Every push to the default branch deploys; pull requests get preview
-URLs. Measured against the platform limits, the build fits comfortably:
+⛔ **Set the root directory to `dealsonline_ui_ux_mock` — this is not optional.**
+The frontend is a subdirectory of the API repo and there is no `package.json` at
+the top level, so a default Pages project fails immediately:
+
+```
+Executing user command: npm run build
+npm error path /opt/buildhome/repo/package.json
+npm error enoent Could not read package.json
+```
+
+That error names npm, so it reads as a dependency problem. It is not: npm is
+running in the wrong directory. Build command and output directory are both
+**relative to the root directory**, so they stay `npm run build` and `dist`.
+
+| setting | value |
+|---|---|
+| Root directory | **`dealsonline_ui_ux_mock`** |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Node version | 20 |
+
+⚠️ **Do not commit a `wrangler.toml` with a placeholder `database_id`.** The build
+log shows Pages checking for one before it runs anything ("Checking for
+configuration in a Wrangler configuration file (BETA)"), and once the root
+directory is right it will find it. A Wrangler config becomes the source of truth
+for bindings, so a fake id there is worse than no file: D1 binds to nothing while
+the dashboard binding is ignored. Bind `DB` in the dashboard instead — see below.
+For local Functions work, pass the database on the command line rather than
+committing it:
+
+```bash
+npx wrangler pages dev dist --d1 DB=dealsonline-reports
+```
+
+Every push to the production branch deploys; pull requests get preview URLs.
+`clusters-api` works as the production branch — Pages lets you nominate any
+branch, so there is no need to merge to `main` first. Measured against the
+platform limits, the build fits comfortably:
 
 | limit | ours |
 |---|---|
@@ -155,7 +190,7 @@ time actually becomes a problem.
 deploy from this repo with the site, so there is no second service.
 
 ```bash
-npx wrangler d1 create dealsonline-reports          # paste id into wrangler.toml
+npx wrangler d1 create dealsonline-reports          # note the id it prints
 npx wrangler d1 execute dealsonline-reports --remote --file=./schema.sql
 ```
 
