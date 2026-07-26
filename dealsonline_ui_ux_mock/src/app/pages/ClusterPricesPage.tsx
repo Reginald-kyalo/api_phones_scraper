@@ -8,6 +8,7 @@ import { Loader2, ExternalLink, AlertTriangle, ArrowLeft, RefreshCw, Package } f
 import { storeName, storeInitial } from '../lib/storeIdentity';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { MatchProvenance } from '../features/clusters/components/MatchProvenance';
+import { ReportDialog } from '../features/clusters/components/ReportDialog';
 import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
 
 /**
@@ -19,6 +20,7 @@ import { PRPriceHistoryChart } from '../features/product/components/PriceHistory
 export default function ClusterPricesPage() {
   const { clusterId } = useParams<{ clusterId: string }>();
   const [cluster, setCluster] = useState<ClusterDetail | null>(null);
+  const [capturedAt, setCapturedAt] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -28,6 +30,7 @@ export default function ClusterPricesPage() {
     setError(false);
     try {
       setCluster(await clustersApi.getDetail(clusterId));
+      clustersApi.getManifest().then((m) => setCapturedAt(m.captured_at)).catch(() => {});
     } catch {
       setError(true);
     } finally {
@@ -207,6 +210,10 @@ export default function ClusterPricesPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="-mt-4 mb-8 flex justify-end">
+          <ReportDialog cluster={cluster} capturedAt={capturedAt} />
         </div>
 
         {/* Per-configuration splits */}

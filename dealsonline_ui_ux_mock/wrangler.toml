@@ -1,0 +1,17 @@
+# Cloudflare Pages configuration.
+#
+# The site is static; the only server-side surface is functions/api/reports.ts,
+# which needs a D1 binding named DB.
+#
+# One-time setup:
+#   npx wrangler d1 create dealsonline-reports
+#   # paste the returned database_id below, then:
+#   npx wrangler d1 execute dealsonline-reports --remote --file=./schema.sql
+name = "dealsonline"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dealsonline-reports"
+database_id = "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"

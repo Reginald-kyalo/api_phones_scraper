@@ -52,8 +52,9 @@ guards this.
 
 ## Host notes
 
-- **Netlify / Cloudflare Pages** — publish `dist`, no config. `_redirects` and
-  `_headers` are read automatically.
+- **Cloudflare Pages (the target)** — connect the GitHub repo; build command
+  `npm run build`, output `dist`. `_redirects` and `_headers` are read
+  automatically. Reporting needs a one-time D1 setup, below.
 - **Vercel** — add a rewrite of `/(.*)` to `/index.html`; it does not read
   `_redirects`.
 - **GitHub Pages** — build with `BASE_PATH=/<repo>/` and publish `dist`.
@@ -89,3 +90,51 @@ The dataset's own integrity is covered by the API repo's suite
 (`apienv/bin/python -m pytest tests/`), including that detail shards carry
 store click-through URLs — a defect that renders perfectly and silently removes
 every "Go to store" link.
+
+
+## Cloudflare Pages + CI/CD
+
+Connect the repo in the Pages dashboard: build `npm run build`, output `dist`,
+Node 20. Every push to the default branch deploys; pull requests get preview
+URLs. Measured against the platform limits, the build fits comfortably:
+
+| limit | ours |
+|---|---|
+| 20,000 files per deployment | **466** |
+| 25 MiB per file | **3.5 MB** largest (`demo/search/groceries.json`) |
+
+⚠️ **The repo is the constraint, not Pages.** `public/demo/` is ~144 MB and a
+re-capture rewrites all ~430 shard files, adding roughly another 100 MB of git
+objects each time. Pages clones the repo on every build, so this only gets
+slower. If the dataset will be regenerated regularly, untrack it and generate it
+in the build step instead — the site does not care where the JSON comes from.
+
+### Reporting bad listings (D1)
+
+`functions/api/reports.ts` is the only server-side surface. Pages Functions
+deploy from this repo with the site, so there is no second service.
+
+```bash
+npx wrangler d1 create dealsonline-reports          # paste id into wrangler.toml
+npx wrangler d1 execute dealsonline-reports --remote --file=./schema.sql
+```
+
+Then bind it in **Pages → Settings → Functions → D1 bindings**: variable `DB`.
+
+Read reports with:
+
+```bash
+npx wrangler d1 execute dealsonline-reports --remote \
+  --command "SELECT cluster_id, reason, COUNT(*) n FROM reports GROUP BY 1,2 ORDER BY n DESC LIMIT 50"
+```
+
+⛔ **Without the binding the endpoint returns 500 and the UI says so.** It never
+shows a confirmation it cannot back up — a static preview with no Function
+returns the SPA shell at 200, so the client checks for a JSON content-type
+before believing a report was stored.
+
+⚠️ **Reports are anchored on more than `cluster_id`.** 4,082 of 61,473 clusters
+are unions of several engine clusters and the absorbed ids are not published, so
+an id can stop resolving after a rebuild. Each row also stores `store_url` (a
+real listing, independent of our clustering) and `captured_at` (which snapshot
+the reader saw).
