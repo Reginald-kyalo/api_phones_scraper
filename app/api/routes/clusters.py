@@ -66,6 +66,14 @@ _SLUGS = {
     # against laptops' 49% and groceries' 96%, because 96% of the losses are classifieds
     # (327 of 394 are jiji+jumia, excluded as likely_used). Browse-grade, not deal-grade.
     "mobile-phone-accessories",
+    # Added 2026-07-26 for the same reason, once re-clustering made them qualify.
+    # All three measured ZERO multi-store on 2026-07-25 and were correctly excluded
+    # then; they had been stuck on 2026-06-30 builds. Re-running the clusterer on
+    # current compiled data gave tvs 687 -> 5,005 clusters (18 multi-store),
+    # digital-cameras 129 -> 619 (6) and printers 342 -> 352 (2).
+    # ⚠️ The demo was already shipping all three, so the live API 400d on categories
+    # the static dataset served — this closes that split.
+    "tvs", "digital-cameras", "printers",
 }
 # Categories where cross-store comparison actually works with the deterministic identity
 # engine. Accessories (headphones/monitors) are structurally non-comparable: only ~0.66% /
