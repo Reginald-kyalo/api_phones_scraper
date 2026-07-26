@@ -52,4 +52,13 @@ export const router = createBrowserRouter([
       { path: "*", Component: NotFound },
     ],
   },
-]);
+], {
+  /*
+   * Sub-path deploys (GitHub Pages project sites) serve the app from
+   * /<repo>/. Without this the router sees "/dealsonline/deals", matches no
+   * route and renders NotFound for every page — the assets and fixtures load
+   * fine, so it looks like a data failure rather than a routing one.
+   * Vite substitutes BASE_URL at build time; it is "/" for a root deploy.
+   */
+  basename: import.meta.env.BASE_URL,
+});

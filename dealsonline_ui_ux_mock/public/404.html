@@ -1,6 +1,11 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>DealsOnline</title>
-<!-- GitHub Pages has no rewrite rule, so it serves 404.html for unknown paths.
-     Hand the original URL back to the SPA router instead of showing an error. -->
-<script>sessionStorage.setItem('spa-redirect', location.href); location.replace('/');</script>
+<!-- Static hosts with no rewrite rule (GitHub Pages) serve this for any unknown
+     path. Park the requested URL and bounce to the app root so the SPA router
+     can restore it — see the restore script in index.html <head>.
+     __BASE__ is replaced at build time by scripts/postbuild.mjs. -->
+<script>
+  sessionStorage.setItem('spa-redirect', location.href);
+  location.replace('__BASE__');
+</script>
