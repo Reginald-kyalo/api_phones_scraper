@@ -125,10 +125,23 @@ export default function ClusterPricesPage() {
 
         <MatchProvenance cluster={cluster} />
 
+        {/* ⛔ This used to read "treat this spread as a guide" — a caveat about a
+            number that is never on the page. Measured over the 88,137 shipped
+            clusters, `comparison_grade: false` and "no spread" are the SAME SET,
+            zero exceptions: the spread needs a primary_facet and accessories have
+            none. So the honest job here is to explain an ABSENCE, not to hedge a
+            figure. 35,577 clusters (40% of the catalogue) show this, 654 of them
+            with two or more shops. */}
         {!cluster.comparison_grade && (
           <div className="flex items-start gap-2 rounded-lg ultra-border p-3 mb-4 text-sm text-muted-foreground">
             <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
-            Accessory listings vary in exact model — treat this spread as a guide, not a like-for-like deal.
+            <span>
+              Accessory listings vary in exact model, so we don&rsquo;t claim a
+              like-for-like saving here.{' '}
+              {rows.length > 1
+                ? 'Compare the shop prices below and check the titles match.'
+                : 'Only one shop currently lists it.'}
+            </span>
           </div>
         )}
         {cluster.data_warning && (
@@ -145,8 +158,14 @@ export default function ClusterPricesPage() {
           </p>
           <div className="flex items-end gap-3">
             <span className="price-num text-3xl font-bold text-foreground">{formatPrice(cluster.best_price)}</span>
-            {cluster.n_stores != null && cluster.n_stores > 0 && (
-              <span className="text-sm text-muted-foreground mb-1">across {shopLabel(cluster.n_stores)}</span>
+            {/* ⛔ rows.length, NOT n_stores. n_stores counts stores that may have
+                no usable price, and those are dropped from best_by_store — so on
+                1,777 of the 88,137 shipped clusters this read "across 2 shops"
+                above a single store row. Same defect as the hero's "5 OFFERS"
+                over six rows: a count sourced from something other than the thing
+                being counted. */}
+            {rows.length > 0 && (
+              <span className="text-sm text-muted-foreground mb-1">across {shopLabel(rows.length)}</span>
             )}
           </div>
           {/* Stated once. Where spread_basis exists the panel below makes the same
@@ -182,9 +201,11 @@ export default function ClusterPricesPage() {
               })}
             </p>
           )}
-          {!cluster.last_seen && cluster.freshness_basis === 'unknown' && (
-            <p className="text-xs text-muted-foreground">This store doesn’t publish a date</p>
-          )}
+          {/* ⛔ Removed: a "this store doesn't publish a date" line for
+              freshness_basis === 'unknown'. It blamed the retailer for what was
+              actually our own staleness — six categories were stuck on 2026-06-30
+              builds, not undated at source. After the re-cluster the bucket is
+              empty: 0 of 88,137 clusters are 'unknown' and 0 lack last_seen. */}
         </div>
         <div className="space-y-3 mb-8">
           {rows.map(([rawStore, offer], idx) => (
