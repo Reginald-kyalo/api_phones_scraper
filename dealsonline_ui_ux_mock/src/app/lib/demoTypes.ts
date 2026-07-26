@@ -30,8 +30,21 @@ export interface DemoManifest {
   page_size: number;
   total_clusters: number;
   multi_store_clusters: number;
-  /** Clusters skipped for having no price and no store — never for size. */
+  /**
+   * Clusters skipped for having no price and no store — never for size. 3,680 of
+   * these are fully delisted; the engine drops them to n_stores == 0.
+   */
   excluded_unpriced: number;
+  /** Skipped: out of stock at every store carrying them. */
+  excluded_unbuyable: number;
+  /** Skipped: unseen for more than `stale_after_days`. */
+  excluded_stale: number;
+  stale_after_days: number;
+  /**
+   * Freshness of what DID ship. `stale` is always 0 — those are excluded. The
+   * `unknown` bucket is six categories that date nothing at source, not rot.
+   */
+  freshness: { fresh: number; stale: number; unknown: number };
   total_stores: number;
   with_image: number;
   with_history: number;

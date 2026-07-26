@@ -100,14 +100,19 @@ export default function ClusterPricesPage() {
         )}
 
         {cluster.image && (
-          <div className="mb-4 flex h-56 items-center justify-center rounded-xl bg-white p-4 ultra-border">
-            {/* Store images 404 often enough that a bare <img> leaves an empty
-                framed box; fall back to the same neutral mark the cards use. */}
+          <div className="relative mb-4 flex h-56 items-center justify-center rounded-xl bg-white p-4 ultra-border">
+            {/* Retailer CDNs are slow and ~22% of URLs are dead, so the mark sits
+                UNDERNEATH: the frame is never blank while an image decodes, and a
+                failure just leaves the mark showing. */}
+            <Package
+              className="absolute h-10 w-10 text-muted-foreground/20"
+              aria-hidden="true"
+            />
             <ImageWithFallback
               src={cluster.image}
               alt=""
-              className="max-h-full max-w-full object-contain"
-              fallback={<Package className="h-10 w-10 text-muted-foreground/30" aria-hidden="true" />}
+              className="relative max-h-full max-w-full object-contain"
+              fallback={<span className="sr-only">Image unavailable</span>}
             />
           </div>
         )}
@@ -151,7 +156,24 @@ export default function ClusterPricesPage() {
         </div>
 
         {/* Store rows — real prices, real click-through */}
-        <h2 className="text-lg font-semibold text-foreground mb-3">Price comparison</h2>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Price comparison</h2>
+          {/* Stale rows never ship, so this only ever confirms freshness or says
+              the source dates nothing — it is never a warning. */}
+          {cluster.last_seen && (
+            <p className="text-xs text-muted-foreground">
+              Last checked{' '}
+              {new Date(cluster.last_seen).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </p>
+          )}
+          {!cluster.last_seen && cluster.freshness_basis === 'unknown' && (
+            <p className="text-xs text-muted-foreground">This store doesn’t publish a date</p>
+          )}
+        </div>
         <div className="space-y-3 mb-8">
           {rows.map(([rawStore, offer], idx) => (
             <div
@@ -213,8 +235,8 @@ export default function ClusterPricesPage() {
           </>
         )}
 
-        {/* Real history only — 3,595 of 62,668 clusters have >=2 captured points,
-            and groceries have none. Never synthesised to fill the slot. */}
+        {/* Real history only — 13,287 of 61,473 clusters (21.6%) have >=2 dated
+            points, groceries included (24.2%). Never synthesised to fill the slot. */}
         {cluster.price_history && cluster.price_history.length >= 2 && (
           <div className="mt-8">
             <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />

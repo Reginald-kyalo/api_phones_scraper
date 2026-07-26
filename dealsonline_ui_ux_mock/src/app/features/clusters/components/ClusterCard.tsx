@@ -25,16 +25,17 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
       className="group flex flex-col overflow-hidden rounded-xl ultra-border transition-colors hover:border-primary/40"
     >
       <div className="relative flex aspect-square items-center justify-center bg-white p-4">
-        {cluster.image ? (
+        {/* Mark underneath, image on top: no blank frame while a slow retailer
+            CDN decodes, and a dead URL simply leaves the mark. */}
+        <Package className="absolute h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
+        {cluster.image && (
           <ImageWithFallback
             src={cluster.image}
             alt=""
             loading="lazy"
-            className="max-h-full max-w-full object-contain"
-            fallback={<Package className="h-10 w-10 text-muted-foreground/30" aria-hidden="true" />}
+            className="relative max-h-full max-w-full object-contain"
+            fallback={<span className="sr-only">Image unavailable</span>}
           />
-        ) : (
-          <Package className="h-10 w-10 text-muted-foreground/30" aria-hidden="true" />
         )}
         {spread != null && spread > 0 && (
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-teal/10 px-1.5 py-0.5 text-xs font-semibold text-teal-deep">

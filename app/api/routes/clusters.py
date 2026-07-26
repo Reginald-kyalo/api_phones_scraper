@@ -27,6 +27,16 @@ import re
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.api.hygiene import (
+    availability,
+    best_title,
+    canonical_store,
+    clean_brand,
+    fold_by_store,
+    fold_stores,
+    freshness,
+    last_seen_at,
+)
 from app.api.schemas.clusters import (
     ClusterDealsResponse,
     ClusterSearchResponse,
@@ -85,7 +95,17 @@ def min_plausible_price(slug: str | None) -> float:
 
 
 def _data_warning(d: dict) -> str | None:
-    # Channel first: when the cluster has no confident new-retail member, the headline
+    # Buyability first. Whether the price is a retail or a refurb number is moot if
+    # there is nothing to buy — every store carrying it is out of stock, or the
+    # listing is gone from the store's site altogether. The engine already gates
+    # these out of the headline (`gate_members`) but stamped the verdict on only
+    # half the corpus, so hygiene.availability recomputes it from members[].
+    avail = availability(d)
+    if avail == "delisted":
+        return "listing removed from the store's site — this price cannot be verified"
+    if avail == "out_of_stock":
+        return "out of stock at every store that carries it — not currently buyable"
+    # Channel next: when the cluster has no confident new-retail member, the headline
     # best_price is a likely-used fallback (a classifieds/refurb asking price), not a
     # retail price — say so explicitly rather than letting it look like a normal deal.
     if d.get("condition_basis") == "likely_used":
@@ -100,9 +120,14 @@ def _data_warning(d: dict) -> str | None:
 
 
 def _by_store(raw: dict, full: bool) -> dict:
-    """best_by_store → {site: price} (summary) or {site: {price,url,title}} (detail)."""
+    """best_by_store → {site: price} (summary) or {site: {price,url,title}} (detail).
+
+    Keys are canonicalised first, so a retailer crawled under both a bare name and
+    a domain (`carrefour` / `carrefour.ke`) is one column, not two.
+    """
+    folded = fold_by_store(raw, cheaper=lambda o: (o or {}).get("price") or float("inf"))
     out = {}
-    for site, v in (raw or {}).items():
+    for site, v in folded.items():
         out[site] = {"price": v.get("price"), "url": v.get("url"), "title": v.get("title")} if full \
             else v.get("price")
     return out
@@ -130,7 +155,11 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         # clean brand+model title (features go in the facet chips, not the title): prefer the
         # built display_name, then the canonical name, then the raw listing as a last resort.
         # canonical_name stays available separately as the "verified as" reference.
-        "title": d.get("display_name") or d.get("canonical_name") or d.get("representative_title"),
+        # ⚠️ hygiene.best_title overrides that order in one provable case: display_name is
+        # rebuilt from the normalised identity key, so on 1,463 clusters it is the same bag of
+        # tokens as a real listing with the order and casing destroyed ("HT S40R" -> "Ht ...
+        # S40r"). When it adds no tokens, the real listing title wins.
+        "title": best_title(d),
         "display_name": d.get("display_name"),
         "representative_title": d.get("representative_title"),
         "category": d.get("canonical_category_slug"),
@@ -149,18 +178,19 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "mvp_generated": bool(d.get("mvp_generated", False)),
         "mvp_rule": d.get("mvp_rule"),
         "mvp_n_merged": d.get("mvp_n_merged"),
-        "brand": d.get("brand"),
+        # None when the keyer put a measurement in the brand slot ("14-inch", "3.5mm").
+        "brand": clean_brand(d.get("brand")),
         "canonical_name": d.get("canonical_name"),
         "n_listings": d.get("n_listings"),
         "n_stores": d.get("n_stores"),
-        "stores": d.get("stores"),
+        "stores": fold_stores(d.get("stores")),
         "is_multi_store": d.get("is_multi_store"),
         # two-tier price: best_price/cheapest_store is the CONFIDENT new-retail headline;
         # likely_used_best_price is the classifieds/refurb "asking" tier, shown separately so
         # it never headlines. condition_basis="likely_used" means even the headline is a
         # fallback (no confident retail member) — see data_warning.
         "best_price": d.get("best_price"),
-        "cheapest_store": d.get("cheapest_store"),
+        "cheapest_store": canonical_store(d.get("cheapest_store")),
         "condition_basis": d.get("condition_basis", "new"),
         "n_confident": d.get("n_confident"),
         "n_likely_used": d.get("n_likely_used", d.get("n_used", 0)),
@@ -173,6 +203,14 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "cross_store_spread_pct": d.get("cross_store_spread_pct"),
         "configs": configs,
         "best_by_store": _by_store(d.get("best_by_store"), full),
+        # Buyability + recency. The engine computes both in `gate_members` but stamped
+        # them on only 28,754 of 66,406 clusters (groceries, tvs, printers, routers,
+        # wearables, desktop-computers and digital-cameras have neither), and this
+        # projection then dropped them entirely — so no consumer could tell a live
+        # price from a three-month-old one. Recomputed uniformly from members[].
+        "availability_basis": availability(d),
+        "freshness_basis": freshness(d),
+        "last_seen": (ls.isoformat() if (ls := last_seen_at(d)) else None),
         "data_warning": _data_warning(d),
     }
 

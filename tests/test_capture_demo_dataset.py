@@ -26,8 +26,10 @@ from scripts.capture_demo_dataset import (
     build_history,
     buckets_for,
     fnv1a,
+    normalise_series,
     pages_for,
     pick_image,
+    raw_collection_for,
     shard_for,
 )
 
@@ -211,6 +213,89 @@ def test_cluster_with_no_history_returns_none():
 
 def test_minimum_is_two_points():
     assert MIN_HISTORY_POINTS == 2
+
+
+# ------------------------------------------------- history: the REAL shapes
+# ⛔ WHY THESE EXIST. Every test above uses a `date` key. Production uses `at`
+# (compiled_products) or `timestamp` (the raw store collections) and has never
+# once written `date`. So the suite was green while all 3,556 captured series
+# carried `"t": ""` on every point — the chart drew, the manifest counted them,
+# and no timestamp survived. Fixtures invented in the shape of the code under
+# test prove only that the code matches itself.
+
+def test_compiled_products_shape_keeps_its_timestamps():
+    """`compiled_products.price_history` — {"at": ..., "price": ...}."""
+    cluster = {"members": [{"product_id": "p1"}]}
+    hist = {"p1": [{"at": "2026-07-02T16:55:58+00:00", "price": 9297},
+                   {"at": "2026-07-10T16:24:03+00:00", "price": 8499}]}
+    series = build_history(cluster, hist)
+    assert [p["t"] for p in series] == ["2026-07-02T16:55:58+00:00",
+                                        "2026-07-10T16:24:03+00:00"]
+    assert [p["price"] for p in series] == [9297, 8499]
+
+
+def test_raw_store_shape_keeps_its_timestamps():
+    """`<site>_products.prices` — {"timestamp": ..., "amount": ...}. The only
+    source groceries have."""
+    cluster = {"members": [{"product_id": "p1"}]}
+    hist = {"p1": [{"timestamp": "2026-06-19T22:50:13+0300", "amount": 169},
+                   {"timestamp": "2026-06-29T22:15:30+0300", "amount": 184}]}
+    series = build_history(cluster, hist)
+    assert [p["t"] for p in series] == ["2026-06-19T22:50:13+0300",
+                                        "2026-06-29T22:15:30+0300"]
+    assert [p["price"] for p in series] == [169, 184]
+
+
+def test_no_point_ever_ships_an_empty_timestamp():
+    """The exact defect: a series that renders but carries no dates."""
+    cluster = {"members": [{"product_id": "p1"}]}
+    hist = {"p1": [{"timestamp": "2026-06-19T22:50:13+0300", "amount": 169},
+                   {"at": "2026-06-29T22:15:30+0300", "price": 184}]}
+    for point in build_history(cluster, hist):
+        assert point["t"], "a point shipped without a timestamp"
+
+
+def test_two_prices_on_one_date_is_not_a_trend():
+    """Real data re-records an old and a new price at the same instant."""
+    cluster = {"members": [{"product_id": "p1"}]}
+    hist = {"p1": [{"at": "2026-07-10T16:24:03+00:00", "price": 8499},
+                   {"at": "2026-07-10T16:24:03+00:00", "price": 9297}]}
+    assert build_history(cluster, hist) is None
+
+
+def test_exact_duplicate_observations_collapse():
+    cluster = {"members": [{"product_id": "p1"}]}
+    hist = {"p1": [{"at": "2026-07-01", "price": 100},
+                   {"at": "2026-07-01", "price": 100},
+                   {"at": "2026-07-05", "price": 90}]}
+    assert build_history(cluster, hist) == [{"t": "2026-07-01", "price": 100},
+                                            {"t": "2026-07-05", "price": 90}]
+
+
+# ------------------------------------------- raw collection name resolution
+
+EXISTING = {"carrefour_products", "jumia_products", "naivas_products",
+            "kilimall_products", "cleanshelf_products", "quickmart_products"}
+
+
+@pytest.mark.parametrize("site,expected", [
+    ("carrefour", "carrefour_products"),        # grocery clusters: bare name
+    ("jumia.co.ke", "jumia_products"),          # device clusters: domain
+    ("kilimall.com", "kilimall_products"),
+    ("cleanshelf.online", "cleanshelf_products"),
+    ("quickmart.co.ke", "quickmart_products"),  # the aliased form still resolves
+    ("NAIVAS", "naivas_products"),
+])
+def test_store_names_resolve_to_their_raw_collection(site, expected):
+    assert raw_collection_for(site, EXISTING) == expected
+
+
+def test_a_store_with_no_raw_collection_is_skipped_not_guessed():
+    """A miss must be None, not a constructed name that queries nothing and
+    looks like "this store has no history"."""
+    assert raw_collection_for("nosuchstore.co.ke", EXISTING) is None
+    assert raw_collection_for("", EXISTING) is None
+    assert raw_collection_for(None, EXISTING) is None
 
 
 @pytest.fixture

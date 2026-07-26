@@ -6,7 +6,7 @@
  * are the same objects `/api/clusters/*` would return — verified at capture time
  * with a field-level diff against the live endpoint.
  *
- * The whole catalogue ships (62,668 clusters, 14 categories), so nothing here
+ * The whole catalogue ships (61,473 clusters, 14 categories), so nothing here
  * may load "everything" eagerly. Listings are paginated and details are sharded;
  * page counts and bucket counts are per category and come from the manifest.
  */

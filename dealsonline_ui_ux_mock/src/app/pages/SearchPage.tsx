@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button';
 import { Loader2, Search as SearchIcon } from 'lucide-react';
 
 /**
- * Offline search across the whole captured catalogue (62,668 products).
+ * Offline search across the whole captured catalogue (61,473 products).
  *
  * The index is sharded per category and fetched in parallel on first use, then
  * cached — so typing a second query costs nothing. Results render from index

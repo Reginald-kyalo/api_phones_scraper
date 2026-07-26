@@ -445,16 +445,39 @@ export interface ClusterView<Store = number> {
   /** non-null ⇒ show a caveat; do NOT headline the price as a clean deal. */
   data_warning: string | null;
 
+  /**
+   * Can this actually be bought? The engine gates on it but the API used to drop
+   * the verdict, so nothing downstream could tell a live price from a dead one.
+   *
+   * The captured dataset contains only `available` and `unknown` — `out_of_stock`
+   * and `delisted` rows are excluded at capture time. Handle all four anyway: the
+   * LIVE API serves them, and `unknown` means the source carries no stock field,
+   * NOT that the item is in stock.
+   */
+  availability_basis?: 'available' | 'out_of_stock' | 'delisted' | 'unknown';
+  /**
+   * `stale` ⇒ unseen for over 60 days, so the price is historical. Never present
+   * in the capture (those rows are excluded).
+   *
+   * ⚠️ `unknown` is NOT a staleness claim — tvs, printers, routers, wearables,
+   * desktop-computers and digital-cameras date nothing at source, so all 3,960 of
+   * their clusters are `unknown`. Do not badge them as out of date.
+   */
+  freshness_basis?: 'fresh' | 'stale' | 'unknown';
+  /** ISO timestamp of the most recently verified listing; null when undated. */
+  last_seen?: string | null;
+
   // --- capture-time additions (see docs/superpowers/plans/2026-07-25-static-demo-dataset.md)
-  /** One real member image, chosen stably per cluster. 6,590/6,592 covered. */
+  /** One real member image, chosen stably per cluster. 46,701/61,473 covered. */
   image?: string | null;
-  /** Only present where >=2 real points exist (798 clusters); never synthesised. */
+  /** Only present where >=2 DATED points exist (13,287 clusters); never synthesised. */
   price_history?: PricePoint[] | null;
   /** True for every cluster rebuilt through the MVP path — NOT a merge signal. */
   mvp_generated?: boolean;
   mvp_rule?: string | null;
   /** >1 ⇒ this cluster is the union of several engine clusters: the only merge signal. */
   mvp_n_merged?: number | null;
+
 }
 
 export interface PricePoint {

@@ -130,11 +130,32 @@ class ClusterView(BaseModel):
     best_by_store: dict[str, StoreOffer | float | None] = Field(default_factory=dict)
 
     # ---- trust ----------------------------------------------------------
+    availability_basis: Literal["available", "out_of_stock", "delisted", "unknown"] = Field(
+        "unknown",
+        description=(
+            '"out_of_stock" ⇒ every store carrying it is out of stock; "delisted" ⇒ the '
+            'listings are gone from the stores\' sites. Both mean the price is real but not '
+            'buyable. "unknown" ⇒ the source carries no stock field, not that it is in stock.'
+        ),
+    )
+    freshness_basis: Literal["fresh", "stale", "unknown"] = Field(
+        "unknown",
+        description=(
+            '"stale" ⇒ nothing in this cluster has been seen for over 60 days, so the price '
+            'is historical. "unknown" ⇒ the source dates nothing (tvs, printers, routers, '
+            "wearables, desktop-computers, digital-cameras) — it is NOT a staleness claim."
+        ),
+    )
+    last_seen: str | None = Field(
+        None,
+        description="ISO timestamp of the most recently verified listing in the cluster",
+    )
     data_warning: str | None = Field(
         None,
         description=(
-            "set when the headline should not be trusted at face value: a likely-used "
-            "fallback, an implausibly low price (per-category floor), or an outlier spread"
+            "set when the headline should not be trusted at face value: nothing buyable "
+            "(out of stock / delisted), a likely-used fallback, an implausibly low price "
+            "(per-category floor), or an outlier spread"
         ),
     )
 

@@ -160,3 +160,121 @@ def test_search_index_covers_every_category():
     for category in manifest["categories"]:
         rows = json.loads((OUT / "search" / f"{category['slug']}.json").read_text())
         assert len(rows) == category["count"]
+
+
+# ------------------------------------------------------------- dead products
+# The catalogue ships single-store clusters, undated categories and low-value
+# rows on purpose. What it must never ship is a product that cannot be bought:
+# out of stock at every store, delisted, or last seen three months ago. Those
+# render as an ordinary card with a real price and a dead click-through.
+
+def test_no_captured_cluster_is_unbuyable():
+    manifest = _manifest()
+    for category in manifest["categories"]:
+        for bucket in range(category["buckets"]):
+            name = f"{category['slug']}-{bucket:0{SHARD_DIGITS}d}.json"
+            path = OUT / "clusters" / name
+            if not path.exists():
+                continue
+            for cluster_id, row in json.loads(path.read_text()).items():
+                # Presence asserted first: `.get()` on an absent field returns
+                # None, which would pass the check below without proving anything.
+                assert "availability_basis" in row, f"{cluster_id} carries no availability"
+                assert row["availability_basis"] not in {"out_of_stock", "delisted"}, \
+                    f"{cluster_id} is unbuyable but shipped"
+
+
+def test_no_captured_cluster_is_stale():
+    """⚠️ "unknown" must still be present — six categories date nothing, and
+    excluding them would repeat the n_stores>=2 mistake."""
+    manifest = _manifest()
+    seen_bases = set()
+    for category in manifest["categories"]:
+        for bucket in range(category["buckets"]):
+            path = OUT / "clusters" / f"{category['slug']}-{bucket:0{SHARD_DIGITS}d}.json"
+            if not path.exists():
+                continue
+            for cluster_id, row in json.loads(path.read_text()).items():
+                basis = row.get("freshness_basis")
+                seen_bases.add(basis)
+                assert basis != "stale", f"{cluster_id} is stale but shipped"
+    assert "unknown" in seen_bases, "undated categories were dropped — six of them"
+    assert "fresh" in seen_bases
+
+
+def test_every_captured_price_point_carries_a_real_timestamp():
+    """⛔ The defect this pins: all 3,556 series once shipped with `"t": ""` on
+    every point. The chart drew, the manifest counted them, the suite was green —
+    the capture was reading a key (`date`) that neither source has ever written.
+    """
+    manifest = _manifest()
+    checked = 0
+    for category in manifest["categories"]:
+        for bucket in range(category["buckets"]):
+            path = OUT / "clusters" / f"{category['slug']}-{bucket:0{SHARD_DIGITS}d}.json"
+            if not path.exists():
+                continue
+            for cluster_id, row in json.loads(path.read_text()).items():
+                for point in row.get("price_history") or []:
+                    assert point.get("t"), f"{cluster_id} has an undated price point"
+                    assert point.get("price") is not None
+                    checked += 1
+    assert checked, "no price points read — the guard proved nothing"
+
+
+def test_price_history_reaches_groceries():
+    """Groceries are the largest category and had ZERO history until the raw
+    store collections were read — their members are not in compiled_products."""
+    manifest = _manifest()
+    with_history = 0
+    for bucket in range(next(c["buckets"] for c in manifest["categories"]
+                             if c["slug"] == "groceries")):
+        path = OUT / "clusters" / f"groceries-{bucket:0{SHARD_DIGITS}d}.json"
+        if not path.exists():
+            continue
+        with_history += sum(1 for row in json.loads(path.read_text()).values()
+                            if row.get("price_history"))
+    assert with_history > 1000, f"groceries history collapsed to {with_history}"
+
+
+def test_a_series_never_puts_two_prices_on_one_date():
+    manifest = _manifest()
+    for category in manifest["categories"]:
+        path = OUT / "clusters" / f"{category['slug']}-000.json"
+        if not path.exists():
+            continue
+        for cluster_id, row in json.loads(path.read_text()).items():
+            series = row.get("price_history") or []
+            stamps = [p["t"] for p in series]
+            assert len(set(stamps)) == len(stamps), f"{cluster_id} has duplicate dates"
+
+
+def test_the_manifest_reports_what_was_excluded_and_why():
+    manifest = _manifest()
+    for key in ("excluded_unpriced", "excluded_unbuyable", "excluded_stale"):
+        assert key in manifest, f"{key} missing — an exclusion is happening invisibly"
+    assert manifest["freshness"]["stale"] == 0
+    assert manifest["freshness"]["fresh"] > 0
+
+
+def test_no_captured_cluster_names_a_retailer_twice():
+    """carrefour / carrefour.ke folded to one identity before the capture.
+
+    Read from the DETAIL shards: `stores` and `best_by_store` are not in
+    SUMMARY_FIELDS, so the listing pages would pass this vacuously.
+    """
+    from app.api.hygiene import STORE_ALIASES
+
+    manifest = _manifest()
+    checked = 0
+    for category in manifest["categories"]:
+        path = OUT / "clusters" / f"{category['slug']}-000.json"
+        if not path.exists():
+            continue
+        for cluster_id, row in json.loads(path.read_text()).items():
+            for store in (row.get("stores") or []):
+                assert store not in STORE_ALIASES, f"{cluster_id}: {store} should have folded"
+            for store in (row.get("best_by_store") or {}):
+                assert store not in STORE_ALIASES, f"{cluster_id}: {store} should have folded"
+            checked += 1
+    assert checked, "no detail shards read — the guard proved nothing"

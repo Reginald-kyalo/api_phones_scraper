@@ -93,10 +93,48 @@ def shard_for(cluster_id: str, slug: str, buckets: int) -> str:
 # cleanshelf listings usually carry no image, and are unreliable when they do.
 EXCLUDED_IMAGE_SITES = {"cleanshelf"}
 
-# Measured 2026-07-25: only 798 of 6,592 multi-store clusters (12.1%) have >=2
-# real points, and groceries have none. A one-point "trend" is not a trend, so
-# the chart is omitted rather than padded.
+# A one-point "trend" is not a trend, so the chart is omitted rather than padded.
+#
+# ⚠️ TWO DISTINCT DATES, not two points. The sources genuinely emit several rows
+# carrying the same timestamp (a re-scrape that recorded both an old and a new
+# price at one instant), and two prices on one date draws a line that says
+# something the data does not.
 MIN_HISTORY_POINTS = 2
+
+# Price history lives in two places under three different key spellings, and the
+# capture originally read a fourth that exists in neither — so every one of the
+# 3,556 series it produced had an EMPTY timestamp on every point. Nothing looked
+# wrong: the chart rendered, the tests passed, the count in the manifest was
+# real. Same shape as the `full=False` bug.
+#
+#   compiled_products.price_history   {"at": iso, "price": n}     devices
+#   <site>_products.prices            {"timestamp": iso, "amount": n}  every store
+#
+# ⭐ The second source is why groceries had NO history at all. Grocery cluster
+# members are not in `compiled_products` (measured: 0 of them resolve), because
+# `cluster_grocery` reads `marketplace_scraper_db` directly. The history was
+# always there, in the collection the clusterer itself reads, and nothing looked.
+_PRICE_KEYS = ("price", "amount")
+_TIME_KEYS = ("at", "timestamp", "date", "t")
+
+
+def _point(raw: dict) -> dict | None:
+    """Normalise one price observation from any of the three source shapes."""
+    price = next((raw[k] for k in _PRICE_KEYS if raw.get(k) is not None), None)
+    when = next((raw[k] for k in _TIME_KEYS if raw.get(k)), None)
+    if price is None or not when:
+        return None
+    return {"t": str(when), "price": price}
+
+
+def normalise_series(raw_points) -> list:
+    """Sorted, de-duplicated points. Empty when there is no real trend to draw."""
+    points = [p for r in (raw_points or []) if (p := _point(r))]
+    unique = {(p["t"], p["price"]): p for p in points}
+    series = sorted(unique.values(), key=lambda p: p["t"])
+    if len({p["t"] for p in series}) < MIN_HISTORY_POINTS:
+        return []
+    return series
 
 SUMMARY_FIELDS = [
     "cluster_id", "display_name", "title", "brand", "category", "best_price",
@@ -133,21 +171,40 @@ def pick_image(cluster: dict, device_images: dict) -> str | None:
 
 
 def build_history(cluster: dict, histories: dict) -> list | None:
-    """Longest real price series among a cluster's members, or None."""
+    """Longest real price series among a cluster's members, or None.
+
+    Longest, not merged: two stores' series spliced together would draw a single
+    line alternating between two retailers' prices, which reads as volatility
+    that never happened. One member, one line.
+    """
     best: list = []
     for member in cluster.get("members") or []:
-        series = histories.get(member.get("product_id")) or []
+        series = normalise_series(histories.get(member.get("product_id")))
         if len(series) > len(best):
             best = series
-    if len(best) < MIN_HISTORY_POINTS:
-        return None
-    points = [
-        {"t": str(p.get("date") or p.get("t") or ""), "price": p.get("price")}
-        for p in best
-        if p.get("price") is not None
-    ]
-    points.sort(key=lambda p: p["t"])
-    return points if len(points) >= MIN_HISTORY_POINTS else None
+    return best or None
+
+
+# Cluster members name their store the way their pipeline writes it — grocery
+# clusters use bare names ("carrefour"), device clusters use domains
+# ("jumia.co.ke") — while the raw collections are always "<stem>_products".
+_STORE_TLDS = (".co.ke", ".or.ke", ".com", ".net", ".online", ".shop", ".store", ".ke")
+
+
+def raw_collection_for(site: str | None, existing: set) -> str | None:
+    """Raw collection holding a store's listings, or None if it has none.
+
+    Checked against the collections that actually exist rather than constructed
+    blindly: a miss must be a silent skip, not a query against a typo'd name that
+    returns zero rows and looks like "this store has no history".
+    """
+    stem = (site or "").lower().strip()
+    for tld in _STORE_TLDS:
+        if stem.endswith(tld):
+            stem = stem[: -len(tld)]
+            break
+    name = f"{stem}_products"
+    return name if stem and name in existing else None
 
 
 def _summary(view: dict) -> dict:
@@ -168,6 +225,7 @@ def main() -> None:
     os.environ.setdefault("CLUSTERS_COLLECTION", SOURCE_COLLECTION)
     from pymongo import MongoClient
 
+    from app.api.hygiene import STALE_AFTER_DAYS, is_stale, is_unbuyable
     from app.api.routes.clusters import (
         COMPARISON_SLUGS,
         MAX_DEAL_SPREAD_PCT,
@@ -179,7 +237,45 @@ def main() -> None:
     source = db[SOURCE_COLLECTION]
     docs = list(source.find({"n_stores": {"$gte": MIN_STORES}}))
     unpriced = source.count_documents({"n_stores": {"$not": {"$gte": MIN_STORES}}})
-    print(f"clusters: {len(docs)} (min_stores={MIN_STORES}, {unpriced} unpriced skipped)")
+    print(f"clusters: {len(docs)} (min_stores={MIN_STORES}, {unpriced} delisted/unpriced skipped)")
+
+    # ⭐ QUALITY EXCLUSIONS — a product nobody can buy is not catalogue, it is noise.
+    #
+    # Everything else in this script ships the whole corpus on purpose (see the module
+    # docstring: the first capture's size caps cost three entire categories). These two
+    # filters are the exception, and they are about the product being DEAD, not about size:
+    #
+    #   unbuyable  192 clusters — every store carrying them is proven out_of_stock. They
+    #              render as an ordinary card with a real price and a "Go to store" button
+    #              that leads to a page you cannot buy from.
+    #   stale    1,003 clusters — nothing in them has been seen since 2026-04 (>60 days).
+    #              The price shown is historical; the listing may no longer exist.
+    #
+    # Measured 2026-07-25: 62,668 -> 61,473 clusters, and the deals feed is unchanged at
+    # 3,189. That the curated surface lost nothing is the expected result, not luck — the
+    # deals filter already required a fresh multi-store like-for-like spread. The dead rows
+    # were all in the browse catalogue, which is exactly where nothing was checking.
+    #
+    # The fully-delisted case (3,680 clusters) never reaches here: the engine drops them to
+    # n_stores == 0 and MIN_STORES already excludes them. That — not "no price" — is what
+    # the manifest's excluded count has always actually been measuring, so it is named for
+    # that now.
+    #
+    # ⚠️ Undated clusters are KEPT. 3,960 rows carry no last_seen on any member and they are
+    # the entirety of tvs, printers, routers, wearables, desktop-computers and
+    # digital-cameras. `freshness()` returns "unknown" for them, never "stale". Dropping
+    # unknowns would delete six categories to fix a problem measured in none of them.
+    kept, dropped_stale, dropped_unbuyable = [], 0, 0
+    for doc in docs:
+        if is_unbuyable(doc):
+            dropped_unbuyable += 1
+        elif is_stale(doc):
+            dropped_stale += 1
+        else:
+            kept.append(doc)
+    docs = kept
+    print(f"excluded {dropped_unbuyable} unbuyable + {dropped_stale} stale "
+          f"(>{STALE_AFTER_DAYS}d) -> {len(docs)} clusters")
 
     member_ids = [m.get("product_id") for d in docs for m in (d.get("members") or [])]
     device_images: dict = {}
@@ -193,6 +289,38 @@ def main() -> None:
         if cp.get("price_history"):
             histories[cp["product_id"]] = cp["price_history"]
     print(f"compiled_products: {len(device_images)} images, {len(histories)} histories")
+
+    # ⭐ Second history source: the raw store collections the crawlers write, which
+    # carry a `prices` array on every site. This is the ONLY source groceries have —
+    # their cluster members do not exist in `compiled_products` at all, because
+    # `cluster_grocery` reads marketplace_scraper_db directly. Measured potential:
+    # 5.8% -> 21.4% of clusters, and groceries 0% -> 24.2%.
+    #
+    # A member found here overrides the compiled copy: `prices` is what the crawler
+    # last wrote, while `compiled_products.price_history` is a rebuild-time snapshot
+    # of it, and the pipeline has not been run under the freeze.
+    raw_db = db.client["marketplace_scraper_db"]
+    raw_colls = set(raw_db.list_collection_names())
+    wanted: dict = defaultdict(set)
+    for doc in docs:
+        for m in doc.get("members") or []:
+            coll = raw_collection_for(m.get("site"), raw_colls)
+            if coll and m.get("product_id"):
+                wanted[coll].add(m["product_id"])
+    raw_found = 0
+    for coll, ids in wanted.items():
+        ids = list(ids)
+        # Chunked: a single $in of ~30k ids per collection is a 16 MB BSON risk.
+        for start in range(0, len(ids), 20_000):
+            for row in raw_db[coll].find(
+                {"product_id": {"$in": ids[start:start + 20_000]},
+                 "prices.1": {"$exists": True}},
+                {"product_id": 1, "prices": 1},
+            ):
+                histories[row["product_id"]] = row["prices"]
+                raw_found += 1
+    print(f"raw collections: {raw_found} histories over {len(wanted)} stores "
+          f"-> {len(histories)} total")
 
     views = []
     for doc in docs:
@@ -312,8 +440,18 @@ def main() -> None:
         "page_size": PAGE_SIZE,
         "total_clusters": len(views),
         "multi_store_clusters": sum(1 for v in views if v.get("is_multi_store")),
-        # Skipped for having no price and no store, never for size. See MIN_STORES.
-        "excluded_unpriced": unpriced,
+        # Every exclusion is for being DEAD, never for size. See MIN_STORES and the
+        # quality-exclusion block above.
+        "excluded_unpriced": unpriced,          # n_stores == 0; 3,680 of these are delisted
+        "excluded_unbuyable": dropped_unbuyable,  # out of stock at every store
+        "excluded_stale": dropped_stale,          # unseen for > STALE_AFTER_DAYS
+        "stale_after_days": STALE_AFTER_DAYS,
+        # Freshness the demo can actually claim. "unknown" is a source that dates
+        # nothing, NOT a staleness claim — see hygiene.freshness.
+        "freshness": {
+            basis: sum(1 for v in views if v.get("freshness_basis") == basis)
+            for basis in ("fresh", "stale", "unknown")
+        },
         "total_stores": len({s for v in views for s in (v.get("stores") or [])}),
         "with_image": sum(1 for v in views if v.get("image")),
         "with_history": sum(1 for v in views if v.get("price_history")),

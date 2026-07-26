@@ -1,16 +1,17 @@
 /**
- * Store values arrive in two shapes: bare names from the grocery scrapers
- * ("carrefour", "naivas") and domains from the device scrapers ("jumia.co.ke").
- * The same retailer can appear as both — `carrefour` (9,270 listings) and
- * `carrefour.ke` (29) are separate identities in the corpus.
+ * Store display labels.
  *
- * This folds them for DISPLAY only. The underlying duplication is a data issue
- * logged for the backend; nothing here rewrites what the capture stored.
+ * ⛔ DISPLAY ONLY — never use this to decide whether two stores are the same.
+ * Duplicate retailer identities (`carrefour` vs `carrefour.ke`) are folded
+ * upstream by `app/api/hygiene.canonical_store`, which uses an explicit
+ * five-entry map. The TLD strip below is generic, so as a data rule it would
+ * silently merge any two future retailers that happen to share a stem. By the
+ * time values reach here they are already canonical; this only prettifies them.
  */
 const TLD = /\.(co\.ke|or\.ke|ke|com|net|online|shop|store)$/;
 
-/** Canonical key for comparing two store values. */
-export function storeKey(raw: string | null | undefined): string {
+/** Internal: display normalisation only. Not an identity. */
+function storeKey(raw: string | null | undefined): string {
   return (raw || '')
     .toLowerCase()
     .trim()

@@ -17,12 +17,34 @@ const chartConfig: ChartConfig = {
   },
 };
 
+/** "17 Jun" — series are irregular observations, so day matters, not just month. */
+const shortDate = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
+const WINDOW_DAYS = { '3m': 90, '6m': 182, '1y': 365, all: Infinity } as const;
+
 export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChartProps) {
   const [historyPeriod, setHistoryPeriod] = useState<'3m' | '6m' | '1y' | 'all'>('1y');
 
+  // Real series are irregular dated observations, not 12 monthly points, so the
+  // window is filtered by date. Slicing a fixed count silently showed a different
+  // span per product.
   const filteredHistory = useMemo(() => {
-    const sliceMap = { '3m': 9, '6m': 6, '1y': 0, 'all': 0 };
-    return priceHistory.slice(sliceMap[historyPeriod]);
+    const sorted = [...priceHistory]
+      .filter((p) => !Number.isNaN(new Date(p.t).getTime()))
+      .sort((a, b) => +new Date(a.t) - +new Date(b.t));
+    const days = WINDOW_DAYS[historyPeriod];
+    if (!Number.isFinite(days) || sorted.length === 0) return sorted;
+    const newest = +new Date(sorted[sorted.length - 1].t);
+    const cutoff = newest - days * 86_400_000;
+    const within = sorted.filter((p) => +new Date(p.t) >= cutoff);
+    // Never render an empty chart just because the window is narrower than the
+    // data is old — fall back to the whole series.
+    return within.length >= 2 ? within : sorted;
   }, [priceHistory, historyPeriod]);
 
   const historyStats = useMemo(() => {
@@ -31,8 +53,8 @@ export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChart
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const minMonth = filteredHistory.find(p => p.price === min)?.t ?? '';
-    const maxMonth = filteredHistory.find(p => p.price === max)?.t ?? '';
+    const minMonth = shortDate(filteredHistory.find(p => p.price === min)?.t ?? '');
+    const maxMonth = shortDate(filteredHistory.find(p => p.price === max)?.t ?? '');
     return { min, max, avg: Math.round(avg * 100) / 100, minMonth, maxMonth };
   }, [filteredHistory]);
 
@@ -40,7 +62,7 @@ export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChart
     <div>
       <h2 className="text-xl font-bold text-foreground mb-1">Price history</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Track how the price of {title} has changed over time
+        {filteredHistory.length} recorded price{filteredHistory.length === 1 ? '' : 's'} for {title}
       </p>
 
       {/* Period selector */}
@@ -72,6 +94,7 @@ export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChart
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="t"
+            tickFormatter={shortDate}
             tickLine={false}
             axisLine={false}
             tickMargin={8}
@@ -86,7 +109,7 @@ export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChart
             domain={['dataMin - 10', 'dataMax + 10']}
           />
           <ChartTooltip
-            content={<ChartTooltipContent indicator="line" />}
+            content={<ChartTooltipContent indicator="line" labelFormatter={(v) => shortDate(String(v))} />}
             formatter={(value: number) => [formatPrice(value), 'Price']}
           />
           <Area
