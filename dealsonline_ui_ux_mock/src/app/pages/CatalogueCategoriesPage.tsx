@@ -7,6 +7,9 @@ import { Loader2, ChevronRight } from 'lucide-react';
 const LABELS: Record<string, string> = {
   'groceries': 'Groceries',
   'mobile-phones': 'Phones',
+  // Without this it rendered as the raw slug, "mobile phone accessories" — the
+  // longest label in the set by a wide margin, and lower-case among title-case.
+  'mobile-phone-accessories': 'Phone accessories',
   'laptops': 'Laptops',
   'tablets': 'Tablets',
   'audio-systems': 'Audio systems',
