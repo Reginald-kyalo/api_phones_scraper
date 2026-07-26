@@ -26,6 +26,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -93,6 +94,19 @@ def shard_for(cluster_id: str, slug: str, buckets: int) -> str:
 # cleanshelf listings usually carry no image, and are unreliable when they do.
 EXCLUDED_IMAGE_SITES = {"cleanshelf"}
 
+# A store's own "no photo" asset is worse than no image at all: the UI renders a
+# neutral mark for a missing image, but a grey vector served from a retailer CDN
+# looks like a product photo that failed to load.
+#
+# Measured 2026-07-26: 846 shipped clusters (1.4%) headlined one — 839 of them
+# groceries, almost entirely Carrefour's `Plus_1_<hash>.svg` MAF default. Every
+# real product photo in the corpus is a raster; no genuine one is an SVG.
+_PLACEHOLDER_IMAGE = re.compile(r"\.svg($|\?)|placeholder|no-?image|default[-_]?img", re.I)
+
+
+def is_placeholder_image(url: str) -> bool:
+    return bool(_PLACEHOLDER_IMAGE.search(url or ""))
+
 # A one-point "trend" is not a trend, so the chart is omitted rather than padded.
 #
 # ⚠️ TWO DISTINCT DATES, not two points. The sources genuinely emit several rows
@@ -145,7 +159,8 @@ SUMMARY_FIELDS = [
 
 
 def _usable(url) -> bool:
-    return isinstance(url, str) and url.strip().startswith("http")
+    return (isinstance(url, str) and url.strip().startswith("http")
+            and not is_placeholder_image(url))
 
 
 def pick_image(cluster: dict, device_images: dict) -> str | None:
@@ -329,7 +344,7 @@ def main() -> None:
         # every "Go to store" button on the comparison page is a dead link — the
         # one thing the whole comparison exists to provide. Listings are written
         # from _summary(), so they stay small regardless.
-        view = _cluster_view(doc, full=True)
+        view = _cluster_view(doc)
         view["image"] = pick_image(doc, device_images)
         view["price_history"] = build_history(doc, histories)
         # Demoted, never dropped: the row stays browsable and its detail page still

@@ -290,6 +290,38 @@ def test_store_names_resolve_to_their_raw_collection(site, expected):
     assert raw_collection_for(site, EXISTING) == expected
 
 
+# ------------------------------------------------------- placeholder images
+
+def test_a_retailer_placeholder_svg_is_not_an_image():
+    """A store's own "no photo" vector is worse than no image: the UI draws a
+    neutral mark for a missing image, but a grey SVG from a retailer CDN reads as
+    a product photo that failed to load. 846 clusters headlined one."""
+    real = "https://cdn.example.com/product/12345.jpg"
+    cluster = {"cluster_id": "c1", "members": [
+        {"site": "carrefour",
+         "image": "http://cdnprod.mafretailproxy.com//assets/images/Plus_1_cc73c93eda.svg"},
+        {"site": "naivas", "image": real},
+    ]}
+    assert pick_image(cluster, {}) == real
+
+
+def test_a_cluster_with_only_placeholders_has_no_image():
+    cluster = {"cluster_id": "c1", "members": [
+        {"site": "carrefour", "image": "http://x/assets/Plus_1_abc.svg"},
+        {"site": "naivas", "image": "https://y/img/placeholder.png"},
+        {"site": "eastmatt", "image": "https://z/no-image.png"},
+    ]}
+    assert pick_image(cluster, {}) is None
+
+
+def test_a_real_raster_is_never_mistaken_for_a_placeholder():
+    for url in ["https://cdn.x/p/nescafe-gold-200g.jpg",
+                "https://cdn.x/media/catalog/svgomatic-blender.png",  # 'svg' mid-word
+                "https://cdn.x/img/default-brand-bag.jpeg"]:          # 'default' but not an img token
+        cluster = {"cluster_id": "c", "members": [{"site": "naivas", "image": url}]}
+        assert pick_image(cluster, {}) == url, url
+
+
 def test_a_store_with_no_raw_collection_is_skipped_not_guessed():
     """A miss must be None, not a constructed name that queries nothing and
     looks like "this store has no history"."""
@@ -308,12 +340,16 @@ def demo_dir() -> Path:
 
 
 def test_detail_shards_carry_store_urls(demo_dir):
-    """Detail views must use the full projection, not the summary one.
+    """Detail views must carry the per-store URL.
 
-    `_cluster_view(doc)` defaults to full=False, which writes best_by_store as
-    {store: price}. The page still renders — prices show, layout is fine — but
-    every "Go to store" link loses its href, silently removing the click-through
-    the comparison exists to provide. Proven red by reverting to full=False.
+    The original defect: `_cluster_view(doc)` defaulted to the LOSSY projection,
+    writing best_by_store as {store: price}. The page still rendered — prices
+    showed, layout was fine — but every "Go to store" link lost its href,
+    silently removing the click-through the comparison exists to provide.
+
+    The default has since been inverted (`summary=False`), so the quiet path is
+    now the safe one and this guard should be hard to trip. It stays because the
+    property it protects is the product's whole purpose, not the flag's spelling.
     """
     shards = sorted((demo_dir / "clusters").glob("*.json"))
     assert shards, "no detail shards captured"
@@ -337,6 +373,55 @@ def test_detail_shards_carry_store_urls(demo_dir):
             if checked >= 200:
                 return
     assert checked, "no priced clusters found to check"
+
+
+def test_detail_shards_carry_the_evidence_the_ui_asks_the_reader_to_judge(demo_dir):
+    """Merged clusters must ship `mvp_merged_members`; spreads must ship their basis.
+
+    Same shape as the store-URL defect above, and the reason it gets its own
+    guard: both fields go missing SILENTLY. The comparison page keeps rendering,
+    the percentage keeps showing and the merge notice keeps saying "grouped from
+    3" — it just stops naming the three, and the report dialog quietly drops from
+    a per-cluster verdict to one unattributed "wrong". The reports still arrive;
+    they are simply no longer labels anyone can act on.
+
+    A merge with no members list is the worse half: `mvp_merged_from` is identity
+    keys, unshowable to a person, so there is no fallback to render.
+    """
+    shards = sorted((demo_dir / "clusters").glob("*.json"))
+    assert shards, "no detail shards captured"
+
+    merges = spreads = 0
+    for shard in shards:
+        for cluster in json.loads(shard.read_text()).values():
+            if (cluster.get("mvp_n_merged") or 0) > 1:
+                members = cluster.get("mvp_merged_members") or []
+                assert len(members) == cluster["mvp_n_merged"], (
+                    f"{cluster['cluster_id']} says it merged "
+                    f"{cluster['mvp_n_merged']} clusters but names {len(members)}"
+                )
+                assert all(m.get("cluster_id") and m.get("title") for m in members), (
+                    f"{cluster['cluster_id']} has a member with no id or no title — "
+                    f"nothing to render, and nothing to report a verdict against"
+                )
+                merges += 1
+
+            basis = cluster.get("spread_basis")
+            if cluster.get("like_for_like_spread_pct") and basis:
+                for end in ("cheapest", "dearest"):
+                    offer = basis.get(end) or {}
+                    assert offer.get("title"), (
+                        f"{cluster['cluster_id']} spread_basis.{end} has no title — "
+                        f"the two titles side by side are the only way a "
+                        f"variant-merge is visible to the reader"
+                    )
+                    assert offer.get("price") is not None, (
+                        f"{cluster['cluster_id']} spread_basis.{end} has no price"
+                    )
+                spreads += 1
+
+    assert merges > 1000, f"only {merges} merged clusters found — expected ~4,000"
+    assert spreads > 1000, f"only {spreads} spreads with a basis — expected ~4,500"
 
 
 def test_spa_deeplink_restore_runs_before_modules():
