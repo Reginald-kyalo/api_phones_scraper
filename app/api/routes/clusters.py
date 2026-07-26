@@ -32,10 +32,12 @@ from app.api.hygiene import (
     best_title,
     canonical_store,
     clean_brand,
+    clean_text,
     fold_by_store,
     fold_stores,
     freshness,
     last_seen_at,
+    spread_basis,
 )
 from app.api.schemas.clusters import (
     ClusterDealsResponse,
@@ -119,8 +121,8 @@ def _data_warning(d: dict) -> str | None:
     return None
 
 
-def _by_store(raw: dict, full: bool) -> dict:
-    """best_by_store → {site: price} (summary) or {site: {price,url,title}} (detail).
+def _by_store(raw: dict, summary: bool) -> dict:
+    """best_by_store → {site: {price,url,title}} (detail) or {site: price} (summary).
 
     Keys are canonicalised first, so a retailer crawled under both a bare name and
     a domain (`carrefour` / `carrefour.ke`) is one column, not two.
@@ -128,13 +130,29 @@ def _by_store(raw: dict, full: bool) -> dict:
     folded = fold_by_store(raw, cheaper=lambda o: (o or {}).get("price") or float("inf"))
     out = {}
     for site, v in folded.items():
-        out[site] = {"price": v.get("price"), "url": v.get("url"), "title": v.get("title")} if full \
-            else v.get("price")
+        out[site] = v.get("price") if summary \
+            else {"price": v.get("price"), "url": v.get("url"),
+                  "title": clean_text(v.get("title"))}
     return out
 
 
-def _cluster_view(d: dict, full: bool = False) -> dict:
-    """Consumer-facing projection of a cluster doc. `full` adds store URLs (detail view)."""
+def _cluster_view(d: dict, summary: bool = False) -> dict:
+    """Consumer-facing projection of a cluster doc.
+
+    `summary=True` drops the per-store URL and title, leaving a bare price — for
+    list responses where the click-through is not yet needed.
+
+    ⚠️ THE DEFAULT IS DELIBERATELY THE RICH VIEW, and it used to be the opposite
+    (`full=False`). That inversion is the fix for a real outage: the demo capture
+    called `_cluster_view(doc)`, got the lossy projection, and shipped the ENTIRE
+    dataset with no store URLs — every "Go to store" button dead, which is the one
+    thing a price comparison exists to deliver. Nothing raised: prices rendered,
+    layout was fine, the suite was green.
+
+    The two failure modes are not symmetric. Forgetting the flag now costs bytes;
+    forgetting it before cost the product's whole purpose. The quiet path is the
+    safe one. (Requested by the frontend after they found the outage.)
+    """
     # Idealo-style feature variants: `configs` are split on the category PRIMARY facet
     # (storage for phones/tablets, CPU for laptops). facet_label is the chip text the UI
     # shows ("256GB", "Intel Core i5"); storage_gb is kept for back-compat.
@@ -148,7 +166,7 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
             "cheapest_store": c.get("cheapest_store"),
             "n_stores": c.get("n_stores"),
             "spread_pct": c.get("spread_pct"),
-            "by_store": _by_store(c.get("best_by_store"), full),
+            "by_store": _by_store(c.get("best_by_store"), summary),
         })
     return {
         "cluster_id": d.get("cluster_id"),
@@ -160,8 +178,8 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         # tokens as a real listing with the order and casing destroyed ("HT S40R" -> "Ht ...
         # S40r"). When it adds no tokens, the real listing title wins.
         "title": best_title(d),
-        "display_name": d.get("display_name"),
-        "representative_title": d.get("representative_title"),
+        "display_name": clean_text(d.get("display_name")),
+        "representative_title": clean_text(d.get("representative_title")),
         "category": d.get("canonical_category_slug"),
         # which feature the variants/prices are split on (storage | cpu)
         "primary_facet": d.get("primary_facet"),
@@ -178,6 +196,17 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "mvp_generated": bool(d.get("mvp_generated", False)),
         "mvp_rule": d.get("mvp_rule"),
         "mvp_n_merged": d.get("mvp_n_merged"),
+        # The engine cluster_ids this row absorbed. Published because without it a
+        # merge is a one-way door: 6,039 ids are absorbed across the corpus and a
+        # consumer holding one (a reader report, a bookmark) has no way to learn
+        # where it went. This is the list that lets it be re-attached.
+        "mvp_merged_from": d.get("mvp_merged_from"),
+        # The same absorbed clusters, NAMED, so a consumer can ask a human about
+        # them. `mvp_merged_from` is identity keys and cannot be rendered.
+        "mvp_merged_members": [
+            {"cluster_id": m.get("cluster_id"), "title": clean_text(m.get("title"))}
+            for m in (d.get("mvp_merged_members") or [])
+        ] or None,
         # None when the keyer put a measurement in the brand slot ("14-inch", "3.5mm").
         "brand": clean_brand(d.get("brand")),
         "canonical_name": d.get("canonical_name"),
@@ -200,9 +229,14 @@ def _cluster_view(d: dict, full: bool = False) -> dict:
         "used_best_price": d.get("used_best_price"),
         # like-for-like (same config) is the honest spread; cross_store conflates configs
         "like_for_like_spread_pct": d.get("like_for_like_spread_pct"),
+        # The two offers that number compares, so a consumer can SHOW the saving
+        # rather than assert it. Also the only place the flavour-merge defect is
+        # visible on a page: strawberry at one shop priced against chocolate at
+        # the other, both titles quoted verbatim.
+        "spread_basis": spread_basis(d),
         "cross_store_spread_pct": d.get("cross_store_spread_pct"),
         "configs": configs,
-        "best_by_store": _by_store(d.get("best_by_store"), full),
+        "best_by_store": _by_store(d.get("best_by_store"), summary),
         # Buyability + recency. The engine computes both in `gate_members` but stamped
         # them on only 28,754 of 66,406 clusters (groceries, tvs, printers, routers,
         # wearables, desktop-computers and digital-cameras have neither), and this
@@ -239,7 +273,8 @@ async def search_clusters(
     if multi_store_only:
         query["is_multi_store"] = True
     rows = await CLUSTERS.find(query).sort("n_listings", -1).to_list(length=limit)
-    return {"query": q, "count": len(rows), "results": [_cluster_view(d) for d in rows]}
+    return {"query": q, "count": len(rows),
+            "results": [_cluster_view(d, summary=True) for d in rows]}
 
 
 @router.get("/deals", response_model=ClusterDealsResponse)
@@ -272,7 +307,7 @@ async def best_deals(
         for s in slugs
     ]
     rows = await CLUSTERS.find(query).sort("like_for_like_spread_pct", -1).to_list(length=limit)
-    return {"count": len(rows), "results": [_cluster_view(d) for d in rows]}
+    return {"count": len(rows), "results": [_cluster_view(d, summary=True) for d in rows]}
 
 
 @router.get("/{cluster_id:path}", response_model=ClusterView)
@@ -281,4 +316,4 @@ async def cluster_detail(cluster_id: str):
     d = await CLUSTERS.find_one({"_id": cluster_id})
     if not d:
         raise HTTPException(status_code=404, detail="cluster not found")
-    return _cluster_view(d, full=True)
+    return _cluster_view(d)

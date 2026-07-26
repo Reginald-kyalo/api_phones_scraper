@@ -63,14 +63,14 @@ DOC = {
 
 def test_the_model_covers_every_field_the_projection_returns():
     """The whole point. A missing field here is an invisible API truncation."""
-    produced = set(_cluster_view(DOC, full=True))
+    produced = set(_cluster_view(DOC))
     declared = set(ClusterView.model_fields)
     assert not produced - declared, \
         f"response_model would SILENTLY DROP: {sorted(produced - declared)}"
 
 
 def test_the_config_model_covers_every_config_field():
-    produced = set(_cluster_view(DOC, full=True)["configs"][0])
+    produced = set(_cluster_view(DOC)["configs"][0])
     assert not produced - set(ClusterConfig.model_fields), \
         f"config fields would be dropped: {sorted(produced - set(ClusterConfig.model_fields))}"
 
@@ -78,13 +78,13 @@ def test_the_config_model_covers_every_config_field():
 def test_the_model_declares_nothing_the_projection_never_produces():
     """A field in the schema but not in the projection documents an endpoint
     behaviour that does not exist — it shows up in /docs and always reads null."""
-    extra = set(ClusterView.model_fields) - set(_cluster_view(DOC, full=True))
+    extra = set(ClusterView.model_fields) - set(_cluster_view(DOC))
     assert not extra, f"schema promises fields the API never returns: {sorted(extra)}"
 
 
 def test_a_real_projection_validates_unchanged():
     """Round-trip: validating must not alter a single value."""
-    view = _cluster_view(DOC, full=True)
+    view = _cluster_view(DOC)
     dumped = ClusterView.model_validate(view).model_dump()
     differing = {k: (view[k], dumped[k]) for k in view
                  if k not in ("configs", "best_by_store") and dumped[k] != view[k]}
@@ -94,10 +94,10 @@ def test_a_real_projection_validates_unchanged():
 def test_summary_mode_keeps_bare_prices_and_detail_mode_keeps_urls():
     """`by_store` is a price in summary views and an object in detail views. The
     union type must accept BOTH — a stricter model would erase click-through."""
-    summary = ClusterView.model_validate(_cluster_view(DOC, full=False))
+    summary = ClusterView.model_validate(_cluster_view(DOC, summary=True))
     assert summary.best_by_store["jumia.co.ke"] == 42999
 
-    detail = ClusterView.model_validate(_cluster_view(DOC, full=True))
+    detail = ClusterView.model_validate(_cluster_view(DOC))
     offer = detail.best_by_store["jumia.co.ke"]
     assert isinstance(offer, StoreOffer) and offer.url == "https://x/y"
 

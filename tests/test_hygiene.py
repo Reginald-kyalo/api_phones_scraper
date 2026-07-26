@@ -116,6 +116,47 @@ def test_title_swap_is_lossless():
     assert tokens(chosen) == tokens(doc["display_name"])
 
 
+def test_html_entities_are_decoded_for_display():
+    """3,020 clusters (4.91%) ship raw entities. A reader asked "is this title
+    right?" would say no because of the mojibake, not because of a matching
+    error — the label would be unusable."""
+    from app.api.hygiene import clean_text
+
+    assert clean_text("Brown&#8217;s Greek Yoghurt Honey Flavour &#8211; 250ml") == \
+        "Brown’s Greek Yoghurt Honey Flavour – 250ml"
+    assert clean_text("Nice&amp;Lovely Glycerine Lotion 600ml") == \
+        "Nice&Lovely Glycerine Lotion 600ml"
+    assert clean_text('Samsung 55&#8243; TV') == 'Samsung 55″ TV'
+    assert clean_text("Cotton  Buds  200s") == "Cotton Buds 200s"
+
+
+def test_decoding_leaves_clean_titles_untouched():
+    from app.api.hygiene import clean_text
+
+    for title in ["Sony HT S40R Soundbar", "Dormans Fine Instant Coffee 1.6Gx36"]:
+        assert clean_text(title) == title
+    assert clean_text(None) is None
+
+
+def test_the_projection_decodes_every_title_surface():
+    from app.api.routes.clusters import _cluster_view
+
+    view = _cluster_view({
+        "canonical_category_slug": "groceries",
+        "display_name": "Too Good Raspberry Yoghurt &#8211; 450g",
+        "representative_title": "Too Good Raspberry Yoghurt &#8211; 450g",
+        "best_by_store": {"naivas": {"price": 90, "url": "https://n/x",
+                                     "title": "Brown&#8217;s Yoghurt"}},
+        "mvp_merged_members": [{"cluster_id": "groceries::a",
+                                "title": "Daawat Green Label Spaghetti &#8211; 400g"}],
+    })
+    assert "&#" not in view["title"]
+    assert "&#" not in view["display_name"]
+    assert "&#" not in view["representative_title"]
+    assert "&#" not in view["best_by_store"]["naivas"]["title"]
+    assert "&#" not in view["mvp_merged_members"][0]["title"]
+
+
 def test_title_falls_back_when_display_name_missing():
     assert best_title({"canonical_name": "Apple iPhone 15"}) == "Apple iPhone 15"
     assert best_title({"representative_title": "raw listing"}) == "raw listing"
@@ -247,7 +288,7 @@ def test_the_projection_folds_duplicate_store_identities():
         "cheapest_store": "carrefour.ke",
         "best_by_store": {"carrefour.ke": {"price": 990}},
         "canonical_category_slug": "groceries",
-    }, full=True)
+    })
     assert view["stores"] == ["carrefour", "naivas"]
     assert view["cheapest_store"] == "carrefour"
     assert list(view["best_by_store"]) == ["carrefour"]
@@ -294,6 +335,139 @@ def test_buyability_outranks_the_refurb_caveat():
         "condition_basis": "likely_used", "canonical_category_slug": "laptops",
     })
     assert "not currently buyable" in view["data_warning"]
+
+
+def test_the_quiet_path_is_the_rich_one():
+    """⚠️ Requested by the frontend after `full=False` shipped a whole dataset with
+    no store URLs. Calling the projection with no flag must now yield the view a
+    consumer can actually click through, not the lossy one."""
+    from app.api.routes.clusters import _cluster_view
+
+    doc = {"best_by_store": {"jumia.co.ke": {"price": 100, "url": "https://j/x",
+                                             "title": "T"}},
+           "canonical_category_slug": "laptops"}
+    offer = _cluster_view(doc)["best_by_store"]["jumia.co.ke"]
+    assert isinstance(offer, dict) and offer["url"] == "https://j/x"
+
+    bare = _cluster_view(doc, summary=True)["best_by_store"]["jumia.co.ke"]
+    assert bare == 100, "summary=True should still drop to a bare price"
+
+
+def test_merged_from_is_published_so_an_absorbed_id_can_be_re_attached():
+    """⛔ Frontend ASK. 6,039 engine cluster_ids are absorbed by merges; without
+    this list a report or bookmark keyed on one has no way to find where it went."""
+    from app.api.routes.clusters import _cluster_view
+
+    view = _cluster_view({
+        "cluster_id": "groceries::a", "mvp_n_merged": 3,
+        "mvp_merged_from": ["groceries::a", "groceries::b", "groceries::c"],
+        "canonical_category_slug": "groceries",
+    })
+    assert view["mvp_merged_from"] == ["groceries::a", "groceries::b", "groceries::c"]
+    assert len(view["mvp_merged_from"]) == view["mvp_n_merged"]
+
+
+# ---------------------------------------------------- spread provenance ----
+# The headline saving is one number with no provenance. These pin that the two
+# offers behind it are published, because that is what lets a reader CHECK it.
+
+BROOKSIDE = {
+    "canonical_category_slug": "groceries",
+    "like_for_like_spread_pct": 2.4,
+    "configs": [{
+        "facet_label": "6x250ml", "spread_pct": 2.4, "n_stores": 2,
+        "best_by_store": {
+            "carrefour": {"price": 410.0, "url": "https://c/x",
+                          "title": "Brookside UHT Flavour Strawberry 250mlx6"},
+            "quickmart": {"price": 420.0, "url": "https://q/y",
+                          "title": "Brookside Uht Flavour Chocolate 250Mlx6"},
+        },
+    }],
+}
+
+
+def test_the_spread_names_both_offers_it_compares():
+    from app.api.hygiene import spread_basis
+
+    basis = spread_basis(BROOKSIDE)
+    assert basis["spread_pct"] == 2.4 and basis["facet_label"] == "6x250ml"
+    assert basis["cheapest"]["store"] == "carrefour" and basis["cheapest"]["price"] == 410.0
+    assert basis["dearest"]["store"] == "quickmart" and basis["dearest"]["price"] == 420.0
+
+
+def test_the_spread_basis_quotes_both_store_titles():
+    """⭐ The whole point. Quoting both titles is what makes the grocery
+    variant-merge visible: strawberry priced against chocolate."""
+    from app.api.hygiene import spread_basis
+
+    basis = spread_basis(BROOKSIDE)
+    assert "Strawberry" in basis["cheapest"]["title"]
+    assert "Chocolate" in basis["dearest"]["title"]
+
+
+def test_the_spread_basis_carries_click_through_urls():
+    from app.api.hygiene import spread_basis
+
+    basis = spread_basis(BROOKSIDE)
+    assert basis["cheapest"]["url"] and basis["dearest"]["url"]
+
+
+def test_spread_basis_is_the_config_that_owns_the_headline():
+    """Identity with the headline, not a re-derivation — the published number and
+    the published evidence must never disagree."""
+    from app.api.hygiene import spread_basis
+
+    doc = {**BROOKSIDE, "like_for_like_spread_pct": 40.0, "configs": [
+        BROOKSIDE["configs"][0],
+        {"facet_label": "12x250ml", "spread_pct": 40.0, "n_stores": 2,
+         "best_by_store": {"a": {"price": 100.0, "title": "A"},
+                           "b": {"price": 140.0, "title": "B"}}},
+    ]}
+    assert spread_basis(doc)["facet_label"] == "12x250ml"
+
+
+def test_no_spread_no_basis():
+    from app.api.hygiene import spread_basis
+
+    assert spread_basis({"like_for_like_spread_pct": None, "configs": []}) is None
+    # a single-store config cannot be a comparison
+    assert spread_basis({"like_for_like_spread_pct": 5.0, "configs": [
+        {"spread_pct": 5.0, "n_stores": 1,
+         "best_by_store": {"a": {"price": 10.0}}}]}) is None
+
+
+def test_the_projection_publishes_the_spread_basis():
+    from app.api.routes.clusters import _cluster_view
+
+    view = _cluster_view(BROOKSIDE)
+    assert view["spread_basis"]["dearest"]["store"] == "quickmart"
+
+
+def test_merged_members_are_nameable_not_just_keys():
+    """⛔ `mvp_merged_from` is identity keys. Nothing can ask a human about
+    'groceries::250mlx6+brookside+flavour+strawberry+uht'."""
+    from app.api.routes.clusters import _cluster_view
+
+    view = _cluster_view({
+        "canonical_category_slug": "groceries", "mvp_n_merged": 2,
+        "mvp_merged_from": ["groceries::a", "groceries::b"],
+        "mvp_merged_members": [
+            {"cluster_id": "groceries::a", "title": "Aquamist Frutz Orange 500ml"},
+            {"cluster_id": "groceries::b", "title": "Aquamist Frutz Apple 500ml"},
+        ],
+    })
+    members = view["mvp_merged_members"]
+    assert [m["title"] for m in members] == ["Aquamist Frutz Orange 500ml",
+                                             "Aquamist Frutz Apple 500ml"]
+    # every rendered row carries the id it must report back
+    assert all(m["cluster_id"] for m in members)
+    assert len(members) == view["mvp_n_merged"]
+
+
+def test_an_unmerged_cluster_reports_no_merge_provenance():
+    from app.api.routes.clusters import _cluster_view
+
+    assert _cluster_view({"canonical_category_slug": "laptops"})["mvp_merged_from"] is None
 
 
 def test_a_healthy_cluster_still_has_no_warning():

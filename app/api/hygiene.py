@@ -13,6 +13,7 @@ obvious fixes are wrong in a way that only measurement shows.
 """
 from __future__ import annotations
 
+import html
 import re
 from datetime import datetime, timezone
 
@@ -100,6 +101,31 @@ def clean_brand(brand: str | None) -> str | None:
 # store noise or feature junk, which is what it is for) it still wins.
 
 
+# --------------------------------------------------------------------------
+# 2b. Titles ship raw HTML entities
+# --------------------------------------------------------------------------
+# Scraped straight from store markup and never decoded, so 3,020 clusters (4.91%)
+# render mojibake: "Brown&#8217;s Greek Yoghurt Honey Flavour &#8211; 250ml".
+# Measured entity counts: #8211 en-dash 2,541 | #8243 inch-mark 402 | amp 245 |
+# #8217 apostrophe 177 | #8221 60 | #215 multiply 28 | #038 9 | quot 4 | nbsp 2.
+#
+# ⚠️ NOT the same as the `html_entity` finding on the MATCHING side, which records
+# that `html.unescape` merges zero additional clusters and is the wrong fix for
+# recall. That is about keying; this is about what a human reads. Decoding for
+# display is unambiguously right and changes no key — nothing here touches Mongo.
+#
+# It also matters for feedback quality: a reader asked "is this title right?" would
+# say no because of the mojibake rather than because the matching is wrong, and the
+# label would be unusable.
+
+
+def clean_text(text: str | None) -> str | None:
+    """Decode HTML entities and collapse whitespace, for display only."""
+    if not text:
+        return text
+    return " ".join(html.unescape(str(text)).split()) or None
+
+
 def _tokens(text: str | None) -> list[str]:
     return [t for t in re.split(r"[^a-z0-9]+", str(text or "").lower()) if t]
 
@@ -115,8 +141,8 @@ def best_title(doc: dict) -> str | None:
     representative = doc.get("representative_title")
     if display and representative and display != representative:
         if sorted(_tokens(display)) == sorted(_tokens(representative)):
-            return representative
-    return display or doc.get("canonical_name") or representative
+            return clean_text(representative)
+    return clean_text(display or doc.get("canonical_name") or representative)
 
 
 # --------------------------------------------------------------------------
@@ -280,3 +306,61 @@ def is_unbuyable(doc: dict) -> bool:
 
 def is_stale(doc: dict, now: datetime | None = None) -> bool:
     return freshness(doc, now) == "stale"
+
+
+# --------------------------------------------------------------------------
+# 5. Which two offers the headline saving actually compares
+# --------------------------------------------------------------------------
+# `like_for_like_spread_pct` is a single number with no provenance: it is the
+# LARGEST per-config spread, and nothing in the payload says which config it came
+# from or which two shops it compared. A consumer wanting to show "12% = 410 at
+# Carrefour vs 420 at Quickmart" had to float-match `spread_pct` across configs,
+# which ties and rounds badly.
+#
+# ⭐ Publishing the basis is what lets a reader CHECK the number instead of just
+# doubting it, and that matters more here than anywhere else in the payload,
+# because the spread is where the dataset's sharpest known defect shows up:
+#
+#   Brookside UHT 250mlx6 — "like-for-like" 2.4%
+#     low   carrefour 410  "Brookside UHT Flavour STRAWBERRY 250mlx6"
+#     high  quickmart 420  "Brookside Uht Flavour CHOCOLATE 250Mlx6"
+#
+# The MVP merge unions FMCG flavour variants but keeps `primary_facet: size`, so
+# they collapse into one config and the "like-for-like" spread is computed ACROSS
+# flavours. Surfacing both titles makes that visible on the page — the reader sees
+# strawberry priced against chocolate and can say so precisely.
+
+
+def spread_basis(doc: dict) -> dict | None:
+    """The two offers behind `like_for_like_spread_pct`, or None.
+
+    Chosen by identity with the config that owns the headline spread rather than
+    by re-deriving it, so the published number and the published evidence can
+    never disagree.
+    """
+    headline = doc.get("like_for_like_spread_pct")
+    if not isinstance(headline, (int, float)):
+        return None
+    for config in doc.get("configs") or []:
+        spread = config.get("spread_pct")
+        if not isinstance(spread, (int, float)) or (config.get("n_stores") or 0) < 2:
+            continue
+        if abs(spread - headline) > 1e-9:
+            continue
+        offers = [(site, o) for site, o in (config.get("best_by_store") or {}).items()
+                  if isinstance((o or {}).get("price"), (int, float))]
+        if len(offers) < 2:
+            continue
+        offers.sort(key=lambda pair: pair[1]["price"])
+        (low_site, low), (high_site, high) = offers[0], offers[-1]
+        as_offer = lambda site, o: {
+            "store": canonical_store(site), "price": o.get("price"),
+            "title": clean_text(o.get("title")), "url": o.get("url"),
+        }
+        return {
+            "facet_label": config.get("facet_label"),
+            "spread_pct": spread,
+            "cheapest": as_offer(low_site, low),
+            "dearest": as_offer(high_site, high),
+        }
+    return None

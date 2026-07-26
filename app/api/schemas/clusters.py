@@ -52,6 +52,38 @@ class ClusterConfig(BaseModel):
     )
 
 
+class SpreadOffer(BaseModel):
+    """One end of the headline saving."""
+
+    store: str | None = None
+    price: float | None = None
+    title: str | None = Field(None, description="the listing title as that store wrote it")
+    url: str | None = None
+
+
+class SpreadBasis(BaseModel):
+    """The two offers `like_for_like_spread_pct` is computed from.
+
+    Published so a consumer can SHOW the saving instead of asserting it — and so a
+    reader can check it. Quoting both store titles is also the only way the known
+    grocery variant-merge defect becomes visible on a page: the MVP merge unions
+    FMCG flavours into one config, so the "like-for-like" pair can be strawberry at
+    one shop against chocolate at the other.
+    """
+
+    facet_label: str | None = Field(None, description="the configuration both offers share")
+    spread_pct: float | None = None
+    cheapest: SpreadOffer | None = None
+    dearest: SpreadOffer | None = None
+
+
+class MergedCluster(BaseModel):
+    """One engine cluster absorbed into this row, named so it can be shown."""
+
+    cluster_id: str | None = None
+    title: str | None = Field(None, description="human-readable name; mvp_merged_from is keys")
+
+
 class ClusterView(BaseModel):
     """One product, compared across the stores that carry it."""
 
@@ -122,6 +154,13 @@ class ClusterView(BaseModel):
             "A 100% spread means the dearest store charges twice the cheapest."
         ),
     )
+    spread_basis: SpreadBasis | None = Field(
+        None,
+        description=(
+            "the two offers behind like_for_like_spread_pct, with both store titles. "
+            "None when no configuration has two priced stores."
+        ),
+    )
     cross_store_spread_pct: float | None = Field(
         None, description="conflates configurations — do not headline this one"
     )
@@ -169,6 +208,24 @@ class ClusterView(BaseModel):
         description=(
             "clusters merged into this one. >1 is the ONLY value implying merge risk — "
             "mvp_generated is true for pass-throughs that were never merged."
+        ),
+    )
+    mvp_merged_from: list[str] | None = Field(
+        None,
+        description=(
+            "the engine cluster_ids this row absorbed, including its own. Use it to "
+            "re-attach anything keyed on an absorbed id — a reader report, a stored "
+            "bookmark — after a rebuild makes that id stop existing. Includes the "
+            "surviving id, so `len(...) == mvp_n_merged`. Keys, not names — to show "
+            "these to a person use mvp_merged_members."
+        ),
+    )
+    mvp_merged_members: list[MergedCluster] | None = Field(
+        None,
+        description=(
+            "the same absorbed clusters with human-readable titles. This is what to "
+            'render when asking "do these belong together?" — one tickable row per '
+            "entry, each carrying the cluster_id to report back."
         ),
     )
 
