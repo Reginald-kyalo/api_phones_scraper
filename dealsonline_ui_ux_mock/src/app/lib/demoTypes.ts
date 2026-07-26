@@ -20,6 +20,13 @@ export interface DemoCategory {
   pages: number;
   /** Detail shards for this category; see shardFor() in demoSource.ts. */
   buckets: number;
+  /** Display name from the canonical taxonomy, e.g. "Laptops". */
+  name?: string | null;
+  /** Top of the tree — "Computing", "Sound & Vision". null for groceries. */
+  group?: string | null;
+  /** ["Computing", "Computers", "Laptops"]; empty when not a taxonomy node. */
+  path?: string[];
+  level?: number | null;
 }
 
 export interface DemoManifest {

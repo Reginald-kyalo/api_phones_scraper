@@ -394,3 +394,42 @@ def spread_basis(doc: dict) -> dict | None:
             "dearest": as_offer(high_site, high),
         }
     return None
+
+
+# --------------------------------------------------------------------------
+# 6. Per-store stock  (frontend ask: "this one is out of stock" cannot name a shop)
+# --------------------------------------------------------------------------
+# `availability_basis` is cluster-level, so a reader can say the product is
+# unavailable but not WHICH shop it is unavailable at — and that is the only form
+# of the complaint that is actionable.
+#
+# Measured 2026-07-26: 38,721 clusters (61.8%) have at least one member carrying a
+# stock_status. Values in the corpus: in_stock, lowstock, out_of_stock, and None.
+#
+# ⚠️ A site's members can disagree (several listings, different stock). The offer
+# shown is the cheapest LIVE one, so the site is reported at its BEST status —
+# reporting a site out of stock while it has a buyable listing would be the more
+# damaging error, and it matches the engine's fail-open rule.
+_STOCK_RANK = {"in_stock": 0, "lowstock": 1, None: 2, "out_of_stock": 3}
+
+
+def stock_by_store(doc: dict) -> dict:
+    """{site: "in_stock"|"lowstock"|"out_of_stock"|"unknown"} from members.
+
+    Delisted members are ignored entirely: a listing whose page is confirmed gone
+    has no stock state to report, and letting it set one would contradict the
+    availability gate that already excluded it.
+    """
+    best: dict = {}
+    for member in doc.get("members") or []:
+        if member.get("delisted"):
+            continue
+        site = canonical_store(member.get("site"))
+        if not site:
+            continue
+        status = member.get("stock_status")
+        if status not in _STOCK_RANK:
+            status = None
+        if site not in best or _STOCK_RANK[status] < _STOCK_RANK[best[site]]:
+            best[site] = status
+    return {site: (status or "unknown") for site, status in best.items()}

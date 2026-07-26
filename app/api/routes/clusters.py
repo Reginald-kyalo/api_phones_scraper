@@ -39,7 +39,9 @@ from app.api.hygiene import (
     last_seen_at,
     saving_pct,
     spread_basis,
+    stock_by_store,
 )
+from app.api.taxonomy import category_path
 from app.api.schemas.clusters import (
     ClusterDealsResponse,
     ClusterSearchResponse,
@@ -122,7 +124,7 @@ def _data_warning(d: dict) -> str | None:
     return None
 
 
-def _by_store(raw: dict, summary: bool) -> dict:
+def _by_store(raw: dict, summary: bool, stock: dict | None = None) -> dict:
     """best_by_store → {site: {price,url,title}} (detail) or {site: price} (summary).
 
     Keys are canonicalised first, so a retailer crawled under both a bare name and
@@ -133,7 +135,9 @@ def _by_store(raw: dict, summary: bool) -> dict:
     for site, v in folded.items():
         out[site] = v.get("price") if summary \
             else {"price": v.get("price"), "url": v.get("url"),
-                  "title": clean_text(v.get("title"))}
+                  "title": clean_text(v.get("title")),
+                  # so "out of stock" can name the shop it applies to
+                  "stock": (stock or {}).get(site, "unknown")}
     return out
 
 
@@ -182,6 +186,10 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         "display_name": clean_text(d.get("display_name")),
         "representative_title": clean_text(d.get("representative_title")),
         "category": d.get("canonical_category_slug"),
+        # Where that slug sits in the 424-node canonical tree, so navigation can
+        # nest 14 flat strings into 4 groups. None for `groceries` and 81 other
+        # in-use slugs that are genuinely not taxonomy nodes.
+        "category_path": category_path(d.get("canonical_category_slug")),
         # which feature the variants/prices are split on (storage | cpu)
         "primary_facet": d.get("primary_facet"),
         # secondary feature variants (display/filter chips, not price-split): the distinct
@@ -240,7 +248,7 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         "spread_basis": spread_basis(d),
         "cross_store_spread_pct": d.get("cross_store_spread_pct"),
         "configs": configs,
-        "best_by_store": _by_store(d.get("best_by_store"), summary),
+        "best_by_store": _by_store(d.get("best_by_store"), summary, stock_by_store(d)),
         # Buyability + recency. The engine computes both in `gate_members` but stamped
         # them on only 28,754 of 66,406 clusters (groceries, tvs, printers, routers,
         # wearables, desktop-computers and digital-cameras have neither), and this

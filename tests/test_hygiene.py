@@ -478,3 +478,51 @@ def test_a_healthy_cluster_still_has_no_warning():
         "canonical_category_slug": "groceries",
     })
     assert view["data_warning"] is None
+
+
+# ------------------------------------------------------ category tree ------
+# The API published 14 flat slugs with no way to nest them, while a 424-node
+# hierarchy sat unread in taxonomy_db. These pin the join and, more importantly,
+# the two places it legitimately returns nothing.
+
+TAXONOMY = {
+    "laptops": {"name": "Laptops", "parent_slug": "computers", "level": 2,
+                "path_string": "Computing > Computers > Laptops",
+                "full_path": ["Computing", "Computers", "Laptops"],
+                "product_type": "computing"},
+    "headphones": {"name": "Headphones", "parent_slug": "sound-vision", "level": 1,
+                   "path_string": "Sound & Vision > Headphones",
+                   "full_path": ["Sound & Vision", "Headphones"],
+                   "product_type": "sound_vision"},
+}
+
+
+def test_a_slug_resolves_to_its_place_in_the_tree():
+    from app.api.taxonomy import category_path
+
+    node = category_path("laptops", TAXONOMY)
+    assert node["path"] == ["Computing", "Computers", "Laptops"]
+    assert node["parent_slug"] == "computers" and node["level"] == 2
+
+
+def test_groceries_has_no_place_in_the_tree_and_that_is_correct():
+    """⚠️ The LARGEST category is not a taxonomy node — FMCG came through its own
+    pipeline. Navigation must not assume every category has a parent."""
+    from app.api.taxonomy import category_path
+
+    assert category_path("groceries", TAXONOMY) is None
+    assert category_path(None, TAXONOMY) is None
+
+
+def test_an_unknown_slug_returns_none_rather_than_guessing():
+    from app.api.taxonomy import category_path
+
+    assert category_path("vehicle-parts", TAXONOMY) is None
+
+
+def test_a_missing_taxonomy_degrades_to_flat_not_to_an_error():
+    """Navigation is an enhancement; a comparison page must never 500 because a
+    lookup collection is absent."""
+    from app.api.taxonomy import category_path
+
+    assert category_path("laptops", {}) is None

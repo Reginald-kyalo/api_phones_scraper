@@ -156,6 +156,11 @@ def normalise_series(raw_points) -> list:
 SUMMARY_FIELDS = [
     "cluster_id", "display_name", "title", "brand", "category", "best_price",
     "n_stores", "n_listings", "cheapest_store", "like_for_like_spread_pct",
+    # saving_pct rides along because the DISCOUNT BADGE lives on cards, which are
+    # built from summaries. Without it the only percentage a card can reach is
+    # like_for_like_spread_pct — a markup — which is exactly how a "3750% off"
+    # badge shipped.
+    "saving_pct",
     "condition_basis", "data_warning", "comparison_grade", "is_multi_store",
     "off_category", "mvp_generated", "mvp_n_merged", "image",
 ]
@@ -225,6 +230,32 @@ def raw_collection_for(site: str | None, existing: set) -> str | None:
     return name if stem and name in existing else None
 
 
+# The chosen image plus the other real photos the cluster's listings carry, so
+# "wrong picture" can be CORRECTED and not merely flagged. Measured 2026-07-26:
+# 12,705 clusters (20.7% of the 61,473 shipped) have >=2 distinct non-placeholder
+# images, counted from the captured shards — the member image and the device-image
+# fallback together, which is why a listings-only count comes out at half this.
+#
+# Capped: a reader choosing between images needs a handful, not thirty, and the
+# detail shards are already the largest thing the demo ships.
+MAX_IMAGE_CANDIDATES = 6
+
+
+def image_candidates(cluster: dict, device_images: dict) -> list:
+    """Every distinct real image for a cluster, chosen one first."""
+    seen = []
+    for member in cluster.get("members") or []:
+        if (member.get("site") or "").lower() in EXCLUDED_IMAGE_SITES:
+            continue
+        for url in (member.get("image"), device_images.get(member.get("product_id"))):
+            if _usable(url) and url.strip() not in seen:
+                seen.append(url.strip())
+    chosen = pick_image(cluster, device_images)
+    if chosen and chosen in seen:
+        seen.remove(chosen)
+    return ([chosen] if chosen else []) + seen[: MAX_IMAGE_CANDIDATES - 1]
+
+
 def _summary(view: dict) -> dict:
     return {k: view.get(k) for k in SUMMARY_FIELDS}
 
@@ -244,6 +275,7 @@ def main() -> None:
     from pymongo import MongoClient
 
     from app.api.hygiene import STALE_AFTER_DAYS, is_stale, is_unbuyable
+    from app.api.taxonomy import category_path
     from app.api.routes.clusters import (
         COMPARISON_SLUGS,
         MAX_DEAL_SPREAD_PCT,
@@ -349,6 +381,7 @@ def main() -> None:
         # from _summary(), so they stay small regardless.
         view = _cluster_view(doc)
         view["image"] = pick_image(doc, device_images)
+        view["image_candidates"] = image_candidates(doc, device_images)
         view["price_history"] = build_history(doc, histories)
         # Demoted, never dropped: the row stays browsable and its detail page still
         # resolves. Category slugs come straight from the store's own category page,
@@ -415,6 +448,10 @@ def main() -> None:
             for r in rows
         ])
 
+        # Where this category sits in the canonical tree, so the manifest alone is
+        # enough to build nested navigation — without it a client has 14 unrelated
+        # strings. `group` is None for groceries, which is not a taxonomy node.
+        node = category_path(slug) or {}
         cat_meta[slug] = {
             "slug": slug,
             "count": len(rows),
@@ -422,6 +459,10 @@ def main() -> None:
             "comparison_grade": slug in COMPARISON_SLUGS,
             "pages": pages,
             "buckets": n_buckets,
+            "name": node.get("name"),
+            "group": (node.get("path") or [None])[0],
+            "path": node.get("path") or [],
+            "level": node.get("level"),
         }
 
     # Reproduce /api/clusters/deals exactly. Shape fidelity is not enough: without

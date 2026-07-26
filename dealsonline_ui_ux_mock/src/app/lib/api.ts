@@ -411,6 +411,22 @@ export interface ClusterView<Store = number> {
   display_name: string | null;
   representative_title: string | null;
   category: string | null;
+  /**
+   * Position in the 424-node canonical taxonomy, for nested navigation.
+   *
+   * ⚠️ `null` is a real answer, not a lookup failure: `groceries` — the LARGEST
+   * category — is not a taxonomy node, because FMCG came through its own
+   * pipeline. Do not assume every category has a parent.
+   */
+  category_path?: {
+    slug: string | null;
+    name: string | null;
+    parent_slug: string | null;
+    level: number | null;
+    path: string[];
+    path_string: string | null;
+    product_type: string | null;
+  } | null;
   primary_facet: string | null;
   spec_facets: Record<string, string[]>;
   /** false for accessories — searchable but not a reliable cross-store comparison. */
@@ -438,7 +454,16 @@ export interface ClusterView<Store = number> {
   /** @deprecated back-compat aliases equal to the *_likely_used fields */
   n_used: number;
   used_best_price: number | null;
+  /**
+   * ⛔ A MARKUP, not a saving: (max - min) / MIN. 139 clusters publish >100%,
+   * which is impossible as a discount. Never render this to a shopper.
+   */
   like_for_like_spread_pct: number | null;
+  /**
+   * What a shopper actually keeps: (max - min) / MAX. Always < 100.
+   * This is the badge number. Present on summaries too, so cards can reach it.
+   */
+  saving_pct?: number | null;
   /**
    * The two offers `like_for_like_spread_pct` actually compares, so the saving
    * can be SHOWN rather than asserted — and checked by a reader.
@@ -484,6 +509,12 @@ export interface ClusterView<Store = number> {
   // --- capture-time additions (see docs/superpowers/plans/2026-07-25-static-demo-dataset.md)
   /** One real member image, chosen stably per cluster. 46,701/61,473 covered. */
   image?: string | null;
+  /**
+   * Every distinct real photo the cluster's listings carry, chosen one FIRST.
+   * Lets "wrong picture" be corrected rather than only flagged. 12,705 clusters
+   * have >=2; retailer placeholder assets are excluded. Capped at 6.
+   */
+  image_candidates?: string[] | null;
   /** Only present where >=2 DATED points exist (13,287 clusters); never synthesised. */
   price_history?: PricePoint[] | null;
   /** True for every cluster rebuilt through the MVP path — NOT a merge signal. */

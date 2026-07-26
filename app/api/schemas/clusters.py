@@ -30,6 +30,14 @@ class StoreOffer(BaseModel):
     price: float | None = None
     url: str | None = Field(None, description="click-through to the store's product page")
     title: str | None = Field(None, description="the listing title as that store wrote it")
+    stock: Literal["in_stock", "lowstock", "out_of_stock", "unknown"] = Field(
+        "unknown",
+        description=(
+            "this shop's stock for this product. A site with several listings is "
+            'reported at its BEST status. "unknown" means the source carries no '
+            "stock field, not that it is unavailable."
+        ),
+    )
 
 
 class ClusterConfig(BaseModel):
@@ -84,6 +92,25 @@ class MergedCluster(BaseModel):
     title: str | None = Field(None, description="human-readable name; mvp_merged_from is keys")
 
 
+class CategoryPath(BaseModel):
+    """Where a category sits in the canonical tree.
+
+    ⚠️ `None` on the ClusterView is a real answer, not a lookup failure:
+    `groceries` — the largest category — is not a taxonomy node at all, because
+    FMCG came through its own pipeline. Navigation must not assume every category
+    has a parent.
+    """
+
+    slug: str | None = None
+    name: str | None = Field(None, description='display name, e.g. "Laptops"')
+    parent_slug: str | None = Field(None, description="the group this sits under")
+    level: int | None = Field(None, description="1, 2 or 3; depth in the tree")
+    path: list[str] = Field(default_factory=list,
+                            description='["Computing", "Computers", "Laptops"]')
+    path_string: str | None = Field(None, description='"Computing > Computers > Laptops"')
+    product_type: str | None = Field(None, description="top-level grouping key")
+
+
 class ClusterView(BaseModel):
     """One product, compared across the stores that carry it."""
 
@@ -103,6 +130,13 @@ class ClusterView(BaseModel):
 
     # ---- category -------------------------------------------------------
     category: str | None = Field(None, description="canonical category slug")
+    category_path: CategoryPath | None = Field(
+        None,
+        description=(
+            "position in the 424-node canonical taxonomy, for nested navigation. "
+            "None when the slug is not a taxonomy node — notably `groceries`."
+        ),
+    )
     comparison_grade: bool = Field(
         False,
         description=(
