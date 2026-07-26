@@ -279,3 +279,45 @@ Two datasets are involved:
 - **Status:** Deals page moved to `/api/clusters/deals`; the legacy endpoint
   is now unused by the UI. Keep the cap documented or align it if anything
   else consumes it.
+
+---
+
+## P1 — added 2026-07-26
+
+### 16. ⛔ avechi prices are stored in CENTS — ~380 live listings are 100× too high
+
+- **Evidence:** `marketplace_scraper_db.avechi_products` holds the inflated value
+  at source, so this is a scrape-time unit bug, not a matching artifact:
+
+  | product | stored | actual |
+  |---|---:|---:|
+  | Anker 737 GanPrime 120W Charger | 999,900 | ~9,999 |
+  | Samsung Wireless Charger Trio | 909,900 | ~9,099 |
+  | Anker 537 PowerCore 24K 65W | 799,900 | ~7,999 |
+
+- **This is LIVE in shipped categories, not just the new one.** Counting avechi
+  listings ≥20,000 KES that divide exactly by 100:
+
+  | slug | avechi listings | suspect | % |
+  |---|---:|---:|---:|
+  | headphones | 424 | **148** | 34.9% |
+  | mobile-phone-accessories | 252 | 103 | 40.9% |
+  | wearables | 324 | 58 | 17.9% |
+  | routers | 51 | 22 | 43.1% |
+  | mobile-phones | 3,179 | 33 | 1.0% |
+
+  The concentration in cheap-goods categories is the signature: 100× a 5,000 KES
+  accessory lands in the suspicious band, while laptops (0.0%) and printers (0.0%)
+  are unaffected because their real prices already sit there.
+
+- **Impact:** inflates the *dearest* side of a spread, so it manufactures fake
+  savings. The deals surface is largely protected by `MAX_DEAL_SPREAD_PCT = 80`,
+  but browse will show a 999,900 KES power bank.
+
+- ⚠️ **Do not remediate on a `≥500,000` threshold** — only 26 of the 103 accessory
+  cases clear it. The reliable signature is `>= 20,000 and price % 100 == 0`
+  scoped to avechi.
+
+- **Fix:** at the scraper (divide avechi by 100 at parse time), not in serving —
+  a serving-layer guard cannot distinguish a genuine 20,000 KES round price from
+  an inflated 200 KES one without knowing the source unit.

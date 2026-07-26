@@ -60,6 +60,12 @@ CLUSTERS = product_matching_db[os.getenv("CLUSTERS_COLLECTION", "product_cluster
 _SLUGS = {
     "mobile-phones", "laptops", "tablets", "headphones", "monitors", "groceries",
     "audio-systems", "wearables", "speakers", "desktop-computers", "routers",
+    # Added 2026-07-26. 481 multi-store clusters — the 4th largest pool in the corpus,
+    # behind only groceries, mobile-phones and laptops — from 21,058 clusters. It is
+    # deliberately NOT in COMPARISON_SLUGS: only 18% of those keep two PRICED stores,
+    # against laptops' 49% and groceries' 96%, because 96% of the losses are classifieds
+    # (327 of 394 are jiji+jumia, excluded as likely_used). Browse-grade, not deal-grade.
+    "mobile-phone-accessories",
 }
 # Categories where cross-store comparison actually works with the deterministic identity
 # engine. Accessories (headphones/monitors) are structurally non-comparable: only ~0.66% /
