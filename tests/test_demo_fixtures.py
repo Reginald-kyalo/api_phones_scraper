@@ -185,11 +185,25 @@ def test_no_captured_cluster_is_unbuyable():
 
 
 def test_no_captured_cluster_is_stale():
-    """⚠️ "unknown" must still be present — six categories date nothing, and
-    excluding them would repeat the n_stores>=2 mistake."""
+    """No stale row ships — and NO CATEGORY IS DROPPED to achieve that.
+
+    ⚠️ This used to assert `"unknown" in seen_bases`, because six categories
+    (tvs, printers, routers, wearables, desktop-computers, digital-cameras) were
+    last clustered 2026-06-30 — before the freshness gate existed — so they dated
+    nothing and shipped as `unknown`. Re-clustering them on 2026-07-26 stamped
+    them properly and the `unknown` bucket went to zero, which broke the old
+    assertion even though the data got strictly better.
+
+    What that assertion was really protecting is kept below: an undated category
+    must never be silently excluded (the n_stores>=2 mistake). That is now checked
+    directly — every manifest category must actually ship rows — instead of via a
+    proxy that a data fix invalidates.
+    """
     manifest = _manifest()
     seen_bases = set()
+    shipped_per_category = {}
     for category in manifest["categories"]:
+        n = 0
         for bucket in range(category["buckets"]):
             path = OUT / "clusters" / f"{category['slug']}-{bucket:0{SHARD_DIGITS}d}.json"
             if not path.exists():
@@ -197,8 +211,12 @@ def test_no_captured_cluster_is_stale():
             for cluster_id, row in json.loads(path.read_text()).items():
                 basis = row.get("freshness_basis")
                 seen_bases.add(basis)
+                n += 1
                 assert basis != "stale", f"{cluster_id} is stale but shipped"
-    assert "unknown" in seen_bases, "undated categories were dropped — six of them"
+        shipped_per_category[category["slug"]] = n
+
+    empty = [s for s, n in shipped_per_category.items() if n == 0]
+    assert not empty, f"categories in the manifest but shipping no rows: {empty}"
     assert "fresh" in seen_bases
 
 
