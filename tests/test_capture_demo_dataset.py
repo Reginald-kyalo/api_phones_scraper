@@ -337,3 +337,28 @@ def test_detail_shards_carry_store_urls(demo_dir):
             if checked >= 200:
                 return
     assert checked, "no priced clusters found to check"
+
+
+def test_spa_deeplink_restore_runs_before_modules():
+    """The 404.html restore must be a classic inline script in index.html <head>.
+
+    ES imports are hoisted, so anything placed in main.tsx runs AFTER routes.ts
+    has already called createBrowserRouter — which snapshots location.pathname.
+    Putting the restore there looks correct and silently sends every deep link to
+    the homepage on any host without a rewrite rule (GitHub Pages). Proven red by
+    moving the block into main.tsx.
+    """
+    root = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock"
+    index = (root / "index.html").read_text()
+    head = index.split("</head>")[0]
+
+    assert "spa-redirect" in head, "deep-link restore is not in index.html <head>"
+    assert 'type="module"' not in head.split("spa-redirect")[0].rsplit("<script", 1)[-1], (
+        "the restore script is a module — it would run after the router is built"
+    )
+    assert "spa-redirect" not in (root / "src" / "main.tsx").read_text(), (
+        "restore lives in main.tsx, where import hoisting makes it too late"
+    )
+    assert "spa-redirect" in (root / "public" / "404.html").read_text(), (
+        "404.html no longer parks the requested URL"
+    )

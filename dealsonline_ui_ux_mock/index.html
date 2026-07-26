@@ -11,6 +11,30 @@
       <meta property="og:type" content="website" />
       <meta property="og:url" content="https://www.dealsonline.ninja" />
       <meta name="theme-color" content="#1B1340" />
+      <script>
+        /*
+         * Deep-link restore for static hosts with no rewrite rule (GitHub Pages).
+         * 404.html parks the requested URL and bounces here; put it back before
+         * anything reads location.
+         *
+         * ⛔ This MUST be a classic inline script in <head>, not module code:
+         * ES imports are hoisted, so routes.ts would run createBrowserRouter —
+         * which snapshots location.pathname — before any statement in main.tsx.
+         */
+        (function () {
+          var parked = sessionStorage.getItem('spa-redirect');
+          if (!parked) return;
+          sessionStorage.removeItem('spa-redirect');
+          try {
+            var u = new URL(parked);
+            if (u.origin === location.origin && u.pathname !== location.pathname) {
+              history.replaceState(null, '', u.pathname + u.search + u.hash);
+            }
+          } catch (e) {
+            /* malformed parked value: stay on the root rather than throw */
+          }
+        })();
+      </script>
     </head>
 
     <body>
