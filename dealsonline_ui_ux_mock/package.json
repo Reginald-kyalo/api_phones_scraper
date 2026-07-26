@@ -4,7 +4,10 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "demo:prepare": "node scripts/prepare-demo-dataset.mjs",
+    "predev": "npm run demo:prepare",
     "dev": "vite",
+    "prebuild": "npm run demo:prepare",
     "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"

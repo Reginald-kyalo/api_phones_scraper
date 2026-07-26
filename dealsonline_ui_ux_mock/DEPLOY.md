@@ -14,6 +14,41 @@ npm run build          # -> dist/
 
 Serving `dist/` on any static host is enough.
 
+### Where the catalogue comes from
+
+`public/demo/` is **not in git**. It is ~151 MB across ~430 JSON files, and git
+keeps every version of every changed file forever — a re-capture rewrote nearly
+all of them, so tracking them loose cost roughly **100 MB of permanent history per
+run**, on a repo Cloudflare Pages re-clones on every build.
+
+What ships instead is one deterministic archive, `data/demo-dataset.tar.gz`
+(**15 MB**), unpacked by a `prebuild` hook. Nothing to run by hand: `npm run build`
+and `npm run dev` both materialise it first, and repeat runs are a no-op.
+
+```bash
+npm run demo:prepare          # explicit; normally implied by build/dev
+```
+
+⛔ **"Generate it in CI" cannot be taken literally.** The capture reads MongoDB,
+which no hosted builder can reach — so the dataset must arrive as an artefact.
+
+⚠️ **The pack is byte-reproducible on purpose.** tar records mtimes and owners
+and gzip stamps its own header with the clock, so a naive pack differs on every
+run and git would store a fresh 15 MB blob even when nothing changed — giving back
+most of the saving. `test_packing_is_reproducible` pins it, including the gzip
+header field, which comparing two same-second packs cannot catch.
+
+**To take the 15 MB out of the repo too** — put the archive on R2, S3 or a GitHub
+Release and set one variable; no other change:
+
+```bash
+DEMO_DATASET_URL=https://…/demo-dataset.tar.gz npm run build
+```
+
+On Pages that is an environment variable in the dashboard. A missing or
+unreachable dataset **fails the build** rather than publishing a site whose every
+page renders its empty state.
+
 ### Deploying under a sub-path
 
 GitHub Pages project sites live at `https://<user>.github.io/<repo>/`. Every
@@ -73,11 +108,12 @@ CLUSTERS_COLLECTION=product_clusters_mvp \
 ```
 
 It rewrites `public/demo/` in place — manifest, paginated listings, sharded
-details and the search index. Rebuild afterwards.
+details and the search index — then repacks `data/demo-dataset.tar.gz`, which is
+the file to commit. `public/demo/` itself is ignored.
 
-⚠️ **Every re-capture rewrites all ~280 shard files**, so each one adds roughly
-another 100 MB of git objects. If the dataset is regenerated often, untrack
-`public/demo/` and generate it in CI before `npm run build` instead.
+⚠️ Commit the archive, or the change does not ship. `git status` will look clean
+apart from it, which is the point: one 15 MB file instead of ~430, and **zero new
+objects when the capture produced identical data**.
 
 ## Pre-deploy checks
 
@@ -103,11 +139,15 @@ URLs. Measured against the platform limits, the build fits comfortably:
 | 20,000 files per deployment | **466** |
 | 25 MiB per file | **3.5 MB** largest (`demo/search/groceries.json`) |
 
-⚠️ **The repo is the constraint, not Pages.** `public/demo/` is ~144 MB and a
-re-capture rewrites all ~430 shard files, adding roughly another 100 MB of git
-objects each time. Pages clones the repo on every build, so this only gets
-slower. If the dataset will be regenerated regularly, untrack it and generate it
-in the build step instead — the site does not care where the JSON comes from.
+✅ **The repo used to be the constraint, not Pages** — ~100 MB of git objects per
+re-capture, on something Pages re-clones every build. Fixed: the catalogue is one
+15 MB reproducible archive unpacked by a `prebuild` hook, and an unchanged capture
+now costs nothing. See *Where the catalogue comes from* above.
+
+⚠️ **The existing ~103 MB of history is still there.** Untracking stops the
+growth; it does not shrink what is already committed. Removing it would mean
+rewriting history (`git filter-repo`) and force-pushing — worth it only if clone
+time actually becomes a problem.
 
 ### Reporting bad listings (D1)
 

@@ -36,6 +36,9 @@ from scripts.category_purity import is_off_category
 SOURCE_COLLECTION = "product_clusters_mvp"
 OUT = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock" / "public" / "demo"
 
+# What actually ships in git. `public/demo/` itself is ignored — see pack_dataset.
+ARCHIVE = OUT.parents[1] / "data" / "demo-dataset.tar.gz"
+
 # 1 = the entire catalogue, single-store clusters included. A single-store
 # cluster is still a real product page (one store, no comparison) and is what
 # makes the corpus look its true size; a comparison site that only lists
@@ -485,5 +488,49 @@ def main() -> None:
     )
 
 
+def pack_dataset(src: Path = OUT, dest: Path = ARCHIVE) -> Path:
+    """Pack `public/demo/` into the single archive that git actually tracks.
+
+    ⭐ THE ARCHIVE IS WHAT IS VERSIONED; the ~430 loose JSON files are not. Git
+    stores a compressed snapshot of every changed file forever, and a re-capture
+    touches nearly all of them, so tracking them loose cost ~100 MB of permanent
+    history per run — on a repo Cloudflare Pages re-clones on every build. The
+    same content as one archive is ~15 MB, and unchanged captures cost nothing at
+    all because of the determinism below.
+
+    ⚠️ DETERMINISM IS THE WHOLE POINT, and it does not come for free. A tar
+    records mtimes, owners and directory order, and gzip stamps its own timestamp
+    into the header — so the default output differs on every run even when not one
+    byte of data changed, and git would store a fresh 15 MB blob each time. Names
+    are sorted and every varying field is zeroed, which makes an unchanged dataset
+    re-pack to identical bytes and cost zero objects. `test_packing_is_reproducible`
+    pins it.
+    """
+    import gzip
+    import tarfile
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    paths = sorted(p for p in src.rglob("*") if p.is_file())
+
+    def scrub(info: tarfile.TarInfo) -> tarfile.TarInfo:
+        info.mtime = 0
+        info.uid = info.gid = 0
+        info.uname = info.gname = ""
+        # 0o644/0o755 vary with umask; pin them so a fresh clone packs the same.
+        info.mode = 0o644
+        return info
+
+    # mtime=0 on the GzipFile too: the gzip HEADER carries a timestamp of its own,
+    # separate from anything tarfile writes.
+    with open(dest, "wb") as raw:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz:
+            with tarfile.open(fileobj=gz, mode="w", format=tarfile.GNU_FORMAT) as tar:
+                for path in paths:
+                    tar.add(path, arcname=str(path.relative_to(src.parent)), filter=scrub)
+    return dest
+
+
 if __name__ == "__main__":
     main()
+    size = pack_dataset().stat().st_size
+    print(f"packed dealsonline_ui_ux_mock/data/demo-dataset.tar.gz ({size / 1e6:.1f} MB)")

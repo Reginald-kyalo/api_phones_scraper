@@ -11,10 +11,14 @@ shards absorb a bigger corpus instead of a cap dropping rows.
 """
 import json
 import math
+import os
+import tarfile
+import time
 from pathlib import Path
 
 import pytest
 
+from scripts import capture_demo_dataset as capture
 from scripts.capture_demo_dataset import (
     MAX_BUCKETS,
     MIN_BUCKETS,
@@ -422,6 +426,70 @@ def test_detail_shards_carry_the_evidence_the_ui_asks_the_reader_to_judge(demo_d
 
     assert merges > 1000, f"only {merges} merged clusters found — expected ~4,000"
     assert spreads > 1000, f"only {spreads} spreads with a basis — expected ~4,500"
+
+
+def test_packing_is_reproducible(tmp_path):
+    """The same dataset must pack to the same bytes, whatever the clock says.
+
+    This is the property the archive is worth having FOR. `public/demo/` is no
+    longer tracked loose because a re-capture rewrote ~430 files and cost ~100 MB
+    of permanent git history each time; the archive is ~15 MB. But git stores a
+    whole new blob for any byte that differs, and gzip stamps the current time
+    into its header while tar records mtimes and owners — so a naive pack differs
+    on every run, and re-running the capture on unchanged data would still cost
+    15 MB. Non-determinism would quietly give back most of the saving.
+
+    Proven red by dropping `mtime=0` from the GzipFile: the two packs differ.
+    """
+    src = tmp_path / "demo"
+    (src / "clusters").mkdir(parents=True)
+    (src / "manifest.json").write_text('{"total_clusters": 2}')
+    (src / "clusters" / "a-000.json").write_text('{"x": 1}')
+
+    first = capture.pack_dataset(src, tmp_path / "one.tar.gz").read_bytes()
+
+    # Touch every file with a different mtime and repack: the content is
+    # identical, so the archive must be too.
+    later = time.time() + 5000
+    for path in src.rglob("*"):
+        os.utime(path, (later, later))
+    second = capture.pack_dataset(src, tmp_path / "two.tar.gz").read_bytes()
+
+    assert first == second, "pack is not reproducible — every capture costs a new blob"
+
+    # ⚠️ Checked as a HEADER FIELD, not by comparing two packs. gzip writes the
+    # wall clock into bytes 4..8, and both packs above run inside the same second,
+    # so equality alone cannot see this regression — it would only appear later,
+    # as a mysterious 15 MB blob on a capture that changed nothing.
+    assert first[4:8] == b"\x00\x00\x00\x00", "gzip stamped the current time"
+
+
+def test_packing_round_trips_every_file(tmp_path):
+    """Unpacking the archive must reproduce the tree exactly.
+
+    The archive is now the only copy in git, so a lossy pack loses the dataset
+    outright rather than degrading it.
+    """
+    src = tmp_path / "demo"
+    (src / "clusters").mkdir(parents=True)
+    written = {
+        "manifest.json": '{"total_clusters": 1}',
+        "clusters/a-000.json": '{"x": 1}',
+        "search/groceries.json": '["milk"]',
+    }
+    for name, body in written.items():
+        path = src / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body)
+
+    archive = capture.pack_dataset(src, tmp_path / "demo.tar.gz")
+    out = tmp_path / "unpacked"
+    out.mkdir()
+    with tarfile.open(archive) as tar:
+        tar.extractall(out)
+
+    for name, body in written.items():
+        assert (out / "demo" / name).read_text() == body, f"{name} did not survive"
 
 
 def test_spa_deeplink_restore_runs_before_modules():

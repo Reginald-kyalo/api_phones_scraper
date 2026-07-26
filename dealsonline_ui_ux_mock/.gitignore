@@ -2,3 +2,10 @@ node_modules/
 dist/
 .vite/
 *.local
+
+# The catalogue is shipped as data/demo-dataset.tar.gz and unpacked here by
+# `npm run demo:prepare` (a prebuild hook). Tracking the ~430 loose JSON files
+# cost ~100 MB of permanent git history per re-capture, on a repo Cloudflare
+# Pages re-clones on every build.
+public/demo/
+public/.demo-staging-*
