@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail } from '../lib/api';
-import { formatPrice, shopLabel } from '../lib/format';
+import { formatPrice, savingPct, shopLabel } from '../lib/format';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Loader2, ExternalLink, AlertTriangle, ArrowLeft, RefreshCw, Package } from 'lucide-react';
@@ -73,7 +73,9 @@ export default function ClusterPricesPage() {
   const rows = Object.entries(cluster.best_by_store)
     .filter(([, s]) => s.price != null && s.price >= 1)
     .sort(([, a], [, b]) => (a.price as number) - (b.price as number));
-  const spread = cluster.like_for_like_spread_pct;
+  // A saving, never the raw spread — the API's percentage divides by the
+  // cheapest price, so it is a markup, not what the shopper keeps. See savingPct.
+  const saving = savingPct(cluster.like_for_like_spread_pct);
   const facetChips = Object.entries(cluster.spec_facets).flatMap(([k, vals]) =>
     vals.map((v) => `${k.toUpperCase()} ${v}`),
   );
@@ -150,9 +152,10 @@ export default function ClusterPricesPage() {
           {/* Stated once. Where spread_basis exists the panel below makes the same
               claim WITH its two offers attached, and repeating the bare number
               above it would just be the unevidenced version of the same sentence. */}
-          {spread != null && spread > 0 && !cluster.spread_basis && (
+          {saving != null && !cluster.spread_basis && (
             <p className="text-xs text-teal-deep mt-1">
-              Prices for the same configuration vary up to {Math.round(spread)}% — comparing pays.
+              Buying at the cheapest shop saves up to {Math.round(saving)}% on the same
+              configuration.
             </p>
           )}
           {!likelyUsed && cluster.likely_used_best_price != null && (cluster.n_likely_used ?? 0) > 0 && (

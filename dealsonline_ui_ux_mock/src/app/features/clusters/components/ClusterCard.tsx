@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { TrendingDown, Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
-import { formatPrice, shopLabel } from '../../../lib/format';
+import { formatPrice, savingPct, shopLabel } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 
@@ -26,7 +26,7 @@ export const PRODUCT_GRID =
  */
 export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   const name = cluster.display_name ?? cluster.title;
-  const spread = cluster.like_for_like_spread_pct;
+  const saving = savingPct(cluster.like_for_like_spread_pct);
   const stores = cluster.n_stores ?? 0;
   const likelyUsed = cluster.condition_basis === 'likely_used';
 
@@ -57,10 +57,14 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
             fallback={<span className="sr-only">Image unavailable</span>}
           />
         )}
-        {spread != null && spread > 0 && (
+        {/* "Save 40%", not the raw 67% spread. The badge is styled as a saving
+            and was read as one, but the API's spread divides by the CHEAPEST
+            price — see savingPct. It is also labelled now: a bare number under a
+            down-arrow announced as just "67%" to a screen reader. */}
+        {saving != null && (
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-teal/10 px-1.5 py-0.5 text-xs font-semibold text-teal-deep">
             <TrendingDown className="h-3 w-3" aria-hidden="true" />
-            {Math.round(spread)}%
+            Save {Math.round(saving)}%
           </span>
         )}
       </div>

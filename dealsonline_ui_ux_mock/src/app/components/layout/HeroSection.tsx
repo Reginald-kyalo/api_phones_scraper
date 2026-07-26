@@ -2,7 +2,7 @@ import { Check, Package } from 'lucide-react';
 import SearchBar from '../../features/search/components/SearchBar';
 import { Reveal } from '../common/Reveal';
 import type { ClusterDetail, ClusterSummary } from '../../lib/api';
-import { formatPrice } from '../../lib/format';
+import { formatPrice, savingPct } from '../../lib/format';
 
 interface HeroSectionProps {
   productCount?: number;
@@ -173,8 +173,12 @@ export default function HeroSection({ productCount, variant = 'dark', showcase, 
                 dark ? 'bg-teal-bright/15 text-teal-bright' : 'bg-teal/10 text-teal'
               }`}
             >
+              {/* Both halves of this badge must describe the same thing. The
+                  cash figure is a real saving, so the percentage has to be one
+                  too — the raw spread divides by the cheapest price and would
+                  read ~27 points higher next to it. */}
               Save {formatPrice(saving)} <span className="opacity-60">·</span>{' '}
-              {Math.round(showcase?.like_for_like_spread_pct ?? 0)}%
+              {Math.round(savingPct(showcase?.like_for_like_spread_pct) ?? 0)}%
             </span>
           </Reveal>
         </div>

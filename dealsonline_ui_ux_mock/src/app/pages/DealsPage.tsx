@@ -3,13 +3,26 @@ import { clustersApi, type ClusterSummary } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { Loader2, Tag, RefreshCw } from 'lucide-react';
+import { savingPct } from '../lib/format';
 
-const SPREAD_FILTERS = [
+/**
+ * Thresholds on the SAVING, matching the badge on every card.
+ *
+ * ⚠️ The old buckets filtered on `like_for_like_spread_pct`, which divides by the
+ * cheapest price — so "50%+" admitted anything saving 33% or more, and a card
+ * badged "Save 33%" appeared under a 50% filter.
+ *
+ * ⛔ The top bucket had to move from 50% to 40%. Measured over the 3,189 deals:
+ * 40%+ has 55, and **50%+ has exactly none** — relabelling the old buckets would
+ * have shipped a filter that is empty by construction, which reads as a broken
+ * page rather than an honest absence.
+ */
+const SAVING_FILTERS = [
   { label: 'All deals', min: 0 },
-  { label: '10%+', min: 10 },
-  { label: '20%+', min: 20 },
-  { label: '30%+', min: 30 },
-  { label: '50%+', min: 50 },
+  { label: 'Save 10%+', min: 10 },
+  { label: 'Save 20%+', min: 20 },
+  { label: 'Save 30%+', min: 30 },
+  { label: 'Save 40%+', min: 40 },
 ] as const;
 
 export default function DealsPage() {
@@ -17,7 +30,7 @@ export default function DealsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
-  const [minSpread, setMinSpread] = useState(0);
+  const [minSaving, setMinSaving] = useState(0);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [pages, setPages] = useState(1);
@@ -59,8 +72,9 @@ export default function DealsPage() {
   }, [load]);
 
   const filtered = useMemo(
-    () => clusters.filter((c) => (c.like_for_like_spread_pct ?? 0) >= minSpread),
-    [clusters, minSpread],
+    () =>
+      clusters.filter((c) => (savingPct(c.like_for_like_spread_pct) ?? 0) >= minSaving),
+    [clusters, minSaving],
   );
 
   if (loading) {
@@ -81,7 +95,7 @@ export default function DealsPage() {
             <h1 className="text-xl md:text-2xl font-bold text-foreground">Today's best deals</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Same product, different stores — ranked by how much the price varies for the same configuration.
+            Same product, different stores — ranked by how much you save buying at the cheapest, for the same configuration.
             {total > 0 && (
               <> {total.toLocaleString()} cross-store deals found.</>
             )}
@@ -100,15 +114,15 @@ export default function DealsPage() {
           </div>
         ) : (
           <>
-            {/* Spread filter chips */}
+            {/* Saving filter chips */}
             <div className="flex flex-wrap gap-2 mb-6">
-              {SPREAD_FILTERS.map((f) => (
+              {SAVING_FILTERS.map((f) => (
                 <Button
                   key={f.min}
                   size="sm"
-                  variant={minSpread === f.min ? 'default' : 'outline'}
-                  onClick={() => setMinSpread(f.min)}
-                  className={`h-8 text-xs rounded-full ${minSpread === f.min ? '' : 'hover:border-primary/40'}`}
+                  variant={minSaving === f.min ? 'default' : 'outline'}
+                  onClick={() => setMinSaving(f.min)}
+                  className={`h-8 text-xs rounded-full ${minSaving === f.min ? '' : 'hover:border-primary/40'}`}
                 >
                   {f.label}
                 </Button>
@@ -137,12 +151,12 @@ export default function DealsPage() {
             ) : (
               <div className="text-center py-16 text-muted-foreground">
                 <p>
-                  {minSpread === 0
+                  {minSaving === 0
                     ? 'No cross-store deals right now — check back soon.'
-                    : `No deals with a ${minSpread}%+ price spread.`}
+                    : `No deals saving ${minSaving}% or more.`}
                 </p>
-                {minSpread > 0 && (
-                  <Button variant="link" onClick={() => setMinSpread(0)} className="mt-2">
+                {minSaving > 0 && (
+                  <Button variant="link" onClick={() => setMinSaving(0)} className="mt-2">
                     Show all deals
                   </Button>
                 )}

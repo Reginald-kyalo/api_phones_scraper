@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import type { ClusterDetail } from '../../../lib/api';
-import { formatPrice } from '../../../lib/format';
+import { formatPrice, savingPct } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 
 /**
@@ -23,9 +23,12 @@ export function SpreadEvidence({ cluster }: { cluster: ClusterDetail }) {
   const basis = cluster.spread_basis;
   const low = basis?.cheapest;
   const high = basis?.dearest;
-  const pct = basis?.spread_pct;
+  // The panel headlines the SAVING, matching the card the reader arrived from.
+  // `spread_pct` is a markup over the cheapest price and would read ~27 points
+  // higher for the same two offers — see savingPct.
+  const pct = savingPct(basis?.spread_pct);
 
-  if (!basis || !low || !high || pct == null || pct <= 0) return null;
+  if (!basis || !low || !high || pct == null) return null;
   if (low.price == null || high.price == null) return null;
 
   // The engine writes "—" when a category has no facet to split on, which is not
@@ -35,7 +38,7 @@ export function SpreadEvidence({ cluster }: { cluster: ClusterDetail }) {
   return (
     <section aria-labelledby="spread-evidence" className="mb-6 rounded-xl ultra-border p-4">
       <h2 id="spread-evidence" className="microcopy-label mb-3">
-        What the {Math.round(pct)}% compares
+        What the {Math.round(pct)}% saving compares
         {facet ? ` · ${facet}` : ''}
       </h2>
 
