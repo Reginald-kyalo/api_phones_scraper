@@ -212,10 +212,26 @@ Photography            129   Digital Cameras
 ⚠️ **`groceries` — the largest category — has no taxonomy node**, because FMCG came
 through its own pipeline. Navigation must not assume every category has a parent.
 
-## 5. Two things NOT exposed
+## 5. ✅ Both previously-missing fields now ship (2026-07-26)
 
-- **Alternative images.** Only the chosen `image` ships, so "wrong picture" can be
-  flagged but not corrected. Say if you want candidates.
-- **Per-store stock.** `availability_basis` is cluster-level. The capture ships
-  only buyable rows, so within the demo it is always `available` or `unknown`;
-  the live API serves all four values.
+This section used to list two gaps. Both are closed — measured against the shipped
+demo (88,137 clusters), not asserted:
+
+- **Alternative images — `image_candidates[]`.** The chosen image first, then every
+  other distinct real photo the cluster's listings carry (retailer placeholder
+  assets excluded, capped at 6). **19,770 clusters (22.4%) carry two or more**, so
+  "wrong picture" is now a *correction*, not just a flag.
+
+- **Per-store stock — `best_by_store[].stock`.** `availability_basis` is
+  cluster-level and could never name the shop; this can. Values in the shipped
+  demo: `in_stock` 54,288 · `lowstock` 6,997 · `out_of_stock` 195 · `unknown` 35,278.
+
+  ⚠️ **Correcting what this section previously claimed:** it said the demo would
+  only ever show `available`/`unknown` because the capture ships buyable rows.
+  That is wrong — **195 `out_of_stock` entries do ship**, because per-store stock is
+  finer-grained than the cluster gate: a cluster stays buyable when store A has it,
+  while store B is legitimately out. That is the whole point of the field.
+
+  A site with several listings is reported at its **best** status — calling a shop
+  out of stock while it has a buyable listing is the more damaging error.
+  `unknown` means the source carries no stock field, **not** that it is unavailable.
