@@ -1,42 +1,32 @@
 import { Check, Package } from 'lucide-react';
 import SearchBar from '../../features/search/components/SearchBar';
 import { Reveal } from '../common/Reveal';
-import type { ClusterSummary } from '../../lib/api';
+import type { ClusterDetail, ClusterSummary } from '../../lib/api';
 import { formatPrice } from '../../lib/format';
 
 interface HeroSectionProps {
   productCount?: number;
   /**
-   * A real captured cluster with >=2 stores. The spread strip and the device
-   * showcase both render from it, so every figure in the hero is one the
-   * dataset can defend. Falls back to the static frame while it loads.
+   * The hero renders a real comparison, so it needs the DETAIL view: listing
+   * rows omit best_by_store to keep the feed small, and without it the offer
+   * list silently fell back to placeholder prices.
    */
-  showcase?: ClusterSummary | null;
+  showcase?: ClusterDetail | null;
   /** Second real cluster, for the hero's floating card. */
   aside?: ClusterSummary | null;
   /** 'dark' = ink canvas (Linear-style); 'light' = airy canvas (Stripe-style). */
   variant?: 'dark' | 'light';
 }
 
-// Stores stay anonymous on purpose — a redacted bar, not a brand name (no
-// store gets free promotion). Just the offer and its price.
-const SCREEN_ROWS = [
-  { bar: 'w-12', price: 'KES 34,499', lowest: true },
-  { bar: 'w-8', price: 'KES 36,900', lowest: false },
-  { bar: 'w-14', price: 'KES 38,200', lowest: false },
-  { bar: 'w-10', price: 'KES 39,450', lowest: false },
-  { bar: 'w-12', price: 'KES 41,000', lowest: false },
-  { bar: 'w-9', price: 'KES 42,300', lowest: false },
-];
 
 export default function HeroSection({ productCount, variant = 'dark', showcase, aside }: HeroSectionProps) {
   const dark = variant === 'dark';
   // Listing rows carry no best_by_store (it is detail-only, to keep the feed
   // small), so the top of the spread is derived from the spread itself:
   // spread_pct = (high - low) / low * 100.
-  const prices = Object.values(showcase?.best_by_store ?? {}).filter(
-    (v): v is number => typeof v === 'number',
-  );
+  const prices = Object.values(showcase?.best_by_store ?? {})
+    .map((v) => (typeof v === 'number' ? v : v?.price))
+    .filter((v): v is number => typeof v === 'number' && v > 0);
   const spreadPct = showcase?.like_for_like_spread_pct ?? null;
   const highest = prices.length
     ? Math.max(...prices)
@@ -55,7 +45,12 @@ export default function HeroSection({ productCount, variant = 'dark', showcase, 
       price: formatPrice(price),
       lowest: i === 0,
     }));
-  const rowsForScreen = offerRows.length ? offerRows : SCREEN_ROWS;
+  // ⛔ No fabricated fallback. When the showcase has not resolved yet the
+  // offer list is empty and the frame renders placeholder bars, never prices.
+  const rowsForScreen = offerRows;
+  // The real number of priced store offers — not n_stores, which counts stores
+  // that may have no usable price, and which read "5 OFFERS" above six rows.
+  const offerCount = prices.length;
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 lg:px-6 pt-6">
@@ -120,14 +115,14 @@ export default function HeroSection({ productCount, variant = 'dark', showcase, 
 
           {/* Right: phone showcase with ambient light (desktop) */}
           <div className="hidden lg:flex justify-center">
-            <PhoneShowcase showcase={showcase} aside={aside} rows={rowsForScreen} />
+            <PhoneShowcase showcase={showcase} aside={aside} offerCount={offerCount} rows={rowsForScreen} />
           </div>
 
           {/* Mobile/tablet: a frameless comparison card so the signature
               "every offer, lowest in teal" visual reaches the mobile-first
               audience too (the phone showcase is desktop-only). */}
           <div className="lg:hidden">
-            <MobileOffers dark={dark} showcase={showcase} rows={rowsForScreen} />
+            <MobileOffers dark={dark} showcase={showcase} offerCount={offerCount} rows={rowsForScreen} />
           </div>
         </div>
 
@@ -193,9 +188,11 @@ export default function HeroSection({ productCount, variant = 'dark', showcase, 
 function PhoneShowcase({
   showcase,
   aside,
+  offerCount,
   rows: rowsForScreen,
 }: {
-  showcase?: ClusterSummary | null;
+  offerCount: number;
+  showcase?: ClusterDetail | ClusterSummary | null;
   /** Second real cluster for the floating card — never a stock photo. */
   aside?: ClusterSummary | null;
   rows: { bar: string; price: string; lowest: boolean }[];
@@ -248,7 +245,7 @@ function PhoneShowcase({
               {showcase ? (showcase.display_name ?? showcase.title) : 'Wireless headphones'}
             </p>
             <p className="font-mono text-[10px] text-muted-foreground text-center mb-3 tracking-wide flex-shrink-0">
-              {showcase?.n_stores ?? 0} OFFERS
+              {offerCount} OFFERS
             </p>
             {/* Offer list intentionally overflows the bottom edge — the last row
                 clips + fades to hint there are more offers below. */}
@@ -302,10 +299,12 @@ function PhoneShowcase({
 function MobileOffers({
   dark,
   showcase,
+  offerCount,
   rows: allRows,
 }: {
+  offerCount: number;
   dark: boolean;
-  showcase?: ClusterSummary | null;
+  showcase?: ClusterDetail | ClusterSummary | null;
   rows: { bar: string; price: string; lowest: boolean }[];
 }) {
   const rows = allRows.slice(0, 3);
@@ -337,7 +336,7 @@ function MobileOffers({
               dark ? 'text-white/45' : 'text-muted-foreground'
             }`}
           >
-            {(showcase?.n_stores ?? 0)} OFFERS · LOWEST {formatPrice(showcase?.best_price ?? null)}
+            {offerCount} OFFERS · LOWEST {formatPrice(showcase?.best_price ?? null)}
           </p>
         </div>
       </div>

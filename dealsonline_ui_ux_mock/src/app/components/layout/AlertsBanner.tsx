@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import type { ClusterSummary } from '../../lib/api';
+import type { ClusterDetail, ClusterSummary } from '../../lib/api';
 import { Bell, TrendingDown, ArrowDown } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { Button } from '../ui/button';
@@ -16,13 +16,13 @@ const OLD_PRICE = 41200;
 const NEW_PRICE = 34499;
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export default function AlertsBanner({ example }: { example?: ClusterSummary | null }) {
+export default function AlertsBanner({ example }: { example?: ClusterDetail | ClusterSummary | null }) {
   // A real product carried by several stores: `high` is what it costs at the
   // dearest, `low` at the cheapest. That gap is measured, unlike a "price
   // dropped over time" story the dataset has no history to support.
-  const storePrices = Object.values(example?.best_by_store ?? {}).filter(
-    (v): v is number => typeof v === 'number',
-  );
+  const storePrices = Object.values(example?.best_by_store ?? {})
+    .map((v) => (typeof v === 'number' ? v : v?.price))
+    .filter((v): v is number => typeof v === 'number' && v > 0);
   const low = example?.best_price ?? NEW_PRICE;
   const spreadPct = example?.like_for_like_spread_pct ?? null;
   const high = storePrices.length

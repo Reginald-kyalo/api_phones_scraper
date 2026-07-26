@@ -6,6 +6,17 @@ import { storeName } from '../../../lib/storeIdentity';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 
 /**
+ * The one product grid.
+ *
+ * Every surface that lists clusters uses this — homepage rails, deals and
+ * category browse. They previously each declared their own columns (and the
+ * rails used an unconstrained flex row, so cards sized to their own content and
+ * no two were the same width). Keep this shared so they cannot drift apart again.
+ */
+export const PRODUCT_GRID =
+  'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3';
+
+/**
  * Catalogue card for one cluster.
  *
  * Works for both halves of the corpus: 76% of clusters carry a real product
@@ -22,18 +33,27 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   return (
     <Link
       to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
-      className="group flex flex-col overflow-hidden rounded-xl ultra-border transition-colors hover:border-primary/40"
+      className="group flex h-full flex-col overflow-hidden rounded-xl ultra-border transition-colors hover:border-primary/40"
     >
-      <div className="relative flex aspect-square items-center justify-center bg-white p-4">
+      {/*
+        The image is positioned ABSOLUTELY, not laid out in flow.
+        `aspect-square` sets a ratio, not a hard limit: an in-flow image taller
+        than the computed height pushes the box past it, which is why deal cards
+        measured 213-274px tall on the same 215px column while browse was uniform.
+        Out of flow, the height is the ratio and nothing else.
+      */}
+      <div className="relative aspect-square overflow-hidden bg-white">
         {/* Mark underneath, image on top: no blank frame while a slow retailer
             CDN decodes, and a dead URL simply leaves the mark. */}
-        <Package className="absolute h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Package className="h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
+        </div>
         {cluster.image && (
           <ImageWithFallback
             src={cluster.image}
             alt=""
             loading="lazy"
-            className="relative max-h-full max-w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain p-4"
             fallback={<span className="sr-only">Image unavailable</span>}
           />
         )}
@@ -47,18 +67,25 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
 
       <div className="flex flex-1 flex-col p-3 pt-2">
         <p className="microcopy-label">{cluster.brand ?? cluster.category ?? 'Product'}</p>
-        <p className="mt-0.5 line-clamp-2 text-sm font-semibold text-foreground">{name}</p>
+        {/* Exactly two lines (h-10 = 2 x 20px line-height), never min-height: a
+            1-line title against min-h-[2.5em] measured 35px where a 2-line one
+            measured 40px, drifting card heights by 5px between rails. */}
+        <p className="mt-0.5 line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
         <div className="mt-auto pt-2">
           <span className="price-num text-base font-bold text-foreground">
             {formatPrice(cluster.best_price)}
           </span>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          {/* Both meta lines are single-line and always occupy their row, even
+              when there is nothing to say. A long store name used to wrap and a
+              single-store product dropped the shop count entirely, so card
+              heights drifted by up to 21px within one row. */}
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {likelyUsed ? 'used/refurb asking' : 'lowest price'}
             {cluster.cheapest_store ? ` · ${storeName(cluster.cheapest_store)}` : ''}
           </p>
-          {stores >= 2 && (
-            <p className="text-xs text-muted-foreground">{shopLabel(stores)}</p>
-          )}
+          <p className="truncate text-xs text-muted-foreground">
+            {stores >= 2 ? shopLabel(stores) : ' '}
+          </p>
         </div>
       </div>
     </Link>

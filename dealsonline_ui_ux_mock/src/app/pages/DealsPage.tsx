@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { clustersApi, type ClusterSummary } from '../lib/api';
 import { Button } from '../components/ui/button';
-import { ClusterCard } from '../features/clusters/components/ClusterCard';
+import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { Loader2, Tag, RefreshCw } from 'lucide-react';
 
 const SPREAD_FILTERS = [
@@ -117,7 +117,7 @@ export default function DealsPage() {
 
             {filtered.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className={PRODUCT_GRID}>
                   {filtered.map((c) => (
                     <ClusterCard key={c.cluster_id} cluster={c} />
                   ))}

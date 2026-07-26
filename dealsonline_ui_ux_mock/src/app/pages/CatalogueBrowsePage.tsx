@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { clustersApi, type ClusterSummary } from '../lib/api';
-import { ClusterCard } from '../features/clusters/components/ClusterCard';
+import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Loader2, ChevronRight, RefreshCw } from 'lucide-react';
@@ -84,7 +84,7 @@ export default function CatalogueBrowsePage() {
           </div>
         ) : (
           <>
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+            <div className={`mt-6 ${PRODUCT_GRID}`}>
               {rows.map((c) => <ClusterCard key={c.cluster_id} cluster={c} />)}
             </div>
 

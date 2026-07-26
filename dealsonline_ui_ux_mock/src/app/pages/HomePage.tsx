@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { formatPrice, shopLabel } from '../lib/format';
-import { clustersApi, type ClusterSummary } from '../lib/api';
+import { clustersApi, type ClusterDetail, type ClusterSummary } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
-import { ClusterCard } from '../features/clusters/components/ClusterCard';
+import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import HeroSection from '../components/layout/HeroSection';
 import CategoryStrip from '../components/layout/CategoryStrip';
@@ -40,7 +40,7 @@ function Rail({
 }) {
   if (products.length === 0) return null;
   const row = (
-    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x scroll-hint-x items-stretch">
+    <div className={PRODUCT_GRID}>
       {products.map((product) => (
         <CardComponent key={`${title}-${product.cluster_id}`} cluster={product} />
       ))}
@@ -92,7 +92,7 @@ export default function HomePage() {
   const [manifest, setManifest] = useState<DemoManifest | null>(null);
   const [deals, setDeals] = useState<ClusterSummary[]>([]);
   const [rails, setRails] = useState<{ slug: string; rows: ClusterSummary[] }[]>([]);
-  const [showcase, setShowcase] = useState<ClusterSummary | null>(null);
+  const [showcase, setShowcase] = useState<ClusterDetail | null>(null);
   const [aside, setAside] = useState<ClusterSummary | null>(null);
 
   useEffect(() => {
@@ -111,17 +111,31 @@ export default function HomePage() {
         // real photo. Deals are spread-ranked, so the head of the list is
         // dominated by high-spread grocery items — good data, but a spaghetti
         // packet does not read as "know the real price" in a phone mockup.
+        // >=6 stores fills the phone's offer list, so the clipped last row reads
+        // as "more below" rather than as a rendering fault. Relaxed in steps
+        // rather than fixed, so a thin capture still yields a hero.
         const showcaseworthy = (c: ClusterSummary) =>
+          Boolean(c.image) && (c.n_stores ?? 0) >= 6 && !c.data_warning;
+        const acceptable = (c: ClusterSummary) =>
           Boolean(c.image) && (c.n_stores ?? 0) >= 3 && !c.data_warning;
         const device = (c: ClusterSummary) =>
           ['mobile-phones', 'laptops', 'tablets'].includes(c.category ?? '');
         const hero =
           d.results.find((c) => showcaseworthy(c) && device(c)) ??
           d.results.find(showcaseworthy) ??
+          d.results.find((c) => acceptable(c) && device(c)) ??
+          d.results.find(acceptable) ??
           d.results.find((c) => c.image) ??
           d.results[0] ??
           null;
-        setShowcase(hero);
+        // The hero needs per-store prices, which only the detail view carries —
+        // a listing row would leave the offer list empty.
+        if (hero) {
+          clustersApi
+            .getDetail(hero.cluster_id)
+            .then((full) => { if (!cancelled) setShowcase(full); })
+            .catch(() => {});
+        }
         setAside(
           d.results.find(
             (c) => c.image && c.cluster_id !== hero?.cluster_id && (c.n_stores ?? 0) >= 2,
