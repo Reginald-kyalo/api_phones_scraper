@@ -10,7 +10,7 @@
     "prebuild": "npm run demo:prepare",
     "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit && tsc -p tsconfig.functions.json"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",
@@ -60,12 +60,14 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
     "@tailwindcss/vite": "4.1.12",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
     "typescript": "^6.0.2",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "wrangler": "^3.114.17"
   },
   "peerDependencies": {
     "react": "18.3.1",

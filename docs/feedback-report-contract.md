@@ -129,8 +129,29 @@ Limits: ≤ 60 facets, `value` ≤ 200 chars, `subject` ≤ 300, `note` ≤ 1000
 **Responses.** `201 {"ok": true, "facets": n}` on success. `400` for an unknown
 `scope` or `kind`, a missing `cluster_id` on a non-site report, > 60 facets, or a
 submission with **neither a facet nor a note** — an empty report would inflate
-every count downstream. `500` if the write fails; it never claims success it did
-not achieve.
+every count downstream. `500` if the write fails and `503` if no storage is
+configured at all; it never claims success it did not achieve.
+
+### Where the rows land (and how to redirect them)
+
+Storage is behind the endpoint, not in front of it — the browser only knows
+`/api/reports`. Swapping it is an environment variable on the Pages project:
+
+| variable | effect |
+|---|---|
+| *(D1 binding `DB`)* | default: the two tables above |
+| `REPORT_WEBHOOK_URL` | POST the whole submission as JSON anywhere |
+| `REPORT_SINK` | force `d1` / `webhook`; unset uses whatever is configured |
+
+⭐ **This is the seam to use if you want reports in Mongo next to the clusters.**
+Point `REPORT_WEBHOOK_URL` at an endpoint on this API and every submission arrives
+as the JSON above plus `country` and `received_at` — the labels would then live
+beside the data they label, which is where they are most useful for training. Say
+if you want that and we will point it at you rather than at D1.
+
+⚠️ The forward happens **server-side at the edge**, so there is no CORS to
+negotiate and no key in the browser bundle. A receiving endpoint only needs to
+accept a JSON POST and return 2xx; anything non-2xx is treated as *not stored*.
 
 ⚠️ A static preview has no Function behind `/api/reports` and returns the SPA
 shell with a 200. Check the response is JSON before showing "sent" — the existing

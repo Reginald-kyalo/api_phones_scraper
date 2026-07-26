@@ -184,6 +184,40 @@ growth; it does not shrink what is already committed. Removing it would mean
 rewriting history (`git filter-repo`) and force-pushing — worth it only if clone
 time actually becomes a problem.
 
+### Where reports are stored, and how to point them somewhere else
+
+The browser only ever knows the string `/api/reports`. Storage is entirely the
+Function's business, so changing it is an environment variable — no code change,
+no rebuild, no client release.
+
+⭐ **Forwarding from the edge rather than the browser is what makes that cheap.**
+A page posting straight to a Google Apps Script or an Airtable endpoint hits a
+CORS preflight it cannot satisfy and a redirect it cannot follow, and any key it
+carried would be readable in the JS bundle. Server-side none of that applies: any
+HTTPS endpoint works, and the credential never leaves Cloudflare.
+
+| variable | effect |
+|---|---|
+| *(D1 binding `DB` only)* | default — the two-table schema below |
+| `REPORT_WEBHOOK_URL` | POST the whole submission as JSON to any endpoint |
+| `REPORT_WEBHOOK_TOKEN` | optional; sent as `Authorization: Bearer …` |
+| `REPORT_SINK` | force `d1` or `webhook`; unset means "use whatever is configured" |
+
+Anything that accepts a JSON POST works: a Google Apps Script bound to a sheet
+(stakeholders watch reports arrive in a spreadsheet, zero infrastructure),
+Airtable, Supabase, or this project's own FastAPI so the labels land next to the
+clusters they label.
+
+⚠️ **A primary sink is awaited; a mirror is not.** With both configured D1 is the
+store of record and the webhook is fire-and-forget — a reader should not wait on
+Google Sheets to be told their report landed, and a mirror failure is not their
+problem. With only a webhook configured it *becomes* the primary and is awaited,
+because otherwise the 201 would be a claim nothing backs.
+
+⛔ With **no** sink configured the endpoint returns **503**, not 500: a missing
+binding is a deployment fault, and "try again in a moment" would invite someone
+to retype a report that can never land.
+
 ### Reporting bad listings (D1)
 
 `functions/api/reports.ts` is the only server-side surface. Pages Functions

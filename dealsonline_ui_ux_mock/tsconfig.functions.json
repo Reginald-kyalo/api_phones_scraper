@@ -1,0 +1,25 @@
+{
+  /*
+   * The main tsconfig has `"include": ["src"]`, so functions/ was checked by
+   * NOTHING — `npm run type-check` passed while never opening the only
+   * server-side file in the project. Cloudflare builds it with esbuild, which
+   * strips types without checking them, so the first place an error surfaced
+   * was a failed deploy.
+   *
+   * Separate config because the runtime is different: Workers, not the DOM.
+   * Pulling @cloudflare/workers-types into the app config instead would put
+   * Worker globals in scope for React components, where they cannot work.
+   */
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/workers-types"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["functions"]
+}
