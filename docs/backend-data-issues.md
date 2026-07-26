@@ -5,6 +5,13 @@ design review and clusters wiring. Each entry: evidence (live API, verified that
 day), user-facing impact, and suggested fix. Frontend guards noted where they
 exist — a guard hides the symptom, the data still needs fixing.
 
+> ⚠️ **Counts written as `X of 61,473` are the 2026-07-25 corpus.** A pipeline run on
+> **2026-07-26** (`compile_products` → full re-cluster → MVP rebuild → re-capture) changed the
+> denominator: **61,473 → 88,137 clusters**, deals 3,189 → **3,568**, and `excluded_unbuyable`
+> **205 → 4,395** as 36,582 previously-uncollected delisted verdicts finally propagated.
+> Percentages in the entries below remain broadly indicative; absolute counts do not.
+> Current figures: `implementation_plans/proposals_to_matching_from_serving_2026-07-26.md` (M-9).
+
 ---
 
 ## Revalidation 2026-07-25 — what is still true

@@ -43,7 +43,9 @@ groceries::250mlx6+brookside+flavour+strawberry+uht
 ```
 
 Render one tickable row per entry and send back the `cluster_id` of each one the
-reader rejects. **4,082 of 61,473 clusters are merges**; `mvp_n_merged > 1` is the
+reader rejects. **4,082 of 61,473 clusters are merges** (2026-07-25 corpus; after the 07-26
+rebuild it is **6,068 of 88,137** — the ratio is what matters here, not the absolute);
+`mvp_n_merged > 1` is the
 only reliable signal (`mvp_generated` is true for 33,634 pass-throughs too).
 
 ### 🆕 `spread_basis` — the percentage question
