@@ -18,6 +18,7 @@ export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
   const [open, setOpen] = useState(false);
   const merged = cluster.mvp_n_merged ?? 0;
   if (merged <= 1) return null;
+  const members = cluster.mvp_merged_members ?? [];
 
   return (
     <div className="mb-4 rounded-lg ultra-border">
@@ -40,9 +41,26 @@ export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
         <div className="border-t border-border px-3 py-3 text-xs leading-relaxed text-muted-foreground">
           <p>
             These listings were matched automatically, not checked by hand. Similar
-            sizes or variants are occasionally grouped together, so compare the store
-            titles below before you buy.
+            sizes or variants are occasionally grouped together, so read the names
+            below before you buy.
           </p>
+          {/* The names the engine unified. Telling a reader "grouped from 3" and
+              then showing only the winning title asks them to audit a merge with
+              the evidence withheld — the differing names ARE the thing to check
+              ("Green Label" against "Blue Label"). `mvp_merged_from` cannot be
+              used here: it is identity keys, unreadable to a person. */}
+          {members.length > 1 && (
+            <ul className="mt-2 space-y-1">
+              {members.map((m) => (
+                <li key={m.cluster_id} className="flex gap-2">
+                  <span aria-hidden="true" className="text-muted-foreground/50">
+                    ·
+                  </span>
+                  <span className="text-foreground">{m.title ?? m.cluster_id}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           {cluster.mvp_rule && (
             <p className="mt-2 break-words font-mono text-[11px]">{cluster.mvp_rule}</p>
           )}

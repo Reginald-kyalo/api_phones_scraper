@@ -8,6 +8,7 @@ import { Loader2, ExternalLink, AlertTriangle, ArrowLeft, RefreshCw, Package } f
 import { storeName, storeInitial } from '../lib/storeIdentity';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { MatchProvenance } from '../features/clusters/components/MatchProvenance';
+import { SpreadEvidence } from '../features/clusters/components/SpreadEvidence';
 import { ReportDialog } from '../features/clusters/components/ReportDialog';
 import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
 
@@ -104,9 +105,9 @@ export default function ClusterPricesPage() {
 
         {cluster.image && (
           <div className="relative mb-4 flex h-56 items-center justify-center rounded-xl bg-white p-4 ultra-border">
-            {/* Retailer CDNs are slow and ~22% of URLs are dead, so the mark sits
-                UNDERNEATH: the frame is never blank while an image decodes, and a
-                failure just leaves the mark showing. */}
+            {/* Retailer CDNs are slow (~5% of URLs are genuinely dead), so the mark
+                sits UNDERNEATH: the frame is never blank while an image decodes,
+                and a failure just leaves the mark showing. */}
             <Package
               className="absolute h-10 w-10 text-muted-foreground/20"
               aria-hidden="true"
@@ -146,7 +147,10 @@ export default function ClusterPricesPage() {
               <span className="text-sm text-muted-foreground mb-1">across {shopLabel(cluster.n_stores)}</span>
             )}
           </div>
-          {spread != null && spread > 0 && (
+          {/* Stated once. Where spread_basis exists the panel below makes the same
+              claim WITH its two offers attached, and repeating the bare number
+              above it would just be the unevidenced version of the same sentence. */}
+          {spread != null && spread > 0 && !cluster.spread_basis && (
             <p className="text-xs text-teal-deep mt-1">
               Prices for the same configuration vary up to {Math.round(spread)}% — comparing pays.
             </p>
@@ -157,6 +161,8 @@ export default function ClusterPricesPage() {
             </p>
           )}
         </div>
+
+        <SpreadEvidence cluster={cluster} />
 
         {/* Store rows — real prices, real click-through */}
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">

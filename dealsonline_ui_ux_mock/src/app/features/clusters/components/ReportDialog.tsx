@@ -26,13 +26,34 @@ import { storeName } from '../../../lib/storeIdentity';
  * Values must stay in step with REASONS in functions/api/reports.ts.
  */
 const REPORT_REASONS = [
-  { value: 'wrong-grouping', label: 'These are different products' },
-  { value: 'wrong-price', label: 'A price is wrong' },
-  { value: 'dead-link', label: 'A link is broken or the product is gone' },
-  { value: 'wrong-category', label: "It's in the wrong category" },
-  { value: 'wrong-image', label: 'The picture is wrong' },
+  { value: 'grouping', label: 'These are different products' },
+  { value: 'price', label: 'A price is wrong' },
+  { value: 'spread', label: "The saving isn't real" },
+  { value: 'dead_link', label: 'A link is broken or the product is gone' },
+  { value: 'category', label: "It's in the wrong category" },
+  { value: 'image', label: 'The picture is wrong' },
   { value: 'other', label: 'Something else' },
 ] as const;
+
+/**
+ * Which reasons are ABOUT one shop rather than the product as a whole. Only
+ * these attach the selected store as the facet's subject — tagging a shop onto
+ * "the picture is wrong" would invent a claim the reader never made.
+ */
+const STORE_SCOPED = new Set<string>(['price', 'dead_link']);
+
+/**
+ * `spread` only means something where the saving is on screen with its evidence,
+ * and `grouping` only where a merge actually happened. Offering either otherwise
+ * invites a verdict on something the reader was never shown.
+ */
+function reasonsFor(cluster: ClusterDetail) {
+  const merged = (cluster.mvp_n_merged ?? 0) > 1;
+  const hasSpread = !!cluster.spread_basis?.cheapest && !!cluster.spread_basis?.dearest;
+  return REPORT_REASONS.filter(
+    (r) => (r.value !== 'grouping' || merged) && (r.value !== 'spread' || hasSpread),
+  );
+}
 
 type State = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -47,9 +68,35 @@ export function ReportDialog({
   const [reason, setReason] = useState<string>('');
   const [note, setNote] = useState('');
   const [store, setStore] = useState<string>('');
+  const [rejected, setRejected] = useState<string[]>([]);
   const [state, setState] = useState<State>('idle');
 
   const stores = Object.keys(cluster.best_by_store ?? {});
+  const reasons = reasonsFor(cluster);
+  const members = cluster.mvp_merged_members ?? [];
+  const askWhichShop = STORE_SCOPED.has(reason) && stores.length > 1;
+
+  /**
+   * One tick = one facet. A 5-way merge the reader picks apart yields five
+   * independently usable labels, each naming the absorbed cluster_id it judged —
+   * which is what makes them training data rather than a comment to re-read.
+   *
+   * The fallback matters: "these are different products" with nothing ticked is
+   * still a real verdict about the group, so it sends one subject-less facet
+   * rather than nothing at all.
+   */
+  function facets() {
+    if (reason === 'grouping' && rejected.length) {
+      return rejected.map((id) => ({ kind: 'grouping', subject: id, value: 'wrong' }));
+    }
+    return [
+      {
+        kind: reason,
+        subject: STORE_SCOPED.has(reason) && store ? store : null,
+        value: reason === 'grouping' ? 'wrong' : null,
+      },
+    ];
+  }
 
   async function submit() {
     if (!reason) return;
@@ -59,16 +106,14 @@ export function ReportDialog({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          scope: 'cluster',
           cluster_id: cluster.cluster_id,
-          reason,
           note,
           title: cluster.display_name ?? cluster.title,
           category: cluster.category,
-          store: store || null,
-          // The durable anchor: a real listing URL outlives our cluster ids.
-          store_url: store ? cluster.best_by_store?.[store]?.url : null,
           captured_at: capturedAt ?? null,
           page_url: location.href,
+          facets: facets(),
         }),
       });
       // A static preview has no Function behind /api/reports and returns the
@@ -87,6 +132,7 @@ export function ReportDialog({
       setReason('');
       setNote('');
       setStore('');
+      setRejected([]);
       setState('idle');
     }
   }
@@ -124,7 +170,7 @@ export function ReportDialog({
                 What&rsquo;s wrong?
               </legend>
               <div className="space-y-1.5">
-                {REPORT_REASONS.map((r) => (
+                {reasons.map((r) => (
                   <label
                     key={r.value}
                     className={`flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 text-sm transition-colors ${
@@ -147,7 +193,42 @@ export function ReportDialog({
               </div>
             </fieldset>
 
-            {stores.length > 1 && (
+            {/* The merge, named. Ticking a row sends a verdict against that exact
+                absorbed cluster_id, so the label survives the next rebuild — the
+                surviving id may not. Only shown for `grouping`: this list is the
+                answer to "which of these doesn't belong", not to any other
+                question. */}
+            {reason === 'grouping' && members.length > 1 && (
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium text-foreground">
+                  Which of these doesn&rsquo;t belong? (optional)
+                </legend>
+                <div className="space-y-1.5">
+                  {members.map((m) => (
+                    <label
+                      key={m.cluster_id}
+                      className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-2.5 text-sm hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={rejected.includes(m.cluster_id)}
+                        onChange={(e) =>
+                          setRejected((prev) =>
+                            e.target.checked
+                              ? [...prev, m.cluster_id]
+                              : prev.filter((id) => id !== m.cluster_id),
+                          )
+                        }
+                        className="mt-0.5 accent-teal-deep"
+                      />
+                      <span className="text-foreground">{m.title ?? m.cluster_id}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
+            {askWhichShop && (
               <div>
                 <Label htmlFor="report-store">Which shop? (optional)</Label>
                 <select

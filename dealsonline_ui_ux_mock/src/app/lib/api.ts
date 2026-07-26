@@ -439,6 +439,20 @@ export interface ClusterView<Store = number> {
   n_used: number;
   used_best_price: number | null;
   like_for_like_spread_pct: number | null;
+  /**
+   * The two offers `like_for_like_spread_pct` actually compares, so the saving
+   * can be SHOWN rather than asserted — and checked by a reader.
+   *
+   * ⚠️ Worth rendering both titles verbatim. The grocery merge unions flavour
+   * variants into one config, so the pair can be e.g. Green Label at one shop
+   * against Blue Label at the other — visible only if both names are on screen.
+   */
+  spread_basis?: {
+    facet_label: string | null;
+    spread_pct: number | null;
+    cheapest: SpreadOffer | null;
+    dearest: SpreadOffer | null;
+  } | null;
   cross_store_spread_pct: number | null;
   configs: ClusterConfig<Store>[];
   best_by_store: Record<string, Store>;
@@ -477,7 +491,34 @@ export interface ClusterView<Store = number> {
   mvp_rule?: string | null;
   /** >1 ⇒ this cluster is the union of several engine clusters: the only merge signal. */
   mvp_n_merged?: number | null;
+  /**
+   * The engine cluster_ids this row absorbed, its own included, so
+   * `length === mvp_n_merged`.
+   *
+   * This is the forwarding address for a dead id. 6,039 ids are absorbed across
+   * the corpus, and a reader report or bookmark keyed on one would otherwise have
+   * no way to find where it went. Search this array to re-attach.
+   *
+   * ⚠️ Ids are reproducible from a given corpus (two rebuilds now produce identical
+   * ids) but not permanent — a genuinely new merge still absorbs one.
+   */
+  mvp_merged_from?: string[] | null;
+  /**
+   * The same absorbed clusters WITH TITLES. `mvp_merged_from` is identity keys
+   * ("groceries::250mlx6+brookside+flavour+strawberry+uht") — unshowable to a
+   * person. This is what to render when asking "do these belong together?":
+   * one tickable row per entry, each carrying the cluster_id to report back.
+   */
+  mvp_merged_members?: { cluster_id: string; title: string | null }[] | null;
 
+}
+
+export interface SpreadOffer {
+  store: string | null;
+  price: number | null;
+  /** the listing title as that store wrote it */
+  title: string | null;
+  url: string | null;
 }
 
 export interface PricePoint {
