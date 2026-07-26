@@ -37,6 +37,7 @@ from app.api.hygiene import (
     fold_stores,
     freshness,
     last_seen_at,
+    saving_pct,
     spread_basis,
 )
 from app.api.schemas.clusters import (
@@ -228,7 +229,10 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         "n_used": d.get("n_used", 0),
         "used_best_price": d.get("used_best_price"),
         # like-for-like (same config) is the honest spread; cross_store conflates configs
+        # ⚠️ A MARKUP: (max - min) / MIN. 139 clusters publish >100%, which is
+        # impossible as a saving. Use `saving_pct` for anything shown to a shopper.
         "like_for_like_spread_pct": d.get("like_for_like_spread_pct"),
+        "saving_pct": saving_pct(d.get("like_for_like_spread_pct")),
         # The two offers that number compares, so a consumer can SHOW the saving
         # rather than assert it. Also the only place the flavour-merge defect is
         # visible on a page: strawberry at one shop priced against chocolate at

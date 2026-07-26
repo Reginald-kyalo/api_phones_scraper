@@ -331,6 +331,36 @@ def is_stale(doc: dict, now: datetime | None = None) -> bool:
 # strawberry priced against chocolate and can say so precisely.
 
 
+# ⛔ `like_for_like_spread_pct` is a MARKUP, not a saving, and the name does not
+# say so. The engine computes (max - min) / MIN — the dearest as a premium over
+# the cheapest. What a shopper keeps is (max - min) / MAX.
+#
+#     67 -> 112     spread 45/67  = 67%   <- published
+#                   saving 45/112 = 40%   <- actually saved
+#
+# Verified over every shipped cluster whose headline maps to a two-store config:
+# 3,418 of 3,418 reproduce the markup formula, so nothing is miscalculated — the
+# number is simply not the one a consumer assumes. **139 clusters publish a value
+# above 100%**, which is impossible as a saving and is the giveaway.
+#
+# Published as its own field rather than left as a docstring note, because the
+# first two consumers of the spread (this API's own docs, and the UI) both read it
+# as a saving. A name that has already misled twice needs a correct sibling, not a
+# warning.
+
+
+def saving_pct(markup_pct) -> float | None:
+    """What the shopper actually keeps, from the engine's markup.
+
+    Algebraic, not re-derived from prices: markup m = (hi-lo)/lo, so
+    saving = (hi-lo)/hi = m/(1+m). Exact, and correct even where the two prices
+    are not both in the payload.
+    """
+    if not isinstance(markup_pct, (int, float)) or markup_pct <= 0:
+        return None
+    return round(100.0 * markup_pct / (100.0 + markup_pct), 1)
+
+
 def spread_basis(doc: dict) -> dict | None:
     """The two offers behind `like_for_like_spread_pct`, or None.
 

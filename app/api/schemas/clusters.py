@@ -150,8 +150,19 @@ class ClusterView(BaseModel):
     like_for_like_spread_pct: float | None = Field(
         None,
         description=(
-            "the HONEST saving: (max - min) / min * 100 within one configuration. "
-            "A 100% spread means the dearest store charges twice the cheapest."
+            "⚠️ A MARKUP, not a saving: (max - min) / MIN * 100 within one "
+            "configuration — the dearest store as a premium over the cheapest. "
+            "100% means the dearest charges twice the cheapest. 139 clusters "
+            "publish more than 100%, which is impossible as a saving. Do not show "
+            "this to a shopper; use saving_pct."
+        ),
+    )
+    saving_pct: float | None = Field(
+        None,
+        description=(
+            "what a shopper actually keeps by buying at the cheapest store: "
+            "(max - min) / MAX * 100. Always < 100. This is the number to render "
+            "as a discount badge."
         ),
     )
     spread_basis: SpreadBasis | None = Field(
