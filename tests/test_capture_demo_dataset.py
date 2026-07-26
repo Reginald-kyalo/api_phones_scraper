@@ -12,6 +12,7 @@ shards absorb a bigger corpus instead of a cap dropping rows.
 import json
 import math
 import os
+import re
 import tarfile
 import time
 from pathlib import Path
@@ -490,6 +491,64 @@ def test_packing_round_trips_every_file(tmp_path):
 
     for name, body in written.items():
         assert (out / "demo" / name).read_text() == body, f"{name} did not survive"
+
+
+def test_every_route_has_a_spa_redirect_rule():
+    """public/_redirects must cover every top-level route in routes.ts.
+
+    ⛔ There is no catch-all to fall back on. `/*` matches `/` itself, which trips
+    Cloudflare's loop detector, so the old single line `/*  /index.html  200`
+    parsed as ZERO valid rules — the file looked correct and did nothing. Rules
+    are enumerated instead, which means adding a route to routes.ts and
+    forgetting this file silently costs that route its clean 200.
+
+    Verified in `wrangler pages dev`, which reproduces production: with the rules
+    below every deep link is 200 with the path intact; without them it is a 404
+    served through the bounce page.
+    """
+    root = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock"
+    routes_src = (root / "src" / "app" / "routes.ts").read_text()
+    rules = (root / "public" / "_redirects").read_text()
+
+    covered = {
+        line.split()[0].rstrip("*").rstrip("/")
+        for line in rules.splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+
+    # `path: "browse/:productType"` -> "browse"; index/splat routes are not paths.
+    declared = {
+        m.group(1).split("/")[0]
+        for m in re.finditer(r'path:\s*"([^"]+)"', routes_src)
+        if m.group(1) not in ("/", "*")
+    }
+    assert declared, "no routes parsed from routes.ts — the regex has gone stale"
+
+    missing = {p for p in declared if f"/{p}" not in covered}
+    assert not missing, (
+        f"routes with no _redirects rule: {sorted(missing)}. On Cloudflare these "
+        f"deep-link to a 404 that bounces via 404.html instead of resolving 200."
+    )
+
+
+def test_spa_redirects_never_target_index_html():
+    """The destination must be `/`, never `/index.html`.
+
+    Pages strips `.html` and `index` from URLs. A wildcard rule aimed at
+    /index.html is rejected as an infinite loop; a non-wildcard one is silently
+    downgraded to a **308 redirect to `/`**, which drops the path — so a shared
+    link to /prices/<id> opens the homepage. Both failures are quiet: the file
+    parses, the deploy succeeds, and only the URL bar shows it.
+    """
+    rules = (
+        Path(__file__).resolve().parents[1]
+        / "dealsonline_ui_ux_mock" / "public" / "_redirects"
+    ).read_text()
+    for line in rules.splitlines():
+        if line.strip() and not line.startswith("#"):
+            assert "index.html" not in line, (
+                f"rule targets index.html and will 308 away the path: {line!r}"
+            )
 
 
 def test_spa_deeplink_restore_runs_before_modules():
