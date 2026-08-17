@@ -47,6 +47,64 @@ def test_the_node_view_publishes_the_flags_the_publisher_writes():
         assert name in BrowseNodeView.model_fields, f"{name} is missing from BrowseNodeView"
 
 
+def test_load_browse_REREADS_once_the_TTL_has_passed():
+    """⛔⛔ `_BROWSE` was a process global read ONCE with no invalidation, so after every
+    `publish_browse_tree --apply` this API served the PREVIOUS tree until somebody restarted
+    it. The engine's own handoff records this exact shape — "a long-running console serves the
+    code it started with" — and it had reached production.
+
+    ⭐ Drives `load_browse`, not `_load_browse`: the inner reader was never the cache, so
+    asserting on it proves nothing about invalidation."""
+    from app.api import taxonomy as tax
+
+    calls = []
+
+    def fake_load(db):
+        calls.append(1)
+        return ({}, {})
+
+    orig_load, orig_ttl = tax._load_browse, tax.BROWSE_TTL_SECONDS
+    tax._load_browse, tax.BROWSE_TTL_SECONDS = fake_load, 0
+    tax.reset_browse_cache()
+    try:
+        tax.load_browse(client={"taxonomy_db": None})
+        tax.load_browse(client={"taxonomy_db": None})
+        assert len(calls) == 2, "a zero TTL must re-read on every call"
+    finally:
+        tax._load_browse, tax.BROWSE_TTL_SECONDS = orig_load, orig_ttl
+        tax.reset_browse_cache()
+
+
+def test_load_browse_still_CACHES_inside_the_TTL():
+    """⛔ The fix must not turn a cached read into a per-request Mongo round trip for 100,158
+    placements. Inside the window it stays cached."""
+    from app.api import taxonomy as tax
+
+    calls = []
+
+    def fake_load(db):
+        calls.append(1)
+        return ({}, {})
+
+    orig_load, orig_ttl = tax._load_browse, tax.BROWSE_TTL_SECONDS
+    tax._load_browse, tax.BROWSE_TTL_SECONDS = fake_load, 3600
+    tax.reset_browse_cache()
+    try:
+        tax.load_browse(client={"taxonomy_db": None})
+        tax.load_browse(client={"taxonomy_db": None})
+        assert len(calls) == 1, "inside the TTL the tree is served from cache"
+    finally:
+        tax._load_browse, tax.BROWSE_TTL_SECONDS = orig_load, orig_ttl
+        tax.reset_browse_cache()
+
+
+def test_reset_browse_cache_forces_the_next_read():
+    from app.api import taxonomy as tax
+    tax._BROWSE = ({"x": {}}, {})
+    tax.reset_browse_cache()
+    assert tax._BROWSE is None, "reset clears the cached tree"
+
+
 def test_an_unknown_node_is_a_404_not_an_empty_list():
     """⛔ An empty list says "this shelf has nothing"; a 404 says "there is no such shelf".
     Collapsing the two hides a broken link forever.

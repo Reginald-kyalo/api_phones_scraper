@@ -38,6 +38,7 @@ building navigation that assumes every category has a parent.
 from __future__ import annotations
 
 import os
+import time
 
 _TAXONOMY: dict[str, dict] | None = None
 
@@ -45,6 +46,20 @@ _TAXONOMY: dict[str, dict] | None = None
 #: nodes:      v2 slug   -> {name, parent_slug, level, full_path, unsorted}
 #: placements: cluster id -> v2 slug
 _BROWSE: tuple[dict, dict] | None = None
+_BROWSE_AT: float = 0.0
+
+#: ⛔⛔ A CACHE WITH NO INVALIDATION SERVES A TREE THAT NO LONGER EXISTS. `_BROWSE` was read
+#: once per process, so after every `publish_browse_tree --apply` this API served the PREVIOUS
+#: tree until somebody restarted it — the engine repo's own "a long-running console serves the
+#: code it started with", arrived in production. A TTL is enough: the tree is rebuilt by hand,
+#: minutes apart at most, and `reset_browse_cache()` is there for a deliberate poke.
+BROWSE_TTL_SECONDS = int(os.getenv("BROWSE_TTL_SECONDS", "300"))
+
+
+def reset_browse_cache() -> None:
+    """Force the next `load_browse` to re-read. For tests and for a post-publish poke."""
+    global _BROWSE, _BROWSE_AT
+    _BROWSE, _BROWSE_AT = None, 0.0
 
 
 def _load(db) -> dict[str, dict]:
@@ -154,8 +169,8 @@ def load_browse(client=None) -> tuple[dict, dict]:
     """Cached presentation tree. Degrades to empty, never to an error — same contract as
     `load_taxonomy`: a comparison page that 500s because a lookup collection is missing is a
     far worse failure than a flat category list."""
-    global _BROWSE
-    if _BROWSE is None:
+    global _BROWSE, _BROWSE_AT
+    if _BROWSE is None or (time.monotonic() - _BROWSE_AT) > BROWSE_TTL_SECONDS:
         try:
             if client is None:
                 from pymongo import MongoClient
@@ -166,6 +181,7 @@ def load_browse(client=None) -> tuple[dict, dict]:
             _BROWSE = _load_browse(client["taxonomy_db"])
         except Exception:
             _BROWSE = ({}, {})
+        _BROWSE_AT = time.monotonic()
     return _BROWSE
 
 
