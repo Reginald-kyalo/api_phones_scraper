@@ -144,7 +144,8 @@ def category_path(slug: str | None, taxonomy: dict | None = None) -> dict | None
 def _load_browse(db) -> tuple[dict, dict]:
     """`(nodes, placements)` from the presentation tree. Read once."""
     raw = list(db["browse_nodes"].find(
-        {}, {"label": 1, "parent_slug": 1, "ancestors": 1, "unsorted": 1, "n_clusters": 1}))
+        {}, {"label": 1, "parent_slug": 1, "ancestors": 1, "unsorted": 1, "n_clusters": 1,
+             "coarse": 1, "browsable": 1}))
     # ⛔ `full_path` must hold LABELS, not slugs. The 424-node spine published names
     # ("Sound & Vision > Home Audio > Audio Systems") and the UI renders the path
     # verbatim; emitting slugs would ship "cable-accessory > computer > tablet" to a
@@ -159,6 +160,12 @@ def _load_browse(db) -> tuple[dict, dict]:
             "level": len(row.get("ancestors") or []),
             "full_path": [label_of.get(s, s) for s in chain],
             "unsorted": bool(row.get("unsorted")),
+            # ⭐ A conjunction shelf a bigger child sits under: a grouping header, not a
+            # landing page. 218 of them hold 41,201 placements, so the renderer needs to know.
+            "coarse": bool(row.get("coarse")),
+            # ⭐ This node or something below it holds clusters. 3,539 of 4,332 nodes fail
+            # this, which is what a navigable tree would otherwise render as empty shelves.
+            "browsable": bool(row.get("browsable")),
         }
     placements = {row["_id"]: row.get("node_slug")
                   for row in db["browse_placements"].find({}, {"node_slug": 1})}
