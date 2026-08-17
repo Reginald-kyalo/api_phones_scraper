@@ -41,7 +41,7 @@ from app.api.hygiene import (
     spread_basis,
     stock_by_store,
 )
-from app.api.taxonomy import category_path
+from app.api.taxonomy import category_path, category_path_for_cluster
 from app.api.schemas.clusters import (
     ClusterDealsResponse,
     ClusterSearchResponse,
@@ -200,10 +200,14 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         "display_name": clean_text(d.get("display_name")),
         "representative_title": clean_text(d.get("representative_title")),
         "category": d.get("canonical_category_slug"),
-        # Where that slug sits in the 424-node canonical tree, so navigation can
-        # nest 14 flat strings into 4 groups. None for `groceries` and 81 other
-        # in-use slugs that are genuinely not taxonomy nodes.
-        "category_path": category_path(d.get("canonical_category_slug")),
+        # Where this CLUSTER sits in the presentation tree (taxonomy_db.browse_nodes,
+        # 4,406 nodes over 47 stores), falling back to the 424-node spine when the
+        # cluster has no placement.
+        # ⛔ Keyed by CLUSTER ID, not by slug: the presentation tree's slugs
+        # ("smartphone") and canonical_category_slug ("mobile-phones") share ZERO
+        # members, so a slug lookup against browse_nodes returns None every time.
+        "category_path": category_path_for_cluster(
+            d.get("_id"), d.get("canonical_category_slug")),
         # which feature the variants/prices are split on (storage | cpu)
         "primary_facet": d.get("primary_facet"),
         # secondary feature variants (display/filter chips, not price-split): the distinct

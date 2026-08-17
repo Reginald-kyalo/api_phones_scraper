@@ -41,6 +41,11 @@ import os
 
 _TAXONOMY: dict[str, dict] | None = None
 
+#: The presentation tree, cached like `_TAXONOMY`. `(nodes, placements)`.
+#: nodes:      v2 slug   -> {name, parent_slug, level, full_path, unsorted}
+#: placements: cluster id -> v2 slug
+_BROWSE: tuple[dict, dict] | None = None
+
 
 def _load(db) -> dict[str, dict]:
     """Slug -> {name, parent_slug, level, path}. 424 rows; read once."""
@@ -105,4 +110,101 @@ def category_path(slug: str | None, taxonomy: dict | None = None) -> dict | None
         "path": node["full_path"],
         "path_string": node["path_string"],
         "product_type": node["product_type"],
+    }
+
+
+# --------------------------------------------------------------------------------------------
+# The PRESENTATION tree (`taxonomy_db.browse_nodes` + `browse_placements`)
+#
+# ⛔⛔ THE JOIN KEY IS THE CLUSTER ID, NOT THE SLUG. `category_path` above is keyed by
+# `canonical_category_slug` ("mobile-phones", "groceries"); the presentation tree is keyed by
+# v2 slugs ("smartphone", "phone-tablet"), and the two spaces share ZERO members. Repointing
+# `_load` at `browse_nodes` would return None for every cluster and delete the hierarchy while
+# every test stayed green. The edge that does exist is `browse_placements: cluster_id -> node`.
+#
+# ⭐ The 424-node spine stays as the FALLBACK until this path is verified live. A per-cluster
+# miss degrades to the old answer, never to nothing.
+# --------------------------------------------------------------------------------------------
+
+def _load_browse(db) -> tuple[dict, dict]:
+    """`(nodes, placements)` from the presentation tree. Read once."""
+    raw = list(db["browse_nodes"].find(
+        {}, {"label": 1, "parent_slug": 1, "ancestors": 1, "unsorted": 1, "n_clusters": 1}))
+    # ⛔ `full_path` must hold LABELS, not slugs. The 424-node spine published names
+    # ("Sound & Vision > Home Audio > Audio Systems") and the UI renders the path
+    # verbatim; emitting slugs would ship "cable-accessory > computer > tablet" to a
+    # shopper. Two passes, because an ancestor's label needs the whole index first.
+    label_of = {r["_id"]: (r.get("label") or r["_id"]) for r in raw}
+    nodes = {}
+    for row in raw:
+        chain = list(row.get("ancestors") or []) + [row["_id"]]
+        nodes[row["_id"]] = {
+            "name": row.get("label"),
+            "parent_slug": row.get("parent_slug"),
+            "level": len(row.get("ancestors") or []),
+            "full_path": [label_of.get(s, s) for s in chain],
+            "unsorted": bool(row.get("unsorted")),
+        }
+    placements = {row["_id"]: row.get("node_slug")
+                  for row in db["browse_placements"].find({}, {"node_slug": 1})}
+    return (nodes, placements)
+
+
+def load_browse(client=None) -> tuple[dict, dict]:
+    """Cached presentation tree. Degrades to empty, never to an error — same contract as
+    `load_taxonomy`: a comparison page that 500s because a lookup collection is missing is a
+    far worse failure than a flat category list."""
+    global _BROWSE
+    if _BROWSE is None:
+        try:
+            if client is None:
+                from pymongo import MongoClient
+                client = MongoClient(
+                    os.getenv("MONGO_URI", "mongodb://localhost:27017"),
+                    serverSelectionTimeoutMS=5_000,
+                )
+            _BROWSE = _load_browse(client["taxonomy_db"])
+        except Exception:
+            _BROWSE = ({}, {})
+    return _BROWSE
+
+
+def category_path_for_cluster(cluster_id, slug=None, browse=None, taxonomy=None) -> dict | None:
+    """Where one CLUSTER sits in the category tree.
+
+    ⭐ Returns the same projection shape `category_path` returns, so the response contract
+    does not move while the two paths coexist.
+
+    ⛔⛔ THE SPINE WINS WHERE IT HAS AN ANSWER, AND THAT ORDER IS DELIBERATE. Measured over
+    5,000 live clusters 2026-08-17, browse-tree-first gave **2,115 clusters a SHALLOWER path
+    against 1,511 deeper** — `tvs` moved from `Sound & Vision > TVs` to `... > Audio & Music
+    Equipment`, `laptops` lost its leaf, `tablets` rooted under `Cables Accessories`.
+
+    ⭐ The cause is upstream, not here: cluster placement takes the MAJORITY member node, and
+    member rows sit on coarse shelves (`phone-tablet` absorbs 108,086 rows / 24% of the
+    corpus), so the fine leaves the taxonomy does have — `smartphone` spans 30 stores — never
+    win the vote. Until the tree is deepened, the presentation layer's honest role is to fill
+    the gaps the spine cannot reach, not to replace it.
+
+    ⇒ This is therefore STRICTLY ADDITIVE: every cluster that has a path today keeps exactly
+    the path it has, and `groceries` — the largest category in the corpus and the one the
+    module docstring above says "resolves to None here" — gains one for the first time.
+    """
+    spine = category_path(slug, taxonomy)
+    if spine:
+        return spine
+    nodes, placements = browse if browse is not None else load_browse()
+    node_slug = placements.get(str(cluster_id)) if cluster_id is not None else None
+    node = nodes.get(node_slug) if node_slug else None
+    if not node:
+        return None
+    return {
+        "slug": node_slug,
+        "name": node["name"],
+        "parent_slug": node["parent_slug"],
+        "level": node["level"],
+        "path": node["full_path"],
+        "path_string": " > ".join(node["full_path"]),
+        "product_type": None,
+        "unsorted": node["unsorted"],
     }
