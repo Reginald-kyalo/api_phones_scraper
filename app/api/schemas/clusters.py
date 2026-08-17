@@ -275,6 +275,36 @@ class ClusterView(BaseModel):
     )
 
 
+class BrowseNodeView(BaseModel):
+    """One shelf in the presentation tree (`taxonomy_db.browse_nodes`)."""
+
+    slug: str
+    label: str | None = None
+    parent_slug: str | None = None
+    ancestors: list[str] = Field(
+        default_factory=list, description="root-first ancestor slugs, excluding self")
+    n_clusters: int = 0
+    n_stores: int = 0
+    coarse: bool = Field(
+        False,
+        description="a conjunction shelf a bigger child sits under — a grouping header, "
+                    "not a landing page")
+    browsable: bool = Field(
+        False, description="this node or something below it holds clusters")
+    unsorted: bool = Field(
+        False, description="holds clusters and has no children to sort them into")
+
+
+class ClusterNodeResponse(BaseModel):
+    """The products on one shelf of the presentation tree, and everything below it."""
+
+    node: BrowseNodeView
+    count: int = Field(description="rows returned, which is bounded by `limit`")
+    total: int = Field(
+        description="rows matching before `limit` — so a capped page is never silent")
+    results: list[ClusterView]
+
+
 class ClusterSearchResponse(BaseModel):
     query: str
     count: int = Field(description="rows returned, which is bounded by `limit`")

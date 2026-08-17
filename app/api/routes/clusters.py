@@ -43,15 +43,21 @@ from app.api.hygiene import (
 )
 from app.api.taxonomy import category_path, category_path_for_cluster
 from app.api.schemas.clusters import (
+    BrowseNodeView,
     ClusterDealsResponse,
+    ClusterNodeResponse,
     ClusterSearchResponse,
     ClusterView,
 )
-from app.database import product_matching_db
+from app.database import product_matching_db, taxonomy_db
 
 router = APIRouter(prefix="/api/clusters", tags=["clusters"])
 
 CLUSTERS = product_matching_db[os.getenv("CLUSTERS_COLLECTION", "product_clusters")]
+# The PRESENTATION tree. `browse_placements` carries an index on `node_slug` that nothing
+# queried until `/by-node` existed — the tree shipped 2026-08-17 and was navigable by nobody.
+BROWSE_NODES = taxonomy_db["browse_nodes"]
+BROWSE_PLACEMENTS = taxonomy_db["browse_placements"]
 # Every canonical slug holding >=2 multi-store clusters (measured 2026-07-25 against
 # product_clusters_mvp). A slug missing here 400s the whole category, which is how
 # groceries stayed invisible before 7226de12 — audio-systems (120 multi-store),
@@ -338,6 +344,78 @@ async def best_deals(
     ]
     rows = await CLUSTERS.find(query).sort("like_for_like_spread_pct", -1).to_list(length=limit)
     return {"count": len(rows), "results": [_cluster_view(d, summary=True) for d in rows]}
+
+
+@router.get("/by-node/{node_slug}", response_model=ClusterNodeResponse)
+async def clusters_by_node(
+    node_slug: str,
+    include_descendants: bool = Query(
+        True, description="include every shelf below this one (descendant closure)"),
+    multi_store_only: bool = Query(False, description="only products compared across >=2 stores"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """The products on one shelf of the presentation tree, and everything below it.
+
+    ⭐ WHY THIS EXISTS. `browse_nodes` (4,332) and `browse_placements` (100,158) shipped
+    2026-08-17 and **nothing queried them by node** — `browse_placements` carried an index on
+    `node_slug` no code path used, and the tree's only contribution was a breadcrumb string on
+    cluster detail. A tree nothing navigates is a report.
+
+    ⭐ DESCENDANT CLOSURE IS ONE INDEXED QUERY, because `ancestors` is materialised on every
+    node. This is also the capability the scraper factory calls *unsayable* against its flat
+    `category_slug_map` ("scrape everything under Phones"); it becomes sayable here first.
+
+    ⛔ 404 on an unknown node, never an empty list — an empty list says "this shelf has
+    nothing", a 404 says "there is no such shelf", and collapsing the two hides a broken link.
+
+    ⛔ THIS ROUTE MUST STAY ABOVE `/{cluster_id:path}`. That catch-all swallows anything
+    declared after it, and the 404 then reads like a missing cluster rather than a routing
+    mistake. Guarded by `tests/test_clusters_by_node.py` and by the engine repo's
+    `product_identity/tests/test_api_projection_contract.py`.
+
+    ⚠️ `total` is returned alongside `count` so a capped page is never silent truncation.
+    """
+    node = await BROWSE_NODES.find_one({"_id": node_slug})
+    if not node:
+        raise HTTPException(status_code=404, detail=f"unknown browse node {node_slug!r}")
+
+    slugs = [node_slug]
+    if include_descendants:
+        slugs += [d["_id"] async for d in
+                  BROWSE_NODES.find({"ancestors": node_slug}, {"_id": 1})]
+
+    # ⚠️ The id list is bounded by the corpus, not by the page: the largest subtree measured
+    # 2026-08-17 is `phone-tablet` at 19,226 placements. `_id` is indexed, so the $in is a
+    # batch of point lookups; the alternative — paginating placements — loses the best-first
+    # sort, which is the whole value of the page.
+    ids = [p["_id"] async for p in
+           BROWSE_PLACEMENTS.find({"node_slug": {"$in": slugs}}, {"_id": 1})]
+
+    query: dict = {"_id": {"$in": ids}}
+    if multi_store_only:
+        query["is_multi_store"] = True
+    total = await CLUSTERS.count_documents(query)
+    rows = await (CLUSTERS.find(query)
+                  .sort("n_listings", -1)
+                  .skip(offset)
+                  .to_list(length=limit))
+    return {
+        "node": BrowseNodeView(
+            slug=node["_id"],
+            label=node.get("label"),
+            parent_slug=node.get("parent_slug"),
+            ancestors=node.get("ancestors") or [],
+            n_clusters=node.get("n_clusters") or 0,
+            n_stores=node.get("n_stores") or 0,
+            coarse=bool(node.get("coarse")),
+            browsable=bool(node.get("browsable")),
+            unsorted=bool(node.get("unsorted")),
+        ),
+        "count": len(rows),
+        "total": total,
+        "results": [_cluster_view(d, summary=True) for d in rows],
+    }
 
 
 @router.get("/{cluster_id:path}", response_model=ClusterView)
