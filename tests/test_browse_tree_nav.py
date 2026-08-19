@@ -188,3 +188,17 @@ def test_an_ancestor_MISSING_from_the_tree_falls_back_to_its_slug():
     finally:
         route_mod.BROWSE_NODES = original
     assert got.parent.ancestor_labels == ["vanished"], "an unknown ancestor shows its slug"
+
+def test_the_CHILDREN_carry_real_ancestor_labels_too():
+    """⛔ SHIPPED BROKEN AND CAUGHT BY READING THE LIVE JSON. The label map was built for the
+    parent and never passed to the children's views, so every child's `ancestor_labels` silently
+    echoed `ancestors` — a field that looks populated and is useless. The original test only
+    asserted on the parent, which is exactly how it got through.
+
+    ⭐ A child's ancestors are the parent's ancestors PLUS the parent itself, all already in
+    hand — no extra query."""
+    got = _run(parent="electronics")
+    kid = next(n for n in got.results if n.slug == "laptop")
+    assert kid.ancestor_labels == ["Electronics"], (
+        "a child resolves its ancestors' labels, not just the parent")
+

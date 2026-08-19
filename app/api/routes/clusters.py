@@ -476,18 +476,25 @@ async def browse_tree(
     # first. Ties break on label so two consecutive calls agree.
     rows.sort(key=lambda d: (-(d.get("n_clusters") or 0), str(d.get("label") or d["_id"])))
 
-    # Labels for the parent's own ancestors, so the client renders a breadcrumb with no extra
-    # round trip. Bounded by tree DEPTH (max 7), not by the corpus.
+    # Labels for the ancestor slugs anything in this response can name, so a client renders a
+    # breadcrumb with no extra round trip. Bounded by tree DEPTH (max 7), not by the corpus.
+    #
+    # ⛔ THE SAME MAP FEEDS THE CHILDREN, NOT ONLY THE PARENT. A child's ancestors are the
+    # parent's ancestors PLUS the parent itself — all already in hand. Building it for the parent
+    # alone left every child's `ancestor_labels` echoing its `ancestors`: a field that looks
+    # populated and carries nothing. It shipped that way because the test asserted on the parent.
     anc_labels: dict = {}
     for anc in (node or {}).get("ancestors") or []:
         doc = await BROWSE_NODES.find_one({"_id": anc})
         if doc and doc.get("label"):
             anc_labels[anc] = doc["label"]
+    if node and node.get("label"):
+        anc_labels[node["_id"]] = node["label"]
 
     return BrowseTreeResponse(
         parent=_browse_node_view(node, anc_labels) if node else None,
         count=len(rows),
-        results=[_browse_node_view(d) for d in rows],
+        results=[_browse_node_view(d, anc_labels) for d in rows],
     )
 
 
