@@ -295,6 +295,15 @@ class BrowseNodeView(BaseModel):
         False, description="holds clusters and has no children to sort them into")
 
 
+class BrowseTreeResponse(BaseModel):
+    """One level of the presentation tree: a node's children, or the roots."""
+
+    parent: BrowseNodeView | None = Field(
+        None, description="the node whose children these are; null for a root listing")
+    count: int = 0
+    results: list[BrowseNodeView] = Field(default_factory=list)
+
+
 class ClusterNodeResponse(BaseModel):
     """The products on one shelf of the presentation tree, and everything below it."""
 

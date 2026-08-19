@@ -43,6 +43,7 @@ from app.api.hygiene import (
 )
 from app.api.taxonomy import category_path, category_path_for_cluster
 from app.api.schemas.clusters import (
+    BrowseTreeResponse,
     BrowseNodeView,
     ClusterDealsResponse,
     ClusterNodeResponse,
@@ -401,21 +402,83 @@ async def clusters_by_node(
                   .skip(offset)
                   .to_list(length=limit))
     return {
-        "node": BrowseNodeView(
-            slug=node["_id"],
-            label=node.get("label"),
-            parent_slug=node.get("parent_slug"),
-            ancestors=node.get("ancestors") or [],
-            n_clusters=node.get("n_clusters") or 0,
-            n_stores=node.get("n_stores") or 0,
-            coarse=bool(node.get("coarse")),
-            browsable=bool(node.get("browsable")),
-            unsorted=bool(node.get("unsorted")),
-        ),
+        "node": _browse_node_view(node),
         "count": len(rows),
         "total": total,
         "results": [_cluster_view(d, summary=True) for d in rows],
     }
+
+
+def _browse_node_view(node: dict) -> BrowseNodeView:
+    """One `browse_nodes` document as the API publishes it. Pure.
+
+    ⛔ ONE construction site for both routes. A `response_model` FILTERS silently, so a field
+    added to the publisher and mapped in only one of two hand-written copies vanishes from the
+    other with no error anywhere.
+    """
+    return BrowseNodeView(
+        slug=node["_id"],
+        label=node.get("label"),
+        parent_slug=node.get("parent_slug"),
+        ancestors=node.get("ancestors") or [],
+        n_clusters=node.get("n_clusters") or 0,
+        n_stores=node.get("n_stores") or 0,
+        coarse=bool(node.get("coarse")),
+        browsable=bool(node.get("browsable")),
+        unsorted=bool(node.get("unsorted")),
+    )
+
+
+@router.get("/browse-tree", response_model=BrowseTreeResponse)
+async def browse_tree(
+    parent: str | None = Query(None, description="node whose children to list; omit for roots"),
+    browsable_only: bool = Query(
+        True, description="withhold shelves with no stock anywhere below them"),
+):
+    """One level of the presentation tree — a node's children, or the roots.
+
+    ⭐ WHY THIS EXISTS. `/by-node/{slug}` serves the products on a shelf **if you already know
+    the slug**, and nothing served the tree's SHAPE — so no client could discover a root or walk
+    to a child. The UI therefore still rendered `/pr/categories/{type}/tree` off the retired
+    424-node PriceRunner spine while `browse_nodes` sat unnavigable. A tree you cannot enumerate
+    is not navigable; this is the same defect one layer up from *"a tree nothing reads is not a
+    taxonomy, it is a report."*
+
+    ⭐ ONE LEVEL, NOT THE WHOLE TREE. Lazy expansion keeps the response bounded by a node's
+    fan-out rather than by the corpus, and the client already gets `ancestors` on every node for
+    breadcrumbs. `parent` is indexed.
+
+    ⛔ 404 on an unknown `parent`, never an empty list — an empty list says "this shelf has no
+    children", a 404 says "there is no such shelf", and collapsing the two hides a broken link.
+
+    ⛔ `browsable_only` DEFAULTS TRUE BUT IS A PARAMETER. 3,198 of 4,185 published nodes hold no
+    stock anywhere below them, so offering them is offering an empty page. But `browsable` is a
+    FLAG the publisher never filters on — the renderer decides — and an auditing caller must
+    still be able to see the whole tree, or this endpoint becomes a second, hidden filter.
+
+    ⛔ THIS ROUTE MUST STAY ABOVE `/{cluster_id:path}`, which swallows anything declared after
+    it. Guarded by `tests/test_browse_tree_nav.py` reading the source text.
+    """
+    node = None
+    if parent is not None:
+        node = await BROWSE_NODES.find_one({"_id": parent})
+        if not node:
+            raise HTTPException(status_code=404, detail=f"unknown browse node {parent!r}")
+
+    query: dict = {"parent_slug": parent}
+    if browsable_only:
+        query["browsable"] = True
+
+    rows = [d async for d in BROWSE_NODES.find(query)]
+    # ⭐ Stock first: a shopper wants the shelf that has something on it, not the one that sorts
+    # first. Ties break on label so two consecutive calls agree.
+    rows.sort(key=lambda d: (-(d.get("n_clusters") or 0), str(d.get("label") or d["_id"])))
+
+    return BrowseTreeResponse(
+        parent=_browse_node_view(node) if node else None,
+        count=len(rows),
+        results=[_browse_node_view(d) for d in rows],
+    )
 
 
 @router.get("/{cluster_id:path}", response_model=ClusterView)
