@@ -70,7 +70,8 @@ def _n(slug, label, parent=None, clusters=0, browsable=True, stores=1):
 
 TREE = [
     _n("electronics", "Electronics", clusters=0, stores=9),
-    _n("laptop", "Laptops", parent="electronics", clusters=349, stores=24),
+    {**_n("laptop", "Laptops", parent="electronics", clusters=349, stores=24),
+     "ancestors": ["electronics"]},
     _n("tablet", "Tablets", parent="electronics", clusters=476, stores=31),
     _n("ghost", "Discontinued", parent="electronics", clusters=0, browsable=False),
     _n("grocery", "Groceries", clusters=12, stores=5),
@@ -153,3 +154,37 @@ def test_the_response_publishes_the_flags_the_RENDERER_needs():
         assert name in BrowseTreeResponse.model_fields, f"{name} missing from BrowseTreeResponse"
     for name in ("slug", "label", "n_clusters", "coarse", "browsable", "unsorted"):
         assert name in BrowseNodeView.model_fields, f"{name} missing from BrowseNodeView"
+
+# --------------------------------------------------------------- breadcrumb labels
+
+def test_the_parent_carries_ANCESTOR_LABELS_not_just_slugs():
+    """⛔ CAUGHT BY RENDERING IT. `ancestors` is a list of SLUGS, so the breadcrumb read
+    "All categories > phone-tablet > Smartphones" — a raw slug in the middle of a shopper-facing
+    trail. The labels live on `browse_nodes` and the client would otherwise need one extra
+    request per ancestor to render one line.
+
+    ⭐ ADDITIVE: `ancestors` keeps its meaning and `ancestor_labels` sits alongside it, index for
+    index, so no existing consumer changes."""
+    got = _run(parent="laptop")
+    assert got.parent is not None
+    assert got.parent.ancestor_labels == ["Electronics"], (
+        "the parent echoes a LABEL per ancestor slug, in the same order")
+
+
+def test_ancestor_labels_line_up_INDEX_FOR_INDEX_with_ancestors():
+    got = _run(parent="laptop")
+    assert len(got.parent.ancestor_labels) == len(got.parent.ancestors), (
+        "a missing label must still occupy its slot or the breadcrumb silently reorders")
+
+
+def test_an_ancestor_MISSING_from_the_tree_falls_back_to_its_slug():
+    """⛔ A label lookup that drops the entry shifts every later crumb by one."""
+    original = route_mod.BROWSE_NODES
+    route_mod.BROWSE_NODES = _Nodes(TREE + [
+        {"_id": "orphan", "label": "Orphan", "parent_slug": None, "ancestors": ["vanished"],
+         "n_clusters": 1, "n_stores": 1, "coarse": False, "browsable": True, "unsorted": False}])
+    try:
+        got = asyncio.run(route_mod.browse_tree(parent="orphan"))
+    finally:
+        route_mod.BROWSE_NODES = original
+    assert got.parent.ancestor_labels == ["vanished"], "an unknown ancestor shows its slug"

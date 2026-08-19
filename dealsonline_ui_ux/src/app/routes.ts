@@ -14,6 +14,7 @@ const DealsPage = lazy(() => import("./pages/DealsPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const ComparisonPage = lazy(() => import("./pages/ComparisonPage"));
 const ClusterPricesPage = lazy(() => import("./pages/ClusterPricesPage"));
+const ShelfPage = lazy(() => import("./pages/ShelfPage"));
 const StyleGuidePage = lazy(() => import("./pages/StyleGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -24,6 +25,11 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: HomePage },
       { path: "browse", Component: CategoriesPage },
+      // The CANONICAL category tree (taxonomy_db.browse_nodes). ⛔ Deliberately NOT the
+      // same route as /browse, which serves the retired 424-node PriceRunner spine: the
+      // two slug spaces are DISJOINT, so the cutover is additive and both stay live.
+      { path: "shelf", Component: ShelfPage },
+      { path: "shelf/:slug", Component: ShelfPage },
       { path: "browse/:productType", Component: BrowsePage },
       { path: "product/:productId", Component: ProductDetailsPage },
       // Redirect or alias legacy routes

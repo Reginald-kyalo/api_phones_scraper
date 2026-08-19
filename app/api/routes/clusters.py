@@ -409,7 +409,7 @@ async def clusters_by_node(
     }
 
 
-def _browse_node_view(node: dict) -> BrowseNodeView:
+def _browse_node_view(node: dict, labels: dict | None = None) -> BrowseNodeView:
     """One `browse_nodes` document as the API publishes it. Pure.
 
     ⛔ ONE construction site for both routes. A `response_model` FILTERS silently, so a field
@@ -421,6 +421,8 @@ def _browse_node_view(node: dict) -> BrowseNodeView:
         label=node.get("label"),
         parent_slug=node.get("parent_slug"),
         ancestors=node.get("ancestors") or [],
+        # ⛔ `or slug`, never a skip: a dropped entry shifts every later crumb by one.
+        ancestor_labels=[(labels or {}).get(a) or a for a in (node.get("ancestors") or [])],
         n_clusters=node.get("n_clusters") or 0,
         n_stores=node.get("n_stores") or 0,
         coarse=bool(node.get("coarse")),
@@ -474,8 +476,16 @@ async def browse_tree(
     # first. Ties break on label so two consecutive calls agree.
     rows.sort(key=lambda d: (-(d.get("n_clusters") or 0), str(d.get("label") or d["_id"])))
 
+    # Labels for the parent's own ancestors, so the client renders a breadcrumb with no extra
+    # round trip. Bounded by tree DEPTH (max 7), not by the corpus.
+    anc_labels: dict = {}
+    for anc in (node or {}).get("ancestors") or []:
+        doc = await BROWSE_NODES.find_one({"_id": anc})
+        if doc and doc.get("label"):
+            anc_labels[anc] = doc["label"]
+
     return BrowseTreeResponse(
-        parent=_browse_node_view(node) if node else None,
+        parent=_browse_node_view(node, anc_labels) if node else None,
         count=len(rows),
         results=[_browse_node_view(d) for d in rows],
     )

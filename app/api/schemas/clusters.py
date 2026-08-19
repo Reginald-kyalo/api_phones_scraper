@@ -283,6 +283,12 @@ class BrowseNodeView(BaseModel):
     parent_slug: str | None = None
     ancestors: list[str] = Field(
         default_factory=list, description="root-first ancestor slugs, excluding self")
+    ancestor_labels: list[str] = Field(
+        default_factory=list,
+        description="display label per entry of `ancestors`, INDEX FOR INDEX — so a breadcrumb "
+                    "renders without one request per ancestor. Falls back to the slug when the "
+                    "ancestor is missing from the tree, because dropping it would shift every "
+                    "later crumb by one.")
     n_clusters: int = 0
     n_stores: int = 0
     coarse: bool = Field(

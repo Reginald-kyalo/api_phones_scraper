@@ -467,4 +467,61 @@ export const clustersApi = {
     request<ClusterDetail>(`/clusters/${encodeURIComponent(clusterId)}`),
 };
 
+// ---------------------------------------------------------------------------
+// The CANONICAL category tree (taxonomy_db.browse_nodes)
+//
+// ⛔ NOT the same thing as `pricerunnerApi`. That reads `taxonomy_db.canonical_categories` —
+// the retired 424-node PriceRunner spine, which still drives /browse. This reads the canonical
+// taxonomy built bottom-up from the shops (4,185 nodes). The two slug spaces are DISJOINT, so
+// a slug from one NEVER resolves in the other. Kept side by side deliberately: the cutover is
+// additive, exactly as the API-side one was.
+// ---------------------------------------------------------------------------
+
+export interface BrowseNode {
+  slug: string;
+  label: string | null;
+  parent_slug: string | null;
+  /** root-first ancestor slugs, excluding self */
+  ancestors: string[];
+  /** display label per `ancestors` entry, INDEX FOR INDEX; falls back to the slug */
+  ancestor_labels: string[];
+  n_clusters: number;
+  n_stores: number;
+  /** a grouping header, not a landing page — render as a section title, not a shelf */
+  coarse: boolean;
+  /** this node or something below it holds stock */
+  browsable: boolean;
+  /** holds stock and has no children to sort it into */
+  unsorted: boolean;
+}
+
+export const browseApi = {
+  /** One level of the tree: a node's children, or the roots when `parent` is omitted. */
+  getTree: (parent?: string | null, options?: { includeEmpty?: boolean }) => {
+    const params = new URLSearchParams();
+    if (parent) params.set('parent', parent);
+    if (options?.includeEmpty) params.set('browsable_only', 'false');
+    return request<{ parent: BrowseNode | null; count: number; results: BrowseNode[] }>(
+      `/clusters/browse-tree?${params}`,
+    );
+  },
+
+  /** The products on one shelf AND everything below it (descendant closure, server-side). */
+  getClusters: (
+    slug: string,
+    options?: { multiStoreOnly?: boolean; limit?: number; offset?: number },
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.multiStoreOnly) params.set('multi_store_only', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.offset) params.set('offset', String(options.offset));
+    return request<{
+      node: BrowseNode;
+      count: number;
+      total: number;
+      results: ClusterSummary[];
+    }>(`/clusters/by-node/${encodeURIComponent(slug)}?${params}`);
+  },
+};
+
 export { ApiError };
