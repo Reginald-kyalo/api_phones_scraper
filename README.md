@@ -4,6 +4,8 @@ The **serving half** of DealsOnline, a Kenyan price-comparison site: a FastAPI +
 API, the React frontends that consume it, and the capture script that turns the live
 catalogue into a fully static demo.
 
+**Live demo:** <https://dealsonline-d58.pages.dev/>
+
 It scrapes nothing and matches nothing. All of that happens upstream in
 [`../phones_scraper`](#upstream-the-phones_scraper-engine); this repo **reads that engine's
 Mongo output** and shapes it into an HTTP contract.
@@ -80,7 +82,8 @@ dead weight, not as the deploy path.
 
 ### The static demo
 
-`dealsonline_ui_ux_mock/` has **no backend at runtime**. `capture_demo_dataset.py` reads
+`dealsonline_ui_ux_mock/` is what serves <https://dealsonline-d58.pages.dev/> on
+Cloudflare Pages, and it has **no backend at runtime**. `capture_demo_dataset.py` reads
 `product_clusters_mvp`, projects each cluster through the API's own `_cluster_view` so the
 fixtures match the live contract by construction, and shards it into `public/demo/`
 (~151 MB, ~430 files, git-ignored). What ships is one byte-reproducible
