@@ -8,6 +8,10 @@ It scrapes nothing and matches nothing. All of that happens upstream in
 [`../phones_scraper`](#upstream-the-phones_scraper-engine); this repo **reads that engine's
 Mongo output** and shapes it into an HTTP contract.
 
+> ⚠️ **Active branch: `clusters-api`.** That is where the work is — it runs **59 commits
+> ahead of `main`**, and carries the whole clusters/departments API and the current
+> frontend. `main` is a stale snapshot; read and branch from `clusters-api` instead.
+
 ---
 
 ## The two catalogues
