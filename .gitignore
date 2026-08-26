@@ -3,3 +3,9 @@ apienv
 .vscode
 __pycache__
 *.pyc
+# personal Claude Code skills (project-scoped, auto-loaded; not committed)
+.claude/skills/
+.claude/settings.local.json
+
+# nginx access log — scan traffic, no reason to ship
+access.txt
