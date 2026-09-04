@@ -420,3 +420,39 @@ class ClusterSearchResponse(BaseModel):
 class ClusterDealsResponse(BaseModel):
     count: int = Field(description="rows returned, which is bounded by `limit`")
     results: list[ClusterView]
+
+
+class SpineDepartmentView(BaseModel):
+    """One department of the REDESIGN spine, discovered from stamped `browse_nodes` fields.
+
+    ⛔ NOT a `DepartmentView`. That is the 21 curated departments from `app/api/departments.py`
+    over the same tree; this is the 19 designed ones. The id spaces overlap on
+    `home-appliances` and the pages differ, so the two must never share a link builder.
+    """
+
+    id: str = Field(description="spine department slug, e.g. `phones-wearables`")
+    label: str = Field(description="published display name — NEVER derived from the slug")
+    n_clusters: int = Field(
+        description="placements reaching this department: the SUM OF `n_clusters`, never of "
+                    "`n_clusters_subtree`. A spine department is a set closed under the label "
+                    "mapping, not a subtree, so it already contains its descendants; summing "
+                    "closures gives 167,610 against a 102,038 corpus.")
+    n_shelves: int = Field(description="adopted `browse_nodes` shelves, before any render fold")
+
+
+class SpineDepartmentsResponse(BaseModel):
+    count: int
+    n_clusters_total: int = Field(
+        description="⭐ The rows DO sum to this, unlike the curated spine's — one placement, "
+                    "one node, one label, one department.")
+    results: list[SpineDepartmentView]
+
+
+class SpineDepartmentClustersResponse(BaseModel):
+    department: SpineDepartmentView
+    shelves: list[BrowseNodeView] = Field(
+        description="the adopted shelves, stock-ordered, maximal only (no shelf whose ancestor "
+                    "is also adopted by this department)")
+    count: int
+    total: int
+    results: list[ClusterView]

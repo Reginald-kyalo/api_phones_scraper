@@ -54,6 +54,9 @@ from app.api.schemas.clusters import (
     DepartmentClustersResponse,
     DepartmentsResponse,
     DepartmentView,
+    SpineDepartmentClustersResponse,
+    SpineDepartmentsResponse,
+    SpineDepartmentView,
 )
 from app.database import product_matching_db, taxonomy_db
 
@@ -856,6 +859,152 @@ async def clusters_by_department(
     return {
         "department": _department_view(dept, docs),
         "shelves": await _browse_node_views(shelf_docs),
+        "count": len(rows),
+        "total": total,
+        "results": [_cluster_view(d, summary=True) for d in rows],
+    }
+
+
+# ============================================================================================
+# THE REDESIGN SPINE — 19 designed departments, discovered from stamped fields
+# ============================================================================================
+#
+# ⭐ WHAT THIS IS. `publish_browse_tree` stamps `spine_department` on every node from
+# `redesign/bridge.tsv`. These routes read that field and nothing else: no TSV, no YAML, no
+# second data source, no request-time join. The client never handles a bare spine slug, which
+# is what makes the 95-slug collision between the two trees structurally unhittable.
+#
+# ⛔ IT DOES NOT REPLACE `departments.py` YET. Both are live; `/aisle` is the parallel route
+# and the cutover is a separate change.
+
+_SPINE_DEPTS: dict | None = None
+_SPINE_DEPTS_AT: float = 0.0
+
+
+def reset_spine_departments_cache() -> None:
+    """Force the next `_spine_departments` to re-read. For tests and a post-publish poke."""
+    global _SPINE_DEPTS, _SPINE_DEPTS_AT
+    _SPINE_DEPTS, _SPINE_DEPTS_AT = None, 0.0
+
+
+async def _spine_departments() -> dict:
+    """`id -> {"label", "n_clusters", "shelves"}`, built from stamped fields.
+
+    ⛔⛔ `n_clusters` IS THE SUM OF OWN STOCK, NOT OF `n_clusters_subtree`, AND THAT INVERTS
+    THE RULE EVERYWHERE ELSE IN THIS FILE. `n_clusters_subtree` exists because a TREE WALK
+    must not understate a coarse parent. A spine department is not a subtree — it is the set
+    of nodes carrying one `spine_department`, and that set already contains the descendants.
+    Measured live 2026-09-04: summing closures gives 167,610 against a corpus of 102,038,
+    inflating `home-appliances` 6.90x. Summing own stock gives 81,525, exactly the placement
+    count.
+
+    ⭐ SHELVES ARE MAXIMAL ONLY. A shelf whose ancestor is also in the department is already
+    inside it; offering both renders the same products behind two doors.
+    """
+    global _SPINE_DEPTS, _SPINE_DEPTS_AT
+    if _SPINE_DEPTS is not None and (time.monotonic() - _SPINE_DEPTS_AT) <= BROWSE_TTL_SECONDS:
+        return _SPINE_DEPTS
+    try:
+        docs = [d async for d in
+                BROWSE_NODES.find({"spine_department": {"$ne": None}})]
+    except Exception:
+        # ⛔ Same contract as every other tree route: navigation degrades, never 500s.
+        return _SPINE_DEPTS or {}
+
+    grouped: dict = {}
+    for d in docs:
+        g = grouped.setdefault(d["spine_department"], {
+            "label": d.get("spine_department_label") or d["spine_department"],
+            "n_clusters": 0, "nodes": []})
+        g["n_clusters"] += d.get("n_clusters") or 0
+        g["nodes"].append(d)
+
+    for g in grouped.values():
+        mine = {d["_id"] for d in g["nodes"]}
+        maximal = [d for d in g["nodes"] if not (set(d.get("ancestors") or []) & mine)]
+        g["shelves"] = sorted(maximal, key=lambda d: (-(d.get("n_clusters_subtree") or 0),
+                                                      str(d.get("label") or d["_id"])))
+        del g["nodes"]
+
+    _SPINE_DEPTS, _SPINE_DEPTS_AT = grouped, time.monotonic()
+    return grouped
+
+
+def _spine_department_view(dept_id: str, g: dict) -> SpineDepartmentView:
+    """One spine department as the API publishes it. Pure.
+
+    ⛔ ONE construction site for both routes — a `response_model` FILTERS silently.
+    """
+    return SpineDepartmentView(id=dept_id, label=g["label"],
+                               n_clusters=g["n_clusters"], n_shelves=len(g["shelves"]))
+
+
+@router.get("/spine-departments", response_model=SpineDepartmentsResponse)
+async def spine_departments():
+    """The REDESIGN spine's departments, discovered from what the engine stamped.
+
+    ⭐ There is no curated config behind this. A spine change reaches the storefront through
+    a republish, not a code edit — which is the whole reason the bridge is published rather
+    than joined here.
+    """
+    grouped = await _spine_departments()
+    rows = sorted(grouped.items(), key=lambda kv: (-kv[1]["n_clusters"], kv[0]))
+    return {
+        "count": len(rows),
+        # ⭐ These rows DO sum, unlike the curated spine's: one placement, one node, one
+        # label, one department. §1.3 of the spec proves the disjointness.
+        "n_clusters_total": sum(g["n_clusters"] for _, g in rows),
+        "results": [_spine_department_view(i, g) for i, g in rows],
+    }
+
+
+@router.get("/by-spine-department/{dept_id}", response_model=SpineDepartmentClustersResponse)
+async def spine_department_clusters(
+    dept_id: str,
+    multi_store_only: bool = Query(False, description="only products compared across >=2 stores"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """The products across every node the REDESIGN spine stamped into one department.
+
+    ⛔ QUERIES THE FULL STAMPED SET, NOT `_spine_departments()`'s `shelves`. `shelves` is
+    MAXIMAL ONLY — built so a department page can render its subcategory tiles without
+    offering the same products behind two doors. But `Cases` is a CHILD of `Phones` in the
+    SAME department, and its placements are real stock: dropping to `shelves` here would
+    silently lose them, and `total` would stop matching the `n_clusters` the menu already
+    promised. So this re-reads the full `spine_department` set, the same one
+    `_spine_departments` grouped before folding it down to shelves.
+
+    ⛔ 404 on an unknown department, never an empty list — matching `/by-department` and
+    `/by-node`. An empty list says "this department has nothing"; a 404 says "there is no
+    such department".
+
+    ⛔ THIS ROUTE MUST STAY ABOVE `/{cluster_id:path}`, which swallows anything declared
+    after it.
+    """
+    grouped = await _spine_departments()
+    g = grouped.get(dept_id)
+    if not g:
+        raise HTTPException(status_code=404, detail=f"unknown spine department {dept_id!r}")
+
+    mine = [d["_id"] async for d in
+            BROWSE_NODES.find({"spine_department": dept_id}, {"_id": 1})]
+
+    ids = [p["_id"] async for p in
+           BROWSE_PLACEMENTS.find({"node_slug": {"$in": mine}}, {"_id": 1})]
+
+    query: dict = {"_id": {"$in": ids}}
+    if multi_store_only:
+        query["is_multi_store"] = True
+    total = await CLUSTERS.count_documents(query)
+    rows = await (CLUSTERS.find(query)
+                  .sort("n_listings", -1)
+                  .skip(offset)
+                  .to_list(length=limit))
+
+    return {
+        "department": _spine_department_view(dept_id, g),
+        "shelves": await _browse_node_views(g["shelves"]),
         "count": len(rows),
         "total": total,
         "results": [_cluster_view(d, summary=True) for d in rows],
