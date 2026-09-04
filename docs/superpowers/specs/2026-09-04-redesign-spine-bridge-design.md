@@ -193,9 +193,10 @@ Per-department inflation: `home-appliances` **6.90×**, `computing-networking` *
 `groceries-everyday-essentials` 1.71×, `phones-wearables` 1.40×.
 
 ⭐ **WHY IT INVERTS.** `n_clusters_subtree` exists because a *tree walk* must not understate a
-coarse parent — `CATEGORY_TREE_API.md` §5: *"printing `n_clusters` understates a department by
-3x"*, and roadmap task 2 records the ordering defect that cost `Electronics & Computers` its
-place in the top 12. But a spine department is **not a subtree**: it is a SET of nodes closed
+coarse parent — `app/api/schemas/clusters.py`'s `n_clusters_subtree` description: *"`food-cupboard`
+holds 2,010 of its own against 6,220 in its subtree, so printing `n_clusters` understates a
+department by 3x"* — and roadmap task 2 records the ordering defect that cost
+`Electronics & Computers` its place in the top 12. But a spine department is **not a subtree**: it is a SET of nodes closed
 under the label mapping, and that set already contains the descendants. Adding each node's
 closure counts every nested node once per ancestor also in the set.
 
