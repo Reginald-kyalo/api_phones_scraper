@@ -52,6 +52,21 @@ def shot(page, name: str) -> None:
         page.screenshot(path=os.path.join(SHOTS, name), full_page=False)
 
 
+def api_get(page, path: str):
+    """GET `{UI}/api{path}` through the page's own request context — the same dev-proxied
+    route the app itself calls (`vite.config.ts` forwards `/api` to :10000).
+
+    ⛔ NEW IN THIS FILE, AND ONLY FOR WHAT NO RENDERED MENU CAN ANSWER. `AislePage` (the 19
+    designed departments) is deliberately not linked from any nav — see its own docstring — so
+    there is no rendered panel to read a claimed count off, the way the curated-department check
+    below reads `panel.locator(...).inner_text()`. The claim can only be read from the endpoint
+    a menu would read if one existed.
+    """
+    r = page.request.get(f"{UI}/api{path}")
+    assert r.ok, f"GET {path} -> {r.status} {r.status_text}"
+    return r.json()
+
+
 def main() -> int:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -407,6 +422,85 @@ def main() -> int:
         s_n = _num(page.locator('section[aria-label="Products"] h2').first.inner_text())
         check(f"/department/pantry and /shelf/pantry are different pages ({d_n} vs {s_n})",
               d_n is not None and s_n is not None and d_n != s_n)
+
+        # ----------------------------------------------------------- the fourth slug space
+        # ⛔⛔ A FOURTH SLUG SPACE, PARALLEL TO /department AND /shelf. `AislePage` renders the
+        # REDESIGN spine's 19 DESIGNED departments (79.9% reach, 81,525 clusters) — the migration
+        # target for the 21 CURATED departments above, run side by side until a cutover the owner
+        # has not made yet. It is additive and not linked from any nav, on purpose: two department
+        # navs in front of a shopper is the failure mode the migration exists to avoid.
+        print("\n== THE AISLE SPINE (/aisle) ==")
+
+        # ⛔ `home-appliances` NAMES A DEPARTMENT IN BOTH SPACES — `/department/home-appliances`
+        # (curated) and `/aisle/home-appliances` (designed) are unrelated pages one slug space
+        # apart. Neither redirects to the other, and a shared link builder would send a shopper to
+        # a plausible wrong page rather than a 404.
+        page.goto(f"{UI}/aisle/home-appliances", wait_until="networkidle")
+        page.wait_for_timeout(2500)
+        aisle_ha_n = _num(page.locator('section[aria-label="Products"] h2').first.inner_text())
+        page.goto(f"{UI}/department/home-appliances", wait_until="networkidle")
+        page.wait_for_timeout(2500)
+        dept_ha_n = _num(page.locator('section[aria-label="Products"] h2').first.inner_text())
+        check("both home-appliances totals rendered, so the comparison below isn't vacuous",
+              aisle_ha_n is not None and dept_ha_n is not None,
+              f"aisle={aisle_ha_n} department={dept_ha_n}")
+        check(f"/aisle/home-appliances and /department/home-appliances are different pages "
+              f"({aisle_ha_n} vs {dept_ha_n})",
+              aisle_ha_n is not None and dept_ha_n is not None and aisle_ha_n != dept_ha_n)
+
+        # ⛔ A `browse_nodes` shelf slug on the aisle route must read as a WRONG ID SPACE, not a
+        # transient failure — same contract as the 404-vs-empty checks above. `smartphone` is a
+        # real shelf slug and never a designed-department id.
+        page.goto(f"{UI}/aisle/smartphone", wait_until="networkidle")
+        page.wait_for_timeout(2000)
+        aisle_404_body = page.inner_text("body")
+        check("a node slug on the aisle route renders 'No such department'",
+              "No such department" in aisle_404_body, aisle_404_body[:120])
+        check("the aisle 404 does not read as a transient failure",
+              "could not be loaded" not in aisle_404_body)
+
+        # `spine-departments` is the endpoint a menu would read if `AislePage` had one — it backs
+        # both the "All categories" door check and the menu-equals-page check below.
+        aisle_rows = api_get(page, "/clusters/spine-departments")["results"]
+        check(f"spine-departments lists the 19 designed departments ({len(aisle_rows)})",
+              len(aisle_rows) == 19, str(sorted(r["id"] for r in aisle_rows)))
+
+        # ⭐ At 79.9% reach the residue is 20,513 placements, reachable ONLY through /shelf.
+        # Losing this door on even one of the 19 would make that slice unbrowsable from that page
+        # WHILE EVERY OTHER ASSERTION HERE STILL PASSED — which is exactly why it is asserted
+        # rather than assumed, for every department rather than a sample.
+        if len(aisle_rows) == 19:
+            for r in aisle_rows:
+                page.goto(f"{UI}/aisle/{r['id']}", wait_until="networkidle")
+                page.wait_for_timeout(1200)
+                check(f"/aisle/{r['id']} keeps its 'All categories' door to /shelf",
+                      page.locator('a[href="/shelf"]').count() > 0)
+
+        # ⛔⛔ THE SAME LOAD-BEARING SHAPE AS THE CURATED "Laptops" CHECK ABOVE: the claim on a
+        # control equals the rows that control opens. A designed department can never advertise a
+        # page it will not show.
+        if len(aisle_rows) == 19:
+            for r in aisle_rows:
+                spine_total = api_get(
+                    page, f"/clusters/by-spine-department/{r['id']}?limit=1")["total"]
+                check(f"{r['id']}: the menu claims {r['n_clusters']:,} and the page shows "
+                      f"{spine_total:,}", spine_total == r["n_clusters"])
+
+        # ⛔ Adopted shelves on an aisle page are `browse_nodes` slugs and must link to `/shelf/`,
+        # never back into `/aisle/` — 43 spine ids are also browsable `browse_nodes` slugs
+        # (measured 2026-09-04), so a mistaken link resolves to a plausible wrong page rather than
+        # a clean 404.
+        page.goto(f"{UI}/aisle/phones-wearables", wait_until="networkidle")
+        page.wait_for_timeout(2000)
+        aisle_hrefs = page.eval_on_selector_all(
+            "main a", "els => els.map(e => e.getAttribute('href'))")
+        aisle_shelf_links = [h for h in aisle_hrefs if h and h.startswith("/shelf/")]
+        check(f"the aisle page offers shelf links to check for escapes ({len(aisle_shelf_links)})",
+              len(aisle_shelf_links) > 0, str(aisle_hrefs[:6]))
+        aisle_stray = [h for h in aisle_hrefs
+                       if h and h.startswith("/aisle/") and h != "/aisle/phones-wearables"]
+        check("no adopted shelf link escapes into the /aisle/ id space",
+              len(aisle_stray) == 0, str(aisle_stray[:3]))
 
         browser.close()
 
