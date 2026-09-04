@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { pricerunnerApi, type PRProductType, type PRTreeNode } from '../lib/api';
 import { Skeleton } from '../components/ui/skeleton';
 import { ChevronRight, Package, X } from 'lucide-react';
-import { prIconMap } from '../components/layout/CategoryStrip';
+import { prIconMap } from '../lib/pricerunnerIcons';
 import {
   Breadcrumb,
   BreadcrumbItem,

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { Heart, Bell, LogOut, LogIn, Menu, Settings, Search, X, Tag, Package } from 'lucide-react';
+import { Heart, Bell, LogOut, LogIn, Menu, Settings, Search, X, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   DropdownMenu,
@@ -13,12 +13,24 @@ import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import SearchBar from '../../features/search/components/SearchBar';
 import Logo from './Logo';
+import MegaMenu from './MegaMenu';
+import MobileCategoryNav from '../../features/categories/MobileCategoryNav';
 
 export default function Header() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  // ⛔ THE CATEGORY TREE HAD NO DOOR. `/shelf` — the canonical browse-node taxonomy — was
+  // reachable only by typing the URL: nothing in `src/` linked to it, and `MegaMenu` was
+  // imported by no one. This state is that door.
+  const [menuOpen, setMenuOpen] = useState(false);
+  // ⛔ THE SHEET MUST BE CONTROLLED. Radix keeps it open across a client-side navigation, so an
+  // uncontrolled sheet leaves the user on the new page with the menu still covering it.
+  const [sheetOpen, setSheetOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const onBrowse = pathname === '/browse' || pathname.startsWith('/browse/');
+  const onShelf = pathname === '/shelf' || pathname.startsWith('/shelf/');
+  // ⛔ Every link inside the panel closes it explicitly, but a browser BACK button does not go
+  // through them. Without this the panel outlives the navigation that dismissed it.
+  useEffect(() => { setMenuOpen(false); setSheetOpen(false); }, [pathname]);
   // The homepage has its own large search bar in the hero — don't duplicate it
   // in the header (matches PriceRunner: header search only on inner pages).
   const isHome = pathname === '/';
@@ -51,14 +63,22 @@ export default function Header() {
 
               {/* Desktop nav links */}
               <nav className="hidden lg:flex items-center gap-1">
+                {/* ⛔ OPENS THE PANEL; DOES NOT NAVIGATE TO `/browse`. This button used to
+                    toggle the retired PriceRunner spine's page, which is why the canonical
+                    tree had no entry point anywhere in the product. */}
                 <button
-                  onClick={() => navigate(pathname === '/browse' ? '/' : '/browse')}
-                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    onBrowse
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-expanded={menuOpen}
+                  aria-haspopup="dialog"
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    menuOpen || onShelf
                       ? 'text-primary bg-primary/10'
                       : 'text-muted-foreground hover:text-foreground hover:bg-gray-50'
                   }`}
                 >
+                  {menuOpen
+                    ? <X aria-hidden="true" className="w-4 h-4" />
+                    : <Menu aria-hidden="true" className="w-4 h-4" />}
                   All categories
                 </button>
                 <Link
@@ -145,18 +165,26 @@ export default function Header() {
                 )}
               </div>
 
-              {/* Mobile hamburger */}
-              <div className="md:hidden">
-                <Sheet>
+              {/* ⛔⛔ `lg:hidden`, NOT `md:hidden` — THERE WAS A DEAD ZONE. The desktop nav that
+                  holds the category panel is `hidden lg:flex` (>=1024px) and this hamburger was
+                  `md:hidden` (<=767px), so every viewport from 768px to 1023px — iPad portrait,
+                  small laptops, a half-width desktop window — rendered NEITHER. No categories,
+                  no navigation menu of any kind. The two breakpoints must be the same edge. */}
+              <div className="lg:hidden">
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open menu">
                       <Menu aria-hidden="true" className="w-5 h-5" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-72 p-0">
+                  {/* ⛔ `overflow-y-auto`: the sheet now carries the category tree and is taller
+                      than a phone. Without it the departments below the fold are unreachable. */}
+                  <SheetContent side="right" className="w-80 p-0 overflow-y-auto">
                     <MobileMenu
                       currentUser={currentUser}
                       onLogout={handleLogout}
+                      sheetOpen={sheetOpen}
+                      onNavigate={() => setSheetOpen(false)}
                     />
                   </SheetContent>
                 </Sheet>
@@ -186,6 +214,8 @@ export default function Header() {
         )}
       </header>
 
+      {/* ⭐ Outside <header> so the overlay is not clipped by the sticky stacking context. */}
+      <MegaMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
   );
 }
@@ -194,9 +224,13 @@ export default function Header() {
 function MobileMenu({
   currentUser,
   onLogout,
+  sheetOpen,
+  onNavigate,
 }: {
   currentUser: { name: string; email: string } | null;
   onLogout: () => void;
+  sheetOpen: boolean;
+  onNavigate: () => void;
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -216,18 +250,25 @@ function MobileMenu({
 
       {/* Nav links */}
       <nav className="flex-1 py-2">
-        <MobileNavLink to="/" icon={<Search className="w-4 h-4" />} label="Home" />
-        <MobileNavLink to="/browse" icon={<Package className="w-4 h-4" />} label="All categories" />
-        <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Sale" />
+        <MobileNavLink to="/" icon={<Search className="w-4 h-4" />} label="Home" onNavigate={onNavigate} />
+        <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Sale" onNavigate={onNavigate} />
+
         <div className="mx-5 my-2 border-t border-border" />
-        <MobileNavLink to="/contact" label="About" />
+        {/* ⛔ THE CANONICAL TREE, NOT A LINK TO IT. This was a single flat `/shelf` entry, which
+            meant every viewport below 1024px had no subcategories at all — the desktop panel's
+            trigger is `hidden lg:flex`. `/browse` still serves the retired spine and stays
+            reachable from the footer; the two slug spaces are disjoint and both live on. */}
+        <MobileCategoryNav enabled={sheetOpen} onNavigate={onNavigate} />
+
+        <div className="mx-5 my-2 border-t border-border" />
+        <MobileNavLink to="/contact" label="About" onNavigate={onNavigate} />
 
         {currentUser && (
           <>
             <div className="mx-5 my-2 border-t border-border" />
-            <MobileNavLink to="/favorites" icon={<Heart className="w-4 h-4" />} label="Favorites" />
-            <MobileNavLink to="/alerts" icon={<Bell className="w-4 h-4" />} label="Price Alerts" />
-            <MobileNavLink to="/account" icon={<Settings className="w-4 h-4" />} label="Account" />
+            <MobileNavLink to="/favorites" icon={<Heart className="w-4 h-4" />} label="Favorites" onNavigate={onNavigate} />
+            <MobileNavLink to="/alerts" icon={<Bell className="w-4 h-4" />} label="Price Alerts" onNavigate={onNavigate} />
+            <MobileNavLink to="/account" icon={<Settings className="w-4 h-4" />} label="Account" onNavigate={onNavigate} />
           </>
         )}
       </nav>
@@ -247,10 +288,13 @@ function MobileMenu({
   );
 }
 
-function MobileNavLink({ to, icon, label }: { to: string; icon?: React.ReactNode; label: string }) {
+function MobileNavLink({ to, icon, label, onNavigate }: {
+  to: string; icon?: React.ReactNode; label: string; onNavigate?: () => void;
+}) {
   return (
     <Link
       to={to}
+      onClick={onNavigate}
       className="flex items-center gap-3 px-5 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors"
     >
       {icon && <span className="text-muted-foreground">{icon}</span>}

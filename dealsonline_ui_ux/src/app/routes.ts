@@ -15,6 +15,7 @@ const LegalPage = lazy(() => import("./pages/LegalPage"));
 const ComparisonPage = lazy(() => import("./pages/ComparisonPage"));
 const ClusterPricesPage = lazy(() => import("./pages/ClusterPricesPage"));
 const ShelfPage = lazy(() => import("./pages/ShelfPage"));
+const DepartmentPage = lazy(() => import("./pages/DepartmentPage"));
 const StyleGuidePage = lazy(() => import("./pages/StyleGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -30,6 +31,13 @@ export const router = createBrowserRouter([
       // two slug spaces are DISJOINT, so the cutover is additive and both stay live.
       { path: "shelf", Component: ShelfPage },
       { path: "shelf/:slug", Component: ShelfPage },
+      // The 21 RULED DEPARTMENTS over that tree (app/api/departments.py).
+      // ⛔⛔ A THIRD SLUG SPACE, AND IT OVERLAPS /shelf's. Six department ids also name a
+      // browse_nodes shelf — `audio`, `bakery`, `cleaning`, `fresh`, `hardware`, `pantry` —
+      // and the pages genuinely differ: /department/pantry is 485 clusters, /shelf/pantry is
+      // 889. Neither redirects to the other, so `departmentHref` and `shelfHref` are the only
+      // two link builders and an id is never passed to the wrong one.
+      { path: "department/:id", Component: DepartmentPage },
       { path: "browse/:productType", Component: BrowsePage },
       { path: "product/:productId", Component: ProductDetailsPage },
       // Redirect or alias legacy routes
