@@ -259,10 +259,17 @@ single shelf swallows more than 90%.
   data source, no request-time join.
   - `GET /api/clusters/spine-departments` → the 19, with mass and borrowed shelves
   - `GET /api/clusters/by-spine-department/{id}` → `{department, shelves, count, total, results}`
-  - ⭐ **Descendant closure, like `/by-department`** — the adopted shelves *and everything below
-    them*, server-side, so a department is never an empty page. ⛔ And like `/by-department` it
-    offers **no `include_descendants` switch**: a department without its subtrees is not a
-    smaller department, it is a wrong one.
+  - ⛔⛔ ✎ **CORRECTED 2026-09-05 — NO DESCENDANT CLOSURE, AND THIS IS THE OPPOSITE OF
+    `/by-department`.** This section originally specified "the adopted shelves and everything
+    below them, like `/by-department`". **Measured against the live stamped tree, that is
+    wrong:** closure pulls in nodes belonging to OTHER departments, because a descendant's
+    label maps where its own label maps. `home-appliances` 3,182 → **21,821 (6.90×)**,
+    `computing-networking` 5,516 → 25,834 — §4.1's inflation arriving by a second route, and
+    it would have broken the menu-equals-page assertion written to catch exactly that.
+    ⇒ A spine department's node set is **already closed** under the label mapping. Source
+    placements from the department's own stamped nodes; there is no closure to apply, and
+    nothing is lost, because a cluster has one placement on one node. The `shelves` list stays
+    maximal-only — those are display doors, not the product query.
 - ⭐ **Shelf views go through `_browse_node_views`**, the collective builder added 2026-09-04. A
   new route must not reintroduce a per-route label map — that is the defect §4 cites.
 - ⛔ Both routes declared **before** `@router.get("/{cluster_id:path}")`, or they are unreachable
