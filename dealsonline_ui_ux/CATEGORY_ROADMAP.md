@@ -148,7 +148,34 @@ Filed from the audit; all are upstream data work, none blocks the storefront:
 - **Orphan attachment** — 3,124 of 4,137 nodes are parentless, but **only 417 stocked browsable
   roots actually matter** (see Phase 2.1). That is the real denominator.
 
-## Phase 6 — The REDESIGN spine (measured 2026-09-03, not yet started)
+## Phase 6 — The REDESIGN spine (measured 2026-09-03; ⭐ LANDED 2026-09-05)
+
+⭐⭐ **THE BRIDGE SHIPPED, AND THE 79.9% BELOW IS NOW LIVE, NOT PROJECTED.** `redesign/emit_bridge.py`
+emits `bridge.tsv` (4,066 rows, six columns — the package's ONE outward contract, byte-reproducible);
+`publish_browse_tree.py` reads only that file and stamps five fields (`spine_slug`,
+`spine_department`, `spine_department_label`, `spine_level`, `spine_disposition`) on every node.
+Measured live: **4,137 nodes, 0 missing dispositions, 19 departments, mass exactly 81,525** —
+reproducing the 79.9% projected below to the cluster. `GET /api/clusters/spine-departments` and
+`GET /api/clusters/by-spine-department/{id}` read only the stamped fields; `/aisle/:id` is live
+with its own link builder (`aisleHref`), deliberately not linked from any nav — the cutover that
+retires `departments.py` is a separate change. See `CATEGORY_TREE_API.md` task 9 for the full
+account, including the standoff that delayed this (both repos recorded it as blocked on the
+other; neither was — the cause was `redesign/HANDOFF.md`'s deliberate isolation, not neglect).
+
+⛔⛔ **AND HERE IS THE INVERSION THAT ALMOST SHIPPED WRONG: A DEPARTMENT'S MASS IS THE SUM OF
+`n_clusters`, NOT `n_clusters_subtree` — THE OPPOSITE OF THE RULE THIS DOCUMENT ESTABLISHES
+ELSEWHERE.** Every other instruction in these docs says use the subtree figure, never the
+own-stock one, because the own figure understates a coarse node — `CATEGORY_TREE_API.md` §5: "a
+coarse node must still show stock, which is exactly what descendant closure gives you"; that
+doc's task 2 records the own-stock ordering excluding `Electronics & Computers` outright. Here
+that rule inverts: a spine department is a SET of
+nodes closed under the label mapping, not a subtree — it already contains its descendants, so
+summing `n_clusters_subtree` over a department's nodes double-counts every nested node once per
+ancestor also in the set. Measured: summing `n_clusters` gives exactly 81,525 (the correct
+total); summing `n_clusters_subtree` gives **167,610** — more than the entire 102,038-cluster
+corpus — with `home-appliances` inflated **6.90×** and `computing-networking` **5.24×**. The
+render gate caught this by failing 17 of 19 departments before the fix landed; there is no other
+assertion in the existing suite that would have noticed.
 
 ⭐⭐ **THE CASE, IN THE STOREFRONT'S OWN UNIT.** `phones_scraper/category_taxonomy/redesign/` holds
 a fifth node set — **1,392 designed nodes, 19 departments** — with *zero* consumers. Its own

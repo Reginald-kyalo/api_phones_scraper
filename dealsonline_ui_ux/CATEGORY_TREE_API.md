@@ -124,6 +124,24 @@ join will not fail loudly; it will produce plausible wrong pages by the dozen.**
 route prefix and its own link builder, and join it on the RAW LABEL
 (`browse_nodes.label` ↔ `label_disposition.raw_label`, verified total: 4,066 of 4,066).
 
+⭐ **AND NOW THAT IT IS WIRED (task 9), THE 95-SLUG FIGURE ABOVE OVERSTATES THE HAZARD FOR WHAT
+ACTUALLY SHIPPED.** The 95/112 collisions live almost entirely at spine levels 1–2, which have no
+route. Measured across the id space that actually got a page — the 19 spine DEPARTMENTS:
+
+| pair | shared |
+|---|---:|
+| spine DEPARTMENTS (19) ∩ `browse_nodes` | **0** |
+| spine DEPARTMENTS (19) ∩ retired 424-spine | **0** |
+| spine DEPARTMENTS (19) ∩ curated ids (21) | **1** — `home-appliances` |
+| spine ALL nodes (1,392) ∩ `browse_nodes` | 95 — **43 of them browsable** |
+
+⇒ Wiring departments first was not merely incremental — it was the low-collision subset. The 43
+browsable collisions that would resolve to a plausible wrong page live one level down, and this
+change gives that level no URLs (§7 of the spec keeps it out of scope on purpose). The one
+exception, `home-appliances`, names both a spine department and a curated department; during the
+parallel period those are different pages, exactly as `/department/pantry` and `/shelf/pantry`
+are — same test.
+
 ⛔ **Keep both alive. Do not repoint the spine pages at the canonical tree.** That exact change
 was attempted on the API side and measured to delete the storefront's hierarchy — the spine is
 what `cluster.category_path` is stamped in, and it is live production data with a consumer.
@@ -443,11 +461,41 @@ that merely *restate* their department empties the second level for **8 of 21 de
 including `Smartphones`**, so it was implemented, measured and backed out. `CATEGORY_ROADMAP.md`
 §1b.2 carries the numbers.
 
-**9. ⬜ OPEN — give the redesign spine a consumer.** The single largest available improvement to
-these surfaces: 46.0% → 79.9% of placements reachable by department. See §2 for the slug hazard
-and `CATEGORY_ROADMAP.md` Phase 6 for the plan. ⛔ Blocked on the engine publishing the bridge; it
-is roughly 30 lines in `publish_browse_tree.py`, which already stamps `n_clusters_subtree` the
-same way.
+**9. ✅ DONE 2026-09-05 — the redesign spine has a consumer.** The single largest available
+improvement to these surfaces: 46.0% → 79.9% of placements reachable by department. See §2 for
+the slug hazard and `CATEGORY_ROADMAP.md` Phase 6 for the numbers and the inversion.
+
+⛔⛔ **THIS WAS NEVER BLOCKED, AND NEITHER WAS THE ENGINE'S SIDE — BOTH REPOS RECORDED A STANDOFF
+THAT DIDN'T EXIST.** This line used to say *"Blocked on the engine publishing the bridge"*; the
+engine's own HEAD commit (`8114a67`) said the FRONTEND consumer was the next session's job.
+Grepped 2026-09-04: no `spine_slug`, `spine_department` or `spine_disposition` existed anywhere.
+Neither side was waiting on work in progress. ⭐ The cause was structural, not neglect:
+`redesign/HANDOFF.md` isolates that package from the live pipeline on purpose — *"a separate
+system until the migration says otherwise"* — and `publish_browse_tree.py` sits on the other
+side of that line. Full account: `docs/superpowers/specs/2026-09-04-redesign-spine-bridge-design.md`.
+
+**What shipped:** `redesign/emit_bridge.py` emits `bridge.tsv` (4,066 rows, six columns) — the
+package's one outward contract, byte-reproducible. `publish_browse_tree.py` reads only that file
+and stamps five additive fields (`spine_slug`, `spine_department`, `spine_department_label`,
+`spine_level`, `spine_disposition`) on every node — live: 4,137 nodes, **0** missing
+dispositions, **19** departments, mass exactly **81,525** (79.9% of 102,038). `GET
+/api/clusters/spine-departments` and `GET /api/clusters/by-spine-department/{id}` read only the
+stamped fields — no TSV, no second data source, no request-time join. `/aisle/:id` is live with
+its own link builder, `aisleHref` — deliberately **not** linked from any nav yet; the parallel
+route is for comparison, and the cutover that retires `departments.py` is a separate change.
+
+⛔⛔ **BEFORE YOU SUM A DEPARTMENT'S MASS: USE `n_clusters`, NOT `n_clusters_subtree` — THE
+OPPOSITE OF THE RULE EVERYWHERE ELSE IN THIS DOC** (§5: a coarse node must still show stock,
+"which is exactly what descendant closure gives you"). A spine department is a SET of
+nodes closed under the label mapping, not a subtree — it already contains its descendants.
+Summing `n_clusters_subtree` over a department's nodes gives **167,610** against a corpus of
+102,038 (`home-appliances` inflates 6.90×). `CATEGORY_ROADMAP.md` Phase 6 has the full table; the
+render gate failed 17 of 19 departments under exactly this regression before it was caught.
+
+⚠️ **The department page takes NO descendant closure**, unlike `/by-department`. Closure pulls in
+nodes belonging to OTHER departments, because a descendant's label maps wherever its own label
+maps (`home-appliances` 3,182 → 21,821 via closure). A spine department's node set is already
+closed; source placements from the department's own stamped nodes only.
 
 ### Known rough edges you will see (data, not UI bugs)
 
