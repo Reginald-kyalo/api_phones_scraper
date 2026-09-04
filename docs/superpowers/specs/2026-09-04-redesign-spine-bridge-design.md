@@ -140,12 +140,19 @@ distinguish it from "no department", which is §4's silent-fallback trap with a 
 
 ## 4. The stamped contract
 
+✎ **AMENDED DURING PLANNING — FIVE FIELDS, NOT FOUR.** `spine_department` is a slug
+(`tv-audio-home-entertainment`); its display name (`TV, Audio & Home Entertainment`) lives only
+in `taxonomy_spine.yaml`, which the API must not read. Deriving it by title-casing the slug is
+not an option at that spelling. So the bridge carries `spine_department_label` and the publisher
+stamps it — denormalised across 4,137 nodes for 19 distinct values, exactly as
+`n_clusters_subtree` is.
+
 `redesign/emit_bridge.py` writes `bridge.tsv`, one row per raw label (4,066 today):
 
 ```
-raw_label	spine_slug	spine_department	spine_level	spine_disposition
-1080P Cameras	cameras	cameras-security-surveillance	2	node
-12 Place Setting			           	facet
+raw_label	spine_slug	spine_department	spine_department_label	spine_level	spine_disposition
+1080P Cameras	cameras	cameras-security-surveillance	Cameras, Security & Surveillance	2	node
+12 Place Setting					facet
 ```
 
 `publish_browse_tree.build_documents` joins it on `label` and stamps four fields per node doc:
@@ -154,6 +161,7 @@ raw_label	spine_slug	spine_department	spine_level	spine_disposition
 |---|---|---|
 | `spine_slug` | the redesign node | `null` |
 | `spine_department` | the node's own `department:` field, read from `taxonomy_spine.yaml` — **not** re-derived by walking to a level-0 ancestor, which is a second way to compute one number | `null` |
+| `spine_department_label` | the department node's `name:` from the spine | `null` |
 | `spine_level` | 0 / 1 / 2 | `null` |
 | `spine_disposition` | `"node"` | **the real disposition** — `split`, `facet`, `review`, … |
 
@@ -172,13 +180,41 @@ publish, not a null.** Today the join is 4,137/4,137; if the engine republishes 
 design package has never seen, the honest answer is to stop and rule on it. Degrading to `null`
 would let coverage rot silently, which is the defect class above wearing a different hat.
 
+### 4.1 ⛔⛔ A DEPARTMENT'S MASS IS THE SUM OF `n_clusters`, **NOT** `n_clusters_subtree`
+
+**Measured 2026-09-04, and this inverts the rule that holds everywhere else in this codebase.**
+
+| summing over each department's nodes | total |
+|---|---:|
+| `n_clusters` (own stock) | **81,525** ✅ exactly the placement count |
+| `n_clusters_subtree` | **167,610** ❌ — more than the entire corpus of 102,038 |
+
+Per-department inflation: `home-appliances` **6.90×**, `computing-networking` **5.24×**,
+`groceries-everyday-essentials` 1.71×, `phones-wearables` 1.40×.
+
+⭐ **WHY IT INVERTS.** `n_clusters_subtree` exists because a *tree walk* must not understate a
+coarse parent — `CATEGORY_TREE_API.md` §5: *"printing `n_clusters` understates a department by
+3x"*, and roadmap task 2 records the ordering defect that cost `Electronics & Computers` its
+place in the top 12. But a spine department is **not a subtree**: it is a SET of nodes closed
+under the label mapping, and that set already contains the descendants. Adding each node's
+closure counts every nested node once per ancestor also in the set.
+
+⛔ **THIS IS THE MOST LIKELY WAY TO GET THIS WRONG,** because every existing instruction in this
+repo says *use the subtree figure, never the own figure* — and a developer who follows it here
+publishes 167,610 clusters across 19 departments, with `home-appliances` seven times its real
+size, and no assertion in the current suite notices. §8's sum-to-reach gate exists for this.
+
 ---
 
 ## 5. Depth borrowing
 
 Each spine department adopts the `browse_nodes` shelves its own clusters sit on, keeping only
-those with no ancestor also in the set, ordered by mass, folded through the existing
-`departmentShelves` (`lib/categories.ts`).
+those with no ancestor also in the set, ordered by mass.
+
+⛔ ✎ **NOT folded through `departmentShelves`.** That helper is for MENU tiles, and
+`CATEGORY_TREE_API.md` §5 records that applying it to a page *"deleted the explanation to tidy
+a label"* — `DepartmentPage` deliberately keeps `foldChildren` instead. This change builds no
+menu at all (the parallel route is unlinked, §6.3), so no fold applies anywhere in it.
 
 ⛔ **ADOPTION, NOT RE-PARENTING — the same ruling as the curated spine.** `departments.py`
 records that promoting `smart-watch` to a root was simulated and **stranded 72 of its 717
@@ -270,7 +306,8 @@ explanation rather than an absence.
 - Every `browse_nodes` label joins — 4,137/4,137 today; a miss fails the publish (§4).
 - `spine_disposition` is a closed set; `spine_slug` is non-null **iff** it is `"node"`.
 - Department masses sum to the reach total (81,525 today), proving §1.3's disjointness rather
-  than assuming it.
+  than assuming it — **and catching the `n_clusters_subtree` inversion of §4.1, which lands at
+  167,610.**
 
 **API**
 - The slug-space guard extends from three id spaces to **four**: a spine id must 404 on
