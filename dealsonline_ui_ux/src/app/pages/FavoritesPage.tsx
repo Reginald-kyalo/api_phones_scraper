@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Heart, Trash2 } from 'lucide-react';
 import { useLocalFavorites } from '../hooks/useLocalStorage';
+import { useHereAs } from '../lib/navigation';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
@@ -15,6 +16,9 @@ import {
 
 export default function FavoritesPage() {
   const { favorites, removeFavorite } = useLocalFavorites();
+  // Favourites is a destination in its own right — a shopper who opens a product from here
+  // should land back HERE, not in Deals.
+  const here = useHereAs('Favourites');
 
   const handleRemove = (productId: string) => {
     removeFavorite(productId);
@@ -48,13 +52,13 @@ export default function FavoritesPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {favorites.map((fav) => (
             <div key={fav.product_id} className="group border border-border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-              <Link to={`/product/${fav.product_id}`} className="block">
+              <Link to={`/product/${fav.product_id}`} state={{ from: here }} className="block">
                 <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                   <ImageWithFallback src={fav.image} alt={fav.name} className="w-full h-full object-contain p-3 group-hover:scale-[1.02] transition-transform" />
                 </div>
               </Link>
               <div className="p-3">
-                <Link to={`/product/${fav.product_id}`} className="font-medium text-sm text-foreground hover:text-primary line-clamp-2">
+                <Link to={`/product/${fav.product_id}`} state={{ from: here }} className="font-medium text-sm text-foreground hover:text-primary line-clamp-2">
                   {fav.name}
                 </Link>
                 {fav.category && (

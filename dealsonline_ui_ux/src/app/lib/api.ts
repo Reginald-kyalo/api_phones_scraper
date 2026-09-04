@@ -390,13 +390,52 @@ export interface ClusterStore {
   title: string;
 }
 
+/**
+ * Where a cluster sits in a category tree — served, but never declared here until now.
+ *
+ * ⛔⛔ THE SLUG IS NOT SAFE TO LINK. `app/api/taxonomy.py:category_path_for_cluster` answers
+ * from the retired 424-node spine where it has an answer and from `browse_nodes` otherwise, so
+ * one field carries slugs from TWO spaces and nothing on the wire says which. Measured
+ * 2026-09-03: the redesign spine shares 112 slugs with the 424-spine and 95 with `browse_nodes`,
+ * and the three trees disagree about what those slugs mean (`bathtubs` is level 3 in one and
+ * level 2 in another). Passing this slug to `shelfHref` or `departmentHref` therefore lands on
+ * a plausible WRONG page, not on a 404 — the loudest failure would be the lucky one.
+ * ⇒ Render `path_string`; do not build a link out of `slug` without knowing the space.
+ */
+export interface CategoryPath {
+  slug: string;
+  name: string | null;
+  parent_slug: string | null;
+  level: number;
+  path: string[];
+  path_string: string;
+  product_type: string | null;
+  unsorted?: boolean;
+}
+
 export interface ClusterConfig<Store = number> {
   facet_label: string | null;
   facet_value: string | number | null;
   storage_gb: number | null;
   best_price: number | null;
   cheapest_store: string | null;
+  /**
+   * ⛔ Stores holding a LISTING — NOT the number a shopper can compare. Rendering this as
+   * "N shops" overstated by a mean of +9.6 on the smartphone shelf (99 of 100 clusters).
+   * Use `n_stores_priced`.
+   */
   n_stores: number | null;
+  /**
+   * ⛔⛔ A CONFIG HAS NO `n_stores_priced` AND THIS TYPE USED TO CLAIM ONE, non-optional.
+   * `app/api/schemas/clusters.py:ClusterConfig` serves `n_stores` only — `n_stores_priced` is
+   * a `ClusterView` field. So the declaration below the comment on `n_stores` ("Use
+   * `n_stores_priced`") pointed at `undefined`, and anything that followed it would have
+   * rendered "compared across NaN shops" with the compiler's blessing.
+   *
+   * ⭐ THE HONEST COUNT AT CONFIG LEVEL IS DERIVED, NOT DECLARED: `pricedOffers(by_store).length`
+   * in `features/clusters/components/OfferRow`. It is the count of the rows that will actually
+   * render, so it cannot overstate them — which is the whole lesson of the cluster-level fix.
+   */
   spread_pct: number | null;
   by_store: Record<string, Store>;
 }
@@ -414,7 +453,18 @@ export interface ClusterView<Store = number> {
   brand: string | null;
   canonical_name: string | null;
   n_listings: number | null;
+  /**
+   * ⛔ Stores holding a LISTING — NOT the number a shopper can compare. Rendering this as
+   * "N shops" overstated by a mean of +9.6 on the smartphone shelf (99 of 100 clusters).
+   * Use `n_stores_priced`.
+   */
   n_stores: number | null;
+  /**
+   * ⭐ Stores that can actually PRICE this cluster — exactly the column count of
+   * `best_by_store`, after store-name canonicalisation. THIS is "compared across N shops".
+   * ⚠️ Below 2 there is no comparison at all, which is worth saying rather than hiding.
+   */
+  n_stores_priced: number;
   stores: string[] | null;
   is_multi_store: boolean;
   best_price: number | null;
@@ -431,6 +481,8 @@ export interface ClusterView<Store = number> {
   cross_store_spread_pct: number | null;
   configs: ClusterConfig<Store>[];
   best_by_store: Record<string, Store>;
+  /** Where this sits in a category tree. ⛔ Render `path_string`; see `CategoryPath`. */
+  category_path: CategoryPath | null;
   /** non-null ⇒ show a caveat; do NOT headline the price as a clean deal. */
   data_warning: string | null;
 }
@@ -472,7 +524,8 @@ export const clustersApi = {
 //
 // ⛔ NOT the same thing as `pricerunnerApi`. That reads `taxonomy_db.canonical_categories` —
 // the retired 424-node PriceRunner spine, which still drives /browse. This reads the canonical
-// taxonomy built bottom-up from the shops (4,185 nodes). The two slug spaces are DISJOINT, so
+// taxonomy built bottom-up from the shops (4,137 nodes @ 2026-08-21). The two slug spaces are
+// DISJOINT, so
 // a slug from one NEVER resolves in the other. Kept side by side deliberately: the cutover is
 // additive, exactly as the API-side one was.
 // ---------------------------------------------------------------------------
@@ -485,7 +538,18 @@ export interface BrowseNode {
   ancestors: string[];
   /** display label per `ancestors` entry, INDEX FOR INDEX; falls back to the slug */
   ancestor_labels: string[];
+  /**
+   * ⛔ OWN stock only — NOT what the shelf page shows. `food-cupboard` publishes 2,010 here
+   * and answers 6,220 on `/by-node`. Render `n_clusters_subtree` instead; this field is kept
+   * because sorting, auditing and "how much sits directly here" still need it.
+   */
   n_clusters: number;
+  /**
+   * ⭐ Stock on this shelf AND everything below it — identical to the `total` that
+   * `/by-node/{slug}` returns, so a menu and the page it links to agree. THIS is the number
+   * to display, and the one the API already orders by.
+   */
+  n_clusters_subtree: number;
   n_stores: number;
   /** a grouping header, not a landing page — render as a section title, not a shelf */
   coarse: boolean;
@@ -521,6 +585,75 @@ export const browseApi = {
       total: number;
       results: ClusterSummary[];
     }>(`/clusters/by-node/${encodeURIComponent(slug)}?${params}`);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// THE DEPARTMENT SPINE — 21 ruled departments over the canonical tree
+//
+// ⭐ WHY THIS IS A SEPARATE CLIENT. `browseApi` serves the tree as the engine publishes it:
+// 529 browsable roots, 75% of them one shop's private vocabulary, `Laptops` in three places.
+// Faithful, and not navigable. The spine is a curated presentation mapping ruled by a person
+// (`phones_scraper/implementation_plans/department_spine_worksheet_2026-08-21.md` §8) and served
+// from API config, so every surface renders the same 21 and cannot drift.
+//
+// ⛔⛔ A DEPARTMENT `id` IS NOT A `BrowseNode` SLUG, AND THE TWO NAMESPACES OVERLAP. Six ids
+// (`audio`, `bakery`, `cleaning`, `fresh`, `hardware`, `pantry`) also name a node, and the pages
+// genuinely differ — `/department/pantry` is 485 clusters while `/shelf/pantry` is 889. This is
+// the SAME defect class as the disjoint spine/canonical slug spaces above, so it gets the same
+// discipline: `departmentHref` and `shelfHref` are the only two link builders, and neither id
+// is ever passed to the other's endpoint.
+//
+// ⛔ THE SPINE DOES NOT REPLACE THE TREE. It reaches ~45% of placed clusters by design; the rest
+// stay reachable at /shelf. Any surface rendering departments MUST keep an "All categories" door.
+// ---------------------------------------------------------------------------
+
+export interface Department {
+  /** URL-safe id — ⛔ NOT a `BrowseNode` slug. `/department/{id}`, never `/shelf/{id}`. */
+  id: string;
+  /** OUR name. `browse_nodes.label` is the engine's join key and is never rewritten upstream. */
+  label: string;
+  /** the `browse_nodes` slugs this department claims, each WITH its subtree */
+  adopts: string[];
+  /**
+   * ⭐ Clusters across every adopted subtree — identical to the `total` that
+   * `/by-department/{id}` returns, so a tile and the page it links to agree by construction.
+   */
+  n_clusters: number;
+  /** ⚠️ the WIDEST adopted shelf's span — a lower bound, not a distinct-store count */
+  n_stores: number;
+  /** ⛔ adopted slugs that no longer resolve. Non-empty means a ruling is being skipped. */
+  unresolved: string[];
+  /** other department ids sharing clusters — ruled and deliberate (Tablets sits in Computers) */
+  overlaps: string[];
+  /** defects this department adopts KNOWINGLY — reported, never patched in the client */
+  notes: string[];
+}
+
+export const departmentApi = {
+  /** The 21 ruled departments, in EDITORIAL order. ⛔ Do not re-sort by stock. */
+  list: () =>
+    request<{ count: number; results: Department[]; n_clusters_total: number }>(
+      '/clusters/departments',
+    ),
+
+  /** The products across every shelf a department adopts. Closure is server-side. */
+  getClusters: (
+    id: string,
+    options?: { multiStoreOnly?: boolean; limit?: number; offset?: number },
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.multiStoreOnly) params.set('multi_store_only', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.offset) params.set('offset', String(options.offset));
+    return request<{
+      department: Department;
+      /** the adopted nodes, stock-ordered — the page's subcategory grid, no extra call */
+      shelves: BrowseNode[];
+      count: number;
+      total: number;
+      results: ClusterSummary[];
+    }>(`/clusters/by-department/${encodeURIComponent(id)}?${params}`);
   },
 };
 

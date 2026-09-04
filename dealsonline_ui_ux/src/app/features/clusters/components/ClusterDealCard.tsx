@@ -1,13 +1,20 @@
 import { Link } from 'react-router';
 import { TrendingDown, AlertTriangle } from 'lucide-react';
 import { type ClusterSummary } from '../../../lib/api';
-import { formatPrice, shopLabel } from '../../../lib/format';
+import { comparedLabel, formatPrice } from '../../../lib/format';
+import type { CameFrom } from '../../../lib/navigation';
 
 /**
  * Text-first deal card for a cross-store cluster (the feed carries no images).
  * Honest-price contract: label refurb/used headlines, surface data_warning.
  */
-export function ClusterDealCard({ cluster }: { cluster: ClusterSummary }) {
+export function ClusterDealCard({
+  cluster,
+  from,
+}: {
+  cluster: ClusterSummary;
+  from?: CameFrom;
+}) {
   const name = cluster.display_name ?? cluster.title;
   const spread = cluster.like_for_like_spread_pct;
   const likelyUsed = cluster.condition_basis === 'likely_used';
@@ -15,6 +22,7 @@ export function ClusterDealCard({ cluster }: { cluster: ClusterSummary }) {
   return (
     <Link
       to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
+      state={from ? { from } : undefined}
       className="flex flex-col rounded-xl p-4 ultra-border hover:border-primary/40 transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
@@ -33,8 +41,11 @@ export function ClusterDealCard({ cluster }: { cluster: ClusterSummary }) {
           {likelyUsed ? 'used/refurb asking' : 'lowest new price'}
         </span>
       </div>
+      {/* ⛔ `n_stores_priced`, NOT `n_stores`. This line used to read "19 shops" for a product
+          the comparison page could price at three. See `comparedLabel`. */}
       <p className="text-xs text-muted-foreground mt-1">
-        {[cluster.cheapest_store, shopLabel(cluster.n_stores ?? 0)].filter(Boolean).join(' · ')}
+        {[cluster.cheapest_store, comparedLabel(cluster.n_stores_priced ?? 0)]
+          .filter(Boolean).join(' · ')}
       </p>
       {cluster.data_warning && (
         <p className="mt-2 text-xs text-muted-foreground inline-flex items-center gap-1">

@@ -93,7 +93,11 @@ export default function DealsPage() {
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                 {filtered.map((c) => (
-                  <ClusterDealCard key={c.cluster_id} cluster={c} />
+                  <ClusterDealCard
+                    key={c.cluster_id}
+                    cluster={c}
+                    from={{ href: '/deals', label: 'All deals' }}
+                  />
                 ))}
               </div>
             ) : (

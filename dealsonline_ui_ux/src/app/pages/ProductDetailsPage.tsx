@@ -18,8 +18,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../components/ui/breadcrumb';
-import { Package } from 'lucide-react';
+import { ArrowLeft, Package } from 'lucide-react';
 import PriceAlertDialog from '../features/alerts/components/PriceAlertDialog';
+import { useCameFrom } from '../lib/navigation';
 
 // ---------------------------------------------------------------------------
 // Tab definitions
@@ -40,6 +41,16 @@ type TabId = (typeof TABS)[number]['id'];
 
 export default function ProductDetailsPage() {
   const { productId } = useParams<{ productId: string }>();
+  // ⛔ THIS PAGE HAD NO BACK CONTROL AT ALL — named in `STOREFRONT_DEFECTS.md` #3 as the half
+  // that "whatever is decided should cover". It does have a breadcrumb, which is why it was the
+  // quieter defect: the trail tells you where you ARE, and nothing offered to take you back.
+  //
+  // ⭐ THE FALLBACK IS THIS PAGE'S OWN PARENT, NOT A SITE-WIDE DEFAULT. `/browse/:productType`
+  // is the link the breadcrumb below already builds and trusts, so a cold load returns to the
+  // category the product actually sits in. Defaulting everything to `/deals` is precisely the
+  // defect that was fixed on the comparison page; repeating it here would be a regression
+  // wearing a new name.
+  const cameFrom = useCameFrom();
   
   // React Query Fetching
   const { data: product, isLoading: loading } = useProductDetail(productId || '');
@@ -149,10 +160,27 @@ export default function ProductDetailsPage() {
     );
   }
 
+  // ⭐ The SAME link the breadcrumb's first segment builds, so the two cannot point apart.
+  const backTo = cameFrom ?? {
+    href: product.productType ? `/browse/${product.productType}` : '/browse',
+    label: product.categoryPath?.[0] ?? 'Browse products',
+  };
+
   return (
     <div className="bg-white min-h-screen">
+      {/* Back control — see `useCameFrom` above for why the fallback is the product's own
+          category and not `/deals`. */}
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 pt-4">
+        <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1">
+          <Link to={backTo.href} data-testid="back-link">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            {backTo.label}
+          </Link>
+        </Button>
+      </div>
+
       {/* Breadcrumb */}
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 pt-4 pb-2">
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 pt-2 pb-2">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>

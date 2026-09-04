@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "verify:categories": "python3 ../.claude/skills/webapp-testing/scripts/with_server.py --server \"cd $INIT_CWD && npm run dev\" --port 5173 --timeout 120 -- ../apienv/bin/python scripts/verify_categories.py",
+    "verify:prices": "python3 ../.claude/skills/webapp-testing/scripts/with_server.py --server \"cd $INIT_CWD && npm run dev\" --port 5173 --timeout 120 -- ../apienv/bin/python scripts/verify_prices.py"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",

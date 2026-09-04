@@ -31,7 +31,8 @@ import {
   X,
   ChevronRight,
 } from 'lucide-react';
-import { prIconMap } from '../components/layout/CategoryStrip';
+import { prIconMap } from '../lib/pricerunnerIcons';
+import { useHereAs } from '../lib/navigation';
 
 type SortOption = 'price-asc' | 'price-desc' | 'name-asc' | 'stores-desc';
 
@@ -160,6 +161,11 @@ export default function BrowsePage() {
   // State
   const [tree, setTree] = useState<PRTreeNode[]>([]);
   const [treeLabel, setTreeLabel] = useState('');
+  // Where a product card should send the shopper BACK to — this URL, filters and page included.
+  // ⭐ `useHereAs` and not a rebuilt href: this page answers to THREE routes
+  // (`/browse/:productType`, `/search`, `/category/:id`) and carries brand/sub/page in the query
+  // string, so only the live location describes where the shopper actually is.
+  const here = useHereAs(treeLabel || 'Browse');
   const [treeLoading, setTreeLoading] = useState(true);
   const [productTypes, setProductTypes] = useState<PRProductType[]>([]);
 
@@ -526,7 +532,7 @@ export default function BrowsePage() {
                 <>
                   <div className={viewMode === 'list' ? 'space-y-4' : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'}>
                     {products.map((p) => (
-                      viewMode === 'list' ? <PRProductCard key={p.id} product={p} /> : <PRProductCardGrid key={p.id} product={p} />
+                      viewMode === 'list' ? <PRProductCard key={p.id} product={p} from={here} /> : <PRProductCardGrid key={p.id} product={p} from={here} />
                     ))}
                   </div>
 

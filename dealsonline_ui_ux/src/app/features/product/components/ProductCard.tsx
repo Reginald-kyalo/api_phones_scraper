@@ -5,8 +5,9 @@ import { Card, CardContent } from '../../../components/ui/card';
 import { Package, Store, GitCompareArrows, Heart } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { useLocalComparison, useLocalFavorites } from '../../../hooks/useLocalStorage';
+import type { CameFrom } from '../../../lib/navigation';
 
-export function PRProductCard({ product }: { product: PRProduct }) {
+export function PRProductCard({ product, from }: { product: PRProduct; from?: CameFrom }) {
   const { addToComparison } = useLocalComparison();
   const { isFavorite, toggleFavorite } = useLocalFavorites();
   const nav = useNavigate();
@@ -14,7 +15,7 @@ export function PRProductCard({ product }: { product: PRProduct }) {
   
   return (
     <div className="relative group">
-      <Link to={`/product/${product.id}`} className="block">
+      <Link to={`/product/${product.id}`} state={from ? { from } : undefined} className="block">
         <Card className="transition-all hover:bg-surface-alt ultra-border">
           <CardContent className="p-0 flex flex-col sm:flex-row">
             {/* Image */}
@@ -114,7 +115,7 @@ export function PRProductCard({ product }: { product: PRProduct }) {
   );
 }
 
-export function PRProductCardGrid({ product }: { product: PRProduct }) {
+export function PRProductCardGrid({ product, from }: { product: PRProduct; from?: CameFrom }) {
   const { addToComparison } = useLocalComparison();
   const { isFavorite, toggleFavorite } = useLocalFavorites();
   const nav = useNavigate();
@@ -122,7 +123,7 @@ export function PRProductCardGrid({ product }: { product: PRProduct }) {
 
   return (
     <div className="relative h-full group">
-      <Link to={`/product/${product.id}`} className="block h-full">
+      <Link to={`/product/${product.id}`} state={from ? { from } : undefined} className="block h-full">
         <Card className="h-full transition-all hover:bg-surface-alt ultra-border">
           <CardContent className="p-0">
             <div className="relative aspect-square bg-white border-b border-border rounded-t-xl overflow-hidden">
