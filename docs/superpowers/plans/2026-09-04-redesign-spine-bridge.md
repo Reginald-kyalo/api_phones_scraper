@@ -124,9 +124,12 @@ def test_spine_disposition_is_a_CLOSED_SET():
     """⛔ A disposition the consumer has never heard of is a silent behaviour change: the API
     groups on `spine_department` and a new bucket would simply vanish from the storefront with
     nothing raised. Widen this list deliberately, in a commit that says why."""
+    # ⛔ EXACTLY the nine values measured in label_disposition.tsv 2026-09-04. An earlier
+    # draft of this list carried seven more (`brand`, `model_code`, `organic`, …) read out of
+    # the TARGET column by mistake — which would have let a genuinely new disposition named
+    # `brand` pass a test whose whole purpose is to catch a new disposition.
     KNOWN = {"node", "split", "facet", "review", "quarantine", "reroute", "classifieds",
-             "filter", "gap", "brand", "model_code", "uninterpretable", "organic",
-             "marketing_shelf", "platform", "screen_size_in"}
+             "filter", "gap"}
     seen = {r["spine_disposition"] for r in _bridge_rows()}
     assert seen <= KNOWN, f"unknown disposition(s): {sorted(seen - KNOWN)}"
 
