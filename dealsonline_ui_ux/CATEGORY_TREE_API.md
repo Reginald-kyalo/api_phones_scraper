@@ -27,8 +27,17 @@ slugs**, not none. §2 is corrected in place. Nothing shipped on the strength of
 because the *practical* risk turned out to be small (11 of the 12 are unbrowsable) — but a third
 tree is coming and for it the same claim is off by ninety-five.
 
-⛔⛔ **A LIVE CONTRACT VIOLATION FOUND WHILE CHECKING §3: `/by-node` AND `/browse-tree` RETURN
-DIFFERENT `ancestor_labels` FOR THE SAME NODE.** See §3. Backend fix, not a UI one.
+✅ ✎ **FIXED — THE LIVE CONTRACT VIOLATION FOUND WHILE CHECKING §3.** `/by-node` and
+`/browse-tree` returned DIFFERENT `ancestor_labels` for the same node; they now agree. **And the
+report above was short by one endpoint: `/by-department`'s `shelves` had it too**, so a
+department's subcategory grid carried raw shop slugs on the same field. Verified live across 55
+nodes and all 21 departments' 46 adopted shelves — **0 disagreements, 0 crumbs equal to their own
+slug**. See §3.
+
+✨ ✎ **AND A SECOND DEFECT AT THE SAME CALL SITE.** `/by-department` also sorted its shelves
+with `_subtree_of(d, None)` — no rollup fallback — so on a database predating roadmap 3.5 the
+subcategory grid ranked by OWN stock, which is exactly the swap that cut `Electronics &
+Computers` out of the top 12 (§6 task 2). Invisible on a current tree, wrong on a restored dump.
 
 ✅ **STALE WARNINGS REMOVED.** §7's "⛔ `npm run verify:categories` IS STILL BROKEN — the
 `with_server.py` it invokes does not exist at that path" is no longer true: the file is there and
@@ -168,31 +177,44 @@ One level of the tree: a node's children, or the roots.
   A missing label falls back to its own slug rather than being dropped, because dropping one
   shifts every later crumb by one.
 
-  ⛔⛔ ✎ **BUT ONLY ON THIS ENDPOINT. `/by-node` RETURNS SLUGS IN THAT FIELD — MEASURED
-  2026-09-04, STILL OPEN.** The same node, the same field, two answers:
+  ✅ ✎ **AND NOW ON EVERY ENDPOINT — FIXED 2026-09-04. IT WAS BROKEN ON TWO, NOT ONE.** The
+  same node, the same field, used to give two answers:
 
   ```
   GET /clusters/browse-tree?parent=smartphone   ancestor_labels: ["Phones and tablets"]   ✅
-  GET /clusters/by-node/smartphone              ancestor_labels: ["phone-tablet"]         ❌
-  GET /clusters/by-node/laptop                  ancestor_labels: ["laptop-tablet"]        ❌
+  GET /clusters/by-node/smartphone              ancestor_labels: ["phone-tablet"]         ❌ → ✅
+  GET /clusters/by-node/laptop                  ancestor_labels: ["laptop-tablet"]        ❌ → ✅
+  GET /clusters/by-department/tablets .shelves  ancestor_labels: ["computer"]             ❌ → ✅
   ```
 
-  Because the fallback is `or slug`, the failure is **silent and plausible** — the field is
-  populated, index-for-index, and full of raw shop slugs. Any breadcrumb built from `/by-node`
-  renders `phone-tablet` to a shopper.
+  ⛔ **THE FOURTH LINE WAS NOT IN THE ORIGINAL REPORT.** `/by-department` builds its adopted
+  shelves through the same constructor and omitted the map in the same way, so a department's
+  subcategory grid — a shopper-facing surface — carried raw slugs. Reporting one caller of a
+  shared helper and not auditing the rest is how a two-site defect gets recorded as a one-site
+  defect. **Grep the callers, not the symptom.**
 
-  ⭐ **AND THE INTERESTING PART IS WHY THE EXISTING GUARD DID NOT CATCH IT.**
-  `_browse_node_view` in `app/api/routes/clusters.py` carries the comment *"⛔ ONE construction
-  site for both routes"* — added precisely so the two could not diverge. They diverged anyway,
-  because the labels arrive as an **argument**: `/browse-tree` passes the label map and
-  `/by-node` passes nothing. Sharing the constructor moved the divergence into its parameter
-  list rather than removing it. (Compare commit `544e069f`, which fixed this same class for
-  `/browse-tree`'s children and did not reach here.)
+  Because the fallback is `or slug`, the failure was **silent and plausible** — the field was
+  populated, index-for-index, and full of raw shop slugs.
 
-  ⚠️ **Not currently user-visible**, and that is luck rather than design: `ShelfPage` reads its
-  breadcrumb off `browseApi.getTree()` and only takes products from `/by-node`. **Do not build a
-  breadcrumb from `/by-node` until this is fixed.** Backend fix; out of scope for a
-  frontend-only pass.
+  ⭐ **THE PART WORTH KEEPING IS WHY THE EXISTING GUARD DID NOT CATCH IT.** `_browse_node_view`
+  carried the comment *"⛔ ONE construction site for both routes"* — added precisely so the two
+  could not diverge. They diverged anyway, because the labels arrived as an **argument
+  defaulting to `None`**: `/browse-tree` passed the map, the other two passed nothing. **Sharing
+  a constructor moves the divergence into its parameter list rather than removing it.** (Compare
+  commit `544e069f`, which fixed this same class for `/browse-tree`'s children and did not reach
+  here — the third time this field has been wrong in three different places.)
+
+  ⇒ **THE FIX IS STRUCTURAL, NOT A THIRD `labels=` ARGUMENT.** A new `_browse_node_views(docs)`
+  **resolves** the map instead of **accepting** it, and is the only way a route builds a node
+  view; `_browse_node_view`'s parameters lost their defaults, so omitting one is a `TypeError`
+  rather than a breadcrumb. Two executable guards replace the comment: one asserts the parameter
+  has no default, the other walks the AST asserting no route calls the singular constructor at
+  all. ⭐ It also collapsed `/browse-tree`'s per-ancestor `find_one` loop into a single `$in`,
+  which usually queries nothing because a child's ancestors resolve off a parent already in hand.
+
+  ⭐ **BREADCRUMBS FROM `/by-node` ARE NOW SAFE.** The earlier "do not build one until this is
+  fixed" no longer applies. It was never user-visible, by luck rather than design — `ShelfPage`
+  reads its breadcrumb off `browseApi.getTree()` and takes only products from `/by-node`.
 - An unknown `parent` is **404, never an empty list**. An empty list means "this shelf has no
   children"; a 404 means "there is no such shelf". Render them differently.
 
@@ -490,7 +512,7 @@ anywhere; it exists so the three surfaces cannot disagree.
 cd dealsonline_ui_ux && npm run dev      # proxies /api → :10000
 
 # gates
-./apienv/bin/python -m pytest -q         # ✎ 293 passed (was 250), 2026-09-04
+./apienv/bin/python -m pytest -q         # ✎ 297 passed (was 293), 2026-09-04
 cd dealsonline_ui_ux && npx tsc --noEmit
 cd dealsonline_ui_ux && npm run build    # the third gate — a type-check is not a build
 ```

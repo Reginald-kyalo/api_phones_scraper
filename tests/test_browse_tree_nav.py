@@ -38,6 +38,13 @@ class _Nodes:
         def match(d):
             for k_, v in q.items():
                 if k_ == "_id":
+                    # ⛔ `{"_id": {"$in": [...]}}` MUST filter. Skipping `_id` outright handed
+                    # every caller the whole collection, so a route that looks up a bounded set
+                    # of slugs — the ancestor label map, the adopted shelves — passed here on
+                    # rows Mongo would never have returned. A stub that cannot say "no" cannot
+                    # prove the query asked for the right thing.
+                    if isinstance(v, dict) and "$in" in v and d["_id"] not in v["$in"]:
+                        return False
                     continue
                 if isinstance(v, dict) and "$ne" in v:
                     if d.get(k_) == v["$ne"]:
@@ -202,3 +209,45 @@ def test_the_CHILDREN_carry_real_ancestor_labels_too():
     assert kid.ancestor_labels == ["Electronics"], (
         "a child resolves its ancestors' labels, not just the parent")
 
+
+
+def test_the_label_map_is_REQUIRED_not_an_optional_argument():
+    """⛔⛔ THIS IS THE DEFECT'S ACTUAL SHAPE. `_browse_node_view` carries the comment "ONE
+    construction site for both routes", added precisely so the two could not diverge — and they
+    diverged anyway, because the labels arrive as an ARGUMENT DEFAULTING TO `None`. Sharing the
+    constructor moved the divergence into its parameter list rather than removing it, and two of
+    three callers took the default.
+
+    ⭐ A comment cannot enforce this; a signature can. With no default, omitting the map is a
+    `TypeError` at import-exercising time rather than a raw shop slug in a shopper's breadcrumb."""
+    import inspect
+
+    param = inspect.signature(route_mod._browse_node_view).parameters["labels"]
+    assert param.default is inspect.Parameter.empty, (
+        "⛔ `labels` has a default again — the next caller can forget it exactly as /by-node did")
+
+
+def test_NO_ROUTE_builds_a_node_view_directly():
+    """⛔ The stronger half of the same guard. A required argument still lets a route pass its
+    own map — or `None` — so the singular constructor must be unreachable from route code: every
+    call site belongs to `_browse_node_views`, which RESOLVES the labels instead of ACCEPTING
+    them. That is the difference between one construction site and one construction site with a
+    parameter for getting it wrong.
+
+    ⭐ Reads the AST rather than the text: a formatting change must not break this, and a call
+    split across lines must not hide from it."""
+    import ast
+
+    tree = ast.parse(SOURCE)
+    builder = next((n for n in ast.walk(tree)
+                    if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and n.name == "_browse_node_views"), None)
+    assert builder is not None, "the collective builder `_browse_node_views` does not exist"
+
+    inside = {id(n) for n in ast.walk(builder)}
+    strays = [n.lineno for n in ast.walk(tree)
+              if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+              and n.func.id == "_browse_node_view" and id(n) not in inside]
+    assert strays == [], (
+        f"⛔ `_browse_node_view` is called outside `_browse_node_views` at lines {strays} — "
+        "that caller supplies its own label map and can supply the wrong one")

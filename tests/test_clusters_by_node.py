@@ -124,3 +124,59 @@ def test_an_unknown_node_is_a_404_not_an_empty_list():
         assert exc.value.status_code == 404
     finally:
         route_mod.BROWSE_NODES = original
+
+
+# --------------------------------------------------------------- breadcrumb labels
+
+class _NoPlacements:
+    """`browse_placements` with nothing on any shelf — this file asserts on `node`, not rows."""
+
+    def find(self, q, *a, **k):
+        class _Cur:
+            def __aiter__(self):
+                async def gen():
+                    return
+                    yield  # pragma: no cover - an empty async generator
+                return gen()
+        return _Cur()
+
+
+class _NoClusters:
+    async def count_documents(self, q):
+        return 0
+
+    def find(self, q, *a, **k):
+        class _Cur:
+            def sort(self, *a, **k): return self
+            def skip(self, n): return self
+            async def to_list(self, length=None): return []
+        return _Cur()
+
+
+def _by_node(slug):
+    from tests.test_browse_tree_nav import TREE, _Nodes
+
+    saved = (route_mod.BROWSE_NODES, route_mod.BROWSE_PLACEMENTS, route_mod.CLUSTERS)
+    route_mod.BROWSE_NODES = _Nodes(TREE)
+    route_mod.BROWSE_PLACEMENTS = _NoPlacements()
+    route_mod.CLUSTERS = _NoClusters()
+    try:
+        return asyncio.run(route_mod.clusters_by_node(node_slug=slug))
+    finally:
+        (route_mod.BROWSE_NODES, route_mod.BROWSE_PLACEMENTS, route_mod.CLUSTERS) = saved
+
+
+def test_by_node_carries_REAL_ancestor_labels_not_raw_SHOP_SLUGS():
+    """⛔⛔ MEASURED LIVE 2026-09-04 AND SHIPPED BROKEN. The same node, the same field, two
+    answers: `/browse-tree?parent=smartphone` returned `["Phones and tablets"]` while
+    `/by-node/smartphone` returned `["phone-tablet"]`. Because the fallback is `or slug` the
+    failure is SILENT and PLAUSIBLE — the field is populated, index for index, and full of raw
+    shop slugs, so any breadcrumb built here renders `phone-tablet` to a shopper.
+
+    ⭐ The shared constructor did NOT prevent this. `_browse_node_view` carries the comment
+    "ONE construction site for both routes" and the two diverged anyway, because the labels
+    arrived as an ARGUMENT that this route passed as `None`."""
+    node = _by_node("laptop")["node"]
+    assert node.ancestors == ["electronics"]
+    assert node.ancestor_labels == ["Electronics"], (
+        "a breadcrumb built from /by-node must not render a raw shop slug")

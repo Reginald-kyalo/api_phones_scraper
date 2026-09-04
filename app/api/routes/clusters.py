@@ -504,22 +504,77 @@ async def clusters_by_node(
                   .skip(offset)
                   .to_list(length=limit))
     return {
-        "node": _browse_node_view(
-            node, None, await _subtree_totals() if _needs_rollup([node]) else None),
+        "node": (await _browse_node_views([node]))[0],
         "count": len(rows),
         "total": total,
         "results": [_cluster_view(d, summary=True) for d in rows],
     }
 
 
-def _browse_node_view(
-    node: dict, labels: dict | None = None, subtree: dict | None = None,
-) -> BrowseNodeView:
+async def _subtree_fallback(docs: list[dict]) -> dict | None:
+    """The computed closure, entered ONLY when a doc in hand predates roadmap 3.5.
+
+    ⭐ Cheap to call twice: `_subtree_totals` is memoised for `BROWSE_TTL_SECONDS`, and on a
+    current tree `_needs_rollup` is false so neither call reaches Mongo at all.
+    """
+    return await _subtree_totals() if _needs_rollup(docs) else None
+
+
+async def _ancestor_labels(docs: list[dict]) -> dict[str, str]:
+    """slug -> display label for every ancestor the docs in hand NAME.
+
+    ⭐ ONE query, not one per crumb. The previous loop issued a `find_one` per ancestor of the
+    parent — bounded by tree depth, but it also meant the map existed only where somebody
+    remembered to build it.
+
+    ⭐ Docs already in hand answer for free: a child's ancestors are its parent's ancestors plus
+    the parent itself, and `/browse-tree` holds the parent, so the common case queries nothing.
+    """
+    resolved = {d["_id"]: d["label"] for d in docs if d.get("label")}
+    wanted = {a for d in docs for a in (d.get("ancestors") or [])}
+
+    labels = {slug: resolved[slug] for slug in wanted & resolved.keys()}
+    missing = wanted - labels.keys()
+    if missing:
+        async for doc in BROWSE_NODES.find({"_id": {"$in": list(missing)}}, {"label": 1}):
+            if doc.get("label"):
+                labels[doc["_id"]] = doc["label"]
+    return labels
+
+
+async def _browse_node_views(docs: list[dict]) -> list[BrowseNodeView]:
+    """Every `browse_nodes` document a response carries, built together.
+
+    ⛔⛔ THIS EXISTS BECAUSE A SHARED CONSTRUCTOR WAS NOT ENOUGH. `_browse_node_view` already
+    carried "ONE construction site for both routes" and the routes diverged anyway: the label
+    map arrived as an ARGUMENT DEFAULTING TO `None`, `/browse-tree` passed one and `/by-node`
+    and `/by-department` passed nothing. Measured live 2026-09-04, `/by-node/smartphone`
+    answered `ancestor_labels: ["phone-tablet"]` where `/browse-tree?parent=smartphone` answered
+    `["Phones and tablets"]` — and because the fallback is `or slug` the field looked populated
+    the whole time.
+
+    ⇒ Sharing a constructor moves the divergence into its parameter list. The fix is to RESOLVE
+    the map here rather than ACCEPT it, so a route has nothing left to get wrong. Build views
+    through this, never through `_browse_node_view` — `test_NO_ROUTE_builds_a_node_view_directly`
+    is the guard, because the comment above was not one.
+
+    ⭐ Pass the WHOLE response's docs in one call: they share the map and the rollup, and a
+    child's ancestors resolve off a parent already in the list.
+    """
+    labels = await _ancestor_labels(docs)
+    subtree = await _subtree_fallback(docs)
+    return [_browse_node_view(d, labels, subtree) for d in docs]
+
+
+def _browse_node_view(node: dict, labels: dict[str, str], subtree: dict | None) -> BrowseNodeView:
     """One `browse_nodes` document as the API publishes it. Pure.
 
-    ⛔ ONE construction site for both routes. A `response_model` FILTERS silently, so a field
-    added to the publisher and mapped in only one of two hand-written copies vanishes from the
-    other with no error anywhere.
+    ⛔ NOT FOR ROUTES — call `_browse_node_views`. Both parameters are REQUIRED on purpose: a
+    default is what let two of three callers ship a breadcrumb full of raw shop slugs.
+
+    ⛔ A `response_model` FILTERS silently, so a field added to the publisher and mapped in only
+    one of two hand-written copies vanishes from the other with no error anywhere. That is why
+    there is one mapping, whatever else changes.
 
     ⛔ `subtree` FALLS BACK TO `n_clusters`, never to 0. When the rollup is unavailable the
     honest degradation is the understated old number; publishing 0 would render a stocked
@@ -531,7 +586,7 @@ def _browse_node_view(
         parent_slug=node.get("parent_slug"),
         ancestors=node.get("ancestors") or [],
         # ⛔ `or slug`, never a skip: a dropped entry shifts every later crumb by one.
-        ancestor_labels=[(labels or {}).get(a) or a for a in (node.get("ancestors") or [])],
+        ancestor_labels=[labels.get(a) or a for a in (node.get("ancestors") or [])],
         n_clusters=node.get("n_clusters") or 0,
         n_clusters_subtree=_subtree_of(node, subtree),
         n_stores=node.get("n_stores") or 0,
@@ -594,28 +649,27 @@ async def browse_tree(
     #
     # ⭐ The number is READ, not computed — the engine publishes `n_clusters_subtree` on every
     # node (roadmap 3.5), so this sorts on a field already present in the rows just fetched.
-    subtree = await _subtree_totals() if _needs_rollup(rows + ([node] if node else [])) else None
+    subtree = await _subtree_fallback(rows + ([node] if node else []))
     rows.sort(key=lambda d: (-_subtree_of(d, subtree), str(d.get("label") or d["_id"])))
 
-    # Labels for the ancestor slugs anything in this response can name, so a client renders a
-    # breadcrumb with no extra round trip. Bounded by tree DEPTH (max 7), not by the corpus.
-    #
+    # ⛔ AFTER the sort. `rows` is sorted IN PLACE, so a list built from it beforehand keeps the
+    # old order and the response ships children in fetch order — the ordering defect
+    # `n_clusters_subtree` exists to fix, reintroduced one layer up.
+    docs = ([node] if node else []) + rows
+
     # ⛔ THE SAME MAP FEEDS THE CHILDREN, NOT ONLY THE PARENT. A child's ancestors are the
     # parent's ancestors PLUS the parent itself — all already in hand. Building it for the parent
     # alone left every child's `ancestor_labels` echoing its `ancestors`: a field that looks
     # populated and carries nothing. It shipped that way because the test asserted on the parent.
-    anc_labels: dict = {}
-    for anc in (node or {}).get("ancestors") or []:
-        doc = await BROWSE_NODES.find_one({"_id": anc})
-        if doc and doc.get("label"):
-            anc_labels[anc] = doc["label"]
-    if node and node.get("label"):
-        anc_labels[node["_id"]] = node["label"]
-
+    #
+    # ⇒ Both facts now live in `_browse_node_views`: the whole response is built in one call, so
+    # the parent and its children cannot be given different maps — nor can this route be given
+    # none, which is how `/by-node` and `/by-department` diverged from it (see that builder).
+    views = await _browse_node_views(docs)
     return BrowseTreeResponse(
-        parent=_browse_node_view(node, anc_labels, subtree) if node else None,
+        parent=views[0] if node else None,
         count=len(rows),
-        results=[_browse_node_view(d, anc_labels, subtree) for d in rows],
+        results=views[1:] if node else views,
     )
 
 
@@ -792,10 +846,16 @@ async def clusters_by_department(
 
     # ⭐ The adopted shelves themselves, so a department page renders its subcategory grid with
     # no request per shelf — ordered by stock, like every other listing this API serves.
-    shelves = sorted((docs[s] for s in live), key=lambda d: -_subtree_of(d, None))
+    #
+    # ⛔ THE SORT TOOK `None` FOR ITS FALLBACK, so on a database predating roadmap 3.5 it ranked
+    # the shelves by OWN stock — the exact swap that cut `Electronics & Computers` out of the
+    # top 12. `_subtree_fallback` is a no-op on a current tree and honest on an old one.
+    shelf_docs = [docs[s] for s in live]
+    shelf_subtree = await _subtree_fallback(shelf_docs)
+    shelf_docs.sort(key=lambda d: -_subtree_of(d, shelf_subtree))
     return {
         "department": _department_view(dept, docs),
-        "shelves": [_browse_node_view(d, None, None) for d in shelves],
+        "shelves": await _browse_node_views(shelf_docs),
         "count": len(rows),
         "total": total,
         "results": [_cluster_view(d, summary=True) for d in rows],

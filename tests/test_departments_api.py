@@ -288,3 +288,18 @@ def test_pagination_APPENDS_without_repeating():
     b = _with_spine(_dept("laptops", limit=5, offset=5))
     assert not ({c["cluster_id"] for c in a["results"]} & {c["cluster_id"] for c in b["results"]})
     assert a["total"] == b["total"] == 130, "`total` is the whole department, not the page"
+
+
+def test_the_adopted_SHELVES_carry_real_ancestor_labels_too():
+    """⛔⛔ THE SECOND SITE, AND THE DOC NAMED ONLY THE FIRST. `CATEGORY_TREE_API.md` §3
+    reported the raw-slug breadcrumb on `/by-node` alone; `/by-department` builds its shelf views
+    through the same constructor and passes `None` for the label map in the same way. A
+    department page's subcategory grid therefore offers `computers` where it means `Computers`.
+
+    ⭐ `Tablets` sits under `Computers`, so its one ancestor has a label to resolve — which is
+    the whole assertion."""
+    got = _with_spine(_dept("tablets"))
+    shelf = next(s for s in got["shelves"] if s.slug == "tablet")
+    assert shelf.ancestors == ["computers"]
+    assert shelf.ancestor_labels == ["Computers"], (
+        "a department's shelf must not carry a raw shop slug where a label belongs")
