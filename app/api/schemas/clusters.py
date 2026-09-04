@@ -152,7 +152,18 @@ class ClusterView(BaseModel):
 
     # ---- coverage -------------------------------------------------------
     n_listings: int | None = None
-    n_stores: int | None = None
+    n_stores: int | None = Field(
+        None,
+        description="stores holding a LISTING for this cluster. ⛔ NOT the number a shopper can "
+                    "compare — see `n_stores_priced`.")
+    n_stores_priced: int = Field(
+        0,
+        description="stores that can actually PRICE this cluster — the column count of "
+                    "`best_by_store`, after store-name canonicalisation. THIS is the honest "
+                    "'compared across N shops'. The engine gates delisted, out-of-stock, "
+                    "implausibly-priced and likely-used members out of pricing a headline, so "
+                    "`n_stores` routinely exceeds it: measured 2026-08-21, 99% of the smartphone "
+                    "shelf overstated by a mean of +9.6 shops.")
     stores: list[str] | None = None
     is_multi_store: bool | None = Field(
         None, description="false ⇒ a real product page, but nothing to compare against"
@@ -290,6 +301,12 @@ class BrowseNodeView(BaseModel):
                     "ancestor is missing from the tree, because dropping it would shift every "
                     "later crumb by one.")
     n_clusters: int = 0
+    n_clusters_subtree: int = Field(
+        0,
+        description="clusters on this shelf AND everything below it — the figure "
+                    "`/by-node/{slug}` returns as `total`, and the one to RENDER. `n_clusters` "
+                    "is own stock only: `food-cupboard` holds 2,010 of its own against 6,220 "
+                    "in its subtree, so printing `n_clusters` understates a department by 3x.")
     n_stores: int = 0
     coarse: bool = Field(
         False,
@@ -314,6 +331,80 @@ class ClusterNodeResponse(BaseModel):
     """The products on one shelf of the presentation tree, and everything below it."""
 
     node: BrowseNodeView
+    count: int = Field(description="rows returned, which is bounded by `limit`")
+    total: int = Field(
+        description="rows matching before `limit` — so a capped page is never silent")
+    results: list[ClusterView]
+
+
+class DepartmentView(BaseModel):
+    """One curated department of the storefront spine (`app/api/departments.py`).
+
+    ⛔ A DEPARTMENT IS NOT A NODE. It is a presentation mapping that ADOPTS one or more
+    `browse_nodes` shelves where they already sit, each with its subtree. `id` lives in its own
+    namespace: `/department/bakery` (bakery + cake, 425) and `/shelf/bakery` (bakery alone, 343)
+    are different pages that share a name.
+    """
+
+    id: str = Field(description="URL-safe department id — NOT a browse_nodes slug")
+    label: str = Field(
+        description="the display name, which is OURS. `browse_nodes.label` is the engine's join "
+                    "key and is never rewritten upstream: `OFFICE STATIONERY` presents here as "
+                    "`Stationery`, `Smart watches` as `Wearables`.")
+    adopts: list[str] = Field(
+        default_factory=list,
+        description="the `browse_nodes` slugs this department claims, each WITH its subtree")
+    n_clusters: int = Field(
+        0,
+        description="clusters across every adopted subtree — the same figure "
+                    "`/by-department/{id}` returns as `total`, so a menu and the page it links "
+                    "to agree by construction. Adopted subtrees are disjoint WITHIN a "
+                    "department, so this is a true count and not a double-counted sum.")
+    n_stores: int = Field(
+        0,
+        description="the widest store span among the adopted shelves. ⚠️ A LOWER BOUND on the "
+                    "department's real span, not the distinct-store count: `browse_nodes` "
+                    "publishes a span per node and not the store list, so a union is not "
+                    "derivable without walking every cluster.")
+    unresolved: list[str] = Field(
+        default_factory=list,
+        description="⛔ adopted slugs that NO LONGER RESOLVE in the published tree. Normally "
+                    "empty. Non-empty means a human ruling is being silently skipped because "
+                    "the engine republished the tree without that node — the department is "
+                    "smaller than it was ruled to be, and this field is why you can tell.")
+    overlaps: list[str] = Field(
+        default_factory=list,
+        description="other department ids sharing clusters with this one, because one adopted "
+                    "shelf sits inside another's subtree. Ruled and deliberate: `tablet` is a "
+                    "descendant of `computer`, so all 720 of Tablets is also in Computers.")
+    notes: list[str] = Field(
+        default_factory=list,
+        description="defects this department adopts KNOWINGLY — e.g. Drinks contains "
+                    "`Chocolates`, a child of `Beverages`. Reported so they stay visible; never "
+                    "patched in the client.")
+
+
+class DepartmentsResponse(BaseModel):
+    """The whole ruled spine. Ordered EDITORIALLY, not by stock — see `departments.py`."""
+
+    count: int = 0
+    results: list[DepartmentView] = Field(default_factory=list)
+    n_clusters_total: int = Field(
+        0,
+        description="distinct clusters reachable from ANY department. ⛔ Less than the sum of "
+                    "the rows, because departments deliberately overlap — and far less than the "
+                    "corpus: the spine reaches ~45% of placed clusters by design, and the rest "
+                    "stay reachable at /shelf.")
+
+
+class DepartmentClustersResponse(BaseModel):
+    """The products across every shelf one department adopts."""
+
+    department: DepartmentView
+    shelves: list[BrowseNodeView] = Field(
+        default_factory=list,
+        description="the adopted nodes themselves, so a department page renders its "
+                    "subcategory grid without one request per shelf")
     count: int = Field(description="rows returned, which is bounded by `limit`")
     total: int = Field(
         description="rows matching before `limit` — so a capped page is never silent")

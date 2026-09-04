@@ -24,6 +24,7 @@ projection.
 
 import os
 import re
+import time
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -41,7 +42,8 @@ from app.api.hygiene import (
     spread_basis,
     stock_by_store,
 )
-from app.api.taxonomy import category_path, category_path_for_cluster
+from app.api.departments import ADOPTED_SLUGS, BY_ID, DEPARTMENTS, Department
+from app.api.taxonomy import BROWSE_TTL_SECONDS, category_path, category_path_for_cluster
 from app.api.schemas.clusters import (
     BrowseTreeResponse,
     BrowseNodeView,
@@ -49,6 +51,9 @@ from app.api.schemas.clusters import (
     ClusterNodeResponse,
     ClusterSearchResponse,
     ClusterView,
+    DepartmentClustersResponse,
+    DepartmentsResponse,
+    DepartmentView,
 )
 from app.database import product_matching_db, taxonomy_db
 
@@ -59,6 +64,89 @@ CLUSTERS = product_matching_db[os.getenv("CLUSTERS_COLLECTION", "product_cluster
 # queried until `/by-node` existed — the tree shipped 2026-08-17 and was navigable by nobody.
 BROWSE_NODES = taxonomy_db["browse_nodes"]
 BROWSE_PLACEMENTS = taxonomy_db["browse_placements"]
+
+# ⛔⛔ `n_clusters` IS OWN STOCK; EVERY PRODUCTS PAGE RENDERS THE CLOSURE. `/by-node/{slug}`
+# returns descendants by default, so `food-cupboard` publishes 2,010 on the tree and answers
+# 6,220 on the shelf — a menu built from `n_clusters` understates a department by 3x and, worse,
+# ORDERS BY IT: sorting the browsable roots on own stock drops `Electronics & Computers` (20,772
+# in subtree) to rank 20, out of a top-12 menu, and promotes `Battery Chargers` (553, one shop)
+# into it. The client cannot repair this — one honest number costs it a whole-tree crawl.
+# (Measured 2026-08-19 over 553 roots / 4,185 nodes; the tree is republished, the defect is not.)
+#
+# ⭐ ONE PASS, NO RECURSION, because `ancestors` is materialised on every node: each node adds
+# its own `n_clusters` to itself and to each of its ancestors.
+#
+# ⚠️ Cached on the SAME TTL as `taxonomy.load_browse`, and for the same reason — the tree is
+# rebuilt by hand, minutes apart at most, and a rollup that never re-reads outlives its tree.
+_SUBTREE: dict[str, int] | None = None
+_SUBTREE_AT: float = 0.0
+
+
+def reset_subtree_cache() -> None:
+    """Force the next `_subtree_totals` to re-read. For tests and for a post-publish poke."""
+    global _SUBTREE, _SUBTREE_AT
+    _SUBTREE, _SUBTREE_AT = None, 0.0
+
+
+# ⭐⭐ ROADMAP 3.5 LANDED ENGINE-SIDE 2026-08-21: `publish_browse_tree` now writes
+# `n_clusters_subtree` on every node doc, cross-checked against an independently derived count
+# (parent-map walk vs. `ancestors`-array rollup) on all 4,137 nodes with **0 disagreements**.
+# Verified live: 4,137 of 4,137 carry it.
+#
+# ⇒ THE ROLLUP ABOVE IS NOW A FALLBACK, NOT THE SOURCE. On a current tree `_subtree_totals()`
+# is never called, so a whole-collection scan and its 300s cache drop off every tree request —
+# which also retires the `reset_subtree_cache()` foot-gun in practice (roadmap 3.4) without
+# adding an admin route to poke it.
+#
+# ⛔ THE FALLBACK STAYS, AND IT IS NOT DEAD WEIGHT. A dev database restored from a dump older
+# than 2026-08-21 has no such field, and the honest degradation there is the computed closure —
+# NOT `n_clusters`, because understating a coarse department is exactly the ordering defect the
+# field exists to fix. The rollup is entered only when a row actually lacks the field.
+def _needs_rollup(docs: list[dict]) -> bool:
+    """True when any doc in hand predates roadmap 3.5 and needs the closure computed."""
+    return any(d.get("n_clusters_subtree") is None for d in docs)
+
+
+def _subtree_of(node: dict, fallback: dict | None) -> int:
+    """Clusters on a shelf and everything below it, published field first.
+
+    ⛔ FALLS BACK TO `n_clusters`, never to 0. Publishing 0 would render a stocked department as
+    empty, which is worse than the understatement this number exists to fix.
+    """
+    published = node.get("n_clusters_subtree")
+    if published is not None:
+        return published
+    return (fallback or {}).get(node["_id"], node.get("n_clusters") or 0)
+
+
+async def _subtree_totals() -> dict[str, int]:
+    """slug -> clusters on that shelf AND everything below it. Every node gets an entry.
+
+    ⛔ A node holding nothing of its own must still appear, or the caller falls back to
+    `n_clusters` for exactly the coarse departments this exists to fix.
+    """
+    global _SUBTREE, _SUBTREE_AT
+    if _SUBTREE is not None and (time.monotonic() - _SUBTREE_AT) <= BROWSE_TTL_SECONDS:
+        return _SUBTREE
+    rollup: dict[str, int] = {}
+    try:
+        async for d in BROWSE_NODES.find({}, {"ancestors": 1, "n_clusters": 1}):
+            slug = d["_id"]
+            rollup.setdefault(slug, 0)
+            n = d.get("n_clusters") or 0
+            if not n:
+                continue
+            rollup[slug] += n
+            for anc in d.get("ancestors") or []:
+                rollup[anc] = rollup.get(anc, 0) + n
+    except Exception:
+        # ⛔ Same contract as `load_browse`: navigation degrades to the old, understated number,
+        # never to a 500. A menu that sorts imperfectly beats a menu that does not render.
+        return _SUBTREE or {}
+    _SUBTREE, _SUBTREE_AT = rollup, time.monotonic()
+    return rollup
+
+
 # Every canonical slug holding >=2 multi-store clusters (measured 2026-07-25 against
 # product_clusters_mvp). A slug missing here 400s the whole category, which is how
 # groceries stayed invisible before 7226de12 — audio-systems (120 multi-store),
@@ -194,6 +282,9 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
             "spread_pct": c.get("spread_pct"),
             "by_store": _by_store(c.get("best_by_store"), summary),
         })
+    # ⭐ Built ONCE and used twice — as the rendered map and as the comparable-store count — so
+    # the number can never disagree with the columns it describes.
+    by_store = _by_store(d.get("best_by_store"), summary, stock_by_store(d))
     return {
         "cluster_id": d.get("cluster_id"),
         # clean brand+model title (features go in the facet chips, not the title): prefer the
@@ -246,6 +337,17 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         "canonical_name": d.get("canonical_name"),
         "n_listings": d.get("n_listings"),
         "n_stores": d.get("n_stores"),
+        # ⛔⛔ THE CARD SAID 20 SHOPS AND THE TABLE COULD PRICE TWO. `n_stores` counts stores
+        # holding a LISTING; `best_by_store` holds the ones that survived the engine's gate
+        # (delisted, out-of-stock, implausibly-priced and likely-used members cannot price a
+        # headline). Measured 2026-08-21: 99% of the smartphone shelf overstated, mean +9.6.
+        # On a price-comparison storefront that number IS the promise, so both are published
+        # and the renderer is told which one means "compared across".
+        #
+        # ⭐ COUNTED OFF `by_store`, NOT THE RAW DOC, so the fold that collapses `carrefour` and
+        # `carrefour.ke` into one COLUMN also collapses them in the COUNT. Counting the raw map
+        # would swap one wrong number for a quieter one.
+        "n_stores_priced": len(by_store),
         "stores": fold_stores(d.get("stores")),
         "is_multi_store": d.get("is_multi_store"),
         # two-tier price: best_price/cheapest_store is the CONFIDENT new-retail headline;
@@ -273,7 +375,7 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         "spread_basis": spread_basis(d),
         "cross_store_spread_pct": d.get("cross_store_spread_pct"),
         "configs": configs,
-        "best_by_store": _by_store(d.get("best_by_store"), summary, stock_by_store(d)),
+        "best_by_store": by_store,
         # Buyability + recency. The engine computes both in `gate_members` but stamped
         # them on only 28,754 of 66,406 clusters (groceries, tvs, printers, routers,
         # wearables, desktop-computers and digital-cameras have neither), and this
@@ -402,19 +504,26 @@ async def clusters_by_node(
                   .skip(offset)
                   .to_list(length=limit))
     return {
-        "node": _browse_node_view(node),
+        "node": _browse_node_view(
+            node, None, await _subtree_totals() if _needs_rollup([node]) else None),
         "count": len(rows),
         "total": total,
         "results": [_cluster_view(d, summary=True) for d in rows],
     }
 
 
-def _browse_node_view(node: dict, labels: dict | None = None) -> BrowseNodeView:
+def _browse_node_view(
+    node: dict, labels: dict | None = None, subtree: dict | None = None,
+) -> BrowseNodeView:
     """One `browse_nodes` document as the API publishes it. Pure.
 
     ⛔ ONE construction site for both routes. A `response_model` FILTERS silently, so a field
     added to the publisher and mapped in only one of two hand-written copies vanishes from the
     other with no error anywhere.
+
+    ⛔ `subtree` FALLS BACK TO `n_clusters`, never to 0. When the rollup is unavailable the
+    honest degradation is the understated old number; publishing 0 would render a stocked
+    department as empty, which is worse than the bug this field fixes.
     """
     return BrowseNodeView(
         slug=node["_id"],
@@ -424,6 +533,7 @@ def _browse_node_view(node: dict, labels: dict | None = None) -> BrowseNodeView:
         # ⛔ `or slug`, never a skip: a dropped entry shifts every later crumb by one.
         ancestor_labels=[(labels or {}).get(a) or a for a in (node.get("ancestors") or [])],
         n_clusters=node.get("n_clusters") or 0,
+        n_clusters_subtree=_subtree_of(node, subtree),
         n_stores=node.get("n_stores") or 0,
         coarse=bool(node.get("coarse")),
         browsable=bool(node.get("browsable")),
@@ -453,7 +563,7 @@ async def browse_tree(
     ⛔ 404 on an unknown `parent`, never an empty list — an empty list says "this shelf has no
     children", a 404 says "there is no such shelf", and collapsing the two hides a broken link.
 
-    ⛔ `browsable_only` DEFAULTS TRUE BUT IS A PARAMETER. 3,198 of 4,185 published nodes hold no
+    ⛔ `browsable_only` DEFAULTS TRUE BUT IS A PARAMETER. 3,181 of 4,137 published nodes hold no
     stock anywhere below them, so offering them is offering an empty page. But `browsable` is a
     FLAG the publisher never filters on — the renderer decides — and an auditing caller must
     still be able to see the whole tree, or this endpoint becomes a second, hidden filter.
@@ -474,7 +584,18 @@ async def browse_tree(
     rows = [d async for d in BROWSE_NODES.find(query)]
     # ⭐ Stock first: a shopper wants the shelf that has something on it, not the one that sorts
     # first. Ties break on label so two consecutive calls agree.
-    rows.sort(key=lambda d: (-(d.get("n_clusters") or 0), str(d.get("label") or d["_id"])))
+    #
+    # ⛔⛔ SUBTREE STOCK, NOT OWN STOCK, AND THE DIFFERENCE DECIDES A MENU. The client takes the
+    # top N roots; ordering them on `n_clusters` swapped 6 of the top 12 (measured 2026-08-19),
+    # cutting
+    # `Electronics & Computers` (20,772 in subtree, 2,018 of its own) out in favour of `Battery
+    # Chargers` (553, one shop). A department that files everything into children sorts last on
+    # own stock — which is precisely backwards, because that is what a department IS.
+    #
+    # ⭐ The number is READ, not computed — the engine publishes `n_clusters_subtree` on every
+    # node (roadmap 3.5), so this sorts on a field already present in the rows just fetched.
+    subtree = await _subtree_totals() if _needs_rollup(rows + ([node] if node else [])) else None
+    rows.sort(key=lambda d: (-_subtree_of(d, subtree), str(d.get("label") or d["_id"])))
 
     # Labels for the ancestor slugs anything in this response can name, so a client renders a
     # breadcrumb with no extra round trip. Bounded by tree DEPTH (max 7), not by the corpus.
@@ -492,10 +613,193 @@ async def browse_tree(
         anc_labels[node["_id"]] = node["label"]
 
     return BrowseTreeResponse(
-        parent=_browse_node_view(node, anc_labels) if node else None,
+        parent=_browse_node_view(node, anc_labels, subtree) if node else None,
         count=len(rows),
-        results=[_browse_node_view(d, anc_labels) for d in rows],
+        results=[_browse_node_view(d, anc_labels, subtree) for d in rows],
     )
+
+
+# ============================================================================================
+# THE DEPARTMENT SPINE
+# ============================================================================================
+#
+# ⭐ WHY THESE EXIST. `/browse-tree` publishes the tree's SHAPE and `/by-node` its products, and
+# both are faithful to a tree with **529 browsable roots** built from 46 shops' own breadcrumbs.
+# Faithful is not navigable: 75% of those roots are one shop's private vocabulary and `Laptops`
+# resolves in three places. The spine (`app/api/departments.py`) is 21 ruled departments over
+# that tree — a presentation mapping, adopting shelves where they already sit.
+#
+# ⛔ THE SPINE IS NOT A REPLACEMENT FOR THE TREE. It reaches ~45% of placed clusters BY DESIGN;
+# the rest stay reachable at `/shelf`. A client that renders departments and drops the "all
+# categories" hand-off makes 55,911 clusters unbrowsable.
+
+_SPINE: tuple[dict, int] | None = None
+_SPINE_AT: float = 0.0
+
+
+def reset_spine_cache() -> None:
+    """Force the next `_spine()` to re-read. For tests and for a post-publish poke."""
+    global _SPINE, _SPINE_AT
+    _SPINE, _SPINE_AT = None, 0.0
+
+
+async def _spine() -> tuple[dict, int]:
+    """`(adopted slug -> node doc, distinct clusters across the whole spine)`.
+
+    ⭐ ONE `$in` OVER 46 IDS, NOT A PLACEMENT SCAN. A department's total is the SUM of
+    `n_clusters_subtree` over the shelves it adopts, which is exact because a department's
+    adopted shelves are mutually disjoint — no adopted slug is an ancestor of another within one
+    department, and `tests/test_department_spine.py` asserts that against the live tree. Adopt a
+    parent and its child together and this would double-count in silence.
+
+    ⭐⭐ AND THE SPINE-WIDE TOTAL IS EXACT FOR A TREE REASON. Two subtrees of a tree either NEST
+    or are DISJOINT, so the union over all adopted shelves is the sum over the MAXIMAL ones —
+    those with no adopted ancestor. Measured 2026-08-21: sum of the 21 rows is 46,914, dropping
+    the two nested shelves (`tablet` 720, `phone-1a5a7a` 67) gives **46,127**, which is exactly
+    the distinct union counted from `browse_placements`. The 787 difference is `tablet` counted
+    twice and `phone-1a5a7a` three times.
+    """
+    global _SPINE, _SPINE_AT
+    if _SPINE is not None and (time.monotonic() - _SPINE_AT) <= BROWSE_TTL_SECONDS:
+        return _SPINE
+    try:
+        docs = {d["_id"]: d async for d in
+                BROWSE_NODES.find({"_id": {"$in": list(ADOPTED_SLUGS)}})}
+    except Exception:
+        # ⛔ Same contract as the tree routes: navigation degrades, never 500s.
+        return _SPINE or ({}, 0)
+    adopted = set(docs)
+    total = sum(_subtree_of(d, None) for slug, d in docs.items()
+                if not (set(d.get("ancestors") or []) & adopted))
+    _SPINE, _SPINE_AT = (docs, total), time.monotonic()
+    return _SPINE
+
+
+def _department_view(dept: Department, docs: dict) -> DepartmentView:
+    """One ruled department as the API publishes it. Pure.
+
+    ⛔ ONE construction site for both routes — a `response_model` FILTERS silently, so a field
+    mapped in only one of two hand-written copies vanishes from the other with no error.
+    """
+    live = [docs[s] for s in dept.adopts if s in docs]
+    unresolved = [s for s in dept.adopts if s not in docs]
+
+    # ⭐ Overlap is a TREE fact, read off the materialised `ancestors`: this department overlaps
+    # another when one of its shelves sits inside a shelf that one adopts. Ruled and deliberate —
+    # `tablet` is a descendant of `computer`, so all 720 of Tablets is also in Computers.
+    reach = {s for d in live for s in [d["_id"], *(d.get("ancestors") or [])]}
+    mine = set(dept.adopts)
+    overlaps = sorted(
+        other.id for other in DEPARTMENTS
+        if other.id != dept.id and (
+            reach & set(other.adopts)
+            or mine & {a for s in other.adopts if s in docs
+                       for a in (docs[s].get("ancestors") or [])}
+        )
+    )
+    return DepartmentView(
+        id=dept.id,
+        label=dept.label,
+        adopts=list(dept.adopts),
+        n_clusters=sum(_subtree_of(d, None) for d in live),
+        # ⚠️ A LOWER BOUND, and labelled as one. `browse_nodes` publishes a span per node, not
+        # the store list, so the union across shelves is not derivable without walking clusters.
+        n_stores=max([d.get("n_stores") or 0 for d in live] or [0]),
+        unresolved=unresolved,
+        overlaps=overlaps,
+        notes=list(dept.notes),
+    )
+
+
+@router.get("/departments", response_model=DepartmentsResponse)
+async def departments():
+    """The 21 ruled departments — the storefront's curated entry into the presentation tree.
+
+    ⭐ ORDERED EDITORIALLY, NOT BY STOCK, and the order is part of the ruling: phones → computing
+    → media → accessories → personal care → grocery → home. `Kitchen` (1,857) sits below
+    `Bakery` (425) because a shopper reads a storefront by domain, not by inventory.
+
+    ⭐⭐ AND THERE IS NO TOP-N CUT LEFT TO GET WRONG. A surface renders all 21 of these. The panel
+    used to take the top 12 of 529 roots, where ordering on own stock instead of subtree stock
+    swapped SIX of the twelve — cutting `Electronics & Computers` (20,772 clusters) in favour of
+    `Battery Chargers` (553, one shop). That whole class of defect is gone rather than fixed.
+
+    ⛔ `unresolved` IS THE FIELD TO WATCH. It is normally empty. Non-empty means the engine
+    republished the tree without a node a person ruled into a department, so that department is
+    quietly smaller than it was ruled to be. `tests/test_department_spine.py` fails on it — the
+    endpoint reports rather than 500s, because a storefront that will not render is worse than
+    one department short a shelf.
+
+    ⛔ THIS ROUTE MUST STAY ABOVE `/{cluster_id:path}`, which swallows anything declared after
+    it. Guarded by `tests/test_departments_api.py` reading the source text.
+    """
+    docs, total = await _spine()
+    return DepartmentsResponse(
+        count=len(DEPARTMENTS),
+        results=[_department_view(d, docs) for d in DEPARTMENTS],
+        n_clusters_total=total,
+    )
+
+
+@router.get("/by-department/{department_id}", response_model=DepartmentClustersResponse)
+async def clusters_by_department(
+    department_id: str,
+    multi_store_only: bool = Query(False, description="only products compared across >=2 stores"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """The products across every shelf a department adopts.
+
+    ⭐ NO `include_descendants` PARAMETER, DELIBERATELY. Adoption *is* the closure — a department
+    that adopted a shelf without its subtree would be a different ruling, and offering the switch
+    would imply it is one page's choice rather than the spine's meaning.
+
+    ⭐ `total` COMES FROM THE SAME UNION THE MENU'S `n_clusters` DOES, so a department tile and
+    the page it links to agree by CONSTRUCTION rather than by care. That is the assertion
+    `verify_categories.py` makes, and the defect it exists to catch: `Laptops` adopts three
+    shelves totalling 1,530, while `/shelf/laptop` alone renders 655.
+
+    ⛔ 404 on an unknown department, never an empty list — matching `/by-node` and `/browse-tree`.
+    An empty list says "this department has nothing"; a 404 says "there is no such department".
+
+    ⛔ THIS ROUTE MUST STAY ABOVE `/{cluster_id:path}`. Guarded by `tests/test_departments_api.py`.
+    """
+    dept = BY_ID.get(department_id)
+    if not dept:
+        raise HTTPException(status_code=404, detail=f"unknown department {department_id!r}")
+
+    docs, _ = await _spine()
+    live = [s for s in dept.adopts if s in docs]
+
+    # Every shelf below every adopted shelf. `ancestors` is materialised and indexed, so this is
+    # one query per adopted root rather than a walk.
+    slugs = set(live)
+    for root in live:
+        slugs.update([d["_id"] async for d in
+                      BROWSE_NODES.find({"ancestors": root}, {"_id": 1})])
+
+    ids = [p["_id"] async for p in
+           BROWSE_PLACEMENTS.find({"node_slug": {"$in": list(slugs)}}, {"_id": 1})]
+
+    query: dict = {"_id": {"$in": ids}}
+    if multi_store_only:
+        query["is_multi_store"] = True
+    total = await CLUSTERS.count_documents(query)
+    rows = await (CLUSTERS.find(query)
+                  .sort("n_listings", -1)
+                  .skip(offset)
+                  .to_list(length=limit))
+
+    # ⭐ The adopted shelves themselves, so a department page renders its subcategory grid with
+    # no request per shelf — ordered by stock, like every other listing this API serves.
+    shelves = sorted((docs[s] for s in live), key=lambda d: -_subtree_of(d, None))
+    return {
+        "department": _department_view(dept, docs),
+        "shelves": [_browse_node_view(d, None, None) for d in shelves],
+        "count": len(rows),
+        "total": total,
+        "results": [_cluster_view(d, summary=True) for d in rows],
+    }
 
 
 @router.get("/{cluster_id:path}", response_model=ClusterView)
