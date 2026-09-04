@@ -234,3 +234,118 @@ def test_a_NODE_SLUG_on_the_department_route_is_a_404():
     with pytest.raises(HTTPException) as exc:
         _with_tree(_dept("phone"))
     assert exc.value.status_code == 404
+
+
+# ================================================================================================
+# IMPORTANT 1 — shelves must be STOCK-filtered, not just maximal-filtered.
+#
+# ⛔⛔ `dud` IS STAMPED INTO `gadget-bin` WITH ZERO STOCK ANYWHERE BELOW IT
+# (`n_clusters_subtree == 0`, no children). Before this fix, `_spine_departments()` only
+# dropped a shelf for having an in-department ancestor — a node with NO ancestor at all, like
+# `dud`, always survived the maximal pass and rendered as a dead tile. Measured live
+# 2026-09-05 across all 19 real departments: 2,348 shelves, 1,865 leading nowhere.
+# ================================================================================================
+_DEAD_SHELF_TREE = [
+    _s("widget", "Widgets", "gadget-bin", "Gadget Bin", 0, 50),
+    {**_n("dud", "Dud", clusters=0), "n_clusters_subtree": 0, "ancestors": [],
+     "spine_slug": "x-dud", "spine_department": "gadget-bin",
+     "spine_department_label": "Gadget Bin", "spine_level": 0, "spine_disposition": "node"},
+]
+
+
+def test_an_UNSTOCKED_node_never_appears_in_shelves():
+    """⛔⛔ RED before the fix: `dud` has no ancestor, so the maximal-only filter kept it and
+    this failed on `{"widget", "dud"} != {"widget"}`.
+
+    RED: dropping the `_subtree_of(d, subtree_fallback) > 0` filter out of
+    `_spine_departments()` (or applying it only to nodes that already have an in-department
+    ancestor) makes `dud` reappear and this fails."""
+    got = _with_tree(route_mod.spine_departments, tree=_DEAD_SHELF_TREE)
+    row = {d.id: d for d in got["results"]}["gadget-bin"]
+    assert row.n_shelves == 1
+    dept = _with_tree(_dept("gadget-bin"), tree=_DEAD_SHELF_TREE)
+    assert [s.slug for s in dept["shelves"]] == ["widget"]
+
+
+def test_the_UNSTOCKED_shelf_filter_never_moves_the_departments_MASS():
+    """⛔ `n_clusters` sums OWN stock over every stamped node, shelves or not. `dud`
+    contributes 0 either way, so filtering it out of `shelves` must not change the mass — if
+    it ever did, a shelf-visibility fix would silently be a stock-accounting bug too.
+
+    RED: summing `n_clusters` over `g["shelves"]` instead of `g["nodes"]` (i.e. deriving mass
+    from the filtered shelf list) makes this fail on 50 != 50 only by accident; the real
+    regression this guards is a future refactor that ties mass to `shelves`."""
+    got = _with_tree(route_mod.spine_departments, tree=_DEAD_SHELF_TREE)
+    row = {d.id: d for d in got["results"]}["gadget-bin"]
+    assert row.n_clusters == 50
+
+
+# ================================================================================================
+# IMPORTANT 4 — a Mongo blip on the department map must read as 503, never 404.
+# ================================================================================================
+class _BrokenNodes:
+    """Stands in for a `browse_nodes` collection mid-outage: every `find` raises."""
+
+    def find(self, *a, **k):
+        raise RuntimeError("mongo blip")
+
+
+def test_a_NEVER_POPULATED_department_map_is_503_not_404():
+    """⛔⛔ `_spine_departments()` degrades to `{}` on any Mongo exception with no prior
+    successful read — correct for the MENU, which just renders fewer tiles. But
+    `spine_department_clusters` was using that same empty dict as its EXISTENCE check, so an
+    API that restarts mid-blip answered a real department's page with 404 — "No such
+    department" — for a department that plainly exists. There are 19 in production; an
+    empty map is never a legitimate "0 departments" state.
+
+    RED: before the fix, the route only checked `if not g`, so this raised 404, not 503."""
+    saved = route_mod.BROWSE_NODES
+    route_mod.BROWSE_NODES = _BrokenNodes()
+    route_mod.reset_spine_departments_cache()
+    try:
+        with pytest.raises(HTTPException) as exc:
+            asyncio.run(route_mod.spine_department_clusters(
+                "phones-wearables", multi_store_only=False, limit=20, offset=0))
+        assert exc.value.status_code == 503
+        assert "department" in str(exc.value.detail).lower()
+    finally:
+        route_mod.BROWSE_NODES = saved
+        route_mod.reset_spine_departments_cache()
+
+
+def test_a_POPULATED_map_still_404s_a_genuinely_unknown_id():
+    """⛔ The 503 guard above must not swallow the real 404 — a populated map with a bogus id
+    is still "no such department", not "try again shortly"."""
+    with pytest.raises(HTTPException) as exc:
+        _with_tree(_dept("no-such-department"))
+    assert exc.value.status_code == 404
+
+
+# ================================================================================================
+# MINOR 8 — pin the zero-collision claim between the 19 designed ids and `browse_nodes` slugs.
+#
+# ⛔⛔ SPEC §1.2's SAFETY FOR `/aisle` RESTS ON THIS BEING ZERO. Unlike the curated 21-department
+# set — which has SIX known id/slug collisions, pinned in `test_department_spine.py`'s
+# `test_the_ID_SLUG_COLLISIONS_are_the_known_six` — the designed spine's safety argument is that
+# it shares NO slugs with `browse_nodes` at all, so a bare id can never resolve to the wrong page.
+# That was measured once, by hand, and nothing has asserted it since: a future publish that slugs
+# a node identically to a designed department id (e.g. a node literally named
+# `phones-wearables`) would create a plausible-wrong-page pair with no alarm anywhere.
+# ================================================================================================
+def test_the_DESIGNED_department_ids_share_NO_slug_with_browse_nodes():
+    """⭐ Cheap: one `distinct` and one `$in` lookup against the live tree, skipped without Mongo
+    like every other live-tree test in this suite (see `test_department_spine.py`'s docstring
+    for why those cannot be stubbed).
+
+    RED: none needed — this is a NEW invariant, not a behavioural fix. It goes red the moment a
+    future publish gives a `browse_nodes` node the same slug as one of the 19 designed ids."""
+    from tests.test_department_spine import _tree
+
+    db = _tree()
+    ids = {i for i in db.browse_nodes.distinct("spine_department") if i}
+    assert ids, "no designed departments discovered at all — is the spine stamped?"
+    collide = {d["_id"] for d in db.browse_nodes.find({"_id": {"$in": list(ids)}}, {"_id": 1})}
+    assert collide == set(), (
+        f"a browse_nodes slug now collides with a designed department id: {sorted(collide)} — "
+        "spec §1.2's safety argument for /aisle assumed this set was empty"
+    )

@@ -900,6 +900,24 @@ async def _spine_departments() -> dict:
 
     ⭐ SHELVES ARE MAXIMAL ONLY. A shelf whose ancestor is also in the department is already
     inside it; offering both renders the same products behind two doors.
+
+    ⛔⛔ SHELVES ARE ALSO STOCK-FILTERED, AND THAT NEVER TOUCHES `n_clusters`. Measured live
+    2026-09-05: unfiltered, the 19 departments carried 2,348 shelves, 1,865 of them
+    (`n_clusters_subtree == 0`) leading nowhere — `/aisle/building-electrical-hardware` alone
+    rendered 170 tiles for 11 that had anything behind them. `n_clusters` sums OWN stock over
+    every stamped node regardless of shelf visibility (see above), so dropping a dead tile
+    from `shelves` cannot and does not change a department's mass.
+
+    ⭐ FILTERED BEFORE THE MAXIMAL PASS, so an empty parent drops out of `mine` and a stocked
+    child beneath it is no longer "covered" by a blocking ancestor that led nowhere itself —
+    it promotes to view instead of vanishing with its dead parent. Verified against live data
+    2026-09-05: filtering before vs. after the maximal pass landed on the IDENTICAL 483
+    stocked shelves in all 19 departments (0 departments differed) — `n_clusters_subtree` is
+    built from the SAME `parent_slug` closure as `ancestors` in the one `build_documents` call
+    that stamps both (roadmap 3.5), so a dead node (subtree 0) can never be the true ancestor
+    of a stocked one. Filter-first is kept anyway: it is the order that stays correct if that
+    invariant is ever the thing that breaks, and it makes "an unstocked node never reaches
+    `shelves`" true by construction rather than by relying on maximal-filter fallout.
     """
     global _SPINE_DEPTS, _SPINE_DEPTS_AT
     if _SPINE_DEPTS is not None and (time.monotonic() - _SPINE_DEPTS_AT) <= BROWSE_TTL_SECONDS:
@@ -916,12 +934,17 @@ async def _spine_departments() -> dict:
         g = grouped.setdefault(d["spine_department"], {
             "label": d.get("spine_department_label") or d["spine_department"],
             "n_clusters": 0, "nodes": []})
+        # ⛔ MASS IS UNTOUCHED BY THE STOCK FILTER BELOW. `n_clusters` sums every stamped
+        # node's OWN stock, shelves or not — see the docstring's ⛔⛔.
         g["n_clusters"] += d.get("n_clusters") or 0
         g["nodes"].append(d)
 
+    subtree_fallback = await _subtree_fallback(docs)
     for g in grouped.values():
-        mine = {d["_id"] for d in g["nodes"]}
-        maximal = [d for d in g["nodes"] if not (set(d.get("ancestors") or []) & mine)]
+        stocked = [d for d in g["nodes"]
+                   if _subtree_of(d, subtree_fallback) > 0]
+        mine = {d["_id"] for d in stocked}
+        maximal = [d for d in stocked if not (set(d.get("ancestors") or []) & mine)]
         g["shelves"] = sorted(maximal, key=lambda d: (-(d.get("n_clusters_subtree") or 0),
                                                       str(d.get("label") or d["_id"])))
         del g["nodes"]
@@ -979,10 +1002,23 @@ async def spine_department_clusters(
     `/by-node`. An empty list says "this department has nothing"; a 404 says "there is no
     such department".
 
-    ⛔ THIS ROUTE MUST STAY ABOVE `/{cluster_id:path}`, which swallows anything declared
-    after it.
+    ⛔⛔ 503 ON A NEVER-POPULATED MAP, NOT 404 — A BLIP MUST NOT READ AS "NO SUCH DEPARTMENT".
+    `_spine_departments()` degrades to `{}` on a Mongo error with no prior successful read —
+    correct for the MENU (`/spine-departments`), which just renders fewer tiles. But THIS
+    route was using that same empty dict as its existence check, so an API that restarted
+    mid-Mongo-blip answered `/aisle/phones-wearables` with 404 and the UI said "No such
+    department" for a department that plainly exists. Compare `/by-node` above, which lets
+    the DB error surface as a 500 so the UI says "could not be loaded" instead of "not
+    found" — same principle, applied here as a 503 because the map itself (not one lookup)
+    is what is unavailable. An empty map in production is never a legitimate "0 departments
+    exist" state — there are 19 — so `not grouped` is an honest signal that the map hasn't
+    loaded, not that the id doesn't exist.
     """
     grouped = await _spine_departments()
+    if not grouped:
+        raise HTTPException(
+            status_code=503,
+            detail="spine departments are not available right now — try again shortly")
     g = grouped.get(dept_id)
     if not g:
         raise HTTPException(status_code=404, detail=f"unknown spine department {dept_id!r}")

@@ -683,11 +683,13 @@ export interface SpineDepartmentView {
 }
 
 export const spineApi = {
-  /** The 19 designed departments, in EDITORIAL order. ⛔ Do not re-sort by stock. */
-  list: () =>
-    request<{ count: number; n_clusters_total: number; results: SpineDepartmentView[] }>(
-      '/clusters/spine-departments',
-    ),
+  // ⛔ NO `list()` HERE. Nothing on the storefront renders the 19-department menu yet — only
+  // `getClusters` (below) is called, from `AislePage`, which already has an id from
+  // `aisleHref`. A prior `list()` carried a comment copied from `departmentApi.list` claiming
+  // "EDITORIAL order, do not re-sort by stock" — but `/clusters/spine-departments` sorts by
+  // `-n_clusters` (and `tests/test_spine_departments.py::test_the_departments_are_ordered_by_
+  // STOCK` pins exactly that), so the comment described the CURATED client, not this one. Add
+  // it back honestly — stock order, not editorial — if a designed-department menu ever ships.
 
   /** The products across every shelf a designed department reaches. Closure is server-side. */
   getClusters: (
