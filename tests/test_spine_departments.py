@@ -6,9 +6,6 @@ coroutine as a no-op and the test passes without executing.
 import asyncio
 from pathlib import Path
 
-# ⭐ `pytest` and `HTTPException` are unused HERE — kept because Task 4 (the
-# `/by-spine-department/{dept_id}` coverage, not in scope for this round) adds tests that
-# need both: `pytest.raises` around the 404, and `HTTPException` to assert on it directly.
 import pytest
 from fastapi import HTTPException
 
@@ -116,3 +113,124 @@ def test_a_node_mapped_to_NOTHING_reaches_no_department():
 def test_the_departments_are_ordered_by_STOCK():
     got = _with_tree(route_mod.spine_departments)
     assert [d.id for d in got["results"]] == ["phones-wearables", "tv-audio"]
+
+
+# ================================================================================================
+# `/by-spine-department/{dept_id}` — Task 4, RE-SCOPED.
+#
+# ⛔ THE ROUTE WAS ALREADY IMPLEMENTED (Task 3's own route-ordering test required it be
+# declared). It sources placements from `_spine_departments()`'s FULL stamped node set for
+# `dept_id`, not from descendant closure over the maximal shelves — a spine department is
+# already a set closed under the label mapping (see `_a_departments_mass_SUMS_OWN_STOCK`
+# above), so nothing is lost by not walking `ancestors` again. Walking `ancestors` from the
+# maximal shelves would be WRONG here: a descendant's label maps wherever ITS OWN label maps,
+# not its ancestor's, so closure pulls in nodes belonging to OTHER departments (measured live
+# 2026-09-04: `home-appliances` 3,182 -> 21,821, a 6.90x inflation).
+# ================================================================================================
+
+def _dept(i, **kw):
+    kw.setdefault("multi_store_only", False)
+    kw.setdefault("limit", 20)
+    kw.setdefault("offset", 0)
+    return lambda: route_mod.spine_department_clusters(i, **kw)
+
+
+def test_the_page_COVERS_every_node_the_department_claims():
+    """⭐ NOT descendant closure — renamed from a brief that assumed one. `Cases`(30) is a
+    child of `Phones`(100) in the SAME department, so `total` sums placements over the
+    department's full stamped node set (both `phone` and `case`), landing on 130 — not
+    because a closure walk found `case` below `phone`, but because `case` is simply a member
+    of `phones-wearables` in its own right, exactly like `phone` is.
+
+    RED: in `spine_department_clusters`, replacing the full `{"spine_department": dept_id}`
+    query with `[s["_id"] for s in g["shelves"]]` (maximal shelves only) drops `case` and
+    this fails on 100 != 130."""
+    assert _with_tree(_dept("phones-wearables"))["total"] == 130
+
+
+def test_the_page_offers_NO_include_descendants_SWITCH():
+    """⛔ A department without its subtrees is not a smaller department, it is a wrong one.
+
+    RED: adding `include_descendants: bool = Query(True)` to the route's signature makes
+    this fail."""
+    import inspect
+    assert "include_descendants" not in inspect.signature(
+        route_mod.spine_department_clusters).parameters
+
+
+def test_the_menu_and_the_page_AGREE():
+    """⛔⛔ THE LOAD-BEARING ASSERTION. The claim on a control must equal the rows that
+    control opens, or a department advertises a page it will not show.
+
+    RED: the same maximal-shelves-only mutation as the COVERS test above makes the page
+    answer 100 while the menu still says 130 — this fails on 100 != 130."""
+    menu = {d.id: d.n_clusters for d in _with_tree(route_mod.spine_departments)["results"]}
+    page = _with_tree(_dept("phones-wearables"))
+    assert page["total"] == menu["phones-wearables"]
+
+
+def test_the_page_returns_MAXIMAL_shelves_only():
+    """⛔ `Cases` is inside `Phones` and both are in the department. Offering both renders
+    the same products behind two doors and makes the counts look like they double.
+
+    RED: inverting the filter in `_spine_departments()` from
+    `not (set(d.get("ancestors") or []) & mine)` to `(set(d.get("ancestors") or []) & mine)`
+    flips which node is "maximal" — `case` (whose ancestor `phone` IS in the department)
+    passes instead of `phone` — and this fails on ["case"] != ["phone"]. Verified live: this
+    exact inversion currently passes the whole suite untouched."""
+    got = _with_tree(_dept("phones-wearables"))
+    assert [s.slug for s in got["shelves"]] == ["phone"]
+
+
+# A separate small tree, because `phones-wearables`'s only maximal shelf (`phone`) has NO
+# ancestors — asserting on `zip(s.ancestors, s.ancestor_labels)` there would pass vacuously
+# on an empty zip, which is exactly the "lied by passing on an empty result" failure mode
+# this task calls out. `gizmo` carries a real ancestor outside its own department, with a
+# label that differs from its slug, so the comparison has something to compare.
+_ANCESTOR_TREE = [
+    {**_n("electronics-global", "Electronics Global", clusters=0),
+     "n_clusters_subtree": 0, "spine_slug": None, "spine_department": None,
+     "spine_department_label": None, "spine_level": None, "spine_disposition": "facet"},
+    _s("gizmo", "Gizmos", "gadgets", "Gadgets", 0, 50,
+       parent="electronics-global", ancestors=("electronics-global",)),
+]
+
+
+def test_the_shelves_carry_REAL_ancestor_labels():
+    """⛔ Built through `_browse_node_views`, never `_browse_node_view` — the collective
+    builder resolves the label map, and a route that supplies its own is how /by-node and
+    /by-department shipped raw shop slugs in a shopper's breadcrumb.
+
+    RED: replacing `_browse_node_view`'s `ancestor_labels=[labels.get(a) or a for a in ...]`
+    with `ancestor_labels=node.get("ancestors") or []` (echoing slugs back as labels) makes
+    every pair equal and this fails."""
+    got = _with_tree(_dept("gadgets"), tree=_ANCESTOR_TREE)
+    assert got["shelves"], "no shelves at all — the assertion below would be vacuous"
+    assert any(s.ancestors for s in got["shelves"]), \
+        "no ancestors to compare — the zip below would be vacuous"
+    assert all(a != l for s in got["shelves"]
+               for a, l in zip(s.ancestors, s.ancestor_labels))
+
+
+def test_an_unknown_department_is_a_404_not_an_empty_list():
+    """⛔ An empty list says "this department has nothing"; a 404 says "there is no such
+    department".
+
+    RED: changing the route's `raise HTTPException(status_code=404, ...)` to
+    `status_code=200` (or dropping the raise and returning an empty page) makes this fail."""
+    with pytest.raises(HTTPException) as exc:
+        _with_tree(_dept("no-such-department"))
+    assert exc.value.status_code == 404
+    assert "department" in str(exc.value.detail).lower()
+
+
+def test_a_NODE_SLUG_on_the_department_route_is_a_404():
+    """⛔⛔ A FOURTH SLUG SPACE. `phone` names a browse_nodes shelf, not a spine department;
+    resolving it here would render a plausible wrong page instead of erroring.
+
+    RED: same guard as the test above — `phone` is not a key of `_spine_departments()`'s
+    grouped dict (which is keyed by department id, e.g. `phones-wearables`), so removing or
+    weakening the 404 guard makes this fail exactly as it does there."""
+    with pytest.raises(HTTPException) as exc:
+        _with_tree(_dept("phone"))
+    assert exc.value.status_code == 404
