@@ -265,6 +265,22 @@ export function departmentHref(id: string): string {
   return `/department/${encodeURIComponent(id)}`;
 }
 
+/**
+ * ⛔⛔ THE FOURTH SLUG SPACE, AND THE REASON IT GETS ITS OWN BUILDER. `shelfHref` exists because
+ * a canonical slug handed to `/browse` finds nothing; `departmentHref` exists because six
+ * curated ids also name a shelf. This exists because `home-appliances` names BOTH a designed
+ * department and a curated one, and `/aisle/home-appliances` and `/department/home-appliances`
+ * are genuinely different pages — neither redirects to the other.
+ *
+ * ⛔ Measured 2026-09-04: the 19 designed department ids collide with `browse_nodes` on ZERO
+ * slugs. That safety does NOT extend to the spine's 1,392 nodes, of which 95 collide with
+ * `browse_nodes` and 43 of those are browsable — so a spine node slug must never be passed here.
+ * This builder takes DEPARTMENT ids only.
+ */
+export function aisleHref(id: string): string {
+  return `/aisle/${encodeURIComponent(id)}`;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Icons
 // ---------------------------------------------------------------------------------------------

@@ -657,4 +657,56 @@ export const departmentApi = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// THE DESIGNED DEPARTMENTS — 19 departments over the REDESIGN spine
+// (browse_nodes.spine_department)
+//
+// ⭐ WHY THIS IS A SEPARATE CLIENT FROM `departmentApi`. That client serves the 21 CURATED
+// departments ruled over the canonical tree by a person, reaching ~45% of placed clusters. This
+// serves the REDESIGN spine's 19 DESIGNED departments — a different ruling, reaching 79.9% of
+// placed clusters (81,525 of them). This is the migration target for `departmentApi`, run side
+// by side with it until the cutover.
+//
+// ⛔⛔ A FOURTH SLUG SPACE. `SpineDepartmentView.id` (`phones-wearables`) is a REDESIGN spine
+// department — not a `browse_nodes` slug, not a curated department id, and not a retired-spine
+// slug. Measured 2026-09-04: the 19 designed ids share ZERO slugs with `browse_nodes` and zero
+// with the retired spine, BUT `home-appliances` names both a designed and a curated department
+// and the two pages genuinely differ. Route ids through `aisleHref` only.
+// ---------------------------------------------------------------------------
+
+export interface SpineDepartmentView {
+  id: string;
+  label: string;
+  /** ⛔ Already the summed OWN stock — do not add `n_clusters_subtree` to it. */
+  n_clusters: number;
+  n_shelves: number;
+}
+
+export const spineApi = {
+  /** The 19 designed departments, in EDITORIAL order. ⛔ Do not re-sort by stock. */
+  list: () =>
+    request<{ count: number; n_clusters_total: number; results: SpineDepartmentView[] }>(
+      '/clusters/spine-departments',
+    ),
+
+  /** The products across every shelf a designed department reaches. Closure is server-side. */
+  getClusters: (
+    id: string,
+    options?: { multiStoreOnly?: boolean; limit?: number; offset?: number },
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.multiStoreOnly) params.set('multi_store_only', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.offset) params.set('offset', String(options.offset));
+    return request<{
+      department: SpineDepartmentView;
+      /** the reached nodes, stock-ordered — the page's subcategory grid, no extra call */
+      shelves: BrowseNode[];
+      count: number;
+      total: number;
+      results: ClusterSummary[];
+    }>(`/clusters/by-spine-department/${encodeURIComponent(id)}?${params}`);
+  },
+};
+
 export { ApiError };

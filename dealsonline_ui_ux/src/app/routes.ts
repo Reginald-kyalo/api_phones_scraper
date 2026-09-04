@@ -16,6 +16,7 @@ const ComparisonPage = lazy(() => import("./pages/ComparisonPage"));
 const ClusterPricesPage = lazy(() => import("./pages/ClusterPricesPage"));
 const ShelfPage = lazy(() => import("./pages/ShelfPage"));
 const DepartmentPage = lazy(() => import("./pages/DepartmentPage"));
+const AislePage = lazy(() => import("./pages/AislePage"));
 const StyleGuidePage = lazy(() => import("./pages/StyleGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -38,6 +39,13 @@ export const router = createBrowserRouter([
       // 889. Neither redirects to the other, so `departmentHref` and `shelfHref` are the only
       // two link builders and an id is never passed to the wrong one.
       { path: "department/:id", Component: DepartmentPage },
+      // The REDESIGN spine's 19 DESIGNED departments (browse_nodes.spine_department).
+      // ⛔⛔ A FOURTH SLUG SPACE, PARALLEL TO /department ON PURPOSE. This is the migration
+      // target for the 21 curated departments — 79.9% of placements reachable vs 46.0% — and
+      // the two run side by side only until the cutover. `home-appliances` names a department
+      // in BOTH spaces and the pages differ, so `aisleHref` and `departmentHref` are separate
+      // builders and an id is never passed to the wrong one. Not linked from any nav.
+      { path: "aisle/:id", Component: AislePage },
       { path: "browse/:productType", Component: BrowsePage },
       { path: "product/:productId", Component: ProductDetailsPage },
       // Redirect or alias legacy routes
