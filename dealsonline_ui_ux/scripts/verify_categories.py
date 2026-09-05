@@ -28,6 +28,7 @@ import re
 import sys
 
 from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 UI = os.environ.get("UI_BASE", "http://localhost:5173")
 SHOTS = os.environ.get("SHOT_DIR", "")
@@ -491,7 +492,10 @@ def main() -> int:
         # (measured 2026-09-04), so a mistaken link resolves to a plausible wrong page rather than
         # a clean 404.
         page.goto(f"{UI}/aisle/phones-wearables", wait_until="networkidle")
-        page.wait_for_timeout(2000)
+        try:
+            page.wait_for_selector('main a[href^="/shelf/"]', timeout=10000)
+        except PlaywrightTimeoutError:
+            pass
         aisle_hrefs = page.eval_on_selector_all(
             "main a", "els => els.map(e => e.getAttribute('href'))")
         aisle_shelf_links = [h for h in aisle_hrefs if h and h.startswith("/shelf/")]
