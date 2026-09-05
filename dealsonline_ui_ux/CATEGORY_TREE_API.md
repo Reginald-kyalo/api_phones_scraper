@@ -60,7 +60,7 @@ canonical (`components/common/PageMeta.tsx`), a back-navigation contract
 | `ShelfPage.tsx` | `/shelf`, `/shelf/:slug` | **canonical** (`browseApi`) | ✅ wired, verified against live data |
 | **`DepartmentPage.tsx`** | **`/department/:id`** | **the ruled SPINE** (`departmentApi`) | ✅ **NEW — 21 departments** |
 | `MegaMenu.tsx` | header panel, every page | **the ruled SPINE** | ✅ ⟳ repointed from roots to departments |
-| `CategoryStrip.tsx` | home page | **the ruled SPINE** | ✅ ⟳ repointed; all 21 + an `/shelf` door |
+| `CategoryStrip.tsx` | home page | **the ruled SPINE** | ✅ ✎ **GROUPED — 12 tiles, all 21 reachable** + an `/shelf` door |
 | `MobileCategoryNav.tsx` | sheet, <1024px | **the ruled SPINE** | ✅ ⟳ repointed |
 | `CategoriesPage.tsx` | `/browse` | retired spine (`pricerunnerApi`) | ⛔ deliberately left on the spine |
 | `BrowsePage.tsx` | `/browse/:productType`, `/search`, `/category/:id` | retired spine | ⛔ deliberately left on the spine |
@@ -280,6 +280,7 @@ dropped it to root rank #23 of 530, *less* visible than before.
 { "count": 21, "n_clusters_total": 46127,
   "results": [
     { "id": "laptops", "label": "Laptops",
+      "parent": "Computing",     // ⭐ ✎ NEW — the NAV TILE this sits under, or null to stand alone
       "adopts": ["laptop", "laptop-2eb1af", "laptop-06ffb7"],
       "n_clusters": 1530,        // == `total` from /by-department/laptops, by construction
       "n_stores": 24,            // ⚠️ the WIDEST adopted shelf — a LOWER BOUND, not a union
@@ -308,6 +309,44 @@ departments in one nav and 19 in another is the failure mode. `CATEGORY_ROADMAP.
 the full measurement, the slug-collision hazard from §2, and the recommendation that the ENGINE
 publish the bridge onto `browse_nodes` (as it already does `n_clusters_subtree`) so this API never
 handles a bare spine slug.
+
+⭐ ✎ **`parent` — GROUPING, ADDED 2026-09-05. 21 TILES BECOME 12 AND NONE ARE LOST.** `Laptops`
+and `Computers` sat side by side as peers, as did five separate grocery departments. Each
+department now carries a `parent` naming the navigation tile it sits under, or `null` to stand
+alone. Live: **4 groups + 8 standalone = 12 tiles**.
+
+| tile | departments |
+|---|---|
+| Phones & Wearables | Smartphones, Tablets, Phone accessories, Wearables |
+| Computing | Laptops, Computers |
+| Sound & Vision | Audio, Televisions |
+| Groceries & Essentials | Drinks, Fresh, Bakery, Pantry, Cleaning |
+| *(8 plain links)* | Cameras, Home appliances, Personal care, Kitchen, Stationery, Lighting, Pets, Hardware |
+
+⛔⛔ **GROUPING IS NOT A CUT, AND THAT DISTINCTION IS THE WHOLE POINT.** The old top-12 reached
+twelve departments and lost nine. This reaches **all 21** — thirteen of them one click deeper,
+inside a popover. `verify_categories.py` opens every group and asserts the union of plain and
+popover links equals the set `/departments` published; sabotaging the fold reports **12/21** and
+names the missing nine.
+
+⛔ **PRESENTATION ONLY — IT GROUPS TILES, IT DOES NOT NEST DEPARTMENTS.** There is no
+`/department/Computing`. Every id keeps its own page and its own totals, and deleting the field
+returns the flat 21.
+
+⛔ **THE GROUPS ARE NOT INVENTED.** Each multi-member group is one the DESIGNED spine already
+rules (measured 2026-09-05 via `browse_nodes.spine_department`). Grouping `Home appliances` +
+`Kitchen` + `Lighting` under a "Home & Living" tile would read just as plausibly and would be a
+NEW ruling dressed as a measured one — the designed spine files those three separately, so they
+stand alone. `tests/test_department_spine.py` pins exact membership.
+
+⚠️ **TWO MEMBERSHIPS ARE NOT BACKED BY THE DESIGNED SPINE.** `wearables` reaches no designed
+department at all (its only shelf `smart-watch` has disposition `split`, one of the 17.5%), and
+`tablets` is a genuine disagreement — the retired spine **and** `browse_nodes` both file it under
+computing, the designed spine under phones. Ruled toward the designed spine; one line reverses it.
+
+⚠️ **ONLY THE STRIP GROUPS.** The panel and the mobile sheet still render all 21 flat, and that
+is deliberate: grouping answers a horizontal-scroll problem, and a vertical column of 21 does not
+have it. The demo storefront's own strip made the same call for the same reason.
 
 ⇒ ⭐ **EVERY SURFACE RENDERING DEPARTMENTS MUST KEEP AN "ALL CATEGORIES" → `/shelf` DOOR.**
 Remove it and half the catalogue becomes unbrowsable while every other assertion still passes.
