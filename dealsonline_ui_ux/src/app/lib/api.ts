@@ -613,6 +613,14 @@ export interface Department {
   id: string;
   /** OUR name. `browse_nodes.label` is the engine's join key and is never rewritten upstream. */
   label: string;
+  /**
+   * The navigation tile this department sits under, or null to stand alone.
+   *
+   * ⛔ PRESENTATION ONLY — it groups TILES, it does not nest departments. Every id keeps its
+   * own `/department/:id` page and its own totals, so a grouped tile is a menu of links, never
+   * a page of its own. There is no `/department/Computing`.
+   */
+  parent: string | null;
   /** the `browse_nodes` slugs this department claims, each WITH its subtree */
   adopts: string[];
   /**

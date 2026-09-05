@@ -44,7 +44,8 @@ TREE = [
 ]
 
 SPINE = (
-    Department(id="laptops", label="Laptops", adopts=("laptop", "lap2"), why="two shelves"),
+    Department(id="laptops", label="Laptops", adopts=("laptop", "lap2"),
+               why="two shelves", parent="Computing"),
     Department(id="tablets", label="Tablets", adopts=("tablet",), why="inside computers"),
     Department(id="computers", label="Computers", adopts=("computers",), why="contains tablets"),
     Department(id="ghosts", label="Ghosts", adopts=("ghost", "laptop-gone"), why="reaped"),
@@ -303,3 +304,14 @@ def test_the_adopted_SHELVES_carry_real_ancestor_labels_too():
     assert shelf.ancestors == ["computers"]
     assert shelf.ancestor_labels == ["Computers"], (
         "a department's shelf must not carry a raw shop slug where a label belongs")
+
+
+def test_the_department_view_publishes_its_PARENT():
+    """⛔ A `response_model` FILTERS silently: a field added to the config and not mapped into
+    the view vanishes from the response with no error anywhere, and the strip would render 21
+    flat tiles while every test on the config still passed."""
+    assert "parent" in DepartmentView.model_fields, "parent is missing from DepartmentView"
+    got = _with_spine(lambda: route_mod.departments())
+    by_id = {d.id: d for d in got.results}
+    assert by_id["laptops"].parent == "Computing", (
+        "the ruled parent must reach the client, not just the config")

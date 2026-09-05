@@ -102,6 +102,36 @@ def main() -> int:
               any(h == "/shelf" for h in hrefs), str(hrefs))
         check("no ALL-CAPS shop label leaked into the strip",
               not any(l.isupper() and len(l) > 3 for l in labels), str(labels[:3]))
+
+        # ⛔⛔ GROUPING IS NOT A CUT, AND THIS IS THE ASSERTION THAT KEEPS IT HONEST. The strip
+        # collapses 21 ruled departments into ~12 tiles by `Department.parent`; a bug in that
+        # fold drops departments off the homepage entirely, and EVERY check above still passes
+        # because the tiles that remain are all well-formed. So: open every group and prove the
+        # union of plain links plus popover links is the whole ruled set the API published.
+        api_depts = api_get(page, "/clusters/departments")["results"]
+        ruled = {d["id"] for d in api_depts}
+        check(f"the API published departments to check the strip against ({len(ruled)})",
+              len(ruled) > 0)
+        reached = {h.split("/department/")[1] for h in hrefs if h and h.startswith("/department/")}
+        triggers = strip.locator("button")
+        n_groups = triggers.count()
+        # ⛔ A grouped strip with zero popovers means the fold silently produced plain links for
+        # everything — or rendered nothing openable. Either way the next assertion would pass
+        # vacuously on the plain links alone, so pin the shape before trusting the union.
+        check(f"grouped tiles are openable ({n_groups} groups)",
+              n_groups > 0 or reached == ruled, f"{n_groups} popovers, {len(reached)} plain")
+        for i in range(n_groups):
+            triggers.nth(i).click()
+            page.wait_for_timeout(400)
+            for h in page.eval_on_selector_all(
+                    '[data-radix-popper-content-wrapper] a[href^="/department/"]',
+                    "els => els.map(e => e.getAttribute('href'))"):
+                reached.add(h.split("/department/")[1])
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(200)
+        check(f"every ruled department is still reachable from the strip ({len(reached)}/{len(ruled)})",
+              reached == ruled, str(sorted(ruled - reached)[:5]))
+
         shot(page, "01_home_strip.png")
 
         # ----------------------------------------------------------- the panel

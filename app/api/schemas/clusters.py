@@ -351,6 +351,12 @@ class DepartmentView(BaseModel):
         description="the display name, which is OURS. `browse_nodes.label` is the engine's join "
                     "key and is never rewritten upstream: `OFFICE STATIONERY` presents here as "
                     "`Stationery`, `Smart watches` as `Wearables`.")
+    parent: str | None = Field(
+        None,
+        description="the navigation tile this department sits under, or null to stand alone. "
+                    "⛔ PRESENTATION ONLY — it groups TILES, it does not nest departments: every "
+                    "id keeps its own `/department/:id` page and its own totals. The groups are "
+                    "the ones the DESIGNED spine already rules; see app/api/departments.py.")
     adopts: list[str] = Field(
         default_factory=list,
         description="the `browse_nodes` slugs this department claims, each WITH its subtree")

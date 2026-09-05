@@ -757,6 +757,7 @@ def _department_view(dept: Department, docs: dict) -> DepartmentView:
     return DepartmentView(
         id=dept.id,
         label=dept.label,
+        parent=dept.parent,
         adopts=list(dept.adopts),
         n_clusters=sum(_subtree_of(d, None) for d in live),
         # ⚠️ A LOWER BOUND, and labelled as one. `browse_nodes` publishes a span per node, not

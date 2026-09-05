@@ -68,6 +68,16 @@ class Department:
     label: str
     adopts: tuple[str, ...]
     why: str
+    #: ⭐ The tile this department sits under in a navigation strip, or None to stand alone.
+    #: ⛔⛔ PRESENTATION ONLY — it groups TILES, it does not nest departments. `/department/:id`
+    #: is untouched, every id keeps its own page, and deleting this field returns the flat 21.
+    #: ⛔ THE GROUPS ARE NOT INVENTED HERE. Each multi-member group is one the DESIGNED spine
+    #: already rules, measured 2026-09-05 via `browse_nodes.spine_department`. Grouping
+    #: `Home appliances` + `Kitchen` + `Lighting` under a "Home & Living" tile would read just
+    #: as plausibly and would be a NEW ruling dressed as a measured one — the designed spine
+    #: files those three separately, so they stand alone. `tests/test_department_spine.py`
+    #: pins the exact group membership against that measurement.
+    parent: str | None = None
     ruled_on: str = "2026-08-21"
     ruled_by: str = "user"
     notes: tuple[str, ...] = field(default_factory=tuple)
@@ -83,7 +93,7 @@ class Department:
 # A surface renders all 21 of these, so that entire class of defect is gone rather than fixed.
 DEPARTMENTS: tuple[Department, ...] = (
     Department(
-        id="smartphones", label="Smartphones",
+        id="smartphones", label="Smartphones", parent="Phones & Wearables",
         adopts=("smartphone", "phone-1a5a7a"),
         why="30 stores, the best-attested shelf in the corpus. `phone` folded into `smartphone` "
             "by the engine's R1 (published 2026-08-21).",
@@ -92,7 +102,7 @@ DEPARTMENTS: tuple[Department, ...] = (
                "That is a deliberate 67-cluster overlap with Tablets and Computers.",),
     ),
     Department(
-        id="tablets", label="Tablets",
+        id="tablets", label="Tablets", parent="Phones & Wearables",
         adopts=("tablet",),
         why="31 stores — the WIDEST store span in the whole corpus. Sits at depth 2 under "
             "`computer`, which is why the roots-only list could never see it.",
@@ -100,7 +110,7 @@ DEPARTMENTS: tuple[Department, ...] = (
                "both stand. 720 clusters reachable two ways.",),
     ),
     Department(
-        id="laptops", label="Laptops",
+        id="laptops", label="Laptops", parent="Computing",
         adopts=("laptop", "laptop-2eb1af", "laptop-06ffb7"),
         why="The cross-parent duplicate the audit named: `Laptops` resolves in three places "
             "(655 / 590 / 285). Adoption unifies them without a merge the engine refuted.",
@@ -109,14 +119,14 @@ DEPARTMENTS: tuple[Department, ...] = (
                "POSITION, not label.",),
     ),
     Department(
-        id="computers", label="Computers",
+        id="computers", label="Computers", parent="Computing",
         adopts=("computer", "desktop", "computer-accessory", "networking", "printer-scanner"),
         why="The tight ≥10-store cut split one computing shelf four ways. Folded here, with "
             "`keyboard` and `printer` riding along inside their parents.",
         notes=("Contains all of Tablets (720). Ruled: both stand.",),
     ),
     Department(
-        id="audio", label="Audio",
+        id="audio", label="Audio", parent="Sound & Vision",
         adopts=("audio-music-equipment", "speaker", "earphone-headphone-6836d5"),
         why="The department's real mass is `audio-music-equipment` — 11,646 clusters sitting "
             "DIRECTLY on a two-store node, the largest undifferentiated shelf after "
@@ -125,7 +135,7 @@ DEPARTMENTS: tuple[Department, ...] = (
                "adopts its parent so nothing is stranded above it.",),
     ),
     Department(
-        id="televisions", label="Televisions",
+        id="televisions", label="Televisions", parent="Sound & Vision",
         adopts=("television", "interactive-display"),
         why="`tv` (22 stores) sits under `television` (19) — an inversion already on the "
             "engine's human-ruling list. Adoption takes the child without needing the edge "
@@ -137,13 +147,13 @@ DEPARTMENTS: tuple[Department, ...] = (
         why="19 stores. `camera-accessory-26aa1b` rides along inside it.",
     ),
     Department(
-        id="phone-accessories", label="Phone accessories",
+        id="phone-accessories", label="Phone accessories", parent="Phones & Wearables",
         adopts=("phone-accessory", "charger-7dd0d2"),
         why="11 stores, 3,707 clusters after the engine's R7 moved `phone-tablet-accesorry` "
             "here. `mobile-accessory` and `screen-protector` ride along inside.",
     ),
     Department(
-        id="wearables", label="Wearables",
+        id="wearables", label="Wearables", parent="Phones & Wearables",
         adopts=("smart-watch",),
         why="10 stores. ⛔ Renamed, NOT promoted — promoting `smart-watch` to a root was "
             "measured to cost it 72 of 717 clusters and drop it to root rank #23.",
@@ -160,7 +170,7 @@ DEPARTMENTS: tuple[Department, ...] = (
             "inside `personal-care-1b4b37`.",
     ),
     Department(
-        id="drinks", label="Drinks",
+        id="drinks", label="Drinks", parent="Groceries & Essentials",
         adopts=("beverage", "soft-drink", "wine", "beer"),
         why="One of four grocery departments. ⛔ No external benchmark contributed — PriceRunner "
             "has no grocery department at all, and its keyword bucketing files every food shelf "
@@ -168,7 +178,7 @@ DEPARTMENTS: tuple[Department, ...] = (
         notes=("Contains `Chocolates` (93 clusters), a child of `Beverages`. Named, not patched.",),
     ),
     Department(
-        id="fresh", label="Fresh",
+        id="fresh", label="Fresh", parent="Groceries & Essentials",
         adopts=("frozen-food", "yoghurt", "cheese", "deli", "fruit", "exotic-fruit"),
         why="Groceries are the largest multi-store pool in the corpus and no single shelf "
             "dominates it, so one grocery name would bury it. Four departments, ruled by hand.",
@@ -176,12 +186,12 @@ DEPARTMENTS: tuple[Department, ...] = (
                "already on the engine's `disjoint_label_groups` report.",),
     ),
     Department(
-        id="bakery", label="Bakery",
+        id="bakery", label="Bakery", parent="Groceries & Essentials",
         adopts=("bakery", "cake"),
         why="One of four grocery departments.",
     ),
     Department(
-        id="pantry", label="Pantry",
+        id="pantry", label="Pantry", parent="Groceries & Essentials",
         adopts=("snack", "breakfast-cereal"),
         why="One of four grocery departments.",
     ),
@@ -192,7 +202,7 @@ DEPARTMENTS: tuple[Department, ...] = (
             "department name, and the ruling authorises renaming at zero cost.",
     ),
     Department(
-        id="cleaning", label="Cleaning",
+        id="cleaning", label="Cleaning", parent="Groceries & Essentials",
         adopts=("cleaning", "detergent"),
         why="`SOAPS & DETERGENTS` folded in under a plain noun.",
     ),
