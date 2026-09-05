@@ -97,6 +97,16 @@ def shard_for(cluster_id: str, slug: str, buckets: int) -> str:
 # cleanshelf listings usually carry no image, and are unreliable when they do.
 EXCLUDED_IMAGE_SITES = {"cleanshelf"}
 
+# ⭐ PREFERRED IMAGE SOURCES. Measured 2026-09-05 over 20,000 live clusters: carrefour
+# carries a usable image on 5,620 of 5,901 listings (95%) and greenspoon on 953 of 953
+# (100%) — the two cleanest photo sets in the corpus, shot against white and consistently
+# framed, where several other retailers ship cropped or watermarked shelf photos.
+#
+# ⛔ BOTH GREENSPOON SPELLINGS. The corpus carries `greenspoon` AND `greenspoon.co.ke` as
+# distinct `site` values; matching one silently gives you half the preference and looks
+# like it works.
+PREFERRED_IMAGE_SITES = {"carrefour", "greenspoon", "greenspoon.co.ke"}
+
 # A store's own "no photo" asset is worse than no image at all: the UI renders a
 # neutral mark for a missing image, but a grey vector served from a retailer CDN
 # looks like a product photo that failed to load.
@@ -163,6 +173,18 @@ SUMMARY_FIELDS = [
     "saving_pct",
     "condition_basis", "data_warning", "comparison_grade", "is_multi_store",
     "off_category", "mvp_generated", "mvp_n_merged", "image",
+    # ⛔⛔ THE HONEST SHOP COUNT, AND A CARD MUST RENDER THIS ONE. `n_stores` is the
+    # engine's count of stores that CARRY the product; `n_stores_priced` counts those
+    # that actually quote a price, which is what a comparison page can show. Measured
+    # 2026-09-05 over 14,277 captured details: 345 (2.4%) claim more stores than they
+    # price — `HP EliteBook 830 G5` says 9 and prices 6. A card reading the first number
+    # advertises a comparison the page will not show, which is the defect
+    # `scripts/verify_prices.py` exists to prevent on the live surface.
+    #
+    # ⛔ ADDITIVE — `n_stores` keeps its meaning and its consumers. The demo must not
+    # overwrite an engine field; it publishes the honest one beside it, exactly as
+    # `/api/clusters/{id}` does (`n_stores_priced`, routes/clusters.py).
+    "n_stores_priced",
 ]
 
 
@@ -178,19 +200,30 @@ def pick_image(cluster: dict, device_images: dict) -> str | None:
     resolve through compiled_products instead. Selection is seeded on cluster_id
     so a rebuild never reshuffles the page.
     """
-    candidates = []
+    candidates: list[str] = []
+    preferred: list[str] = []
     for member in cluster.get("members") or []:
-        if (member.get("site") or "").lower() in EXCLUDED_IMAGE_SITES:
+        site = (member.get("site") or "").lower()
+        if site in EXCLUDED_IMAGE_SITES:
             continue
         if _usable(member.get("image")):
-            candidates.append(member["image"].strip())
+            url = member["image"].strip()
         elif _usable(device_images.get(member.get("product_id"))):
-            candidates.append(device_images[member["product_id"]].strip())
-    if not candidates:
+            url = device_images[member["product_id"]].strip()
+        else:
+            continue
+        (preferred if site in PREFERRED_IMAGE_SITES else candidates).append(url)
+
+    # ⭐ PREFERENCE FIRST, STABILITY WITHIN IT. A preferred source wins outright; the
+    # seeded pick then runs inside the winning tier, so a rebuild still never reshuffles
+    # a page (the property the seed exists for) while the shown photo comes from the
+    # cleanest set available for that product.
+    pool = preferred or candidates
+    if not pool:
         return None
-    candidates.sort()
+    pool = sorted(set(pool))
     seed = hashlib.sha256(str(cluster.get("cluster_id", "")).encode()).digest()
-    return candidates[int.from_bytes(seed[:8], "big") % len(candidates)]
+    return pool[int.from_bytes(seed[:8], "big") % len(pool)]
 
 
 def build_history(cluster: dict, histories: dict) -> list | None:
@@ -254,6 +287,19 @@ def image_candidates(cluster: dict, device_images: dict) -> list:
     if chosen and chosen in seen:
         seen.remove(chosen)
     return ([chosen] if chosen else []) + seen[: MAX_IMAGE_CANDIDATES - 1]
+
+
+def priced_store_count(cluster: dict) -> int:
+    """Stores that actually quote a price — the number a comparison card may claim.
+
+    ⛔ NOT `len(stores)` and NOT `n_stores`: both count stores that carry the product,
+    including ones with no usable price, so a card built from either promises rows the
+    page cannot render.
+    """
+    by_store = cluster.get("best_by_store")
+    if not isinstance(by_store, dict):
+        return 0
+    return sum(1 for v in by_store.values() if v)
 
 
 def _summary(view: dict) -> dict:
@@ -382,6 +428,10 @@ def main() -> None:
         view = _cluster_view(doc)
         view["image"] = pick_image(doc, device_images)
         view["image_candidates"] = image_candidates(doc, device_images)
+        # ⛔ From the SOURCE doc, not from `view`: `_cluster_view` reshapes `best_by_store`
+        # into the API's rendering form, and counting the reshaped copy would couple this
+        # number to a projection that exists for the page rather than for the truth.
+        view["n_stores_priced"] = priced_store_count(doc)
         view["price_history"] = build_history(doc, histories)
         # Demoted, never dropped: the row stays browsable and its detail page still
         # resolves. Category slugs come straight from the store's own category page,

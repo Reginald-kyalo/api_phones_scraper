@@ -401,6 +401,15 @@ export interface ClusterConfig<Store = number> {
   best_price: number | null;
   cheapest_store: string | null;
   n_stores: number | null;
+  /**
+   * ⛔⛔ THE NUMBER A CARD MUST RENDER. `n_stores` counts stores that CARRY the product;
+   * this counts the ones that actually quote a price — what a comparison page can show.
+   * Measured 2026-09-05: `Xiaomi Redmi 9` is in 3 stores and priced by 1, and 48.6% of
+   * multi-store clusters over-claim the same way.
+   * ⚠️ Optional: fixtures captured before 2026-09-05 do not carry it, so read it with a
+   * fallback to `n_stores` rather than assuming it is present.
+   */
+  n_stores_priced?: number | null;
   spread_pct: number | null;
   by_store: Record<string, Store>;
 }
@@ -442,6 +451,15 @@ export interface ClusterView<Store = number> {
   canonical_name: string | null;
   n_listings: number | null;
   n_stores: number | null;
+  /**
+   * ⛔⛔ THE NUMBER A CARD MUST RENDER. `n_stores` counts stores that CARRY the product;
+   * this counts the ones that actually quote a price — what a comparison page can show.
+   * Measured 2026-09-05: `Xiaomi Redmi 9` is in 3 stores and priced by 1, and 48.6% of
+   * multi-store clusters over-claim the same way.
+   * ⚠️ Optional: fixtures captured before 2026-09-05 do not carry it, so read it with a
+   * fallback to `n_stores` rather than assuming it is present.
+   */
+  n_stores_priced?: number | null;
   stores: string[] | null;
   is_multi_store: boolean;
   best_price: number | null;

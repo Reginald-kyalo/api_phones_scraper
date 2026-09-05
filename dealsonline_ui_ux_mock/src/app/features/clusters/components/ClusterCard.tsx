@@ -27,7 +27,12 @@ export const PRODUCT_GRID =
 export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   const name = cluster.display_name ?? cluster.title;
   const saving = savingPct(cluster.like_for_like_spread_pct);
-  const stores = cluster.n_stores ?? 0;
+  // ⛔ THE PRICED COUNT, NOT `n_stores`. `n_stores` counts stores that CARRY the
+  // product; this card links to a comparison page that can only render stores with a
+  // PRICE. `Xiaomi Redmi 9` is in 3 stores and priced by 1 — a "3 shops" card opening
+  // on one price is the shop-count defect `verify_prices.py` exists to prevent.
+  // ⚠️ Falls back to `n_stores` so a fixture captured before this field still renders.
+  const stores = cluster.n_stores_priced ?? cluster.n_stores ?? 0;
   const likelyUsed = cluster.condition_basis === 'likely_used';
 
   return (
