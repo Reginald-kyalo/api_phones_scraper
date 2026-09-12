@@ -1,6 +1,7 @@
 import { Check, Package } from 'lucide-react';
 import SearchBar from '../../features/search/components/SearchBar';
 import { Reveal } from '../common/Reveal';
+import { ImageWithFallback } from '../common/ImageWithFallback';
 import type { ClusterDetail, ClusterSummary } from '../../lib/api';
 import { formatPrice, savingPct } from '../../lib/format';
 
@@ -207,11 +208,11 @@ function PhoneShowcase({
       <div className="absolute -left-12 top-12 w-32 bg-card rounded-xl shadow-xl ultra-border p-2.5 z-0">
         <div className="aspect-square bg-surface-alt rounded-lg overflow-hidden mb-2">
           {aside?.image ? (
-            <img
+            <ImageWithFallback
               src={aside.image}
               alt=""
               className="w-full h-full object-contain p-1.5"
-              loading="lazy"
+              fallback={<Package className="w-5 h-5 m-auto text-muted-foreground/40" aria-hidden="true" />}
             />
           ) : (
             <Package className="w-5 h-5 m-auto text-muted-foreground/40" aria-hidden="true" />
@@ -235,11 +236,11 @@ function PhoneShowcase({
           <div className="px-4 pt-2 flex flex-col flex-1 min-h-0">
             <div className="aspect-square w-20 mx-auto bg-surface-alt rounded-xl overflow-hidden mb-2.5 flex-shrink-0">
               {showcase?.image ? (
-                <img
+                <ImageWithFallback
                   src={showcase.image}
                   alt=""
                   className="w-full h-full object-contain p-2"
-                  loading="lazy"
+                  fallback={<Package className="w-6 h-6 m-auto text-muted-foreground/40" aria-hidden="true" />}
                 />
               ) : (
                 <Package className="w-6 h-6 m-auto text-muted-foreground/40" aria-hidden="true" />
@@ -321,11 +322,11 @@ function MobileOffers({
       <div className="flex items-center gap-3 mb-3">
         <div className="w-12 h-12 rounded-lg bg-surface-alt overflow-hidden flex-shrink-0 flex items-center justify-center">
           {showcase?.image ? (
-            <img
+            <ImageWithFallback
               src={showcase.image}
               alt=""
               className="w-full h-full object-contain p-1.5"
-              loading="lazy"
+              fallback={<Package className="w-5 h-5 text-muted-foreground/40" aria-hidden="true" />}
             />
           ) : (
             <Package className="w-5 h-5 text-muted-foreground/40" aria-hidden="true" />

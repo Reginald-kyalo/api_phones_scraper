@@ -22,6 +22,22 @@ import {
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
+/**
+ * Retailer CDNs can hotlink-block at view time even when the capture-time URL
+ * was healthy. The hero is the first thing a shopper sees, so it must not be
+ * chosen from a host that consistently refuses browser requests.
+ */
+const BLOCKED_HERO_IMAGE_HOSTS = new Set(['pictures-kenya.jijistatic.com']);
+
+function heroImageUsable(image?: string | null): boolean {
+  if (!image) return false;
+  try {
+    return !BLOCKED_HERO_IMAGE_HOSTS.has(new URL(image).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Teal down-arrow discount, matching the production DealCard badge. */
 function DiscountBadge({ percent, className = '' }: { percent: number; className?: string }) {
   if (percent <= 0) return null;
@@ -314,7 +330,7 @@ export default function HomePage() {
       try {
         const [m, d] = await Promise.all([
           clustersApi.getManifest(),
-          clustersApi.getDeals({ limit: 12 }),
+          clustersApi.getDeals({ limit: 40 }),
         ]);
         if (cancelled) return;
         setManifest(m);
@@ -327,22 +343,25 @@ export default function HomePage() {
         // >=6 stores fills the phone's offer list, so the clipped last row reads
         // as "more below" rather than as a rendering fault. Relaxed in steps
         // rather than fixed, so a thin capture still yields a hero.
-        const showcaseworthy = (c: ClusterSummary) =>
-          Boolean(c.image) && (c.n_stores ?? 0) >= 6 && !c.data_warning;
-        const acceptable = (c: ClusterSummary) =>
-          Boolean(c.image) && (c.n_stores ?? 0) >= 3 && !c.data_warning;
-        const device = (c: ClusterSummary) =>
-          ['mobile-phones', 'laptops', 'tablets'].includes(c.category ?? '');
-        const hero =
-          d.results.find((c) => showcaseworthy(c) && device(c)) ??
-          d.results.find(showcaseworthy) ??
-          d.results.find((c) => acceptable(c) && device(c)) ??
-          d.results.find(acceptable) ??
-          d.results.find((c) => c.image) ??
-          d.results[0] ??
-          null;
         // The hero needs per-store prices, which only the detail view carries —
         // a listing row would leave the offer list empty.
+        const showcaseworthy = (c: ClusterSummary) =>
+          heroImageUsable(c.image) && (c.n_stores ?? 0) >= 6 && !c.data_warning;
+        const acceptable = (c: ClusterSummary) =>
+          heroImageUsable(c.image) && (c.n_stores ?? 0) >= 3 && !c.data_warning;
+        const device = (c: ClusterSummary) =>
+          ['mobile-phones', 'laptops', 'tablets'].includes(c.category ?? '');
+        const phone = (c: ClusterSummary) => c.category === 'mobile-phones';
+        const hero =
+          d.results.find((c) => showcaseworthy(c) && phone(c)) ??
+          d.results.find((c) => showcaseworthy(c) && device(c)) ??
+          d.results.find(showcaseworthy) ??
+          d.results.find((c) => acceptable(c) && phone(c)) ??
+          d.results.find((c) => acceptable(c) && device(c)) ??
+          d.results.find(acceptable) ??
+          d.results.find((c) => heroImageUsable(c.image)) ??
+          d.results[0] ??
+          null;
         if (hero) {
           clustersApi
             .getDetail(hero.cluster_id)
@@ -351,7 +370,10 @@ export default function HomePage() {
         }
         setAside(
           d.results.find(
-            (c) => c.image && c.cluster_id !== hero?.cluster_id && (c.n_stores ?? 0) >= 2,
+            (c) =>
+              heroImageUsable(c.image) &&
+              c.cluster_id !== hero?.cluster_id &&
+              (c.n_stores ?? 0) >= 2,
           ) ?? null,
         );
 
@@ -371,7 +393,7 @@ export default function HomePage() {
 
   const categoryCount = (slug: string) =>
     manifest?.categories.find((c) => c.slug === slug)?.count ?? 0;
-  const featuredDeal = deals.find((c) => c.image) ?? deals[0] ?? null;
+  const featuredDeal = deals.find((c) => heroImageUsable(c.image)) ?? deals[0] ?? null;
 
   return (
     <div className="bg-white">
