@@ -345,18 +345,22 @@ export default function HomePage() {
         // rather than fixed, so a thin capture still yields a hero.
         // The hero needs per-store prices, which only the detail view carries —
         // a listing row would leave the offer list empty.
+        const pricedOffers = (c: ClusterSummary) => c.n_stores_priced ?? c.n_stores ?? 0;
         const showcaseworthy = (c: ClusterSummary) =>
-          heroImageUsable(c.image) && (c.n_stores ?? 0) >= 6 && !c.data_warning;
+          Boolean(c.image) &&
+          (c.n_stores ?? 0) >= 6 &&
+          pricedOffers(c) >= 3 &&
+          !c.data_warning;
         const acceptable = (c: ClusterSummary) =>
-          heroImageUsable(c.image) && (c.n_stores ?? 0) >= 3 && !c.data_warning;
+          Boolean(c.image) &&
+          pricedOffers(c) >= 2 &&
+          (c.n_stores ?? 0) >= 3 &&
+          !c.data_warning;
         const device = (c: ClusterSummary) =>
           ['mobile-phones', 'laptops', 'tablets'].includes(c.category ?? '');
-        const phone = (c: ClusterSummary) => c.category === 'mobile-phones';
         const hero =
-          d.results.find((c) => showcaseworthy(c) && phone(c)) ??
           d.results.find((c) => showcaseworthy(c) && device(c)) ??
           d.results.find(showcaseworthy) ??
-          d.results.find((c) => acceptable(c) && phone(c)) ??
           d.results.find((c) => acceptable(c) && device(c)) ??
           d.results.find(acceptable) ??
           d.results.find((c) => heroImageUsable(c.image)) ??
@@ -365,7 +369,13 @@ export default function HomePage() {
         if (hero) {
           clustersApi
             .getDetail(hero.cluster_id)
-            .then((full) => { if (!cancelled) setShowcase(full); })
+            .then((full) => {
+              if (cancelled) return;
+              const usableImage =
+                full.image_candidates?.find((image) => heroImageUsable(image)) ??
+                (heroImageUsable(full.image) ? full.image : null);
+              setShowcase(usableImage ? { ...full, image: usableImage } : full);
+            })
             .catch(() => {});
         }
         setAside(
