@@ -1,29 +1,20 @@
-import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { clustersApi } from '../lib/api';
-import type { DemoManifest } from '../lib/demoTypes';
 import { spineDepartmentById } from '../data/spineDepartments';
-import { categoryLabel } from './CatalogueCategoriesPage';
-import { Loader2, ChevronRight, FolderTree, PackageOpen } from 'lucide-react';
+import { LIVE_SPINE_SHELVES, spineShelfDisplay } from '../data/liveSpineShelves';
+import { ChevronRight } from 'lucide-react';
 
 /**
  * The static-demo equivalent of production's `/aisle/:id`.
  *
  * A design department is a spine id, not a captured `/browse` category. This
  * page exists so the 19-department nav has a real destination in the demo. It
- * shows which captured categories belong to the department when any were
- * shipped, and says so honestly when this demo did not capture one.
+ * shows the same production leaf shelves the API publishes for the department,
+ * so the category carousel opens a page with further leaves rather than the
+ * old captured-category fallback.
  */
 export default function DemoAislePage() {
   const { id } = useParams<{ id: string }>();
   const department = spineDepartmentById(id);
-  const [manifest, setManifest] = useState<DemoManifest | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    clustersApi.getManifest().then((m) => { if (!cancelled) setManifest(m); });
-    return () => { cancelled = true; };
-  }, []);
 
   if (!department) {
     return (
@@ -42,7 +33,7 @@ export default function DemoAislePage() {
   }
 
   const { Icon } = department;
-  const captured = manifest?.categories.filter((c) => department.capturedSlugs.includes(c.slug)) ?? [];
+  const shelves = LIVE_SPINE_SHELVES[department.id] ?? [];
 
   return (
     <div className="bg-white min-h-screen">
@@ -68,50 +59,27 @@ export default function DemoAislePage() {
           </div>
         </div>
 
-        {!manifest ? (
-          <div className="py-12 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" aria-label="Loading department" />
-          </div>
-        ) : captured.length > 0 ? (
-          <>
-            <h2 className="mb-3 text-lg font-semibold text-foreground">Captured categories</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {captured.map((c) => (
-                <Link
-                  key={c.slug}
-                  to={`/browse/${c.slug}`}
-                  className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40"
-                >
-                  <span className="font-semibold text-foreground">{categoryLabel(c.slug)}</span>
-                  <span className="price-num mt-2 text-2xl font-bold text-foreground">
-                    {c.count.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {c.multi_store.toLocaleString()} compared across stores
-                  </span>
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">
-                    Browse <ChevronRight className="h-3 w-3" aria-hidden="true" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="py-16 text-center">
-            <FolderTree className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden="true" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              This department is part of the production taxonomy, but the static demo did not
-              capture any products under it.
-            </p>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">
+          {department.label} shelves
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {shelves.map((shelf) => (
             <Link
-              to="/browse"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-teal-deep hover:text-teal"
+              key={shelf.slug}
+              to={`/shelf/${shelf.slug}`}
+              className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40"
             >
-              <PackageOpen className="h-4 w-4" aria-hidden="true" />
-              Browse the captured demo categories
+              <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
+              <span className="price-num mt-2 text-2xl font-bold text-foreground">
+                {shelf.count.toLocaleString()}
+              </span>
+              <span className="text-xs text-muted-foreground">products in this shelf</span>
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">
+                Browse <ChevronRight className="h-3 w-3" aria-hidden="true" />
+              </span>
             </Link>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );
