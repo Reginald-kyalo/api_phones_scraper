@@ -20,6 +20,8 @@
 # serves a bare contentless 404 for every deep link.
 
 /browse/*       /   200
+/aisle/*        /   200
+/shelf/*        /   200
 /prices/*       /   200
 /product/*      /   200
 /category/*     /   200

@@ -1,5 +1,5 @@
 /**
- * The category panel — the site's entry into the storefront's 21 ruled DEPARTMENTS.
+ * The category panel — the site's entry into the storefront's 19 DESIGNED departments.
  *
  * ⛔⛔ THIS COMPONENT WAS ONCE MOUNTED NOWHERE. It existed, read the retired 424-node PriceRunner
  * spine, and no page imported it — while the header's "All categories" button quietly
@@ -7,29 +7,24 @@
  * nothing navigates, one layer up: it looks like a working surface in the file listing and is
  * unreachable in the product. It is mounted by `Header.tsx`, which is the point of it.
  *
- * ⭐⭐ IT NOW SHOWS DEPARTMENTS, NOT ROOTS, AND THERE IS NO TOP-N CUT LEFT. It used to take the
- * top 12 of ~529 browsable roots — shop vocabulary, where `Laptops` appears three times and 75%
- * of the roots are served by one shop. The 21 departments are a human ruling served from API
- * config, so the panel renders all of them and cannot cut the list wrongly.
+ * ⭐⭐ IT SHOWS THE 19 REDESIGN DEPARTMENTS, reaching 79.9% of placed clusters (81,525 clusters),
+ * repointed from the earlier 21 curated departments (46.0%).
  *
- * ⛔ THE PANEL IS THE ENTRY; THE DEPARTMENT PAGE IS THE DESTINATION. Every column link and every
- * "show all" lands on `/department/:id` or `/shelf/:slug`, both of which own a breadcrumb, a
+ * ⛔ THE PANEL IS THE ENTRY; THE AISLE PAGE IS THE DESTINATION. Every column link and every
+ * "show all" lands on `/aisle/:id` or `/shelf/:slug`, both of which own a breadcrumb, a
  * linkable URL and pagination that a flyout cannot.
  *
- * ⛔⛔ AND THE "ALL CATEGORIES" DOOR IS LOAD-BEARING, NOT DECORATION. The spine reaches ~45% of
- * placed clusters by design — the remaining 55%, chiefly `phone-tablet`'s 19,286
- * undifferentiated clusters, are reachable ONLY through `/shelf`. Removing that link makes half
- * the catalogue unbrowsable.
+ * ⛔⛔ AND THE "ALL CATEGORIES" DOOR IS LOAD-BEARING, NOT DECORATION. The redesign spine reaches
+ * 79.9% of placed clusters; the remaining ~20% are reachable through `/shelf`. Removing that link
+ * makes the rest of the catalogue unbrowsable.
  *
- * ⛔ NEVER PASS A DEPARTMENT ID TO `shelfHref`, OR A NODE SLUG TO `departmentHref`. Six ids also
- * name a node (`audio`, `bakery`, `cleaning`, `fresh`, `hardware`, `pantry`) and the pages
- * differ, so the mistake resolves to a plausible wrong page instead of erroring.
+ * ⛔ NEVER PASS A DEPARTMENT ID TO `shelfHref`, OR A NODE SLUG TO `aisleHref`.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, Loader2, X } from 'lucide-react';
 import {
-  categoryIcon, categoryLabel, departmentHref, departmentIcon, departmentShelves, formatCount,
+  aisleHref, categoryIcon, categoryLabel, departmentIcon, departmentShelves, formatCount,
   shelfCount, shelfHref,
 } from '../../lib/categories';
 import { useDepartments, useShelves } from '../../features/categories/useCategoryTree';
@@ -70,8 +65,9 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
   const active = departments.find((d) => d.id === activeId) ?? null;
   // ⭐ Drop an adopted shelf that only restates the department name — see `foldsIntoParent`.
   // ⛔ `departmentShelves`, NOT `foldChildren` — a department ADOPTS roots and is named after
-  // the principal one, so restatement is normal there and `foldsIntoParent` skips it. See its
-  // docstring: 46 adopted shelves across 21 departments, `foldChildren` removed one.
+  // the principal one, so restatement is normal there and `foldsIntoParent` skips it. It also
+  // drops duplicate-LABEL groups whole rather than collapsing to the biggest tile. See its
+  // docstring for the measurement (46 adopted shelves across the 21 curated departments).
   const shownShelves = departmentShelves(shelves, active?.label ?? null);
 
   return (
@@ -121,7 +117,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                       return (
                         <li key={d.id}>
                           <Link
-                            to={departmentHref(d.id)}
+                            to={aisleHref(d.id)}
                             onMouseEnter={() => setActiveId(d.id)}
                             onFocus={() => setActiveId(d.id)}
                             onClick={onClose}
@@ -170,7 +166,8 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                           return (
                             <li key={s.slug}>
                               {/* ⛔ A SHELF, so `shelfHref` — these are `browse_nodes` slugs and
-                                  `/department/{slug}` would 404 or, worse, resolve elsewhere. */}
+                                  `/aisle/{slug}` would 404 or, worse, resolve elsewhere (95
+                                  spine ids also name a browsable shelf). */}
                               <Link
                                 to={shelfHref(s.slug)}
                                 onClick={onClose}
@@ -203,14 +200,14 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
 
                     <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-4">
                       <Link
-                        to={departmentHref(active.id)}
+                        to={aisleHref(active.id)}
                         onClick={onClose}
                         className="text-sm font-medium text-link hover:text-link-hover transition-colors"
                       >
                         Show all {active.label} ({active.n_clusters.toLocaleString()}) →
                       </Link>
-                      {/* ⛔⛔ LOAD-BEARING. The 21 departments reach ~45% of the catalogue; this
-                          is the ONLY route to the other 55%. Do not remove it. */}
+                      {/* ⛔⛔ LOAD-BEARING. The 19 redesign departments reach ~79.9% of the
+                          catalogue; this is the ONLY route to the remaining ~20%. */}
                       <Link
                         to="/shelf"
                         onClick={onClose}

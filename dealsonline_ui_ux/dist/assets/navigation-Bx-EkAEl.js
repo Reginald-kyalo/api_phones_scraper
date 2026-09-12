@@ -1,0 +1,1 @@
+import{bA as t}from"./index-Cz38P8XH.js";function s(n){return r()??n}function r(){var o;return((o=t().state)==null?void 0:o.from)??null}function u(n){const{pathname:o,search:e}=t();return{href:`${o}${e}`,label:n}}export{r as a,s as b,u};

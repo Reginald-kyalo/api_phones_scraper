@@ -7,6 +7,7 @@
  * served from committed fixtures instead — see `demoSource.ts`.
  */
 import * as demoSource from './demoSource';
+import type { DemoBrowseNode, DemoShelfTreeResponse } from './demoTypes';
 
 const BASE = '/api';
 
@@ -606,6 +607,30 @@ export const clustersApi = {
 
   /** One page of a category listing (0-based); the catalogue is too big to load whole. */
   getCategoryPage: (slug: string, page = 0) => demoSource.getCategoryPage(slug, page),
+};
+
+// ---------------------------------------------------------------------------
+// The canonical category tree, served statically for the demo's shelf pages.
+// The live build calls /api/clusters/browse-tree and /api/clusters/by-node;
+// this build reads the captured `public/demo/shelves/` files instead.
+// ---------------------------------------------------------------------------
+
+export type BrowseNode = DemoBrowseNode;
+
+export const browseApi = {
+  /** One level of the tree. The demo only captures leaf shelves, so a root listing is empty. */
+  getTree: (parent?: string | null): Promise<DemoShelfTreeResponse> => {
+    if (!parent) {
+      return Promise.resolve({ parent: null, count: 0, results: [] });
+    }
+    return demoSource.getShelfTree(parent);
+  },
+
+  /** The products on one shelf AND everything below it. */
+  getClusters: (
+    slug: string,
+    options?: { multiStoreOnly?: boolean; limit?: number; offset?: number },
+  ) => demoSource.getShelfClusters(slug, options ?? {}),
 };
 
 export { ApiError };

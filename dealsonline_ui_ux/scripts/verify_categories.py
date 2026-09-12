@@ -57,11 +57,10 @@ def api_get(page, path: str):
     """GET `{UI}/api{path}` through the page's own request context — the same dev-proxied
     route the app itself calls (`vite.config.ts` forwards `/api` to :10000).
 
-    ⛔ NEW IN THIS FILE, AND ONLY FOR WHAT NO RENDERED MENU CAN ANSWER. `AislePage` (the 19
-    designed departments) is deliberately not linked from any nav — see its own docstring — so
-    there is no rendered panel to read a claimed count off, the way the curated-department check
-    below reads `panel.locator(...).inner_text()`. The claim can only be read from the endpoint
-    a menu would read if one existed.
+    ⛔ NEW IN THIS FILE, AND ONLY FOR WHAT NO RENDERED MENU CAN ANSWER. The panel now DOES render
+    the 19 designed departments, so most claims are read off it. This helper covers the rest:
+    the completeness set for all 19, and the per-department page total that no single rendered
+    column can show at once.
     """
     r = page.request.get(f"{UI}/api{path}")
     assert r.ok, f"GET {path} -> {r.status} {r.status_text}"
@@ -90,47 +89,30 @@ def main() -> int:
         # ⛔ THE DISJOINT-SLUG-SPACE TRAP. `/browse` serves the retired 424-node PriceRunner spine
         # and shares ZERO slugs with this tree, so a canonical slug sent there resolves to
         # nothing at all — a dead link that looks like a working one.
-        check("every strip tile links to /department or the /shelf door, none to /browse",
-              all(h and (h.startswith("/department/") or h == "/shelf") for h in hrefs),
+        check("every strip tile links to /aisle or the /shelf door, none to /browse",
+              all(h and (h.startswith("/aisle/") or h == "/shelf") for h in hrefs),
               str(hrefs[:3]))
-        # ⛔⛔ LOAD-BEARING, AND THE ONLY REASON THE SPINE IS SAFE. The 21 ruled departments
-        # reach ~45% of placed clusters; the other 55% — chiefly `phone-tablet`'s 19,286
-        # undifferentiated ones — are reachable ONLY through /shelf. A surface that renders
-        # departments and drops this door makes half the catalogue unbrowsable, and every other
+        # ⛔⛔ LOAD-BEARING, AND THE ONLY REASON THE SPINE IS SAFE. The 19 redesign departments
+        # reach ~79.9% of placed clusters; the remaining ~20% — nodes not yet stamped to any
+        # spine department — are reachable ONLY through /shelf. A surface that renders departments
+        # and drops this door makes that tail of the catalogue unbrowsable, and every other
         # assertion here would still pass.
         check("the strip keeps an 'all categories' door to /shelf",
               any(h == "/shelf" for h in hrefs), str(hrefs))
         check("no ALL-CAPS shop label leaked into the strip",
               not any(l.isupper() and len(l) > 3 for l in labels), str(labels[:3]))
 
-        # ⛔⛔ GROUPING IS NOT A CUT, AND THIS IS THE ASSERTION THAT KEEPS IT HONEST. The strip
-        # collapses 21 ruled departments into ~12 tiles by `Department.parent`; a bug in that
-        # fold drops departments off the homepage entirely, and EVERY check above still passes
-        # because the tiles that remain are all well-formed. So: open every group and prove the
-        # union of plain links plus popover links is the whole ruled set the API published.
-        api_depts = api_get(page, "/clusters/departments")["results"]
-        ruled = {d["id"] for d in api_depts}
-        check(f"the API published departments to check the strip against ({len(ruled)})",
+        # ⛔⛔ COMPLETENESS — ALL 19 REDESIGN DEPARTMENTS MUST BE REACHABLE. The strip now
+        # renders all 19 as plain links (no popovers — SpineDepartmentView has no `parent` field).
+        # Fetch the spine API to get the authoritative set and confirm every id has a link.
+        api_spine = api_get(page, "/clusters/spine-departments")["results"]
+        ruled = {d["id"] for d in api_spine}
+        check(f"the API published spine departments to check the strip against ({len(ruled)})",
               len(ruled) > 0)
-        reached = {h.split("/department/")[1] for h in hrefs if h and h.startswith("/department/")}
-        triggers = strip.locator("button")
-        n_groups = triggers.count()
-        # ⛔ A grouped strip with zero popovers means the fold silently produced plain links for
-        # everything — or rendered nothing openable. Either way the next assertion would pass
-        # vacuously on the plain links alone, so pin the shape before trusting the union.
-        check(f"grouped tiles are openable ({n_groups} groups)",
-              n_groups > 0 or reached == ruled, f"{n_groups} popovers, {len(reached)} plain")
-        for i in range(n_groups):
-            triggers.nth(i).click()
-            page.wait_for_timeout(400)
-            for h in page.eval_on_selector_all(
-                    '[data-radix-popper-content-wrapper] a[href^="/department/"]',
-                    "els => els.map(e => e.getAttribute('href'))"):
-                reached.add(h.split("/department/")[1])
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(200)
-        check(f"every ruled department is still reachable from the strip ({len(reached)}/{len(ruled)})",
+        reached = {h.split("/aisle/")[1] for h in hrefs if h and h.startswith("/aisle/")}
+        check(f"every spine department is still reachable from the strip ({len(reached)}/{len(ruled)})",
               reached == ruled, str(sorted(ruled - reached)[:5]))
+
 
         shot(page, "01_home_strip.png")
 
@@ -163,10 +145,11 @@ def main() -> int:
         # silently tests the wrong string. Strip the trailing count instead — including the
         # `18.4k` form `formatCount` produces above 10,000.
         names = [re.sub(r"\s+[\d.,]+k?$", "", t).strip() for t in dept_txt]
-        check("the panel shows the RULED departments, not shop vocabulary",
-              {"Smartphones", "Laptops", "Audio", "Kitchen"} <= set(names), str(names))
+        check("the panel shows the DESIGNED departments, not shop vocabulary",
+              {"Phones & Wearables", "Computing & Networking", "Groceries & Everyday Essentials"}
+              <= set(names), str(names))
         # ⛔ The audit's load-bearing defect: `Laptops` resolves in three places in the tree and
-        # `Phones` in three. A department spine exists to present each concept ONCE.
+        # `Phones` in three. A department layer exists to present each concept ONCE.
         check("no department name appears twice",
               len(names) == len(set(names)), str([n for n in names if names.count(n) > 1]))
         check("no CPU spec facet is offered as a department",
@@ -177,27 +160,30 @@ def main() -> int:
         check("no shouted label in the panel",
               not any(re.match(r"^[A-Z][A-Z &]{4,}$", n) for n in names), str(names))
         dhrefs = [depts.nth(i).get_attribute("href") for i in range(dn)]
-        check("every department links to /department, never /shelf or /browse",
-              all(h and h.startswith("/department/") for h in dhrefs), str(dhrefs[:3]))
+        check("every department links to /aisle, never /shelf or /browse",
+              all(h and h.startswith("/aisle/") for h in dhrefs), str(dhrefs[:3]))
         kids = panel.locator("ul.grid a")
         check(f"active department shows its adopted shelves ({kids.count()})", kids.count() > 0)
         khrefs = [kids.nth(i).get_attribute("href") for i in range(kids.count())]
-        # ⛔ SHELVES are `browse_nodes` slugs. Six department ids also name a node, so sending a
-        # slug to /department (or an id to /shelf) resolves to a plausible WRONG page rather
-        # than erroring — which is worse than a 404 and is why there are two link builders.
-        check("adopted shelves link to /shelf, never /department",
+        # ⛔ SHELVES are `browse_nodes` slugs. Sending a shelf slug to /aisle (or a department id
+        # to /shelf) resolves to a plausible WRONG page rather than erroring — worse than a 404,
+        # and the reason `aisleHref` and `shelfHref` are separate builders. The 95-slug
+        # spine∩browse_nodes collision lives one level down, so this keeps it out of the panel.
+        check("adopted shelves link to /shelf, never /aisle or /department",
               all(h and h.startswith("/shelf/") for h in khrefs), str(khrefs[:3]))
 
         # ⛔⛔ NO TWO TILES MAY SHARE A LABEL — roadmap 1b.2, measured 2026-09-04. The Laptops
-        # department adopts THREE roots (`laptop`, `laptop-2eb1af`, `laptop-06ffb7`) and all
-        # three are labelled "Laptops": the panel offered three identical tiles reading 655, 590
-        # and 285 with nothing to choose between them. `departmentShelves` drops such a group
-        # WHOLE rather than keeping the biggest, because keeping one would link to 655 of the
-        # department's 1,530 and lose 875 clusters behind a tile that looks complete.
-        page.locator('nav[aria-label="Departments"] a[href="/department/laptops"]').first.hover()
+        # department once adopted THREE roots (`laptop`, `laptop-2eb1af`, `laptop-06ffb7`), all
+        # labelled "Laptops": the panel offered three identical tiles reading 655, 590 and 285
+        # with nothing to choose between them. `departmentShelves` drops such a group WHOLE rather
+        # than keeping the biggest, because keeping one would link to 655 of the department's
+        # 1,530 and lose 875 clusters behind a tile that looks complete. The defect is a property
+        # of the fold, not of `Laptops`, so the active row is driven by the API's stock order
+        # (hover the first) rather than a hardcoded id a republish may move.
+        depts.first.hover()
         page.wait_for_timeout(1500)
         ltiles = [t.strip() for t in panel.locator("ul.grid a span.truncate").all_inner_texts()]
-        check(f"no two shelf tiles share a label under Laptops ({ltiles})",
+        check(f"no two shelf tiles share a label under the active department ({ltiles})",
               len(ltiles) == len(set(ltiles)))
         # ⛔ THE LINE ABOVE PASSES VACUOUSLY AT `[] == set()`, which is the state the fix
         # actually produces here — so on its own it would also pass if the panel rendered
@@ -211,14 +197,16 @@ def main() -> int:
 
         # ----------------------------------------------------------- counts agree
         print("\n== COUNT HONESTY ==")
-        # ⛔⛔ `laptops` IS THE SHARPEST CASE IN THE SPINE, WHICH IS WHY IT IS THE ONE ASSERTED.
-        # It adopts THREE separate `Laptops` shelves under three different parents (655 + 590 +
-        # 285). Had the tile linked to its principal shelf instead of a department page, the
-        # menu would advertise 1,530 and the page deliver 655 — the same 3x understatement
-        # (`Food Cupboard`: 2,010 promised, 6,220 delivered) this assertion has caught before,
-        # re-created by a curation choice rather than by a sort key.
-        fc = panel.locator('nav[aria-label="Departments"] a[href="/department/laptops"]')
-        check("Laptops is in the menu", fc.count() > 0)
+        # ⛔⛔ THE CLAIM ON THE CONTROL MUST EQUAL THE ROWS THE PAGE IT OPENS SHOWS. The row
+        # prints `formatCount`, which is EXACT below 10,000 and ROUNDED above it ("28.2k"), so
+        # the probe takes the API's first department under the exact-count line rather than the
+        # biggest — comparing a rounded label to a precise heading would fail for the wrong
+        # reason. The number itself is the design layer's whole promise: a department's mass is
+        # the SUM of its nodes' OWN stock, never `n_clusters_subtree` (CATEGORY_TREE_API.md §2).
+        spine_rows = api_get(page, "/clusters/spine-departments")["results"]
+        exact = next((r for r in spine_rows if r["n_clusters"] < 10_000), spine_rows[-1])
+        fc = panel.locator(f'nav[aria-label="Departments"] a[href="/aisle/{exact["id"]}"]')
+        check(f"the exact-count department is in the menu ({exact['id']})", fc.count() > 0)
         fc_txt = fc.inner_text().replace("\n", " ") if fc.count() else ""
         menu_n = _num(fc_txt)
         fc.click()
@@ -229,7 +217,7 @@ def main() -> int:
         page_n = _num(htxt)
         # ⭐ Compare the two numbers rather than pinning either — a republish is allowed to move
         # them, but never to make them disagree.
-        check(f"menu and department page agree ({menu_n} == {page_n})",
+        check(f"menu and aisle page agree ({menu_n} == {page_n})",
               menu_n is not None and menu_n == page_n, f"menu={fc_txt!r} page={htxt!r}")
         check("the department page spans more than one shelf",
               page.locator('section[aria-label="Shelves"] a').count() > 1)
@@ -457,9 +445,11 @@ def main() -> int:
         # ----------------------------------------------------------- the fourth slug space
         # ⛔⛔ A FOURTH SLUG SPACE, PARALLEL TO /department AND /shelf. `AislePage` renders the
         # REDESIGN spine's 19 DESIGNED departments (79.9% reach, 81,525 clusters) — the migration
-        # target for the 21 CURATED departments above, run side by side until a cutover the owner
-        # has not made yet. It is additive and not linked from any nav, on purpose: two department
-        # navs in front of a shopper is the failure mode the migration exists to avoid.
+        # target for the 21 CURATED departments, which stay live at /department during the
+        # parallel period. The NAV cutover to this space HAS landed (the strip, the panel and the
+        # mobile sheet all link here), so this section now guards the aisle page itself: the
+        # counts the nav promised, the /shelf door on every department, and no shelf link
+        # escaping back into the 95-slug /aisle ∩ /browse_nodes collision.
         print("\n== THE AISLE SPINE (/aisle) ==")
 
         # ⛔ `home-appliances` NAMES A DEPARTMENT IN BOTH SPACES — `/department/home-appliances`

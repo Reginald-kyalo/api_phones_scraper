@@ -4,6 +4,7 @@ import { formatPrice, shopLabel } from '../lib/format';
 import { clustersApi, type ClusterDetail, type ClusterSummary } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
 import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
+import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import HeroSection from '../components/layout/HeroSection';
 import CategoryStrip from '../components/layout/CategoryStrip';
@@ -20,6 +21,218 @@ import {
   Tag,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+
+/** Teal down-arrow discount, matching the production DealCard badge. */
+function DiscountBadge({ percent, className = '' }: { percent: number; className?: string }) {
+  if (percent <= 0) return null;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 rounded-md bg-teal/10 text-teal text-xs font-bold px-1.5 py-1 ${className}`}
+    >
+      <ArrowDown aria-hidden="true" className="w-3 h-3" strokeWidth={2.5} />
+      {percent}%
+    </span>
+  );
+}
+
+function dealNumbers(cluster: ClusterSummary) {
+  const price = cluster.best_price ?? 0;
+  const savingPct = cluster.saving_pct ?? null;
+  const oldPrice =
+    price > 0 && savingPct != null && savingPct > 0
+      ? Math.round(price / (1 - savingPct / 100))
+      : null;
+  return {
+    name: cluster.display_name ?? cluster.title,
+    brand: cluster.brand ?? cluster.category ?? 'Product',
+    price,
+    oldPrice,
+    savings: oldPrice && oldPrice > price ? oldPrice - price : 0,
+    discount: savingPct && savingPct > 0 ? Math.round(savingPct) : 0,
+    stores: cluster.n_stores_priced ?? cluster.n_stores ?? 0,
+  };
+}
+
+/** Production `DealCard` shape, but backed by a real captured cluster + image. */
+function DealCard({ cluster, large = false }: { cluster: ClusterSummary; large?: boolean }) {
+  const deal = dealNumbers(cluster);
+  return (
+    <div
+      className={`flex flex-col flex-shrink-0 snap-start bg-card ultra-border rounded-lg overflow-hidden ${
+        large ? 'min-w-[240px] max-w-[270px]' : 'min-w-[200px] max-w-[220px]'
+      }`}
+    >
+      <Link to={`/prices/${encodeURIComponent(cluster.cluster_id)}`} className="group flex flex-col flex-1">
+        <div className="relative aspect-square bg-surface-alt flex items-center justify-center">
+          <Package className="h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
+          {cluster.image && (
+            <ImageWithFallback
+              src={cluster.image}
+              alt=""
+              loading="lazy"
+              className={`absolute inset-0 h-full w-full object-contain ${large ? 'p-5' : 'p-4'}`}
+              fallback={<span className="sr-only">Image unavailable</span>}
+            />
+          )}
+          <DiscountBadge percent={deal.discount} className="absolute top-2 left-2" />
+        </div>
+        <div className="px-3 pt-3 flex flex-col flex-1">
+          <p className="microcopy-label">{deal.brand}</p>
+          <p className="text-sm text-foreground line-clamp-2 leading-snug min-h-[2.6em] mt-1 group-hover:text-primary transition-colors">
+            {deal.name}
+          </p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className={`price-num font-bold text-price ${large ? 'text-lg' : 'text-base'}`}>
+              {formatPrice(deal.price)}
+            </span>
+            {deal.oldPrice && (
+              <span className="price-num price-old text-xs">{formatPrice(deal.oldPrice)}</span>
+            )}
+          </div>
+          {deal.savings > 0 && (
+            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-teal">
+              <ArrowDown aria-hidden="true" className="w-3 h-3" strokeWidth={2.5} /> Save {formatPrice(deal.savings)}
+            </p>
+          )}
+          <p className="microcopy-label mt-1">{shopLabel(deal.stores)}</p>
+        </div>
+      </Link>
+
+      <div className="px-3 pt-2.5 pb-3">
+        <Link
+          to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
+          className="group/btn flex items-center justify-center gap-1.5 h-9 rounded-lg bg-teal text-white text-sm font-semibold hover:bg-teal-deep transition-colors"
+        >
+          View deal
+          <ArrowUpRight aria-hidden="true" className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/** Production "Deal of the day" large card, backed by a real captured cluster. */
+function FeaturedDeal({ cluster }: { cluster: ClusterSummary }) {
+  const deal = dealNumbers(cluster);
+  const highest =
+    deal.oldPrice && deal.oldPrice > deal.price
+      ? deal.oldPrice
+      : Math.round(deal.price * 1.12);
+
+  return (
+    <Reveal className="mb-12">
+      <section className="ultra-border rounded-2xl overflow-hidden hover:border-border">
+        <div className="grid md:grid-cols-2 items-stretch">
+          <Link
+            to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
+            className="group relative bg-surface-alt flex items-center justify-center p-8 md:p-10 min-h-[260px]"
+          >
+            <span className="microcopy-label absolute top-4 left-4 text-teal">Deal of the day</span>
+            <DiscountBadge percent={deal.discount} className="absolute top-4 right-4" />
+            {cluster.image ? (
+              <ImageWithFallback
+                src={cluster.image}
+                alt=""
+                loading="lazy"
+                className="max-h-[260px] w-auto object-contain"
+                fallback={<Package className="h-16 w-16 text-muted-foreground" />}
+              />
+            ) : (
+              <Package className="h-16 w-16 text-muted-foreground" />
+            )}
+          </Link>
+
+          <div className="p-6 md:p-10 flex flex-col justify-center">
+            <p className="microcopy-label">{deal.brand}</p>
+            <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground mt-1 mb-3 leading-tight">
+              {deal.name}
+            </h3>
+
+            <div className="flex items-baseline gap-3 mb-1">
+              <span className="price-num text-2xl md:text-3xl font-bold text-price">
+                {formatPrice(deal.price)}
+              </span>
+              {deal.oldPrice && (
+                <span className="price-num price-old text-sm">{formatPrice(deal.oldPrice)}</span>
+              )}
+            </div>
+            {deal.savings > 0 && (
+              <p className="inline-flex items-center gap-1 text-sm font-semibold text-teal mb-5">
+                <ArrowDown aria-hidden="true" className="w-3.5 h-3.5" strokeWidth={2.5} /> Save{' '}
+                {formatPrice(deal.savings)}
+              </p>
+            )}
+
+            <div className="flex items-center gap-3 mb-6 max-w-md">
+              <span className="price-num text-sm font-semibold text-teal">{formatPrice(deal.price)}</span>
+              <div className="relative h-1.5 flex-1 rounded-full bg-border">
+                <span
+                  className="absolute -top-1 left-0 w-3.5 h-3.5 rounded-full bg-teal"
+                  style={{ boxShadow: '0 0 0 4px rgba(14,124,139,0.15)' }}
+                />
+                <span className="absolute -top-1 right-0 w-3.5 h-3.5 rounded-full bg-muted-foreground/40" />
+              </div>
+              <span className="price-num text-sm text-muted-foreground">{formatPrice(highest)}</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Link
+                to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
+                className="group/btn inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-lg bg-teal text-white text-sm font-semibold hover:bg-teal-deep transition-colors"
+              >
+                View deal
+                <ArrowUpRight aria-hidden="true" className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+              </Link>
+              <Link
+                to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:text-link-hover"
+              >
+                Compare {shopLabel(deal.stores)} <ArrowRight aria-hidden="true" className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </Reveal>
+  );
+}
+
+function DealRail({
+  title,
+  subtitle,
+  href,
+  linkLabel,
+  products,
+}: {
+  title: string;
+  subtitle: string;
+  href: string;
+  linkLabel: string;
+  products: ClusterSummary[];
+}) {
+  if (products.length === 0) return null;
+  return (
+    <section className="mb-12">
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+        <Link
+          to={href}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:text-link-hover whitespace-nowrap"
+        >
+          {linkLabel} <ArrowRight aria-hidden="true" className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x scroll-hint-x items-stretch">
+        {products.map((product) => (
+          <DealCard key={`${title}-${product.cluster_id}`} cluster={product} large />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function Rail({
   title,
@@ -158,6 +371,7 @@ export default function HomePage() {
 
   const categoryCount = (slug: string) =>
     manifest?.categories.find((c) => c.slug === slug)?.count ?? 0;
+  const featuredDeal = deals.find((c) => c.image) ?? deals[0] ?? null;
 
   return (
     <div className="bg-white">
@@ -167,17 +381,14 @@ export default function HomePage() {
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
-        <Rail
-          title="Biggest price gaps today"
-          subtitle={
-            manifest
-              ? `${manifest.deals.count.toLocaleString()} products cost measurably less at one store than another`
-              : 'The largest like-for-like savings across stores'
-          }
+        {featuredDeal && <FeaturedDeal cluster={featuredDeal} />}
+
+        <DealRail
+          title="Top deals today"
+          subtitle="The biggest price drops we're tracking right now"
           href="/deals"
           linkLabel="See all deals"
           products={deals.slice(0, 6)}
-          reveal
         />
 
         <HowItWorks />

@@ -14,14 +14,15 @@
  * ⭐ ONE DEPARTMENT OPEN AT A TIME. A sheet is ~320px wide and already scrolls; letting several
  * expand at once turns it into a directory again.
  *
- * ⭐⭐ READS THE 21 RULED DEPARTMENTS, not the top 12 of ~529 roots. `categoryLabel` is applied
- * to SHELVES (shop copy, 275 of which SHOUT) and never to a department name, which is ours.
+ * ⭐⭐ READS THE 19 REDESIGN DEPARTMENTS, not the top 12 of ~529 roots. `categoryLabel` is
+ * applied to SHELVES (shop copy, 275 of which SHOUT) and never to a department name, which is
+ * ours.
  */
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import {
-  categoryLabel, departmentHref, departmentIcon, departmentShelves, formatCount, shelfCount,
+  aisleHref, categoryLabel, departmentIcon, departmentShelves, formatCount, shelfCount,
   shelfHref,
 } from '../../lib/categories';
 import { useDepartments, useShelves } from './useCategoryTree';
@@ -110,8 +111,9 @@ export default function MobileCategoryNav({ enabled, onNavigate }: Props) {
                     </div>
                   ) : (
                     <ul>
-                      {/* ⛔ SHELVES are `browse_nodes` slugs — `shelfHref`, never
-                          `departmentHref`. The two namespaces overlap on six names. */}
+                      {/* ⛔ SHELVES are `browse_nodes` slugs — `shelfHref`, never `aisleHref`.
+                          The spine and `browse_nodes` share 95 slugs one level down, so the
+                          mistake resolves to a plausible wrong page rather than a 404. */}
                       {shown.map((c) => (
                         <li key={c.slug}>
                           <Link
@@ -132,7 +134,7 @@ export default function MobileCategoryNav({ enabled, onNavigate }: Props) {
                   {/* ⭐ Always offered, shelves or not: a department adopting ONE shelf has
                       nothing to expand, so this is the only way into it. */}
                   <Link
-                    to={departmentHref(d.id)}
+                    to={aisleHref(d.id)}
                     onClick={onNavigate}
                     className="block pl-12 pr-5 py-2 text-sm font-medium text-link hover:text-link-hover"
                   >
@@ -145,8 +147,8 @@ export default function MobileCategoryNav({ enabled, onNavigate }: Props) {
         })}
       </ul>
 
-      {/* ⛔⛔ LOAD-BEARING. The 21 departments reach ~45% of placed clusters; this is the ONLY
-          route to the other 55%, chiefly `phone-tablet`'s 19,286. Do not remove it. */}
+      {/* ⛔⛔ LOAD-BEARING. The 19 redesign departments reach ~79.9% of placed clusters; this is
+          the ONLY route to the remaining ~20%. Do not remove it. */}
       <Link
         to="/shelf"
         onClick={onNavigate}

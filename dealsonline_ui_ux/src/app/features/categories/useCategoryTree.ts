@@ -8,15 +8,15 @@
  * disagree in the first place.
  *
  * ⭐⭐ THE TOP-N CUT IS GONE, AND THAT IS THE POINT OF THIS PASS. `useDepartments` used to take
- * the top 12 of ~529 browsable roots ordered by subtree stock. It now reads the 21 RULED
- * departments from `/clusters/departments`, so there is no cut to get wrong. The defect that
- * retires with it was real and shipped: ordering those roots on OWN stock instead of subtree
+ * the top 12 of ~529 browsable roots ordered by subtree stock. It now reads the 19 DESIGNED
+ * departments from `/clusters/spine-departments`, so there is no cut to get wrong. The defect
+ * that retires with it was real and shipped: ordering those roots on OWN stock instead of subtree
  * stock swapped six of the twelve, cutting `Electronics & Computers` (20,772 clusters) in favour
  * of `Battery Chargers` (553, one shop), and four correct departments held zero stock of their
  * own so were invisible entirely.
  *
- * ⛔ THE SPINE IS NOT THE WHOLE CATALOGUE. Measured: 21 departments reach ~45% of placed
- * clusters. The other 55% — chiefly `phone-tablet`'s 19,286 undifferentiated clusters — stay
+ * ⛔ THE SPINE IS NOT THE WHOLE CATALOGUE. Measured: 19 redesign departments reach ~79.9% of
+ * placed clusters. The remaining ~20% — nodes not yet stamped to any spine department — stay
  * reachable at `/shelf`. **Every surface using this hook must keep its "All categories" link.**
  *
  * ⭐ The cache is MODULE-LEVEL, not per-component, so opening the sheet after the panel costs
@@ -30,14 +30,14 @@
  * is where that belongs.
  */
 import { useEffect, useState } from 'react';
-import { departmentApi, type BrowseNode, type Department } from '../../lib/api';
+import { spineApi, type BrowseNode, type SpineDepartmentView } from '../../lib/api';
 
-let _departments: Department[] | null = null;
+let _departments: SpineDepartmentView[] | null = null;
 const _shelves: Record<string, BrowseNode[]> = {};
 
-/** The ruled departments, in EDITORIAL order. `enabled` defers until a surface opens. */
+/** The 19 redesign spine departments. `enabled` defers until a surface opens. */
 export function useDepartments(enabled: boolean) {
-  const [departments, setDepartments] = useState<Department[]>(_departments ?? []);
+  const [departments, setDepartments] = useState<SpineDepartmentView[]>(_departments ?? []);
   const [loading, setLoading] = useState(!_departments);
   const [failed, setFailed] = useState(false);
 
@@ -45,12 +45,10 @@ export function useDepartments(enabled: boolean) {
     if (!enabled || _departments) return;
     let cancelled = false;
     setLoading(true);
-    departmentApi
+    spineApi
       .list()
       .then((res) => {
         if (cancelled) return;
-        // ⛔ NO `.slice()`. The spine is 21 rows because a person ruled 21; a client-side cut
-        // would silently re-introduce the editorial decision this endpoint exists to own.
         _departments = res.results;
         setDepartments(_departments);
         setFailed(false);
@@ -66,12 +64,10 @@ export function useDepartments(enabled: boolean) {
 }
 
 /**
- * The shelves one department adopts, for a panel column or an accordion.
+ * The shelves one designed department reaches, for a panel column or an accordion.
  *
- * ⭐ READS `/by-department` WITH `limit=1`, NOT the tree. A department spans up to six adopted
- * shelves that are NOT siblings and often not even in the same branch — `Laptops` adopts three
- * `Laptops` nodes under three different parents — so no single `browse-tree` call can produce
- * this list. The one product row is the cheapest way to ask; the payload we want is `shelves`.
+ * ⭐ READS `/by-spine-department` WITH `limit=1`. The one product row is the cheapest way to ask;
+ * the payload we want is `shelves`.
  */
 export function useShelves(id: string | null) {
   const [shelves, setShelves] = useState<BrowseNode[]>(id ? _shelves[id] ?? [] : []);
@@ -82,7 +78,7 @@ export function useShelves(id: string | null) {
     if (_shelves[id]) { setShelves(_shelves[id]); return; }
     let cancelled = false;
     setLoading(true);
-    departmentApi
+    spineApi
       .getClusters(id, { limit: 1 })
       .then((res) => {
         if (cancelled) return;

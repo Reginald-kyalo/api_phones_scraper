@@ -1,7 +1,9 @@
 # Wiring the canonical category tree into the frontend
 
-Reference for the two endpoints that serve **`taxonomy_db.browse_nodes`** — the category tree
-built bottom-up from what Kenyan shops actually stock — and what still needs doing on the UI side.
+Reference for the category layers the storefront renders: **`taxonomy_db.browse_nodes`** — the
+tree built bottom-up from what Kenyan shops actually stock — the 21 curated departments over it,
+and the 19 design departments the nav now reads (§0b, §3c), plus what still needs doing on the
+UI side.
 
 ⛔⛔ **THE TREE WAS REPUBLISHED 2026-08-21 AND THIS DOC IS UPDATED FOR IT.** The engine applied
 your `REPARENT_REQUEST_PHONES.md` R1, R2 and R7 — see
@@ -53,15 +55,54 @@ canonical (`components/common/PageMeta.tsx`), a back-navigation contract
 
 ---
 
+## 0b. Revision 2026-09-12 — the nav cutover to the redesign spine has landed
+
+Everything in this section was measured against the live API on 2026-09-12. Changed lines below
+are marked ✎.
+
+✅ **THE THREE NAV SURFACES NOW READ THE 19 DESIGNED DEPARTMENTS, NOT THE 21 CURATED ONES.**
+`MegaMenu.tsx`, `CategoryStrip.tsx` and `MobileCategoryNav.tsx` all resolve departments through
+`useDepartments`, which was repointed from `departmentApi.list()` to `spineApi.list()`
+(`GET /api/clusters/spine-departments`), and every department link is built with `aisleHref` →
+`/aisle/:id`. Measured live: **19 departments, `n_clusters_total` 81,525** — the mass the
+redesign spine always had, now reachable from the nav rather than only by typing a URL.
+
+⚠️ **THE STRIP NO LONGER GROUPS, AND THAT IS NOT A REGRESSION.** §3b records the 2026-09-05
+grouping that collapsed the 21 curated departments into 12 tiles via `Department.parent`. A
+`SpineDepartmentView` has **no `parent` field** — the redesign spine's 19 departments are all
+level 0 — so there is nothing to fold on, and the strip renders **19 plain `/aisle` links plus
+the `/shelf` door**. Grouping was never load-bearing for reach; it only reduced tile count, and
+the tile count it reduced was the curated set the nav no longer reads.
+
+⛔ **`/department/:id` DID NOT GO AWAY AND MUST NOT YET.** The curated spine is still live in
+`app/api/departments.py`, still has a consumer (`DepartmentPage`), and the two id spaces still
+overlap on `home-appliances` (different pages). This cutover is at the NAV layer only: the
+storefront offers one department vocabulary in its chrome while both routes resolve. Deleting
+`departments.py` remains a separate, later change (see §6 task 10).
+
+✎ **"NOT LINKED FROM ANY NAV" IS NOW FALSE, AND EVERY COMMENT THAT SAID IT WAS CORRECTED.**
+`AislePage.tsx`, `routes.ts` and `api.ts` all carried the pre-cutover caveat. The route is the
+destination for all three nav surfaces.
+
+✎ **THE RENDER GATE WAS REPOINTED WITH IT.** `verify_categories.py` now asserts the strip renders
+**all 19 spine departments** (set equality against `/clusters/spine-departments`); that every
+department control links to `/aisle/` and every adopted shelf control to `/shelf/`; that no shelf
+link escapes into `/aisle/` (the 95-slug spine ∩ `browse_nodes` collision); that the
+`formatCount`-rounded menu claim still equals the page it opens; and that every `/aisle/:id`
+keeps the `/shelf` door.
+
+---
+
 ## 1. Is the data wired? Partly.
 
 | surface | route | tree it reads | state |
 |---|---|---|---|
 | `ShelfPage.tsx` | `/shelf`, `/shelf/:slug` | **canonical** (`browseApi`) | ✅ wired, verified against live data |
-| **`DepartmentPage.tsx`** | **`/department/:id`** | **the ruled SPINE** (`departmentApi`) | ✅ **NEW — 21 departments** |
-| `MegaMenu.tsx` | header panel, every page | **the ruled SPINE** | ✅ ⟳ repointed from roots to departments |
-| `CategoryStrip.tsx` | home page | **the ruled SPINE** | ✅ ✎ **GROUPED — 12 tiles, all 21 reachable** + an `/shelf` door |
-| `MobileCategoryNav.tsx` | sheet, <1024px | **the ruled SPINE** | ✅ ⟳ repointed |
+| **`DepartmentPage.tsx`** | **`/department/:id`** | **the ruled SPINE** (`departmentApi`) | ✅ 21 curated departments — ✎ kept live during the parallel period |
+| **`AislePage.tsx`** ✎ | **`/aisle/:id`** | **the REDESIGN SPINE** (`spineApi`) | ✅ **NEW 2026-09-05 — 19 designed departments**, the nav's destination since §0b |
+| `MegaMenu.tsx` | header panel, every page | **the REDESIGN SPINE** ✎ (`spineApi`) | ✅ ⟳ repointed 2026-09-12 → `/aisle/:id` |
+| `CategoryStrip.tsx` | home page | **the REDESIGN SPINE** ✎ (`spineApi`) | ✅ ✎ **19 plain `/aisle` tiles** + `/shelf` door, no grouping |
+| `MobileCategoryNav.tsx` | sheet, <1024px | **the REDESIGN SPINE** ✎ (`spineApi`) | ✅ ⟳ repointed 2026-09-12 → `/aisle/:id` |
 | `CategoriesPage.tsx` | `/browse` | retired spine (`pricerunnerApi`) | ⛔ deliberately left on the spine |
 | `BrowsePage.tsx` | `/browse/:productType`, `/search`, `/category/:id` | retired spine | ⛔ deliberately left on the spine |
 
@@ -77,8 +118,8 @@ flyout and never will, so the panel shows the top departments and hands off. Gro
 widens the page, not the panel.
 
 ⭐⭐ **AND THE TOP-N CUT IS NOW GONE ENTIRELY (2026-08-21).** The panel used to take the top 12 of
-529 roots; it renders the **21 ruled departments** instead, so there is no cut left to get wrong.
-See §3b.
+529 roots; it renders a **department list** instead, so there is no cut left to get wrong. ✎ Since
+2026-09-12 that list is the **19 design departments** (§0b), not the 21 curated ones.
 
 ---
 
@@ -115,9 +156,10 @@ plausible wrong page, and the second failure is silent. `mobile-phones` is a spi
 `smartphone` a canonical one — neither lookup finds the other — but do not rely on the miss.
 
 ⛔⛔⛔ **AND FOR THE THIRD TREE THE CLAIM INVERTS COMPLETELY.** `phones_scraper` holds a redesign
-spine — 1,392 designed nodes, 19 departments, **currently zero consumers** — which is the
-intended long-term replacement for the department layer (it reaches **79.9% of cluster placements
-against `departments.py`'s 46.0%**; see `CATEGORY_ROADMAP.md` Phase 6). It shares **95 slugs with
+spine — 1,392 designed nodes, 19 departments, **now consumed by all three nav surfaces** (§0b) —
+which is the intended long-term replacement for the department layer (it reaches **79.9% of
+cluster placements against `departments.py`'s 46.0%**; see `CATEGORY_ROADMAP.md` Phase 6). It
+shares **95 slugs with
 `browse_nodes` and 112 with the 424-spine**, and the trees disagree about what they mean —
 `bathtubs` is level 3 in one and level 2 in another. **When that tree is wired, a slug-to-slug
 join will not fail loudly; it will produce plausible wrong pages by the dozen.** Give it its own
@@ -141,6 +183,13 @@ change gives that level no URLs (§7 of the spec keeps it out of scope on purpos
 exception, `home-appliances`, names both a spine department and a curated department; during the
 parallel period those are different pages, exactly as `/department/pantry` and `/shelf/pantry`
 are — same test.
+
+⭐ ✎ **AND THE NAV CUTOVER HAS NOW BEEN MADE (§0b, 2026-09-12).** The three nav surfaces read
+`/clusters/spine-departments` and link `/aisle/:id`; `/department/:id` stays live but is no
+longer offered in the chrome. The slug hazard above is unchanged by that — the four builders
+(`shelfHref`, `departmentHref`, `aisleHref`, and `browseApi`'s `/browse` route) still exist for
+the four spaces — but the storefront now presents one department vocabulary to a shopper instead
+of two.
 
 ⛔ **Keep both alive. Do not repoint the spine pages at the canonical tree.** That exact change
 was attempted on the API side and measured to delete the storefront's hierarchy — the spine is
@@ -266,6 +315,12 @@ clusters of its own and **6,220** with its subtree. Use `total` for the heading.
 
 ## 3b. The DEPARTMENT SPINE — `/departments` and `/by-department/{id}`
 
+⛔⛔ ✎ **AS OF 2026-09-12 THIS SPINE NO LONGER DRIVES THE NAV.** The three nav surfaces read the
+19 DESIGNED departments instead (§0b). This section is retained because `/department/:id` is
+still live, still the curated vocabulary's own page, and still the reference for what "adoption,
+not re-parenting" means. Read the grouping paragraph below as a record of what the strip did
+between 2026-09-05 and 2026-09-12 — the strip does not group any more.
+
 ⭐ **WHAT IT IS.** 21 curated departments over the same tree, ruled by a person on 2026-08-21
 (`phones_scraper/implementation_plans/department_spine_worksheet_2026-08-21.md` §8) and served
 from API config in **`app/api/departments.py`**. The engine is asked for nothing.
@@ -310,10 +365,12 @@ the full measurement, the slug-collision hazard from §2, and the recommendation
 publish the bridge onto `browse_nodes` (as it already does `n_clusters_subtree`) so this API never
 handles a bare spine slug.
 
-⭐ ✎ **`parent` — GROUPING, ADDED 2026-09-05. 21 TILES BECOME 12 AND NONE ARE LOST.** `Laptops`
-and `Computers` sat side by side as peers, as did five separate grocery departments. Each
-department now carries a `parent` naming the navigation tile it sits under, or `null` to stand
-alone. Live: **4 groups + 8 standalone = 12 tiles**.
+⭐ ✎ **`parent` — GROUPING, ADDED 2026-09-05. 21 TILES BECOME 12 AND NONE ARE LOST.**
+⛔ ✎ **RETIRED FROM THE STRIP 2026-09-12 (§0b): the strip now reads the 19 design departments,
+which carry no `parent`, so it renders them flat. The field and the membership below remain live
+on `/departments`.** `Laptops` and `Computers` sat side by side as peers, as did five separate
+grocery departments. Each department carries a `parent` naming the navigation tile it sits under,
+or `null` to stand alone. Live: **4 groups + 8 standalone = 12 tiles**.
 
 | tile | departments |
 |---|---|
@@ -325,9 +382,11 @@ alone. Live: **4 groups + 8 standalone = 12 tiles**.
 
 ⛔⛔ **GROUPING IS NOT A CUT, AND THAT DISTINCTION IS THE WHOLE POINT.** The old top-12 reached
 twelve departments and lost nine. This reaches **all 21** — thirteen of them one click deeper,
-inside a popover. `verify_categories.py` opens every group and asserts the union of plain and
-popover links equals the set `/departments` published; sabotaging the fold reports **12/21** and
-names the missing nine.
+inside a popover. While the strip rendered this spine, `verify_categories.py` opened every group
+and asserted the union of plain and popover links equals the set `/departments` published;
+sabotaging the fold reported **12/21** and named the missing nine. ✎ **The gate now asserts the
+same shape against the redesign spine instead** — all 19 tiles are plain links, so it checks set
+equality directly rather than opening popovers.
 
 ⛔ **PRESENTATION ONLY — IT GROUPS TILES, IT DOES NOT NEST DEPARTMENTS.** There is no
 `/department/Computing`. Every id keeps its own page and its own totals, and deleting the field
@@ -344,9 +403,11 @@ department at all (its only shelf `smart-watch` has disposition `split`, one of 
 `tablets` is a genuine disagreement — the retired spine **and** `browse_nodes` both file it under
 computing, the designed spine under phones. Ruled toward the designed spine; one line reverses it.
 
-⚠️ **ONLY THE STRIP GROUPS.** The panel and the mobile sheet still render all 21 flat, and that
-is deliberate: grouping answers a horizontal-scroll problem, and a vertical column of 21 does not
-have it. The demo storefront's own strip made the same call for the same reason.
+⚠️ **ONLY THE STRIP EVER GROUPED.** The panel and the mobile sheet always rendered this spine
+flat, deliberately: grouping answered a horizontal-scroll problem, and a vertical column of 21
+does not have it. ✎ Since 2026-09-12 the strip is flat too — it reads the redesign spine, whose
+19 departments have no parent to fold on — and the demo storefront's strip was un-grouped with
+it, so all four surfaces now agree.
 
 ⇒ ⭐ **EVERY SURFACE RENDERING DEPARTMENTS MUST KEEP AN "ALL CATEGORIES" → `/shelf` DOOR.**
 Remove it and half the catalogue becomes unbrowsable while every other assertion still passes.
@@ -374,6 +435,59 @@ Tablets *and* Computers. Ruled: both stand. The rows therefore sum to 46,914 whi
 (93 clusters, a child of `Beverages`), and Stationery contains `ultra-book` — a *pinned* slug
 labelled *Exercise Books*. Both are cheaper than the stranding a re-parent causes. Name them;
 do not patch them in the client.
+
+---
+
+## 3c. The DESIGNED department list — the nav's canonical categories
+
+⭐ ✎ **THIS IS THE CURRENT CANONICAL LIST.** It is what `GET /api/clusters/spine-departments`
+returns and what all three nav surfaces render since the 2026-09-12 cutover (§0b). The ids are
+**redesign-spine department slugs** and must only ever be passed to `aisleHref`; the labels are
+the published `spine_department_label` and are never derived from the slug.
+
+Measured live 2026-09-12 against `taxonomy_db.browse_nodes`, ordered by stock — the order the API
+publishes and the nav renders (no editorial re-sort):
+
+| # | id | label | `n_clusters` | `n_shelves` |
+|---:|---|---|---:|---:|
+| 1 | `phones-wearables` | Phones & Wearables | 28,152 | 34 |
+| 2 | `groceries-everyday-essentials` | Groceries & Everyday Essentials | 17,594 | 158 |
+| 3 | `tv-audio-home-entertainment` | TV, Audio & Home Entertainment | 7,596 | 27 |
+| 4 | `computing-networking` | Computing & Networking | 5,516 | 42 |
+| 5 | `health-beauty-personal-care` | Health, Beauty & Personal Care | 5,322 | 33 |
+| 6 | `home-appliances` | Home Appliances | 3,182 | 32 |
+| 7 | `home-furniture-decor` | Home, Furniture & Décor | 2,999 | 31 |
+| 8 | `kitchen-dining-cookware` | Kitchen, Dining & Cookware | 2,988 | 33 |
+| 9 | `office-school-stationery` | Office, School & Stationery | 2,233 | 23 |
+| 10 | `building-electrical-hardware` | Building, Electrical & Hardware | 1,560 | 11 |
+| 11 | `fashion-accessories` | Fashion & Accessories | 1,522 | 13 |
+| 12 | `power-solar-energy` | Power, Solar & Energy | 653 | 10 |
+| 13 | `baby-kids-toys` | Baby, Kids & Toys | 600 | 8 |
+| 14 | `classifieds` | Classifieds | 543 | 4 |
+| 15 | `cameras-security-surveillance` | Cameras, Security & Surveillance | 521 | 4 |
+| 16 | `automotive-motorcycle` | Automotive & Motorcycle | 452 | 7 |
+| 17 | `sports-outdoors-leisure` | Sports, Outdoors & Leisure | 59 | 5 |
+| 18 | `agriculture-agrovet` | Agriculture & Agrovet | 20 | 4 |
+| 19 | `gaming-books-media` | Gaming, Books & Media | 13 | 4 |
+| | **total** | **19 departments** | **81,525** | 483 |
+
+⛔⛔ **THE ROWS SUM TO `n_clusters_total` (81,525), UNLIKE THE CURATED SPINE'S.** A cluster is
+one placement → one node → one label → at most one department, so these 19 are disjoint; the 21
+curated rows overlap and their 46,914 exceeds their 46,127 total. ⛔ **And this total is the SUM
+OF `n_clusters`, never `n_clusters_subtree`** — the rule inverts here (§2, §6 task 9): closures
+sum to 167,610 against a 102,038 corpus.
+
+⚠️ **THREE DEPARTMENTS RENDER NEARLY EMPTY** and need an editorial rule before they are promoted
+beyond the nav: `gaming-books-media` (13), `agriculture-agrovet` (20), `sports-outdoors-leisure`
+(59). That is matcher coverage — the classifieds exclusion — not a taxonomy defect.
+
+⚠️ **`home-appliances` NAMES A DEPARTMENT IN BOTH SPACES.** `/aisle/home-appliances` (3,182) and
+`/department/home-appliances` (1,212) are different pages; the render gate asserts they differ.
+
+⭐ **`n_shelves` IS THE STOCK-FILTERED, MAXIMAL SHELF COUNT** and is §3b's "documentation" number,
+not a cap: the renderer takes its own cut (the panel shows 8), the endpoint publishes all of them.
+483 stocked shelves survive across the 19 — see §2 for why a dead tile is dropped before the
+maximal pass rather than after.
 
 ---
 
@@ -418,16 +532,20 @@ exactly what descendant closure gives you.
 src/app/lib/api.ts                 browseApi.getTree(parent?, {includeEmpty})
                                    browseApi.getClusters(slug, {multiStoreOnly, limit, offset})
                                    departmentApi.getAll() / .getClusters(id, …)
-                                   interface BrowseNode, DepartmentView, CategoryPath
+                                   spineApi.list() / .getClusters(id, …)          ✎
+                                   interface BrowseNode, DepartmentView, SpineDepartmentView, CategoryPath
+src/app/features/categories/useCategoryTree.ts  ✎ useDepartments/useShelves — repointed to
+                                   spineApi; the shared module-level cache for the nav surfaces
 src/app/lib/categories.ts          EVERY presentation rule for the tree — label normalisation,
-                                   shelfHref/departmentHref, icons, shelfCount,
+                                   shelfHref/departmentHref/aisleHref, icons, shelfCount,
                                    foldChildren (tree) and departmentShelves (spine)
 src/app/lib/navigation.ts        ✎ CameFrom / useOrigin / useCameFrom / useHereAs — the
                                    back-navigation contract
 src/app/components/common/PageMeta.tsx  ✎ per-page <title>, description, canonical, OG
 src/app/pages/ShelfPage.tsx        working reference implementation — tree + breadcrumb + products
-src/app/pages/DepartmentPage.tsx   the spine's landing page
-src/app/routes.ts                  /shelf, /shelf/:slug, /department/:id
+src/app/pages/DepartmentPage.tsx   the curated spine's landing page
+src/app/pages/AislePage.tsx        ✎ the design spine's landing page (same contract, `spineApi`)
+src/app/routes.ts                  /shelf, /shelf/:slug, /department/:id, /aisle/:id  ✎
 ```
 
 `ShelfPage.tsx` is a working example of every call you need; copy from it rather than
@@ -460,7 +578,9 @@ already mounted was mounted nowhere (see §1).
 
 **2. ✅ DONE — `MegaMenu` reads the canonical tree** and is mounted in `Header.tsx`.
 `browseApi.getTree()` gives 529 browsable roots; the panel takes the top 12 and calls
-`getTree(slug)` for the active column's children.
+`getTree(slug)` for the active column's children. ✎ **SUPERSEDED 2026-08-21 / 2026-09-12:** the
+panel now reads `spineApi.list()` and shows the 19 design departments, so neither the top-12 cut
+nor `getTree(slug)` is on the panel's path any more.
 
 ⛔⛔ **THE TOP-N CUT IS ONLY SAFE BECAUSE THE ORDERING WAS FIXED FIRST.** This step used to say
 "ordered by stock", and the endpoint ordered by `n_clusters` — a node's OWN stock, not the
@@ -520,8 +640,14 @@ and stamps five additive fields (`spine_slug`, `spine_department`, `spine_depart
 dispositions, **19** departments, mass exactly **81,525** (79.9% of 102,038). `GET
 /api/clusters/spine-departments` and `GET /api/clusters/by-spine-department/{id}` read only the
 stamped fields — no TSV, no second data source, no request-time join. `/aisle/:id` is live with
-its own link builder, `aisleHref` — deliberately **not** linked from any nav yet; the parallel
-route is for comparison, and the cutover that retires `departments.py` is a separate change.
+its own link builder, `aisleHref`. ✎ **As of 2026-09-12 it IS linked from all three nav surfaces
+(§0b)**; retiring `departments.py` itself is still a separate change.
+
+**10. ✅ DONE 2026-09-12 — the nav cutover.** The three nav surfaces (`MegaMenu`, `CategoryStrip`,
+`MobileCategoryNav`) now read `spineApi.list()` and link `/aisle/:id`, so the 79.9% reach is the
+default browsing path rather than a typed URL. The strip un-grouped (a `SpineDepartmentView` has
+no `parent`), `/department/:id` stayed live, and the render gate was repointed to the 19 design
+departments. See §0b for the measured detail and every corrected claim.
 
 ⛔⛔ **BEFORE YOU SUM A DEPARTMENT'S MASS: USE `n_clusters`, NOT `n_clusters_subtree` — THE
 OPPOSITE OF THE RULE EVERYWHERE ELSE IN THIS DOC** (§5: a coarse node must still show stock,
@@ -654,14 +780,21 @@ spine's slug space, no raw shop label reaches a shopper, a spine slug 404s as "N
 pagination appends without repeating, the compare filter narrows and lands in the URL.
 
 ⟳ **Added 2026-08-21 with the spine**, each guarding something the departments made newly
-possible to get wrong:
+possible to get wrong. ✎ **Repointed 2026-09-12: the nav checks now read `/aisle/`, not
+`/department/`** (§0b):
 - the strip, the panel and the mobile sheet each keep an **"all categories" door to `/shelf`** —
-  without it the 55% of the catalogue no department adopts is unreachable, *and every other
-  assertion still passes*;
-- **departments link to `/department/`, adopted shelves link to `/shelf/`** — the two id spaces
-  overlap on six names, so the mistake resolves to a plausible wrong page instead of erroring;
+  without it the ~20% of the catalogue no design department reaches is unreachable, *and every
+  other assertion still passes*;
+- **department controls link to `/aisle/`, adopted shelves link to `/shelf/`** — the four slug
+  spaces overlap (`home-appliances` in two, six curated ids in `browse_nodes`, 95 spine∩browse
+  ids one level down), so the mistake resolves to a plausible wrong page instead of erroring.
+  ✎ The gate also asserts the STRIP reaches all 19 spine departments and that no shelf link
+  escapes back into `/aisle/`;
+- **all three surfaces are checked at 390 / 900 / 1440px** — the same pages, the same doors;
 - `/department/pantry` and `/shelf/pantry` **are different pages** (485 vs 889);
 - a node slug on the department route reads **"No such department"**, not a transient failure;
+- ✎ `/aisle/home-appliances` and `/department/home-appliances` **are different pages**, and
+  every `/aisle/:id` keeps its `/shelf` door;
 - **no department name appears twice** — `Laptops` resolves three times in the tree and the
   spine exists to present each concept once;
 - ⟳ the old top-12 ordering guard (`Electronics & Computers` in, `Battery Chargers` out) **moved

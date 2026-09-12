@@ -623,5 +623,11 @@ def pack_dataset(src: Path = OUT, dest: Path = ARCHIVE) -> Path:
 
 if __name__ == "__main__":
     main()
+    # ⭐ Leaf pages are a separate capture pass but must be part of the same
+    # archive. This is the only place the two generated datasets are joined; the
+    # mock's prebuild script only unpacks, it never talks to the live API.
+    from scripts.capture_demo_shelves import capture_shelves
+
+    capture_shelves()
     size = pack_dataset().stat().st_size
     print(f"packed dealsonline_ui_ux_mock/data/demo-dataset.tar.gz ({size / 1e6:.1f} MB)")

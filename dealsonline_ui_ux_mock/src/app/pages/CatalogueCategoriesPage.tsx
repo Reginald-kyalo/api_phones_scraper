@@ -3,12 +3,12 @@ import { Link } from 'react-router';
 import { clustersApi } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
 import { Loader2, ChevronRight } from 'lucide-react';
+import { SPINE_DEPARTMENTS } from '../data/spineDepartments';
+import { LIVE_SPINE_SHELVES, spineShelfDisplay } from '../data/liveSpineShelves';
 
 const LABELS: Record<string, string> = {
   'groceries': 'Groceries',
   'mobile-phones': 'Phones',
-  // Without this it rendered as the raw slug, "mobile phone accessories" — the
-  // longest label in the set by a wide margin, and lower-case among title-case.
   'mobile-phone-accessories': 'Phone accessories',
   'laptops': 'Laptops',
   'tablets': 'Tablets',
@@ -27,11 +27,12 @@ const LABELS: Record<string, string> = {
 export const categoryLabel = (slug: string) => LABELS[slug] ?? slug.replace(/-/g, ' ');
 
 /**
- * Every category in the captured catalogue, with its real size.
+ * All categories, now in two honest layers:
  *
- * Comparison-grade categories lead, because those are the ones where a
- * cross-store price actually means something; the rest are listed honestly as
- * browsable but not comparable.
+ * 1. The 19 design departments — the same canonical list production reads from
+ *    `/clusters/spine-departments`, presented here as static `/aisle/:id` pages.
+ * 2. The captured demo categories — what this static build actually ships in
+ *    `/browse/:slug`.
  */
 export default function CatalogueCategoriesPage() {
   const [manifest, setManifest] = useState<DemoManifest | null>(null);
@@ -63,7 +64,50 @@ export default function CatalogueCategoriesPage() {
           {manifest.multi_store_clusters.toLocaleString()} compared across 2+ stores
         </p>
 
-        <h2 className="mt-8 mb-3 text-lg font-semibold text-foreground">Price comparison</h2>
+        <h2 className="mt-8 mb-3 text-lg font-semibold text-foreground">Departments</h2>
+        <div className="space-y-12">
+          {SPINE_DEPARTMENTS.map((department) => {
+            const shelves = LIVE_SPINE_SHELVES[department.id] ?? [];
+            return (
+              <section key={department.id}>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3">
+                  <Link
+                    to={`/aisle/${department.id}`}
+                    className="text-lg font-semibold text-foreground hover:text-primary"
+                  >
+                    {department.label}
+                  </Link>
+                  <span className="text-sm text-muted-foreground">
+                    {department.n_clusters.toLocaleString()} products
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                  {shelves.map((shelf) => (
+                    <Link
+                      key={shelf.slug}
+                      to={`/shelf/${shelf.slug}`}
+                      className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40"
+                    >
+                      <span className="text-sm font-medium text-foreground">
+                        {spineShelfDisplay(shelf)}
+                      </span>
+                      <span className="price-num text-xs text-muted-foreground">
+                        {shelf.count.toLocaleString()}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+
+        <h2 className="mt-12 mb-3 text-lg font-semibold text-foreground">Captured demo categories</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          These are the catalogue slices this static build actually ships under `/browse/`.
+        </p>
+
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Price comparison</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {comparable.map((c) => (
             <Link
@@ -85,7 +129,7 @@ export default function CatalogueCategoriesPage() {
           ))}
         </div>
 
-        <h2 className="mt-10 mb-1 text-lg font-semibold text-foreground">Also tracking</h2>
+        <h3 className="mt-8 mb-1 text-sm font-semibold text-foreground">Also tracking</h3>
         <p className="mb-3 text-sm text-muted-foreground">
           Browsable, but too few products appear at more than one store for a
           reliable price comparison.

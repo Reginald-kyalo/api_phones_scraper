@@ -1,95 +1,48 @@
 /**
- * The homepage department strip — the storefront's 21 RULED departments, in 12 tiles.
+ * The homepage department strip — the 19 redesign spine departments.
  *
  * ⛔ NOT `pricerunnerApi`, and no longer the raw tree either. It used to show the first 12 of
  * ~529 browsable roots, which are shop vocabulary: `Laptops` resolves in three places, 75% of
  * those roots are served by ONE shop, and four of the twelve were only there because they had
- * been ordered by the wrong number. These 21 are a human ruling served from API config.
+ * been ordered by the wrong number.
  *
- * ⭐⭐ GROUPED, NOT CUT — AND THE DIFFERENCE IS THE WHOLE POINT. `Laptops` and `Computers` sat
- * side by side as peers, as did five separate grocery departments. Grouping collapses 21 tiles
- * to 12 while EVERY ONE of the 21 stays reachable, one click deeper. That is the opposite of
- * the old top-12, which reached 12 and lost 9.
- *
- * ⛔⛔ THE GROUPS ARE NOT INVENTED HERE, AND NOT INVENTED IN THIS FILE'S SIBLINGS EITHER. They
- * arrive on `Department.parent` from `app/api/departments.py`, where each multi-member group is
- * one the DESIGNED spine already rules (measured 2026-09-05 via `browse_nodes.spine_department`).
- * A client-side grouping table here would be a second, drifting ruling — the exact "21 in one
- * nav and 19 in another" failure the roadmap names.
- *
- * ⛔ A GROUP OF ONE RENDERS AS A PLAIN LINK. Making someone open a popover to discover a single
- * destination is worse than no grouping at all. Eight departments stand alone today and are
- * plain links; the API guarantees no one-member group exists, and this renderer would degrade
- * gracefully if one ever did.
+ * ⭐⭐ REDESIGN SPINE, NOT CURATED DEPARTMENTS. These 19 departments are stamped directly on
+ * `browse_nodes.spine_department`, the DESIGNED taxonomy layer measured 2026-09-05. They reach
+ * 79.9% of placed clusters (81,525 of 102,038) vs. 46.0% from the old 21 curated departments.
+ * Every department is an independent top-level node with no `parent` grouping field — each
+ * renders as a plain link, and every tile is the only click-in for that slice of the catalogue.
  *
  * ⭐⭐ IT STILL SCROLLS AT EVERY WIDTH. The old strip cut to 12 and then switched to
  * `lg:justify-between` with `lg:overflow-visible` — a single non-scrolling row — so anything past
  * the cut was unreachable on a wide screen while the narrow one could still scroll to it. Fewer
  * tiles does NOT make that layout safe, so the scrolling row stays.
  *
- * ⛔ THE STRIP IS NOT THE CATALOGUE. 21 departments reach ~45% of placed clusters; `/shelf` owns
- * the rest, which is why the last tile is a door to it rather than another department.
+ * ⛔ THE STRIP IS NOT THE CATALOGUE. 79.9% of placed clusters are browsable through these 19
+ * departments; the remaining ~20% live in nodes not yet stamped to any spine department and are
+ * reachable ONLY through /shelf, which is why the last tile is a door to it.
  */
 import { Link } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, LayoutGrid, Package } from 'lucide-react';
-import { departmentApi, type Department } from '../../lib/api';
-import { departmentHref, departmentIcon, formatCount } from '../../lib/categories';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { LayoutGrid } from 'lucide-react';
+import { spineApi, type SpineDepartmentView } from '../../lib/api';
+import { aisleHref, departmentIcon } from '../../lib/categories';
 
 /** Survives unmount/remount within a session; the server caches the spine for 300s regardless. */
-let _cache: Department[] | null = null;
+let _cache: SpineDepartmentView[] | null = null;
 
-type Tile =
-  /** One department, linking straight to its page. */
-  | { key: string; label: string; total: number; dept: Department; children?: never }
-  /** A ruled group, opening a menu of its departments. */
-  | { key: string; label: string; total: number; dept?: never; children: Department[] };
+type Tile = { key: string; label: string; total: number; dept: SpineDepartmentView };
 
 /**
- * Collapse the flat department list onto the parents the API publishes.
- *
- * ⛔ ORDER IS PRESERVED FROM THE API, NOT RE-SORTED BY STOCK. `departments.py` records that its
- * order is EDITORIAL — "Kitchen (1,857) sits below Bakery (425) because a shopper reads a
- * storefront by domain, not by inventory" — and a client-side sort would re-take exactly the
- * decision that endpoint exists to own. A group takes the position of its first member.
- *
- * ⛔ A department with no parent, or the only member of its group, becomes a plain link.
+ * Build tiles from the 19 redesign spine departments. Every department is a top-level node with
+ * no `parent` field, so every tile is a plain link — no popovers needed.
  */
-function buildTiles(departments: Department[]): Tile[] {
-  const tiles: Tile[] = [];
-  const groups = new Map<string, Department[]>();
-
-  for (const d of departments) {
-    if (!d.parent) {
-      tiles.push({ key: d.id, label: d.label, total: d.n_clusters, dept: d });
-      continue;
-    }
-    const members = groups.get(d.parent);
-    if (members) {
-      members.push(d);
-      continue;
-    }
-    // First member of this group claims the group's position in editorial order.
-    const fresh: Department[] = [d];
-    groups.set(d.parent, fresh);
-    tiles.push({
-      key: `group:${d.parent}`,
-      label: d.parent,
-      total: 0, // filled below, once every member is known
-      children: fresh,
-    });
-  }
-
-  return tiles.map((t) =>
-    t.children
-      ? t.children.length === 1
-        // ⛔ A popover over one destination is worse than no grouping. Degrade to a link.
-        ? { key: t.children[0].id, label: t.children[0].label,
-            total: t.children[0].n_clusters, dept: t.children[0] }
-        : { ...t, total: t.children.reduce((sum, d) => sum + d.n_clusters, 0) }
-      : t,
-  );
+function buildTiles(departments: SpineDepartmentView[]): Tile[] {
+  return departments.map((d) => ({
+    key: d.id,
+    label: d.label,
+    total: d.n_clusters,
+    dept: d,
+  }));
 }
 
 const TILE =
@@ -98,16 +51,13 @@ const BADGE =
   'w-12 h-12 rounded-xl ultra-border flex items-center justify-center group-hover:border-teal group-hover:bg-teal/5 transition-colors';
 
 export default function CategoryStrip() {
-  const [departments, setDepartments] = useState<Department[]>(_cache ?? []);
+  const [departments, setDepartments] = useState<SpineDepartmentView[]>(_cache ?? []);
 
   useEffect(() => {
     if (_cache) return;
     let cancelled = false;
-    departmentApi.list().then((res) => {
+    spineApi.list().then((res) => {
       if (cancelled) return;
-      // ⛔ NO `.slice()`. 21 is a ruling; a client-side cut would re-take the editorial decision
-      // this endpoint exists to own — and that is exactly how the old top-12 went wrong.
-      // Grouping is not a cut: all 21 stay reachable.
       _cache = res.results;
       setDepartments(_cache);
     }).catch(() => {
@@ -125,70 +75,25 @@ export default function CategoryStrip() {
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6">
         <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide scroll-hint-x">
           {tiles.map((tile) => {
-            if (tile.dept) {
-              const Icon = departmentIcon(tile.dept);
-              return (
-                <Link key={tile.key} to={departmentHref(tile.dept.id)} className={TILE}
-                      title={tile.label}>
-                  <div className={BADGE}>
-                    <Icon className="w-5 h-5 flex-shrink-0 group-hover:text-teal transition-colors"
-                          strokeWidth={1.75} />
-                  </div>
-                  {/* ⭐ A department name is OURS and already clean — it never goes through
-                      `categoryLabel`, which exists to repair SHOUTING shop copy. */}
-                  <span className="text-xs font-medium truncate w-full text-center">
-                    {tile.label}
-                  </span>
-                </Link>
-              );
-            }
-
-            // ⭐ The group's icon is its LARGEST member's, so the tile still reads as the thing
-            // most of its stock is. A dedicated group icon table would be a fifth place category
-            // presentation is decided.
-            const biggest = tile.children.reduce(
-              (a, b) => (b.n_clusters > a.n_clusters ? b : a), tile.children[0]);
-            const Icon = departmentIcon(biggest) ?? Package;
-
+            const Icon = departmentIcon(tile.dept);
             return (
-              <Popover key={tile.key}>
-                <PopoverTrigger className={TILE} title={tile.label}>
-                  <div className={BADGE}>
-                    <Icon className="w-5 h-5 flex-shrink-0 group-hover:text-teal transition-colors"
-                          strokeWidth={1.75} />
-                  </div>
-                  <span className="flex items-center gap-0.5 text-xs font-medium truncate w-full justify-center">
-                    {tile.label}
-                    <ChevronDown className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-                  </span>
-                </PopoverTrigger>
-                <PopoverContent align="center" className="w-60 p-1.5">
-                  {tile.children.map((d) => {
-                    const ChildIcon = departmentIcon(d);
-                    return (
-                      <Link
-                        key={d.id}
-                        to={departmentHref(d.id)}
-                        className="flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-gray-50"
-                      >
-                        <ChildIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground"
-                                   aria-hidden="true" />
-                        <span className="flex-1 text-foreground">{d.label}</span>
-                        {/* ⛔ The department's OWN total, never the group's — a tile that
-                            advertised the group's number would promise a page it never opens. */}
-                        <span className="price-num text-xs text-muted-foreground">
-                          {formatCount(d.n_clusters)}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </PopoverContent>
-              </Popover>
+              <Link key={tile.key} to={aisleHref(tile.dept.id)} className={TILE}
+                    title={tile.label}>
+                <div className={BADGE}>
+                  <Icon className="w-5 h-5 flex-shrink-0 group-hover:text-teal transition-colors"
+                        strokeWidth={1.75} />
+                </div>
+                {/* ⭐ A department name is OURS and already clean — it never goes through
+                    `categoryLabel`, which exists to repair SHOUTING shop copy. */}
+                <span className="text-xs font-medium truncate w-full text-center">
+                  {tile.label}
+                </span>
+              </Link>
             );
           })}
 
-          {/* ⛔⛔ LOAD-BEARING, NOT A FLOURISH. The spine reaches ~45% of placed clusters; the
-              other 55% — chiefly `phone-tablet`'s 19,286 undifferentiated ones — are reachable
+          {/* ⛔⛔ LOAD-BEARING, NOT A FLOURISH. The spine reaches ~79.9% of placed clusters; the
+              remaining ~20% — nodes not yet stamped to a spine department — are reachable
               ONLY through /shelf. Removing this makes half the catalogue unbrowsable. */}
           <Link
             to="/shelf"

@@ -24,6 +24,18 @@ export function shopLabel(n: number): string {
 }
 
 /**
+ * How many shops this product can actually be COMPARED across.
+ *
+ * Below two there is no comparison, and saying so is better than a confident
+ * "1 shop" above an expander with nothing worth opening.
+ */
+export function comparedLabel(n: number): string {
+  if (n <= 0) return 'no price available';
+  if (n === 1) return 'only 1 shop — no comparison';
+  return `compared across ${n} shops`;
+}
+
+/**
  * What a shopper actually saves by buying at the cheapest store, as a percentage.
  *
  * ⛔ `like_for_like_spread_pct` IS NOT A SAVING and must never be rendered as

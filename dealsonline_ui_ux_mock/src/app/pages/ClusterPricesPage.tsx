@@ -1,16 +1,150 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
-import { clustersApi, type ClusterDetail } from '../lib/api';
-import { formatPrice, savingPct, shopLabel } from '../lib/format';
+import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
+import { comparedLabel, formatPrice, savingPct, shopLabel } from '../lib/format';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Loader2, ExternalLink, AlertTriangle, ArrowLeft, RefreshCw, Package } from 'lucide-react';
+import {
+  ChevronDown,
+  ExternalLink,
+  Loader2,
+  AlertTriangle,
+  ArrowLeft,
+  RefreshCw,
+  Package,
+  TrendingDown,
+} from 'lucide-react';
 import { storeName, storeInitial } from '../lib/storeIdentity';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { MatchProvenance } from '../features/clusters/components/MatchProvenance';
 import { SpreadEvidence } from '../features/clusters/components/SpreadEvidence';
 import { ReportDialog } from '../features/clusters/components/ReportDialog';
 import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
+
+type Config = ClusterDetail['configs'][number];
+
+/**
+ * The shops that can actually PRICE one configuration, cheapest first.
+ *
+ * This is intentionally derived from the rows that will render rather than
+ * `n_stores`, because the config-level count is not served by the API.
+ */
+function pricedOffers(byStore: Record<string, ClusterStore> | null | undefined): [string, ClusterStore][] {
+  return Object.entries(byStore ?? {})
+    .filter(([, offer]) => offer != null && offer.price != null && offer.price >= 1)
+    .sort(([, a], [, b]) => (a.price as number) - (b.price as number));
+}
+
+function variantLabel(config: Config): string {
+  return config.facet_label ?? (config.storage_gb != null ? `${config.storage_gb}GB` : 'Variant');
+}
+
+/**
+ * One configuration of a cluster, with the per-store comparison it carries.
+ *
+ * The static mock used to render only `from PRICE at STORE · N shops` and drop
+ * `configs[].by_store` — a full `{price, url, title}` map per shop. This block
+ * renders that same variant comparison as the live app.
+ */
+function VariantBlock({ config }: { config: Config }) {
+  const [open, setOpen] = useState(false);
+  const offers = pricedOffers(config.by_store);
+  const label = variantLabel(config);
+  const spread = config.spread_pct;
+  const comparable = offers.length > 1;
+
+  return (
+    <div data-testid="variant" className="rounded-xl ultra-border overflow-hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="w-full text-left p-4 flex items-baseline justify-between gap-2 flex-wrap
+                   hover:bg-gray-50 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <span className="font-semibold text-sm text-foreground">{label}</span>
+          {spread != null && spread > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-deep
+                             bg-teal/10 rounded px-1.5 py-0.5">
+              <TrendingDown className="h-3 w-3" aria-hidden="true" />
+              {Math.round(spread)}%
+            </span>
+          )}
+        </span>
+        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+          from{' '}
+          <span className="price-num font-bold text-foreground">
+            {formatPrice(config.best_price)}
+          </span>
+          {config.cheapest_store ? ` at ${storeName(config.cheapest_store)}` : ''}
+          {' · '}
+          {comparedLabel(offers.length)}
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+            aria-hidden="true"
+          />
+        </span>
+      </button>
+      {open && (
+        <div className="px-4 pb-4">
+          {offers.length > 0 ? (
+            <>
+              <ul aria-label={`${label} prices`} className="space-y-2 list-none p-0">
+                {offers.map(([rawStore, offer], idx) => (
+                  <li
+                    key={rawStore}
+                    className={`flex items-center gap-4 rounded-xl p-3 transition-colors ultra-border hover:bg-gray-50 ${
+                      idx === 0 ? 'border-primary/20' : 'border-border'
+                    }`}
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-foreground text-background font-bold text-xs">
+                      {storeInitial(rawStore)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-xs text-foreground">{storeName(rawStore)}</span>
+                        {idx === 0 && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-teal/10 text-teal-deep border-primary/20">
+                            Best price
+                          </Badge>
+                        )}
+                      </div>
+                      {offer.title && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{offer.title}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      <span className="price-num text-base font-bold text-foreground">
+                        {formatPrice(offer.price)}
+                      </span>
+                      <Button asChild size="sm" className="text-xs h-8 px-4">
+                        <a href={offer.url} target="_blank" rel="noopener noreferrer">
+                          Go to store
+                          <ExternalLink className="h-3 w-3 ml-1" aria-hidden="true" />
+                        </a>
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {comparable && spread != null && spread > 0 && (
+                <p className="text-xs text-teal-deep mt-2">
+                  {Math.round(spread)}% between the cheapest and dearest {label} — same
+                  configuration, so this saving is real.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No usable price for this configuration right now.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Live cross-store price comparison for one cluster (the matching engine's
@@ -251,22 +385,13 @@ export default function ClusterPricesPage() {
           <>
             <h2 className="text-lg font-semibold text-foreground mb-1">By configuration</h2>
             <p className="text-sm text-muted-foreground mb-3">
-              Like-for-like prices per variant — the honest comparison.
+              Like-for-like prices per variant — the honest comparison. The list above takes each
+              shop's best offer whatever the variant, so it can put a 128GB price beside a 256GB
+              one; these do not.
             </p>
             <div className="space-y-3">
               {cluster.configs.map((cfg, i) => (
-                <div key={i} className="rounded-xl ultra-border p-4">
-                  <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                    <span className="font-semibold text-sm text-foreground">
-                      {cfg.facet_label ?? (cfg.storage_gb != null ? `${cfg.storage_gb}GB` : 'Variant')}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      from <span className="price-num font-bold text-foreground">{formatPrice(cfg.best_price)}</span>
-                      {cfg.cheapest_store ? ` at ${cfg.cheapest_store}` : ''}
-                      {cfg.n_stores != null ? ` · ${shopLabel(cfg.n_stores)}` : ''}
-                    </span>
-                  </div>
-                </div>
+                <VariantBlock key={i} config={cfg} />
               ))}
             </div>
           </>

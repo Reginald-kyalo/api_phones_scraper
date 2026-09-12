@@ -53,7 +53,9 @@ Lowest ●━━━━○ highest, with `Save KES X · Y%`. It's the literal emb
 Files under `src/app/`:
 
 - **`components/layout/HeroSection.tsx`** — light contained hero (rounded-2xl), `variant: 'dark' | 'light'` (light is live; dark kept for reuse). Eyebrow (mono) → display headline → subcopy → in-hero `SearchBar` → trust line → **price-spread strip**. Right: a **generic phone** mock (narrow/tall, earpiece + gesture cue, **no notch/buttons/logo**) showing anonymized offer rows (redacted bars + `.price-num` prices, lowest in teal) that **clip+fade at the bottom edge** to imply more offers. Ambient teal glow.
-- **`components/layout/CategoryStrip.tsx`** — full-width category nav; hairline-bordered icon tiles, teal hover, `lg:justify-between` (spans edge-to-edge on desktop), horizontal scroll on mobile.
+- **`components/layout/CategoryStrip.tsx`** — full-width category nav; hairline-bordered icon tiles, teal hover. **A single scrolling row at every width**, one direct link per **design department** (`/aisle/:id`) plus an **"All" door** to `/browse`. It mirrors the production strip's post-cutover model: the 19 canonical departments, flat links, no popover-only branch.
+- **`pages/CatalogueCategoriesPage.tsx`** (`/browse`) — **the same 19 design departments as the strip**, now the first layer of “All categories”; the second layer is the captured `/browse/:slug` catalogue this static build actually ships.
+- **`pages/DemoAislePage.tsx`** (`/aisle/:id`) — one design department. It lists the captured categories under it when present, and states plainly when this demo did not capture a department (e.g. `home-appliances`).
 - **`components/layout/HowItWorks.tsx`** — 3-step Search → Compare → Save trust band.
 - **`components/layout/AlertsBanner.tsx`** — price-alerts feature banner (teal, faux alert card).
 - **`components/layout/Footer.tsx`** — ink canvas, teal accent line, newsletter, link columns, `Logo variant="light"`.

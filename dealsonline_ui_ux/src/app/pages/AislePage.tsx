@@ -4,10 +4,10 @@
  * ⛔⛔ A FOURTH SLUG SPACE, PARALLEL TO `/department` ON PURPOSE. `DepartmentPage` renders the
  * 21 CURATED departments ruled over the canonical tree, reaching ~46.0% of placed clusters. This
  * renders the 19 DESIGNED departments, reaching 79.9% (81,525 clusters). It is the migration
- * target for the curated set, run side by side until a cutover the owner has not made yet — so
- * this route is additive and is not linked from the header, the category strip or the mobile
- * sheet. Two department navs in front of a shopper is the failure mode the migration exists to
- * avoid.
+ * target for the curated set, and as of the nav cutover it IS linked: the header panel, the
+ * home strip and the mobile sheet all route here through `aisleHref`. `/department/:id` stays
+ * live for the curated set, so two department spaces exist side by side at the ROUTE level, but
+ * only one is offered in the nav — a shopper never sees both.
  *
  * ⭐ OTHERWISE THIS MIRRORS `DepartmentPage.tsx` EXACTLY, on purpose: same loading, error,
  * pagination and `PageMeta` contracts, same reasons for `foldChildren` over `departmentShelves`,

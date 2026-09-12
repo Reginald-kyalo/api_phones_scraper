@@ -60,3 +60,37 @@ export interface DemoManifest {
   deals: { count: number; pages: number };
   categories: DemoCategory[];
 }
+
+/** One shelf in the production `taxonomy_db.browse_nodes` tree. */
+export interface DemoBrowseNode {
+  slug: string;
+  label: string | null;
+  parent_slug: string | null;
+  /** root-first ancestor slugs, excluding self */
+  ancestors: string[];
+  /** display label per `ancestors` entry, index for index */
+  ancestor_labels: string[];
+  n_clusters: number;
+  n_clusters_subtree: number;
+  n_stores: number;
+  coarse: boolean;
+  browsable: boolean;
+  unsorted: boolean;
+}
+
+/** Static copy of `GET /api/clusters/browse-tree?parent={slug}`. */
+export interface DemoShelfTreeResponse {
+  parent: DemoBrowseNode | null;
+  count: number;
+  results: DemoBrowseNode[];
+}
+
+/** Per-leaf pagination metadata written by `capture_demo_shelves.py`. */
+export interface DemoShelfMeta {
+  slug: string;
+  total: number;
+  pages: number;
+  multi_total: number;
+  multi_pages: number;
+  page_size: number;
+}

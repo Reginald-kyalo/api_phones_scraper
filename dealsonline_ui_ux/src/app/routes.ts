@@ -42,9 +42,11 @@ export const router = createBrowserRouter([
       // The REDESIGN spine's 19 DESIGNED departments (browse_nodes.spine_department).
       // ⛔⛔ A FOURTH SLUG SPACE, PARALLEL TO /department ON PURPOSE. This is the migration
       // target for the 21 curated departments — 79.9% of placements reachable vs 46.0% — and
-      // the two run side by side only until the cutover. `home-appliances` names a department
-      // in BOTH spaces and the pages differ, so `aisleHref` and `departmentHref` are separate
-      // builders and an id is never passed to the wrong one. Not linked from any nav.
+      // it is now the destination for all three nav surfaces (the header panel, the strip and
+      // the mobile sheet) via `aisleHref`. `/department/:id` stays live for the curated set, and
+      // `home-appliances` names a department in BOTH spaces with genuinely different pages, so
+      // `aisleHref` and `departmentHref` are separate builders and an id is never passed to the
+      // wrong one.
       { path: "aisle/:id", Component: AislePage },
       { path: "browse/:productType", Component: BrowsePage },
       { path: "product/:productId", Component: ProductDetailsPage },

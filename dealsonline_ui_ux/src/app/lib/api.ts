@@ -672,8 +672,9 @@ export const departmentApi = {
 // ⭐ WHY THIS IS A SEPARATE CLIENT FROM `departmentApi`. That client serves the 21 CURATED
 // departments ruled over the canonical tree by a person, reaching ~45% of placed clusters. This
 // serves the REDESIGN spine's 19 DESIGNED departments — a different ruling, reaching 79.9% of
-// placed clusters (81,525 of them). This is the migration target for `departmentApi`, run side
-// by side with it until the cutover.
+// placed clusters (81,525 of them). This is the migration target for `departmentApi` and it now
+// backs all three nav surfaces (`MegaMenu`, `CategoryStrip`, `MobileCategoryNav`) plus
+// `/aisle/:id`; `departmentApi` remains for `/department/:id` during the parallel period.
 //
 // ⛔⛔ A FOURTH SLUG SPACE. `SpineDepartmentView.id` (`phones-wearables`) is a REDESIGN spine
 // department — not a `browse_nodes` slug, not a curated department id, and not a retired-spine
@@ -691,13 +692,13 @@ export interface SpineDepartmentView {
 }
 
 export const spineApi = {
-  // ⛔ NO `list()` HERE. Nothing on the storefront renders the 19-department menu yet — only
-  // `getClusters` (below) is called, from `AislePage`, which already has an id from
-  // `aisleHref`. A prior `list()` carried a comment copied from `departmentApi.list` claiming
-  // "EDITORIAL order, do not re-sort by stock" — but `/clusters/spine-departments` sorts by
-  // `-n_clusters` (and `tests/test_spine_departments.py::test_the_departments_are_ordered_by_
-  // STOCK` pins exactly that), so the comment described the CURATED client, not this one. Add
-  // it back honestly — stock order, not editorial — if a designed-department menu ever ships.
+  /** The 19 designed departments, sorted by stock descending. */
+  list: () =>
+    request<{
+      count: number;
+      n_clusters_total: number;
+      results: SpineDepartmentView[];
+    }>('/clusters/spine-departments'),
 
   /** The products across every shelf a designed department reaches. Closure is server-side. */
   getClusters: (

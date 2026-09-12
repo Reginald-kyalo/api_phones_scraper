@@ -5,6 +5,8 @@ import Root from "./pages/Root";
 const HomePage = lazy(() => import("./pages/HomePage"));
 const CatalogueCategoriesPage = lazy(() => import("./pages/CatalogueCategoriesPage"));
 const CatalogueBrowsePage = lazy(() => import("./pages/CatalogueBrowsePage"));
+const DemoAislePage = lazy(() => import("./pages/DemoAislePage"));
+const DemoShelfPage = lazy(() => import("./pages/DemoShelfPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 const PriceAlertsPage = lazy(() => import("./pages/PriceAlertsPage"));
@@ -27,6 +29,10 @@ export const router = createBrowserRouter([
       // Catalogue — every captured cluster, served from public/demo/.
       { path: "browse", Component: CatalogueCategoriesPage },
       { path: "browse/:productType", Component: CatalogueBrowsePage },
+      // The 19 design departments, mirroring production's `/aisle/:id`.
+      { path: "aisle/:id", Component: DemoAislePage },
+      // Production browse-node leaves, listed by the full category menus.
+      { path: "shelf/:slug", Component: DemoShelfPage },
       { path: "search", Component: SearchPage },
       { path: "deals", Component: DealsPage },
       { path: "prices/:clusterId", Component: ClusterPricesPage },
