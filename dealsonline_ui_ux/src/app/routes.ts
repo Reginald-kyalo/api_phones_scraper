@@ -47,7 +47,7 @@ export const router = createBrowserRouter([
       // `home-appliances` names a department in BOTH spaces with genuinely different pages, so
       // `aisleHref` and `departmentHref` are separate builders and an id is never passed to the
       // wrong one.
-      { path: "aisle/:id", Component: AislePage },
+      { path: "aisle/:departmentId/:nodeId?", Component: AislePage },
       { path: "browse/:productType", Component: BrowsePage },
       { path: "product/:productId", Component: ProductDetailsPage },
       // Redirect or alias legacy routes

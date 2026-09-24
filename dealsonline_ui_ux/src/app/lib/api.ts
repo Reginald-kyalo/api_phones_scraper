@@ -720,4 +720,36 @@ export const spineApi = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Published shopping hierarchy
+// ---------------------------------------------------------------------------
+
+/** Authored category node. Its id belongs exclusively to the `/aisle` URL space. */
+export interface SpineHierarchyNode {
+  id: string;
+  label: string;
+  parentId: string | null;
+  children: SpineHierarchyNode[];
+  directTotal: number;
+  total: number;
+}
+
+export const spineHierarchyApi = {
+  get: () => request<{ count: number; results: SpineHierarchyNode[] }>(
+    '/clusters/spine-hierarchy',
+  ),
+  getClusters: (
+    id: string,
+    options?: { multiStoreOnly?: boolean; limit?: number; offset?: number },
+  ) => {
+    const params = new URLSearchParams();
+    if (options?.multiStoreOnly) params.set('multi_store_only', 'true');
+    if (options?.limit) params.set('limit', String(options.limit));
+    if (options?.offset) params.set('offset', String(options.offset));
+    return request<{ node: SpineHierarchyNode; count: number; total: number; results: ClusterSummary[] }>(
+      `/clusters/by-spine-node/${encodeURIComponent(id)}?${params}`,
+    );
+  },
+};
+
 export { ApiError };

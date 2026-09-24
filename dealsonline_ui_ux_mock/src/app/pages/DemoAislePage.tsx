@@ -1,6 +1,5 @@
 import { Link, useParams } from 'react-router';
-import { spineDepartmentById } from '../data/spineDepartments';
-import { LIVE_SPINE_SHELVES, spineShelfDisplay } from '../data/liveSpineShelves';
+import { spineShelfDisplay, taxonomyDepartmentById } from '../data/taxonomyTree';
 import { ChevronRight } from 'lucide-react';
 
 /**
@@ -14,7 +13,7 @@ import { ChevronRight } from 'lucide-react';
  */
 export default function DemoAislePage() {
   const { id } = useParams<{ id: string }>();
-  const department = spineDepartmentById(id);
+  const department = taxonomyDepartmentById(id);
 
   if (!department) {
     return (
@@ -33,8 +32,6 @@ export default function DemoAislePage() {
   }
 
   const { Icon } = department;
-  const shelves = LIVE_SPINE_SHELVES[department.id] ?? [];
-
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
@@ -53,31 +50,26 @@ export default function DemoAislePage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">{department.label}</h1>
             <p className="text-sm text-muted-foreground">
-              {department.n_clusters.toLocaleString()} products across{' '}
-              {department.n_shelves.toLocaleString()} shelves in the production taxonomy
+              {department.n_shelves.toLocaleString()} captured shelves, organised for easier browsing
             </p>
           </div>
         </div>
 
-        <h2 className="mb-3 text-lg font-semibold text-foreground">
-          {department.label} shelves
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {shelves.map((shelf) => (
-            <Link
-              key={shelf.slug}
-              to={`/shelf/${shelf.slug}`}
-              className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40"
-            >
-              <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
-              <span className="price-num mt-2 text-2xl font-bold text-foreground">
-                {shelf.count.toLocaleString()}
-              </span>
-              <span className="text-xs text-muted-foreground">products in this shelf</span>
-              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">
-                Browse <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              </span>
-            </Link>
+        <div className="space-y-8">
+          {department.families.map((family) => (
+            <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
+              <h2 id={`${department.id}-${family.id}`} className="mb-3 text-lg font-semibold text-foreground">{family.label}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {family.shelves.map((shelf) => (
+                  <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40">
+                    <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
+                    <span className="price-num mt-2 text-2xl font-bold text-foreground">{shelf.count.toLocaleString()}</span>
+                    <span className="text-xs text-muted-foreground">products in this shelf</span>
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">Browse <ChevronRight className="h-3 w-3" aria-hidden="true" /></span>
+                  </Link>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       </div>

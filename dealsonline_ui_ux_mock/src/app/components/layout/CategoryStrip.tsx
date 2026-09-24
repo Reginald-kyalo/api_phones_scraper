@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { LayoutGrid } from 'lucide-react';
-import { SPINE_DEPARTMENTS } from '../../data/spineDepartments';
+import { TAXONOMY_DEPARTMENTS } from '../../data/taxonomyTree';
 
 /**
  * The homepage department strip — the same 19 canonical design departments the
@@ -21,7 +21,7 @@ export default function CategoryStrip() {
     <nav className="bg-white border-b border-border" aria-label="Departments">
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6">
         <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide scroll-hint-x">
-          {SPINE_DEPARTMENTS.map((department) => {
+          {TAXONOMY_DEPARTMENTS.map((department) => {
             const { Icon } = department;
             return (
               <Link

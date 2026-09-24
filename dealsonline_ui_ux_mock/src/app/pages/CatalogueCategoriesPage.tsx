@@ -3,8 +3,7 @@ import { Link } from 'react-router';
 import { clustersApi } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
 import { Loader2, ChevronRight } from 'lucide-react';
-import { SPINE_DEPARTMENTS } from '../data/spineDepartments';
-import { LIVE_SPINE_SHELVES, spineShelfDisplay } from '../data/liveSpineShelves';
+import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../data/taxonomyTree';
 
 const LABELS: Record<string, string> = {
   'groceries': 'Groceries',
@@ -29,9 +28,8 @@ export const categoryLabel = (slug: string) => LABELS[slug] ?? slug.replace(/-/g
 /**
  * All categories, now in two honest layers:
  *
- * 1. The 19 design departments — the same canonical list production reads from
- *    `/clusters/spine-departments`, presented here as static `/aisle/:id` pages.
- * 2. The captured demo categories — what this static build actually ships in
+ * 1. Derived departments and families, presented as static `/aisle/:id` pages.
+ * 2. Captured demo categories — what this static build actually ships in
  *    `/browse/:slug`.
  */
 export default function CatalogueCategoriesPage() {
@@ -66,8 +64,7 @@ export default function CatalogueCategoriesPage() {
 
         <h2 className="mt-8 mb-3 text-lg font-semibold text-foreground">Departments</h2>
         <div className="space-y-12">
-          {SPINE_DEPARTMENTS.map((department) => {
-            const shelves = LIVE_SPINE_SHELVES[department.id] ?? [];
+          {TAXONOMY_DEPARTMENTS.map((department) => {
             return (
               <section key={department.id}>
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3">
@@ -81,20 +78,19 @@ export default function CatalogueCategoriesPage() {
                     {department.n_clusters.toLocaleString()} products
                   </span>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                  {shelves.map((shelf) => (
-                    <Link
-                      key={shelf.slug}
-                      to={`/shelf/${shelf.slug}`}
-                      className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40"
-                    >
-                      <span className="text-sm font-medium text-foreground">
-                        {spineShelfDisplay(shelf)}
-                      </span>
-                      <span className="price-num text-xs text-muted-foreground">
-                        {shelf.count.toLocaleString()}
-                      </span>
-                    </Link>
+                <div className="space-y-4">
+                  {department.families.map((family) => (
+                    <section key={family.id} aria-labelledby={`${department.id}-${family.id}`}>
+                      <h3 id={`${department.id}-${family.id}`} className="mb-2 text-sm font-semibold text-muted-foreground">{family.label}</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                        {family.shelves.map((shelf) => (
+                          <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40">
+                            <span className="text-sm font-medium text-foreground">{spineShelfDisplay(shelf)}</span>
+                            <span className="price-num text-xs text-muted-foreground">{shelf.count.toLocaleString()}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
                   ))}
                 </div>
               </section>

@@ -57,6 +57,9 @@ from app.api.schemas.clusters import (
     SpineDepartmentClustersResponse,
     SpineDepartmentsResponse,
     SpineDepartmentView,
+    SpineHierarchyNode,
+    SpineHierarchyResponse,
+    SpineNodeClustersResponse,
 )
 from app.database import product_matching_db, taxonomy_db
 
@@ -673,6 +676,129 @@ async def browse_tree(
         parent=views[0] if node else None,
         count=len(rows),
         results=views[1:] if node else views,
+    )
+
+
+# ============================================================================================
+# PUBLISHED TAXONOMY HIERARCHY
+# ============================================================================================
+
+async def _published_spine_nodes() -> dict[str, dict]:
+    """Canonical taxonomy nodes assembled solely from publisher stamps.
+
+    A canonical spine node can have several source browse nodes.  Keeping their ids in
+    ``source_slugs`` is what lets the listing route retain every product while navigation
+    presents one stable category id.  No local taxonomy config participates here.
+    """
+    docs = [doc async for doc in BROWSE_NODES.find({"spine_slug": {"$ne": None}})]
+    nodes: dict[str, dict] = {}
+    for doc in docs:
+        node_id = doc.get("spine_slug")
+        if not isinstance(node_id, str) or not node_id:
+            continue
+        node = nodes.setdefault(node_id, {
+            "id": node_id,
+            "label": doc.get("spine_name") or node_id,
+            "parentId": doc.get("spine_parent_slug") or None,
+            "departmentId": doc.get("spine_department") or None,
+            "directTotal": 0,
+            "source_slugs": set(),
+            "children": [],
+            "total": 0,
+        })
+        node["directTotal"] += doc.get("n_clusters") or 0
+        node["source_slugs"].add(doc["_id"])
+
+    # Invalid/missing parents become top-level recovery nodes.  A published cycle is handled
+    # the same way so one bad row never makes the entire menu unrenderable.
+    for node in nodes.values():
+        parent = node["parentId"]
+        seen = {node["id"]}
+        while parent in nodes and parent not in seen:
+            seen.add(parent)
+            parent = nodes[parent]["parentId"]
+        if node["parentId"] not in nodes or parent in seen:
+            node["parentId"] = None
+        node["children"] = []
+    for node in nodes.values():
+        if node["parentId"]:
+            nodes[node["parentId"]]["children"].append(node["id"])
+
+    def rollup(node_id: str) -> int:
+        node = nodes[node_id]
+        node["total"] = node["directTotal"] + sum(rollup(child) for child in node["children"])
+        return node["total"]
+
+    for node in nodes.values():
+        if node["parentId"] is None:
+            rollup(node["id"])
+    return nodes
+
+
+def _spine_hierarchy_node(node_id: str, nodes: dict[str, dict]) -> SpineHierarchyNode:
+    """A stocked navigation node. Parents with stocked descendants remain visible."""
+    node = nodes[node_id]
+    children = [
+        _spine_hierarchy_node(child, nodes)
+        for child in node["children"]
+        if nodes[child]["total"] > 0
+    ]
+    children.sort(key=lambda child: (-child.total, child.label, child.id))
+    return SpineHierarchyNode(
+        id=node["id"], label=node["label"], parentId=node["parentId"],
+        departmentId=node["departmentId"], children=children,
+        directTotal=node["directTotal"], total=node["total"],
+    )
+
+
+@router.get("/spine-hierarchy", response_model=SpineHierarchyResponse)
+async def spine_hierarchy():
+    """Stocked recursive category navigation from the published canonical spine."""
+    nodes = await _published_spine_nodes()
+    roots = [
+        _spine_hierarchy_node(node_id, nodes)
+        for node_id, node in nodes.items()
+        if node["parentId"] is None and node["total"] > 0
+    ]
+    roots.sort(key=lambda node: (-node.total, node.label, node.id))
+    return SpineHierarchyResponse(count=len(roots), results=roots)
+
+
+@router.get("/by-spine-node/{node_id}", response_model=SpineNodeClustersResponse)
+async def spine_node_clusters(
+    node_id: str,
+    multi_store_only: bool = Query(False, description="only products compared across >=2 stores"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """Products assigned to a canonical taxonomy node and every descendant node."""
+    nodes = await _published_spine_nodes()
+    node = nodes.get(node_id)
+    if not node:
+        raise HTTPException(status_code=404, detail=f"unknown spine node {node_id!r}")
+
+    descendant_ids: set[str] = set()
+    pending = [node_id]
+    while pending:
+        current = pending.pop()
+        if current in descendant_ids:
+            continue
+        descendant_ids.add(current)
+        pending.extend(nodes[current]["children"])
+    source_slugs = set().union(*(nodes[current]["source_slugs"] for current in descendant_ids))
+    ids = [placement["_id"] async for placement in
+           BROWSE_PLACEMENTS.find({"node_slug": {"$in": list(source_slugs)}}, {"_id": 1})]
+    query: dict = {"_id": {"$in": ids}}
+    if multi_store_only:
+        query["is_multi_store"] = True
+    total = await CLUSTERS.count_documents(query)
+    rows = await (CLUSTERS.find(query)
+                  .sort("n_listings", -1)
+                  .skip(offset)
+                  .to_list(length=limit))
+    return SpineNodeClustersResponse(
+        node=_spine_hierarchy_node(node_id, nodes), count=len(rows), total=total,
+        results=[_cluster_view(row, summary=True) for row in rows],
     )
 
 

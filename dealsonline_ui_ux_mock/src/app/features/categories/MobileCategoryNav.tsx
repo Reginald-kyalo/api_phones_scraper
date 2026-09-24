@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronDown } from 'lucide-react';
-import { SPINE_DEPARTMENTS } from '../../data/spineDepartments';
-import { LIVE_SPINE_SHELVES, spineShelfDisplay } from '../../data/liveSpineShelves';
+import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../../data/taxonomyTree';
 
 interface Props {
   /** Kept for signature parity with production; this demo has no request to defer. */
@@ -24,10 +23,9 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
       </p>
 
       <ul>
-        {SPINE_DEPARTMENTS.map((department) => {
+        {TAXONOMY_DEPARTMENTS.map((department) => {
           const { Icon } = department;
           const isOpen = openId === department.id;
-          const shelves = LIVE_SPINE_SHELVES[department.id] ?? [];
           return (
             <li key={department.id} className="border-b border-border/60 last:border-0">
               <button
@@ -51,23 +49,26 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
 
               {isOpen && (
                 <div className="pb-2 bg-gray-50/60">
-                  {shelves.length > 0 ? (
-                    <ul>
-                      {shelves.map((shelf) => (
-                        <li key={shelf.slug}>
-                          <Link
-                            to={`/shelf/${shelf.slug}`}
-                            onClick={onNavigate}
-                            className="flex items-center gap-2 pl-12 pr-5 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <span className="flex-1 truncate">{spineShelfDisplay(shelf)}</span>
-                            <span className="text-xs tabular-nums shrink-0">
-                              {shelf.count.toLocaleString()}
-                            </span>
-                          </Link>
-                        </li>
+                  {department.families.length > 0 ? (
+                    <div className="px-5 py-2 space-y-2">
+                      {department.families.map((family) => (
+                        <details key={family.id} className="group rounded-md border border-border/70 bg-white" open={family.shelves.length <= 6}>
+                          <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
+                            {family.label} <span className="ml-1 text-muted-foreground">({family.shelves.length})</span>
+                          </summary>
+                          <ul className="border-t border-border/70 pb-1">
+                            {family.shelves.map((shelf) => (
+                              <li key={shelf.slug}>
+                                <Link to={`/shelf/${shelf.slug}`} onClick={onNavigate} className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                  <span className="flex-1 truncate">{spineShelfDisplay(shelf)}</span>
+                                  <span className="text-xs tabular-nums shrink-0">{shelf.count.toLocaleString()}</span>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="pl-12 pr-5 py-2 text-sm text-muted-foreground">
                       This department is a single shelf.

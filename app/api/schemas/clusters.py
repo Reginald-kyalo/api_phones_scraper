@@ -462,3 +462,35 @@ class SpineDepartmentClustersResponse(BaseModel):
     count: int
     total: int
     results: list[ClusterView]
+
+
+class SpineHierarchyNode(BaseModel):
+    """One canonical, published category node used by the storefront taxonomy."""
+
+    id: str = Field(description="stable published `spine_slug`")
+    label: str = Field(description="published `spine_name`, never inferred from the id")
+    parentId: str | None = Field(
+        None, description="published `spine_parent_slug`; null for a top-level node")
+    departmentId: str | None = Field(
+        None, description="published `spine_department`, retained as the department namespace")
+    children: list["SpineHierarchyNode"] = Field(default_factory=list)
+    directTotal: int = Field(
+        0, description="sum of `n_clusters` directly stamped to this canonical node")
+    total: int = Field(
+        0, description="directTotal plus every stocked descendant exactly once in this tree")
+
+
+class SpineHierarchyResponse(BaseModel):
+    """The stocked, recursive taxonomy hierarchy published by the source engine."""
+
+    count: int = Field(description="number of top-level stocked nodes")
+    results: list[SpineHierarchyNode] = Field(default_factory=list)
+
+
+class SpineNodeClustersResponse(BaseModel):
+    """Products mapped to one canonical taxonomy node and all of its descendants."""
+
+    node: SpineHierarchyNode
+    count: int = Field(description="rows returned, bounded by limit")
+    total: int = Field(description="distinct matching products before pagination")
+    results: list[ClusterView]

@@ -277,8 +277,9 @@ export function departmentHref(id: string): string {
  * `browse_nodes` and 43 of those are browsable — so a spine node slug must never be passed here.
  * This builder takes DEPARTMENT ids only.
  */
-export function aisleHref(id: string): string {
-  return `/aisle/${encodeURIComponent(id)}`;
+export function aisleHref(departmentId: string, nodeId?: string): string {
+  const base = `/aisle/${encodeURIComponent(departmentId)}`;
+  return nodeId ? `${base}/${encodeURIComponent(nodeId)}` : base;
 }
 
 // ---------------------------------------------------------------------------------------------

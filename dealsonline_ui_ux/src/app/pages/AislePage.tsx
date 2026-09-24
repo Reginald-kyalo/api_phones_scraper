@@ -28,7 +28,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { useHereAs } from '../lib/navigation';
 import {
-  ApiError, spineApi, type BrowseNode, type ClusterSummary, type SpineDepartmentView,
+  ApiError, spineApi, spineHierarchyApi, type BrowseNode, type ClusterSummary, type SpineDepartmentView,
 } from '../lib/api';
 import {
   aisleHref, categoryIcon, categoryLabel, foldChildren, formatCount, shelfCount, shelfHref,
@@ -42,7 +42,8 @@ import { ChevronRight, FolderTree, Loader2, PackageOpen, Store } from 'lucide-re
 const PAGE = 24;
 
 export default function AislePage() {
-  const { id } = useParams<{ id: string }>();
+  const { departmentId, nodeId } = useParams<{ departmentId: string; nodeId?: string }>();
+  const id = nodeId ?? departmentId;
   // ⭐ THE FILTER LIVES IN THE URL, NOT IN STATE — same ruling as DepartmentPage and ShelfPage.
   const [params, setParams] = useSearchParams();
   const multiStoreOnly = params.get('multi_store') === '1';
@@ -66,12 +67,19 @@ export default function AislePage() {
     setLoading(true);
     setError(null);
     setClusters([]);
-    spineApi
-      .getClusters(id, { limit: PAGE, multiStoreOnly })
-      .then((res) => {
+    const request = nodeId
+      ? spineHierarchyApi.getClusters(nodeId, { limit: PAGE, multiStoreOnly })
+      : spineApi.getClusters(departmentId!, { limit: PAGE, multiStoreOnly });
+    request.then((res) => {
         if (cancelled) return;
-        setDepartment(res.department);
-        setShelves(res.shelves);
+        if ('department' in res) {
+          setDepartment(res.department);
+          setShelves(res.shelves);
+        } else {
+          setDepartment({ id: departmentId!, label: res.node.label, n_clusters: res.node.total,
+            n_shelves: res.node.children.length });
+          setShelves([]);
+        }
         setClusters(res.results);
         setTotal(res.total);
       })
@@ -87,7 +95,7 @@ export default function AislePage() {
     return () => {
       cancelled = true;
     };
-  }, [id, multiStoreOnly]);
+  }, [id, departmentId, nodeId, multiStoreOnly]);
 
   /**
    * ⭐ APPEND, don't replace: `offset` is derived from what is already on screen, so the button
@@ -96,8 +104,10 @@ export default function AislePage() {
   const loadMore = useCallback(() => {
     if (!id || loadingMore) return;
     setLoadingMore(true);
-    spineApi
-      .getClusters(id, { limit: PAGE, offset: clusters.length, multiStoreOnly })
+    const request = nodeId
+      ? spineHierarchyApi.getClusters(nodeId, { limit: PAGE, offset: clusters.length, multiStoreOnly })
+      : spineApi.getClusters(departmentId!, { limit: PAGE, offset: clusters.length, multiStoreOnly });
+    request
       .then((res) => {
         // ⛔ De-duplicate by cluster id — see DepartmentPage for why: the server sorts by
         // `n_listings`, which is not a tiebreak, so an equal-listings pair can swap between
@@ -112,7 +122,7 @@ export default function AislePage() {
         // Leave what is already on screen; the button stays available to retry.
       })
       .finally(() => setLoadingMore(false));
-  }, [id, clusters.length, loadingMore, multiStoreOnly]);
+  }, [id, departmentId, nodeId, clusters.length, loadingMore, multiStoreOnly]);
 
   // ⭐ Same rule as DepartmentPage: an adopted shelf that only restates the department name is a
   // redundant tile.

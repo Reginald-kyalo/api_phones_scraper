@@ -1,27 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, X } from 'lucide-react';
-import { SPINE_DEPARTMENTS } from '../../data/spineDepartments';
-import { LIVE_SPINE_SHELVES, spineShelfDisplay } from '../../data/liveSpineShelves';
+import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../../data/taxonomyTree';
 
 interface MegaMenuProps {
   open: boolean;
   onClose: () => void;
 }
 
-const SHELVES = 8;
-
 /**
- * Static copy of the production category panel. Production reads the 19 design
- * departments from the API; this demo reads the same list from
- * `SPINE_DEPARTMENTS` and shows its captured `/browse` categories as shelves.
+ * Static category panel driven by the derived hierarchy. Every captured shelf
+ * is available beneath a family heading; the menu never truncates a department.
  */
 export default function MegaMenu({ open, onClose }: MegaMenuProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (SPINE_DEPARTMENTS.length > 0) setActiveId((cur) => cur ?? SPINE_DEPARTMENTS[0].id);
+    if (TAXONOMY_DEPARTMENTS.length > 0) setActiveId((cur) => cur ?? TAXONOMY_DEPARTMENTS[0].id);
   }, []);
 
   useEffect(() => {
@@ -35,8 +31,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
 
   if (!open) return null;
 
-  const active = SPINE_DEPARTMENTS.find((d) => d.id === activeId) ?? SPINE_DEPARTMENTS[0];
-  const shelves = active ? LIVE_SPINE_SHELVES[active.id] ?? [] : [];
+  const active = TAXONOMY_DEPARTMENTS.find((d) => d.id === activeId) ?? TAXONOMY_DEPARTMENTS[0];
 
   return (
     <>
@@ -64,7 +59,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
               className="w-72 flex-shrink-0 border-r border-border pr-6 max-h-[420px] overflow-y-auto"
             >
               <ul className="space-y-0.5">
-                {SPINE_DEPARTMENTS.map((department) => {
+                {TAXONOMY_DEPARTMENTS.map((department) => {
                   const { Icon } = department;
                   const on = activeId === department.id;
                   return (
@@ -104,28 +99,31 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                     </span>
                   </div>
 
-                  {shelves.length > 0 ? (
-                    <ul className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1">
-                      {shelves.slice(0, SHELVES * 3).map((shelf) => (
-                        <li key={shelf.slug}>
-                          <Link
-                            to={`/shelf/${shelf.slug}`}
-                            onClick={onClose}
-                            title={spineShelfDisplay(shelf)}
-                            className="group flex items-baseline justify-between gap-2 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <span className="flex items-baseline gap-2 min-w-0">
-                              <span className="truncate group-hover:underline">
-                                {spineShelfDisplay(shelf)}
-                              </span>
-                            </span>
-                            <span className="text-xs tabular-nums flex-shrink-0">
-                              {shelf.count.toLocaleString()}
-                            </span>
-                          </Link>
-                        </li>
+                  {active.families.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 max-h-[420px] overflow-y-auto pr-2">
+                      {active.families.map((family) => (
+                        <section key={family.id} aria-labelledby={`family-${active.id}-${family.id}`}>
+                          <h4 id={`family-${active.id}-${family.id}`} className="mb-1 text-xs font-semibold uppercase tracking-wide text-foreground">
+                            {family.label}
+                          </h4>
+                          <ul className="space-y-0.5">
+                            {family.shelves.map((shelf) => (
+                              <li key={shelf.slug}>
+                                <Link
+                                  to={`/shelf/${shelf.slug}`}
+                                  onClick={onClose}
+                                  title={spineShelfDisplay(shelf)}
+                                  className="group flex items-baseline justify-between gap-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  <span className="truncate group-hover:underline">{spineShelfDisplay(shelf)}</span>
+                                  <span className="text-xs tabular-nums flex-shrink-0">{shelf.count.toLocaleString()}</span>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border border-border">
                       <p className="text-sm text-muted-foreground">
