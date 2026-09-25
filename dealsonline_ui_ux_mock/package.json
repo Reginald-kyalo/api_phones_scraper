@@ -10,6 +10,7 @@
     "prebuild": "npm run demo:prepare",
     "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
+    "check:phone-navigation": "python3 scripts/export_phone_navigation.py --source ${PHONES_SCRAPER_SOURCE:-../../phones_scraper/category_taxonomy/redesign/taxonomy_spine.yaml} --source-commit e5e36c9cdd28c5e983c2a810b192b13361fbec4e --check && python3 -m pytest ../tests/test_mock_phone_navigation.py",
     "type-check": "tsc --noEmit && tsc -p tsconfig.functions.json"
   },
   "dependencies": {

@@ -8,7 +8,11 @@ export interface PhoneCategory {
   synonyms: string[];
 }
 
-export const PHONE_NAVIGATION_SOURCE = release.source_sha256;
+/** Together these identify the exact approved authored source for this release. */
+export const PHONE_NAVIGATION_SOURCE = {
+  commit: release.source_commit,
+  sha256: release.source_sha256,
+} as const;
 export const PHONE_CATEGORIES: PhoneCategory[] = release.nodes as PhoneCategory[];
 const byId = new Map(PHONE_CATEGORIES.map((node) => [node.id, node]));
 

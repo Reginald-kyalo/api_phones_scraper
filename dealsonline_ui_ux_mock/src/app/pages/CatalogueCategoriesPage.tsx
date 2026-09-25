@@ -78,7 +78,12 @@ export default function CatalogueCategoriesPage() {
                   {department.id !== 'phones-wearables' && <span className="text-sm text-muted-foreground">{department.n_clusters.toLocaleString()} products</span>}
                 </div>
                 {department.id === 'phones-wearables' && <div className="mb-5"><PhoneCategoryChoices parentId="phones-wearables" /></div>}
-                {department.id === 'phones-wearables' && <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Existing collections</h3>}
+                {department.id === 'phones-wearables' && (
+                  <div className="mb-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Existing collections</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">Counts below are collection counts. A collection may contain mixed product types.</p>
+                  </div>
+                )}
                 <div className="space-y-4">
                   {department.families.map((family) => (
                     <section key={family.id} aria-labelledby={`${department.id}-${family.id}`}>
@@ -87,7 +92,9 @@ export default function CatalogueCategoriesPage() {
                         {family.shelves.map((shelf) => (
                           <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40">
                             <span className="text-sm font-medium text-foreground">{spineShelfDisplay(shelf)}</span>
-                            <span className="price-num text-xs text-muted-foreground">{shelf.count.toLocaleString()}</span>
+                            <span className="price-num text-xs text-muted-foreground">
+                              {shelf.count.toLocaleString()}<span className="sr-only"> items in collection</span>
+                            </span>
                           </Link>
                         ))}
                       </div>
