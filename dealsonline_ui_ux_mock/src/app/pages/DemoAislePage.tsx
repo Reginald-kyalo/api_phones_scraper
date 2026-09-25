@@ -55,6 +55,29 @@ export default function DemoAislePage() {
           </div>
         </div>
 
+        <nav aria-label={`${department.label} product types`} className="mb-8 flex flex-wrap gap-2">
+          {department.families
+            .filter((family) => family.id !== 'mixed-mobile-compatibility' && family.id !== 'needs-review')
+            .map((family) => (
+              <a
+                key={family.id}
+                href={`#${family.id}`}
+                className="rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              >
+                {family.label}
+              </a>
+            ))}
+          {department.plannedIntents?.map((intent) => (
+            <span
+              key={intent.id}
+              className="rounded-full border border-dashed border-primary/40 bg-primary/5 px-4 py-2 text-sm font-semibold text-teal-deep"
+              title="Product assignment will be connected in the canonical release"
+            >
+              {intent.label}
+            </span>
+          ))}
+        </nav>
+
         <div className="space-y-8">
           {department.families.map((family) => (
             <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
