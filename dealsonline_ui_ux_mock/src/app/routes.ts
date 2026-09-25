@@ -6,6 +6,7 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const CatalogueCategoriesPage = lazy(() => import("./pages/CatalogueCategoriesPage"));
 const CatalogueBrowsePage = lazy(() => import("./pages/CatalogueBrowsePage"));
 const DemoAislePage = lazy(() => import("./pages/DemoAislePage"));
+const PhoneCategoryPage = lazy(() => import("./pages/PhoneCategoryPage"));
 const DemoShelfPage = lazy(() => import("./pages/DemoShelfPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
@@ -43,7 +44,7 @@ export const router = createBrowserRouter([
       // real comparison page. Old links land on the catalogue rather than 404.
       { path: "product/:productId", loader: () => redirect("/browse") },
       { path: "product/pr/:productId", loader: () => redirect("/browse") },
-      { path: "category/:categoryId", loader: () => redirect("/browse") },
+      { path: "category/:categoryId", Component: PhoneCategoryPage },
 
       { path: "favorites", Component: FavoritesPage },
       { path: "alerts", Component: PriceAlertsPage },

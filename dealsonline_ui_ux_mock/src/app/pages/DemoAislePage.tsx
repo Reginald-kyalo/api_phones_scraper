@@ -1,6 +1,27 @@
 import { Link, useParams } from 'react-router';
-import { spineShelfDisplay, taxonomyDepartmentById } from '../data/taxonomyTree';
+import { spineShelfDisplay, taxonomyDepartmentById, type TaxonomyDepartment } from '../data/taxonomyTree';
 import { ChevronRight } from 'lucide-react';
+import PhoneCategoryChoices from '../components/categories/PhoneCategoryChoices';
+
+function ShelfCollections({ department }: { department: TaxonomyDepartment }) {
+  return <div className="space-y-8">
+    {department.families.map((family) => (
+      <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
+        <h2 id={`${department.id}-${family.id}`} className="mb-3 text-lg font-semibold text-foreground">{family.label}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {family.shelves.map((shelf) => (
+            <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40">
+              <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
+              <span className="price-num mt-2 text-2xl font-bold text-foreground">{shelf.count.toLocaleString()}</span>
+              <span className="text-xs text-muted-foreground">products in this shelf</span>
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">Browse <ChevronRight className="h-3 w-3" aria-hidden="true" /></span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>;
+}
 
 /**
  * The static-demo equivalent of production's `/aisle/:id`.
@@ -55,23 +76,18 @@ export default function DemoAislePage() {
           </div>
         </div>
 
-        <div className="space-y-8">
-          {department.families.map((family) => (
-            <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
-              <h2 id={`${department.id}-${family.id}`} className="mb-3 text-lg font-semibold text-foreground">{family.label}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {family.shelves.map((shelf) => (
-                  <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40">
-                    <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
-                    <span className="price-num mt-2 text-2xl font-bold text-foreground">{shelf.count.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground">products in this shelf</span>
-                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">Browse <ChevronRight className="h-3 w-3" aria-hidden="true" /></span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        {department.id === 'phones-wearables' && (
+          <>
+            <h2 className="mb-3 text-lg font-semibold text-foreground">Shop by product type</h2>
+            <PhoneCategoryChoices parentId="phones-wearables" />
+            <details className="mt-8 border-t border-border pt-6">
+              <summary className="cursor-pointer text-lg font-semibold text-foreground">Existing collections</summary>
+              <p className="mb-5 text-sm text-muted-foreground">These source shelves retain their original links while products are assigned to the new categories. Some collections contain more than one product type.</p>
+              <ShelfCollections department={department} />
+            </details>
+          </>
+        )}
+        {department.id !== 'phones-wearables' && <ShelfCollections department={department} />}
       </div>
     </div>
   );

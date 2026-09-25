@@ -93,7 +93,7 @@ export default function Footer() {
           </FooterCol>
 
           <FooterCol title="Categories">
-            <FooterLink to="/browse/phones_wearables">Phones &amp; Wearables</FooterLink>
+            <FooterLink to="/aisle/phones-wearables">Phones &amp; Wearables</FooterLink>
             <FooterLink to="/browse/computing">Computing</FooterLink>
             <FooterLink to="/browse/sound_vision">Sound &amp; Vision</FooterLink>
             <FooterLink to="/browse/health_beauty">Health &amp; Beauty</FooterLink>

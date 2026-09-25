@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronDown } from 'lucide-react';
 import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../../data/taxonomyTree';
+import { phoneCategoryHref, phoneChildren } from '../../data/phoneCategories';
 
 interface Props {
   /** Kept for signature parity with production; this demo has no request to defer. */
@@ -36,9 +37,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
               >
                 <Icon className="w-4 h-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />
                 <span className="flex-1 truncate">{department.label}</span>
-                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                  {department.n_clusters.toLocaleString()}
-                </span>
+                {department.id !== 'phones-wearables' && <span className="text-xs text-muted-foreground tabular-nums shrink-0">{department.n_clusters.toLocaleString()}</span>}
                 <ChevronDown
                   aria-hidden="true"
                   className={`w-4 h-4 shrink-0 text-muted-foreground transition-transform ${
@@ -49,7 +48,22 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
 
               {isOpen && (
                 <div className="pb-2 bg-gray-50/60">
-                  {department.families.length > 0 ? (
+                  {department.id === 'phones-wearables' ? (
+                    <div className="px-5 py-2 space-y-2">
+                      {phoneChildren('phones-wearables').map((family) => (
+                        <details key={family.id} className="rounded-md border border-border/70 bg-white">
+                          <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">{family.label}</summary>
+                          <div className="border-t border-border/70 pb-1">
+                            <Link to={phoneCategoryHref(family.id)} onClick={onNavigate} className="block px-3 py-2 text-sm text-link">Browse {family.label}</Link>
+                            {phoneChildren(family.id).map((child) => <div key={child.id} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                              <Link to={phoneCategoryHref(child.id)} onClick={onNavigate} className="text-sm text-muted-foreground hover:text-foreground">{child.label}</Link>
+                              {phoneChildren(child.id).filter((node) => node.kind === 'shortcut').map((shortcut) => <Link key={shortcut.id} to={phoneCategoryHref(shortcut.id)} onClick={onNavigate} className="text-xs text-link underline">{shortcut.label} · pending</Link>)}
+                            </div>)}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  ) : department.families.length > 0 ? (
                     <div className="px-5 py-2 space-y-2">
                       {department.families.map((family) => (
                         <details key={family.id} className="group rounded-md border border-border/70 bg-white" open={family.shelves.length <= 6}>

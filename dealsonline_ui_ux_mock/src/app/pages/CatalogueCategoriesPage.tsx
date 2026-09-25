@@ -4,6 +4,7 @@ import { clustersApi } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
 import { Loader2, ChevronRight } from 'lucide-react';
 import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../data/taxonomyTree';
+import PhoneCategoryChoices from '../components/categories/PhoneCategoryChoices';
 
 const LABELS: Record<string, string> = {
   'groceries': 'Groceries',
@@ -74,10 +75,10 @@ export default function CatalogueCategoriesPage() {
                   >
                     {department.label}
                   </Link>
-                  <span className="text-sm text-muted-foreground">
-                    {department.n_clusters.toLocaleString()} products
-                  </span>
+                  {department.id !== 'phones-wearables' && <span className="text-sm text-muted-foreground">{department.n_clusters.toLocaleString()} products</span>}
                 </div>
+                {department.id === 'phones-wearables' && <div className="mb-5"><PhoneCategoryChoices parentId="phones-wearables" /></div>}
+                {department.id === 'phones-wearables' && <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Existing collections</h3>}
                 <div className="space-y-4">
                   {department.families.map((family) => (
                     <section key={family.id} aria-labelledby={`${department.id}-${family.id}`}>

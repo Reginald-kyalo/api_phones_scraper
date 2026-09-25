@@ -52,7 +52,7 @@ const explicitPlacements: Record<string, Placement> = {
 };
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
-  'phones-wearables': { label: 'Phones, Tablets & Wearables' },
+  'phones-wearables': { label: 'Phones & Wearables' },
   'groceries-everyday-essentials': { label: 'Groceries & Drinks' },
   'tv-audio-home-entertainment': { label: 'TV, Audio & Music' },
   'home-furniture-decor': { label: 'Home, Furniture & Décor' },

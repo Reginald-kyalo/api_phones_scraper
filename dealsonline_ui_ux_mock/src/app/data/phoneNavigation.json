@@ -1,0 +1,611 @@
+{
+  "source_sha256": "7fb474cade66b3c89c7b6037e7fcc1ab9d2b9a7fa3966d40ec2838c2a715f598",
+  "nodes": [
+    {
+      "id": "phones-wearables",
+      "label": "Phones & Wearables",
+      "parentId": null,
+      "kind": "category",
+      "synonyms": [
+        "Accessory Kits",
+        "Mobile Accessories",
+        "Mobiles Accesories",
+        "Original Accessories",
+        "Original Brand Accessories",
+        "Phone Accesories",
+        "Phone Accessories",
+        "PHONES & ACCESSORIES",
+        "Phones & Tablets",
+        "Phones & Tablets Accesorries",
+        "Phones and tablets",
+        "Smartphones, Tablets & Wearables"
+      ]
+    },
+    {
+      "id": "mobile-phones",
+      "label": "Mobile Phones",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": [
+        "Carrier Cell Phones",
+        "Mobiles",
+        "Unlocked Cell Phones",
+        "Unlocked Phones"
+      ]
+    },
+    {
+      "id": "smartphones",
+      "label": "Smartphones",
+      "parentId": "mobile-phones",
+      "kind": "category",
+      "synonyms": [
+        "Certified Pre-Loved SmartPhones",
+        "Foldable Phones",
+        "Gaming Phones",
+        "Gt 30 Pro",
+        "Neon",
+        "Neon Phones",
+        "Note Edge",
+        "Phones",
+        "Samaung EX-Display Phones",
+        "Smart Phones",
+        "Zero Flip 5G"
+      ]
+    },
+    {
+      "id": "feature-phones",
+      "label": "Feature Phones",
+      "parentId": "mobile-phones",
+      "kind": "category",
+      "synonyms": [
+        "Analog Phone",
+        "IP & Feature Phones",
+        "Kabambe",
+        "Kabambe Phones / Mulika Mwizi",
+        "Mulika Mwizi",
+        "New Phones"
+      ]
+    },
+    {
+      "id": "rugged-phones",
+      "label": "Rugged Phones",
+      "parentId": "mobile-phones",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "satellite-phones",
+      "label": "Satellite Phones",
+      "parentId": "mobile-phones",
+      "kind": "category",
+      "synonyms": [
+        "Inmarsat Satellite Phones",
+        "Iridium Satellite Phones",
+        "Thuraya Satellite Phones"
+      ]
+    },
+    {
+      "id": "pagers",
+      "label": "Pagers",
+      "parentId": "mobile-phones",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "sim-cards-airtime-vouchers",
+      "label": "SIM Cards & Airtime Vouchers",
+      "parentId": "mobile-phones",
+      "kind": "category",
+      "synonyms": [
+        "SCRATCH CARDS"
+      ]
+    },
+    {
+      "id": "tablets-e-readers",
+      "label": "Tablets & E-Readers",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "tablets",
+      "label": "Tablets",
+      "parentId": "tablets-e-readers",
+      "kind": "category",
+      "synonyms": [
+        "Computers & Tablets",
+        "Elimu Tab",
+        "Handheld Computer",
+        "Laptops & Tablets",
+        "Microsoft Tablets",
+        "Mobile Computer",
+        "Tablet PC",
+        "Tabs"
+      ]
+    },
+    {
+      "id": "kids-educational-tablets",
+      "label": "Kids' & Educational Tablets",
+      "parentId": "tablets-e-readers",
+      "kind": "category",
+      "synonyms": [
+        "Kids’ Tablets"
+      ]
+    },
+    {
+      "id": "e-readers",
+      "label": "E-Readers",
+      "parentId": "tablets-e-readers",
+      "kind": "category",
+      "synonyms": [
+        "eBook-Readers"
+      ]
+    },
+    {
+      "id": "drawing-tablets",
+      "label": "Drawing Tablets",
+      "parentId": "tablets-e-readers",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "wearables",
+      "label": "Wearables",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": [
+        "Smart Watches & Wearables",
+        "Smartphones & Wearables",
+        "Wearable Technology"
+      ]
+    },
+    {
+      "id": "smartwatches",
+      "label": "Smartwatches",
+      "parentId": "wearables",
+      "kind": "category",
+      "synonyms": [
+        "Golf Watches",
+        "Promate Watches",
+        "Running Watches",
+        "Vision Watches",
+        "VisionPlus Watches",
+        "Watches"
+      ]
+    },
+    {
+      "id": "fitness-trackers",
+      "label": "Fitness Trackers",
+      "parentId": "wearables",
+      "kind": "category",
+      "synonyms": [
+        "App-Enabled Activity Trackers"
+      ]
+    },
+    {
+      "id": "smart-bands",
+      "label": "Smart Bands",
+      "parentId": "wearables",
+      "kind": "category",
+      "synonyms": [
+        "Mi Band Watches",
+        "Smart watches & Smart Bands",
+        "Smartbands"
+      ]
+    },
+    {
+      "id": "kids-trackers",
+      "label": "Kids' Trackers",
+      "parentId": "wearables",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "item-trackers",
+      "label": "Item Trackers",
+      "parentId": "wearables",
+      "kind": "category",
+      "synonyms": [
+        "AIRTAG"
+      ]
+    },
+    {
+      "id": "smart-glasses",
+      "label": "Smart Glasses",
+      "parentId": "wearables",
+      "kind": "category",
+      "synonyms": [
+        "GLASSES",
+        "Ray-Ban Meta"
+      ]
+    },
+    {
+      "id": "phone-power-cables",
+      "label": "Phone Power & Cables",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": [
+        "Phone charger Cable",
+        "Power Cables"
+      ]
+    },
+    {
+      "id": "power-banks",
+      "label": "Power Banks",
+      "parentId": "phone-power-cables",
+      "kind": "category",
+      "synonyms": [
+        "Chargers & Power Banks",
+        "MagSafe Powerbanks",
+        "Power Banks & Chargers",
+        "Powerbanks"
+      ]
+    },
+    {
+      "id": "wall-chargers",
+      "label": "Wall Chargers",
+      "parentId": "phone-power-cables",
+      "kind": "category",
+      "synonyms": [
+        "Chargers",
+        "Wall charger"
+      ]
+    },
+    {
+      "id": "wireless-chargers",
+      "label": "Wireless Chargers",
+      "parentId": "phone-power-cables",
+      "kind": "category",
+      "synonyms": [
+        "MagSafe Chargers",
+        "Wireless charger",
+        "Wireless Stand Chargers"
+      ]
+    },
+    {
+      "id": "car-chargers",
+      "label": "Car Chargers",
+      "parentId": "phone-power-cables",
+      "kind": "category",
+      "synonyms": [
+        "Car Chargers & Accessories"
+      ]
+    },
+    {
+      "id": "charging-cables",
+      "label": "Charging Cables",
+      "parentId": "phone-power-cables",
+      "kind": "category",
+      "synonyms": [
+        "Cable",
+        "Cables",
+        "Charging cable",
+        "Mobile Phone Cables (Android, Iphone & Type C)",
+        "Other Cables"
+      ]
+    },
+    {
+      "id": "phone-protection-carry",
+      "label": "Phone Protection & Carry",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": [
+        "MagSafe Wallets"
+      ]
+    },
+    {
+      "id": "cases-covers",
+      "label": "Cases & Covers",
+      "parentId": "phone-protection-carry",
+      "kind": "category",
+      "synonyms": [
+        "Cases & Clips",
+        "Cases and Covers",
+        "MagSafe Cases",
+        "Phone Cases",
+        "Phone Covers"
+      ]
+    },
+    {
+      "id": "screen-protectors",
+      "label": "Screen Protectors",
+      "parentId": "phone-protection-carry",
+      "kind": "category",
+      "synonyms": [
+        "Glass protectors",
+        "Protectors"
+      ]
+    },
+    {
+      "id": "phone-holders-mounts",
+      "label": "Phone Holders & Mounts",
+      "parentId": "phone-protection-carry",
+      "kind": "category",
+      "synonyms": [
+        "Smartphone Hold Rring"
+      ]
+    },
+    {
+      "id": "pouches-bags",
+      "label": "Pouches & Bags",
+      "parentId": "phone-protection-carry",
+      "kind": "category",
+      "synonyms": [
+        "Bags"
+      ]
+    },
+    {
+      "id": "phone-audio-add-ons",
+      "label": "Phone Audio & Add-ons",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "selfie-sticks-gimbals",
+      "label": "Selfie Sticks & Gimbals",
+      "parentId": "phone-audio-add-ons",
+      "kind": "category",
+      "synonyms": [
+        "Gimbals",
+        "Selfie Stick"
+      ]
+    },
+    {
+      "id": "sim-tools",
+      "label": "SIM Tools",
+      "parentId": "phone-audio-add-ons",
+      "kind": "category",
+      "synonyms": [
+        "Sim Cards & Tools",
+        "Tools"
+      ]
+    },
+    {
+      "id": "styluses",
+      "label": "Styluses",
+      "parentId": "phone-audio-add-ons",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "phone-spare-parts",
+      "label": "Phone Spare Parts",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": [
+        "Replacement Parts & Tools"
+      ]
+    },
+    {
+      "id": "replacement-screens",
+      "label": "Replacement Screens",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": [
+        "Screen Replacement",
+        "Touch Replacement",
+        "Touch Replacemnt"
+      ]
+    },
+    {
+      "id": "phone-batteries",
+      "label": "Phone Batteries",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "charging-ports",
+      "label": "Charging Ports",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "back-housings",
+      "label": "Back Housings",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "camera-modules",
+      "label": "Camera Modules",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "flex-cables",
+      "label": "Flex Cables",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "repair-tool-kits",
+      "label": "Repair Tool Kits",
+      "parentId": "phone-spare-parts",
+      "kind": "category",
+      "synonyms": [
+        "Phone Repair",
+        "Repair Kits"
+      ]
+    },
+    {
+      "id": "tablet-accessories-spares",
+      "label": "Tablet Accessories & Spares",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "tablet-cases-sleeves",
+      "label": "Tablet Cases & Sleeves",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": [
+        "Bags, Cases & Sleeves",
+        "Cases & Sleeves",
+        "reMarkable Cases",
+        "Tablet Cases"
+      ]
+    },
+    {
+      "id": "keyboard-cases",
+      "label": "Keyboard Cases",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": [
+        "Cases"
+      ]
+    },
+    {
+      "id": "tablet-screen-protectors",
+      "label": "Tablet Screen Protectors",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "tablet-stands-mounts",
+      "label": "Tablet Stands & Mounts",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "tablet-screens-lcds",
+      "label": "Tablet Screens & LCDs",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "tablet-batteries",
+      "label": "Tablet Batteries",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "tablet-back-covers",
+      "label": "Tablet Back Covers",
+      "parentId": "tablet-accessories-spares",
+      "kind": "category",
+      "synonyms": [
+        "Back covers",
+        "Tablet Bags & Covers"
+      ]
+    },
+    {
+      "id": "landline-office-telephony",
+      "label": "Landline & Office Telephony",
+      "parentId": "phones-wearables",
+      "kind": "category",
+      "synonyms": [
+        "Answering Devices",
+        "Deskphones",
+        "Landline Phones",
+        "Phone & Fax",
+        "Telephones /VOIP",
+        "Telephony",
+        "Video Phones"
+      ]
+    },
+    {
+      "id": "corded-phones",
+      "label": "Corded Phones",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "GSM and Analog Corded Handsets"
+      ]
+    },
+    {
+      "id": "cordless-phones",
+      "label": "Cordless Phones",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": []
+    },
+    {
+      "id": "ip-phones",
+      "label": "IP Phones",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "Cisco IP Phones",
+        "IP Phones & PBX"
+      ]
+    },
+    {
+      "id": "pbx-systems",
+      "label": "PBX Systems",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "Pbx",
+        "PBX Phones & Systems",
+        "yeastar modules and accessories",
+        "yeastar n series phone system",
+        "Yeastar P-Series IP PBX Systems"
+      ]
+    },
+    {
+      "id": "voip-gateways",
+      "label": "VoIP Gateways",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "VoIP",
+        "Yeastar Gateways"
+      ]
+    },
+    {
+      "id": "conference-phones",
+      "label": "Conference Phones",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "Audio Conferencing"
+      ]
+    },
+    {
+      "id": "two-way-radios-walkie-talkies",
+      "label": "Two-Way Radios & Walkie-Talkies",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "Radio Communication",
+        "Radios & Transceivers",
+        "Specified Low Power Transceivers",
+        "Walkie Talkies Radios"
+      ]
+    },
+    {
+      "id": "intercoms",
+      "label": "Intercoms",
+      "parentId": "landline-office-telephony",
+      "kind": "category",
+      "synonyms": [
+        "IP Intercoms"
+      ]
+    },
+    {
+      "id": "iphones",
+      "label": "iPhones",
+      "parentId": "smartphones",
+      "kind": "shortcut",
+      "synonyms": []
+    },
+    {
+      "id": "ipads",
+      "label": "iPads",
+      "parentId": "tablets",
+      "kind": "shortcut",
+      "synonyms": []
+    }
+  ]
+}

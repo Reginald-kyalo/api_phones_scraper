@@ -1,0 +1,13 @@
+# Category navigation review
+
+Current parent: **Phones & Wearables** — in progress. Next: inspect the product mix and full descendants of `phone-tablet`, then `computer-tablet`, before ruling on legacy shelf dispositions. Do not mark this parent complete from navigation tests alone.
+
+Source baseline: `phones_scraper` commit `e5e36c9cdd28c5e983c2a810b192b13361fbec4e`; authored `taxonomy_redesign.md` §5; generated spine SHA-256 `7fb474cade66b3c89c7b6037e7fcc1ab9d2b9a7fa3966d40ec2838c2a715f598`. The mock's checked-in phone navigation contains all 60 source nodes plus two brand shortcuts. Regenerate it with `python3 dealsonline_ui_ux_mock/scripts/export_phone_navigation.py --source /path/to/phones_scraper/category_taxonomy/redesign/taxonomy_spine.yaml` after an approved source change.
+
+Accepted display decisions: Mobile Phones, Tablets & E-Readers, Wearables, power/cables, protection/carry, audio/add-ons, phone parts, tablet accessories, and office telephony use the source spine's distinct branches. iPhones sits under Smartphones and iPads under Tablets as pending shortcuts. Device and accessory branches stay separate. Source shelves remain available as legacy collections on their original URLs, outside the primary phone navigation. The mock hides unverified counts for these new category choices.
+
+Evidence sampled: `phone-tablet` starts with phones but its parent has tablets and watches; `computer-tablet` includes tablets and at least one phone; `laptop-tablet` includes laptops; `landline-phone-accessory` begins with a fashion pendant, a phone, and a stylus; `bag-fd8696` begins with food packaging; `glass` begins with drinking glasses; `phone-battery` includes AA batteries; `charger-6a5f2e` is a laptop battery; `screen-replacement` is a laptop part. These examples establish contamination, not the full composition of each shelf.
+
+Unresolved: product-level split and legacy disposition for the mixed shelves; complete evidence for the remaining phone source shelves; misfiled sources that may move to Computing, Kitchen, Cameras, or another parent; whether currently published production assignments match this source revision. Cross-parent moves await review of both ends. No product assignment has changed.
+
+Implementation coverage: mock desktop menu, mobile menu, category directory, aisle page, and nested category pages use the reviewed phone navigation. Existing source collection URLs remain. The production API and live frontend still read the published stamped hierarchy; they must be checked against this source revision before claiming cross-implementation consistency. Other parents retain their current implementation.
