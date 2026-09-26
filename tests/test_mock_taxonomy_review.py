@@ -4,6 +4,7 @@ The mock is TypeScript and intentionally consumes the checked-in API capture.
 These tests guard the review boundary without introducing a second executable
 taxonomy: placements are read from the source table itself.
 """
+import json
 import re
 from collections import Counter
 from pathlib import Path
@@ -12,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 TREE = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyTree.ts"
 CAPTURE = ROOT / "dealsonline_ui_ux_mock/src/app/data/liveSpineShelves.ts"
+PHONE_NAVIGATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/phoneNavigation.json"
 REVIEWED = {
     "baby-kids-toys",
     "cameras-security-surveillance",
@@ -262,5 +264,10 @@ def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
         r"\{ family: 'mixed-mobile-compatibility'",
         source,
     )
-    assert "{ id: 'iphones', label: 'iPhones' }" in source
-    assert "{ id: 'ipads', label: 'iPads' }" in source
+    nodes = {node["id"]: node for node in json.loads(PHONE_NAVIGATION.read_text())["nodes"]}
+    assert nodes["iphones"] == {
+        "id": "iphones", "label": "iPhones", "parentId": "smartphones", "kind": "shortcut", "synonyms": [],
+    }
+    assert nodes["ipads"] == {
+        "id": "ipads", "label": "iPads", "parentId": "tablets", "kind": "shortcut", "synonyms": [],
+    }

@@ -82,6 +82,9 @@ def build_release(content: bytes, source_commit: str = PINNED_SOURCE_COMMIT) -> 
         for row in source_rows
         if row.get("department") == "phones-wearables"
     ]
+    # Validate the authored branch before adding local shortcuts so an invalid
+    # source reports its own defect rather than a shortcut's missing parent.
+    _validate(nodes)
     nodes.extend(dict(shortcut) for shortcut in SHORTCUTS)
     _validate(nodes)
     return {
