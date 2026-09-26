@@ -1,0 +1,266 @@
+"""Static gates for the hand-reviewed home taxonomy batch.
+
+The mock is TypeScript and intentionally consumes the checked-in API capture.
+These tests guard the review boundary without introducing a second executable
+taxonomy: placements are read from the source table itself.
+"""
+import re
+from collections import Counter
+from pathlib import Path
+
+
+ROOT = Path(__file__).parents[1]
+TREE = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyTree.ts"
+CAPTURE = ROOT / "dealsonline_ui_ux_mock/src/app/data/liveSpineShelves.ts"
+REVIEWED = {
+    "baby-kids-toys",
+    "cameras-security-surveillance",
+    "computing-networking",
+    "groceries-everyday-essentials",
+    "health-beauty-personal-care",
+    "home-appliances",
+    "home-furniture-decor",
+    "kitchen-dining-cookware",
+    "phones-wearables",
+    "tv-audio-home-entertainment",
+}
+
+
+def _placement_keys():
+    source = TREE.read_text()
+    keys = re.findall(r"^  '([^']+)': \{", source, re.MULTILINE)
+    for group in re.findall(r"addReviewedGroup\(\[([^\]]*)\]", source):
+        keys.extend(re.findall(r"'([^']+)'", group))
+    return keys
+
+
+def _captured_shelves():
+    departments = {}
+    current = None
+    for line in CAPTURE.read_text().splitlines():
+        opening = re.match(r'  "([^"]+)": \[', line)
+        if opening:
+            current = opening.group(1)
+            departments[current] = []
+            continue
+        shelf = re.search(r'slug: "([^"]+)"', line)
+        if current and shelf:
+            departments[current].append(shelf.group(1))
+        if current and line.strip() == "],":
+            current = None
+    return departments
+
+
+def test_every_shelf_in_a_reviewed_source_department_has_one_disposition():
+    keys = Counter(_placement_keys())
+    captured = _captured_shelves()
+
+    for department in REVIEWED:
+        assert captured[department], f"capture missing reviewed department {department}"
+        assert not [slug for slug in captured[department] if keys[slug] != 1]
+
+
+def test_reviewed_departments_fail_closed_instead_of_using_keyword_fallbacks():
+    source = TREE.read_text()
+    for department in REVIEWED:
+        assert f"  '{department}'," in source
+    assert "Reviewed taxonomy shelf has no disposition" in source
+
+
+def test_cleaning_tools_and_consumables_have_one_household_owner():
+    source = TREE.read_text()
+    expected = {
+        "cleaning-household": "cleaning-household-essentials",
+        "broom-8a72bd": "cleaning-tools",
+        "cloth-peg-ab1381": "laundry-accessories",
+        "dish-washing-liquid": "dishwashing",
+        "facial-tissue": "household-paper",
+        "vacuum-cleaner-steam-mop": "powered-cleaning",
+    }
+    for slug, family in expected.items():
+        row = re.search(rf"^  '{re.escape(slug)}': \{{ ([^\n]+) \}},$", source, re.MULTILINE)
+        assert row
+        assert "departmentId: 'household-cleaning'" in row.group(1)
+        assert f"family: '{family}'" in row.group(1)
+
+
+def test_small_appliance_intents_are_not_collapsed_into_food_preparation():
+    source = TREE.read_text()
+    for family in (
+        "food-preparation",
+        "coffee-hot-drinks",
+        "countertop-cooking",
+        "breakfast-baking",
+        "dessert-ice-making",
+    ):
+        assert f"family: '{family}'" in source
+    assert re.search(
+        r"'home-appliance': \{ family: 'home-appliances'", source
+    ), "the broad legacy shelf must not be reused as Food Preparation"
+
+
+def test_pass_two_keeps_baby_and_pet_products_out_of_groceries():
+    source = TREE.read_text()
+    for slug in ("baby-food", "baby-toddler-formula"):
+        assert re.search(
+            rf"'{slug}': \{{ departmentId: 'baby-kids-toys'", source
+        )
+    for slug in ("pet-care", "pet-accessory-toy", "pet-pet-accessory-pet-food"):
+        assert re.search(
+            rf"'{slug}': \{{ departmentId: 'pet-supplies'", source
+        )
+
+
+def test_live_animals_remain_classifieds_and_are_not_retail_pet_nodes():
+    source = TREE.read_text()
+    for slug in ("pet", "poultry"):
+        row = re.search(rf"^  '{slug}': \{{ ([^\n]+) \}},$", source, re.MULTILINE)
+        assert row
+        assert "departmentId" not in row.group(1)
+        assert "live-pets-livestock" in row.group(1)
+
+
+def test_evidence_review_resolves_coarse_grocery_shelves_by_stable_intent():
+    source = TREE.read_text()
+    expected = {
+        "food-cupboard": "pantry",
+        "fresh": "fresh-food",
+        "cooking": "sauces-condiments",
+        "healthy-snack-beverage": "nuts-seeds-dried-fruit",
+        "ice-cream-dessert": "frozen-desserts",
+        "long-life-62b199": "dairy",
+    }
+    for slug, family in expected.items():
+        assert re.search(
+            rf"addReviewedGroup\([^\n]*'{re.escape(slug)}'[^\n]*, "
+            rf"\{{ family: '{family}'",
+            source,
+        )
+
+
+def test_evidence_review_corrects_non_grocery_product_types():
+    source = TREE.read_text()
+    corrections = {
+        "house-hold-d1c761": ("household-cleaning", "dishwashing"),
+        "paper-plastic": ("home-furniture-decor", "plastic-housewares"),
+        "fire-lighter-match": ("kitchen-dining-cookware", "cooking-fuel-fire-lighting"),
+    }
+    for slug, (department, family) in corrections.items():
+        row = re.search(
+            rf"addReviewedGroup\(\[[^\]]*'{re.escape(slug)}'[^\]]*\], ([^\n]+)\);",
+            source,
+        )
+        assert row
+        assert f"departmentId: '{department}'" in row.group(1)
+        assert f"family: '{family}'" in row.group(1)
+
+
+def test_grocery_format_and_mislabel_shelves_follow_product_evidence():
+    source = TREE.read_text()
+    expected = {
+        "baking-flour-4d6f18": ("kitchen-dining-cookware", "baking-accessories"),
+        "cold-drink": ("kitchen-dining-cookware", "tea-coffee-accessories"),
+        "coconut-powder": ("baby-kids-toys", "baby-care"),
+        "wipe": ("baby-kids-toys", "baby-care"),
+    }
+    for slug, (department, family) in expected.items():
+        row = re.search(
+            rf"addReviewedGroup\(\[[^\]]*'{re.escape(slug)}'[^\]]*\], ([^\n]+)\);",
+            source,
+        )
+        assert row
+        assert f"departmentId: '{department}'" in row.group(1)
+        assert f"family: '{family}'" in row.group(1)
+
+
+def test_pantry_families_cover_the_requested_stable_shopper_intents():
+    source = TREE.read_text()
+    for family in (
+        "staples-grains-pulses",
+        "flour-baking",
+        "breakfast-cereals",
+        "oils-fats",
+        "herbs-spices-seasonings",
+        "sauces-condiments",
+        "ready-meals",
+    ):
+        assert f"family: '{family}'" in source
+
+
+def test_pass_three_separates_devices_accessories_parts_and_storage():
+    source = TREE.read_text()
+    for family in (
+        "laptops",
+        "desktop-computers",
+        "computer-accessories",
+        "laptop-parts",
+        "monitors-displays",
+        "networking",
+        "storage",
+        "phones",
+        "mobile-accessories",
+        "power-charging",
+        "headphones-earbuds",
+        "audio-video-accessories",
+    ):
+        assert f"family: '{family}'" in source
+
+
+def test_pass_three_corrects_cross_department_electronics_shelves():
+    source = TREE.read_text()
+    expected = {
+        "external-hard-drive": ("computing-networking", "storage"),
+        "laptop-tablet": ("computing-networking", "laptops"),
+        "screen-replacement": ("computing-networking", "laptop-parts"),
+        "accessory-kit": ("cameras-security-surveillance", "content-creation-accessories"),
+        "watch-3bab17": ("fashion-accessories", "watches-jewellery"),
+    }
+    for slug, (department, family) in expected.items():
+        assert department in source and family in source
+        row = re.search(rf"^  '{re.escape(slug)}': \{{ ([^\n]+) \}},$", source, re.MULTILINE)
+        if row:
+            assert f"departmentId: '{department}'" in row.group(1)
+            assert f"family: '{family}'" in row.group(1)
+        else:
+            grouped = re.search(
+                rf"addReviewedGroup\(\[[^\]]*'{re.escape(slug)}'[^\]]*\], ([^\n]+)\);",
+                source,
+            )
+            assert grouped
+            assert f"departmentId: '{department}'" in grouped.group(1)
+            assert f"family: '{family}'" in grouped.group(1)
+
+
+def test_pass_three_deep_review_uses_product_type_over_source_label():
+    source = TREE.read_text()
+    expected_family = {
+        "telephony-computing-networking": "laptops",
+        "computer-accessory-component": "computer-parts-components",
+        "point-sale-retail-technology": "printers-scanners",
+        "office-accessory": "networking",
+        "tv-entertainment": "headphones-earbuds",
+        "cctv-surveillance": "cameras-surveillance",
+    }
+    for slug, family in expected_family.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"family: '{family}'" in row
+
+    assert re.search(
+        r"addReviewedGroup\(\['interactive-display'\], "
+        r"\{ departmentId: 'computing-networking', family: 'displays-replacement-screens'",
+        source,
+    )
+
+
+def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
+    source = TREE.read_text()
+    assert "family: 'phones', familyLabel: 'Phones'" in source
+    assert "family: 'tablets', familyLabel: 'Tablets'" in source
+    assert "family: 'phones-tablets'" not in source
+    assert re.search(
+        r"addReviewedGroup\(\['phone-tablet', 'computer-tablet'\], "
+        r"\{ family: 'mixed-mobile-compatibility'",
+        source,
+    )
+    assert "{ id: 'iphones', label: 'iPhones' }" in source
+    assert "{ id: 'ipads', label: 'iPads' }" in source

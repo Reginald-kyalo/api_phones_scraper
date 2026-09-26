@@ -76,7 +76,7 @@ export default function DemoAislePage() {
           </div>
         </div>
 
-        {department.id === 'phones-wearables' && (
+{department.id === 'phones-wearables' && (
           <>
             <h2 className="mb-3 text-lg font-semibold text-foreground">Shop by product type</h2>
             <PhoneCategoryChoices parentId="phones-wearables" />
@@ -87,7 +87,20 @@ export default function DemoAislePage() {
             </details>
           </>
         )}
-        {department.id !== 'phones-wearables' && <ShelfCollections department={department} />}
+        {department.id !== 'phones-wearables' && (
+          <>
+            <nav aria-label={`${department.label} product types`} className="mb-8 flex flex-wrap gap-2">
+              {department.families
+                .filter((family) => family.id !== 'needs-review')
+                .map((family) => (
+                  <a key={family.id} href={`#${family.id}`} className="rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary">
+                    {family.label}
+                  </a>
+                ))}
+            </nav>
+            <ShelfCollections department={department} />
+          </>
+        )}
       </div>
     </div>
   );
