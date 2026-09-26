@@ -4,10 +4,10 @@ import { LIVE_SPINE_SHELVES, spineShelfDisplay, type LiveSpineShelf } from './li
 import { SPINE_DEPARTMENTS, type DemoSpineDepartment } from './spineDepartments';
 
 /**
- * The mock's navigation tree.  It is derived from the generated shelf capture,
- * rather than maintaining a second list of menu leaves.  The small disposition
- * table only records deliberate corrections and family names; every captured
- * shelf remains in exactly one family and continues to use its original URL.
+ * Legacy collection links derived from the generated shelf capture. This is
+ * not the approved phone category hierarchy (see phoneNavigation.json). The
+ * disposition table only records collection groupings; every captured shelf
+ * remains in exactly one family and preserves its original `/shelf/:slug` URL.
  */
 export interface TaxonomyFamily {
   id: string;
@@ -135,6 +135,10 @@ export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);
+
+export const isLegacyPhoneCollection = (slug: string | undefined): boolean =>
+  Boolean(slug && taxonomyDepartmentById('phones-wearables')?.families
+    .some((family) => family.shelves.some((shelf) => shelf.slug === slug)));
 
 /** Fails fast if a capture or disposition change drops or duplicates a shelf. */
 export function assertTaxonomyIntegrity(): void {

@@ -13,7 +13,7 @@ function ShelfCollections({ department }: { department: TaxonomyDepartment }) {
             <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40">
               <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
               <span className="price-num mt-2 text-2xl font-bold text-foreground">{shelf.count.toLocaleString()}</span>
-              <span className="text-xs text-muted-foreground">products in this shelf</span>
+              <span className="text-xs text-muted-foreground">items in this collection</span>
               <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">Browse <ChevronRight className="h-3 w-3" aria-hidden="true" /></span>
             </Link>
           ))}
