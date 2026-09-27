@@ -1,0 +1,7 @@
+{
+  "source_repository": "https://github.com/Reginald-kyalo/phones_scraper.git",
+  "source_commit": "e5e36c9cdd28c5e983c2a810b192b13361fbec4e",
+  "source_path": "category_taxonomy/redesign/taxonomy_spine.yaml",
+  "source_sha256": "7fb474cade66b3c89c7b6037e7fcc1ab9d2b9a7fa3966d40ec2838c2a715f598",
+  "purpose": "Approved immutable source snapshot for the phone-navigation release"
+}

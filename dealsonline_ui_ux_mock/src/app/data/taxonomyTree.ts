@@ -404,14 +404,25 @@ for (const [sourceId, shelves] of Object.entries(LIVE_SPINE_SHELVES)) {
 
 export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
   .map(({ base, families }) => makeDepartment(base, families))
-  .filter((department) => department.families.length > 0);
+  // Approved phone categories are independent of captured legacy collections.
+  // Keep their department and aisle routable even when a capture has no phone shelves.
+  .filter((department) => department.id === 'phones-wearables' || department.families.length > 0);
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);
 
-export const isLegacyPhoneCollection = (slug: string | undefined): boolean =>
-  Boolean(slug && taxonomyDepartmentById('phones-wearables')?.families
-    .some((family) => family.shelves.some((shelf) => shelf.slug === slug)));
+const legacyPhoneCollectionSlugs = new Set(
+  Array.from(departmentMap.get('phones-wearables')?.families.values() ?? [])
+    .flatMap((family) => family.shelves.map((shelf) => shelf.slug)),
+);
+
+export const isLegacyPhoneCollection = (
+  slug: string | undefined,
+  ancestorSlugs: readonly string[] = [],
+): boolean => Boolean(
+  (slug && legacyPhoneCollectionSlugs.has(slug))
+  || ancestorSlugs.some((ancestor) => legacyPhoneCollectionSlugs.has(ancestor)),
+);
 
 /** Fails fast if a capture or disposition change drops or duplicates a shelf. */
 export function assertTaxonomyIntegrity(): void {

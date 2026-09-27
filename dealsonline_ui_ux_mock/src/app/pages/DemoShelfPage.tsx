@@ -217,7 +217,7 @@ export default function DemoShelfPage() {
                 <h1 className="text-xl md:text-2xl font-bold text-foreground">{heading}</h1>
               </div>
               <p className="text-sm text-muted-foreground">
-                {isLegacyPhoneCollection(slug)
+                {isLegacyPhoneCollection(slug, node?.ancestors)
                   ? 'This is a legacy collection and may contain mixed product types.'
                   : node?.coarse
                   ? 'A grouping of several departments — pick one below to narrow it down.'

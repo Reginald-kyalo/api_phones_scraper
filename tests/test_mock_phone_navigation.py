@@ -1,7 +1,7 @@
 """Contract for the reviewed Phones, Tablets & Wearables navigation release."""
 
-import json
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -12,6 +12,7 @@ DATA = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock/src/app/dat
 EXPORTER = DATA.parents[3] / "scripts/export_phone_navigation.py"
 PINNED_COMMIT = "e5e36c9cdd28c5e983c2a810b192b13361fbec4e"
 PINNED_SHA256 = "7fb474cade66b3c89c7b6037e7fcc1ab9d2b9a7fa3966d40ec2838c2a715f598"
+TEST_COMMIT = "test-source"
 
 spec = importlib.util.spec_from_file_location("export_phone_navigation", EXPORTER)
 exporter = importlib.util.module_from_spec(spec)
@@ -73,11 +74,11 @@ def test_exporter_is_repeatable_and_keeps_empty_approved_categories():
         row("smartphones", "phones-wearables", count=2),
         row("tablets", "phones-wearables", count=0),
     ])
-    first = exporter.render_release(content)
-    second = exporter.render_release(content)
+    first = exporter.render_release(content, TEST_COMMIT)
+    second = exporter.render_release(content, TEST_COMMIT)
     assert first == second
     release = json.loads(first)
-    assert release["source_commit"] == PINNED_COMMIT
+    assert release["source_commit"] == TEST_COMMIT
     assert "tablets" in {node["id"] for node in release["nodes"]}
 
 
@@ -91,14 +92,35 @@ def test_exporter_is_repeatable_and_keeps_empty_approved_categories():
 )
 def test_exporter_rejects_invalid_source_trees(nodes, message):
     with pytest.raises(exporter.NavigationError, match=message):
-        exporter.build_release(source_bytes(nodes))
+        exporter.build_release(source_bytes(nodes), TEST_COMMIT)
+
+
+def test_exporter_rejects_a_disconnected_second_root():
+    with pytest.raises(exporter.NavigationError, match="exactly one.*root"):
+        exporter.build_release(source_bytes([
+            row("phones-wearables"),
+            row("smartphones", "phones-wearables"),
+            row("tablets"),
+        ]), TEST_COMMIT)
+
+
+def test_exporter_rejects_malformed_labels():
+    malformed = row("tablets", "phones-wearables")
+    malformed["name"] = None
+    with pytest.raises(exporter.NavigationError, match="non-empty string label"):
+        exporter.build_release(source_bytes([
+            row("phones-wearables"),
+            row("smartphones", "phones-wearables"),
+            malformed,
+        ]), TEST_COMMIT)
 
 
 def test_exporter_rejects_shortcut_with_noncanonical_parent():
     with pytest.raises(exporter.NavigationError, match="canonical category parent"):
         exporter._validate([
-            {"id": "first", "parentId": "second", "kind": "shortcut"},
-            {"id": "second", "parentId": None, "kind": "shortcut"},
+            {"id": "phones-wearables", "label": "Phones", "parentId": None, "kind": "category", "synonyms": []},
+            {"id": "first", "label": "First", "parentId": "second", "kind": "shortcut", "synonyms": []},
+            {"id": "second", "label": "Second", "parentId": "phones-wearables", "kind": "shortcut", "synonyms": []},
         ])
 
 
@@ -110,11 +132,34 @@ def test_check_mode_detects_stale_file(tmp_path):
         row("smartphones", "phones-wearables"),
         row("tablets", "phones-wearables"),
     ]))
-    exporter.export(source, output, PINNED_COMMIT)
-    exporter.export(source, output, PINNED_COMMIT, check=True)
+    exporter.export(source, output, TEST_COMMIT)
+    exporter.export(source, output, TEST_COMMIT, check=True)
     output.write_text("{}\n")
     with pytest.raises(SystemExit, match="is stale"):
-        exporter.export(source, output, PINNED_COMMIT, check=True)
+        exporter.export(source, output, TEST_COMMIT, check=True)
+
+
+def test_invalid_source_does_not_replace_existing_output(tmp_path):
+    source = tmp_path / "taxonomy_spine.yaml"
+    output = tmp_path / "phoneNavigation.json"
+    output.write_text("committed output\n")
+    source.write_bytes(source_bytes([
+        row("phones-wearables"),
+        row("smartphones", "phones-wearables"),
+        row("tablets"),
+    ]))
+    with pytest.raises(exporter.NavigationError):
+        exporter.export(source, output, TEST_COMMIT)
+    assert output.read_text() == "committed output\n"
+
+
+def test_checked_in_snapshot_has_approved_provenance_and_is_fresh():
+    snapshot = DATA.parents[3] / "data/phone-navigation/taxonomy_spine.yaml"
+    provenance = json.loads((snapshot.parent / "provenance.json").read_text())
+    assert provenance["source_commit"] == PINNED_COMMIT
+    assert provenance["source_sha256"] == PINNED_SHA256
+    assert exporter.hashlib.sha256(snapshot.read_bytes()).hexdigest() == PINNED_SHA256
+    exporter.export(snapshot, DATA, PINNED_COMMIT, check=True)
 
 
 def test_navigation_contract_separates_categories_from_legacy_collections():
@@ -128,3 +173,6 @@ def test_navigation_contract_separates_categories_from_legacy_collections():
     assert "Counts below are collection counts" in directory
     assert "may contain mixed product types" in directory
     assert "legacy collection and may contain mixed product types" in shelf_page
+    assert "department.id === 'phones-wearables' || department.families.length > 0" in taxonomy
+    assert "ancestorSlugs.some" in taxonomy
+    assert "isLegacyPhoneCollection(slug, node?.ancestors)" in shelf_page
