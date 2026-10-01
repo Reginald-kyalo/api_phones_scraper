@@ -136,7 +136,7 @@ const explicitPlacements: Record<string, Placement> = {
   'shaving-cream-6bc9f0': { departmentId: 'health-beauty-personal-care', family: 'hair-removal', familyLabel: 'Hair Removal' },
   'external-hard-drive': { departmentId: 'computing-networking', family: 'storage', familyLabel: 'Storage' },
   'smart-watch-accessory': { departmentId: 'phones-wearables', family: 'wearables', familyLabel: 'Wearables' },
-  'watch-3bab17': { departmentId: 'fashion-accessories', family: 'watches-jewellery', familyLabel: 'Watches & Jewellery' },
+  'watch-3bab17': { departmentId: 'phones-wearables', family: 'wearables', familyLabel: 'Wearables' },
   'bulb': { departmentId: 'home-furniture-decor', family: 'lighting', familyLabel: 'Lighting' },
   'shower-water-heater': { departmentId: 'home-appliances', family: 'water-heating-treatment', familyLabel: 'Water Heating & Treatment' },
   'photocopy-paper': { departmentId: 'office-school-stationery', family: 'paper-notebooks', familyLabel: 'Paper & Notebooks' },

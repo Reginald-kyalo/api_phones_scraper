@@ -220,7 +220,7 @@ def test_pass_three_corrects_cross_department_electronics_shelves():
         "laptop-tablet": ("computing-networking", "laptops"),
         "screen-replacement": ("computing-networking", "laptop-parts"),
         "accessory-kit": ("cameras-security-surveillance", "content-creation-accessories"),
-        "watch-3bab17": ("fashion-accessories", "watches-jewellery"),
+        "watch-3bab17": ("phones-wearables", "wearables"),
     }
     for slug, (department, family) in expected.items():
         assert department in source and family in source
@@ -393,11 +393,11 @@ def test_pass_five_keeps_mixed_fashion_collections_reviewable():
     assert "family: 'needs-review'" in row
 
 
-def test_pass_five_does_not_silently_overturn_the_accepted_watch_move():
+def test_pass_five_applies_the_approved_watch_correction():
     source = TREE.read_text()
     row = next(line for line in source.splitlines() if "'watch-3bab17':" in line)
-    assert "departmentId: 'fashion-accessories'" in row
-    assert "family: 'watches-jewellery'" in row
+    assert "departmentId: 'phones-wearables'" in row
+    assert "family: 'wearables'" in row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():

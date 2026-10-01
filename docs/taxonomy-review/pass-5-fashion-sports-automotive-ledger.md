@@ -32,7 +32,7 @@ These checks are not counted again in the 13-shelf Fashion source inventory.
 
 | Incoming or adjacent shelf | Current placement | Boundary result |
 | --- | --- | --- |
-| `watch-3bab17` | Phones & Wearables → Fashion › Watches & Jewellery | The current capture has five Samsung/Huawei bands and smartwatches, contradicting the prior “ordinary watches” rationale. This accepted semantic move is parked for user decision rather than silently overturned. |
+| `watch-3bab17` | Phones & Wearables › **Wearables** | The complete current capture has five Samsung/Huawei bands and smartwatches. The user approved correcting the prior Fashion placement; the stable shelf URL and membership remain unchanged. |
 | `tablet-bag-cover` | Phones › Cases, Covers & Wallets | All three products are device-specific back covers, so the accepted Phones placement remains supported despite the word “bag.” |
 | `bag-fd8696` and `packaging-bag` | Office › Packaging Supplies | Product evidence is packaging bags, boxes, punnets and cartons. These are not fashion bags; the accepted Office placement remains supported. |
 | `smartwatch` | Phones › Wearables | Device-specific smartwatches remain distinct from an ordinary-watch family. The incoming `smart-watch-accessory` joins this broad Wearables destination. |
@@ -51,8 +51,8 @@ These checks are not counted again in the 13-shelf Fashion source inventory.
 2. **Contradicting evidence:** the current checked-in capture at `public/demo/shelves/watch-3bab17/products-000.json` contains five wearable devices: Samsung Galaxy Fit3, Huawei Band 11, and Huawei GT 3/3 Pro/4. This is complete captured-product evidence. It does not establish whether the older Pass 3 review used a different capture, so that historical discrepancy remains uncertain.
 3. **Alternative:** move `watch-3bab17` to Phones & Wearables › Wearables, matching its current captured products, while retaining its stable shelf URL.
 4. **Impact:** one accepted cross-parent collection-navigation decision and its tests/Pass 3 ledger would change; IDs, URL and listing membership would not. Product reassignment and canonical publication remain out of scope.
-5. **Disposition:** proposed for user decision and left unchanged in implementation because overturning an accepted semantic decision requires approval. Independent Fashion source review is complete.
+5. **Disposition:** approved by the user and applied. `watch-3bab17` now joins Phones & Wearables › Wearables; the Pass 3 ledger and regression expectations are reconciled.
 
 ## Remaining batch work
 
-Sports & Outdoors is the next parent. Automotive & Motorcycle follows it. The disputed incoming watch move does not block either independent review.
+Sports & Outdoors is the next parent. Automotive & Motorcycle follows it.
