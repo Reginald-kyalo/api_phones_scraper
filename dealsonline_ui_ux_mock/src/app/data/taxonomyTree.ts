@@ -2,6 +2,11 @@ import type { LucideIcon } from 'lucide-react';
 import { PawPrint, SprayCan } from 'lucide-react';
 import { LIVE_SPINE_SHELVES, spineShelfDisplay, type LiveSpineShelf } from './liveSpineShelves';
 import { SPINE_DEPARTMENTS, type DemoSpineDepartment } from './spineDepartments';
+import {
+  createCollectionDetector,
+  shouldRetainTaxonomyDepartment,
+  validateReviewedTaxonomyInputs,
+} from './taxonomyValidation';
 
 /**
  * Legacy collection links derived from the generated shelf capture. This is
@@ -386,12 +391,15 @@ departmentMap.set('pet-supplies', {
   families: new Map(),
 });
 
+validateReviewedTaxonomyInputs(
+  LIVE_SPINE_SHELVES,
+  Object.keys(explicitPlacements),
+  reviewedSourceDepartments,
+);
+
 for (const [sourceId, shelves] of Object.entries(LIVE_SPINE_SHELVES)) {
   for (const shelf of shelves) {
     const placement = explicitPlacements[shelf.slug];
-    if (!placement && reviewedSourceDepartments.has(sourceId)) {
-      throw new Error(`Reviewed taxonomy shelf has no disposition: ${sourceId}/${shelf.slug}`);
-    }
     const resolvedPlacement = placement ?? defaultFamily(sourceId, shelf);
     const targetId = resolvedPlacement.departmentId ?? sourceId;
     const target = departmentMap.get(targetId);
@@ -406,7 +414,7 @@ export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
   .map(({ base, families }) => makeDepartment(base, families))
   // Approved phone categories are independent of captured legacy collections.
   // Keep their department and aisle routable even when a capture has no phone shelves.
-  .filter((department) => department.id === 'phones-wearables' || department.families.length > 0);
+  .filter((department) => shouldRetainTaxonomyDepartment(department.id, department.families.length));
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);
@@ -416,13 +424,7 @@ const legacyPhoneCollectionSlugs = new Set(
     .flatMap((family) => family.shelves.map((shelf) => shelf.slug)),
 );
 
-export const isLegacyPhoneCollection = (
-  slug: string | undefined,
-  ancestorSlugs: readonly string[] = [],
-): boolean => Boolean(
-  (slug && legacyPhoneCollectionSlugs.has(slug))
-  || ancestorSlugs.some((ancestor) => legacyPhoneCollectionSlugs.has(ancestor)),
-);
+export const isLegacyPhoneCollection = createCollectionDetector(legacyPhoneCollectionSlugs);
 
 /** Fails fast if a capture or disposition change drops or duplicates a shelf. */
 export function assertTaxonomyIntegrity(): void {
@@ -433,11 +435,6 @@ export function assertTaxonomyIntegrity(): void {
   }
   if (source.length !== derived.length || source.some((id, index) => id !== derived[index])) {
     throw new Error('The derived taxonomy must contain every captured shelf exactly once.');
-  }
-  const captured = new Set(source);
-  const staleDisposition = Object.keys(explicitPlacements).find((shelfSlug) => !captured.has(shelfSlug));
-  if (staleDisposition) {
-    throw new Error(`Taxonomy disposition refers to a missing captured shelf: ${staleDisposition}`);
   }
   for (const department of TAXONOMY_DEPARTMENTS) {
     const labels = new Set<string>();

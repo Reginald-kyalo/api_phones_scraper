@@ -6,6 +6,12 @@ The approved Phones & Wearables category hierarchy is pinned to `phones_scraper`
 
 Run `npm run check:phone-navigation --prefix dealsonline_ui_ux_mock` to verify the snapshot checksum, regenerate in memory, compare `phoneNavigation.json` byte-for-byte, and run the navigation contracts. Advancing the source is an explicit release update: replace the snapshot, update its provenance, update the pinned commit and checksum in the exporter and progress record, and regenerate the JSON together.
 
+## 2026-10-01 continuation verification
+
+Implementation resumed from `3ebcd2ddcc061887dfd38830492a91f59bb5cde6`, which matched the refreshed `origin/clusters-api` ref with a clean worktree. The phone regression seam now executes the same fail-closed input validation, department-retention rule, and collection detector used by the application. A consistent fixture with no captured phone shelves and no phone dispositions remains valid and keeps the Phones & Wearables department routable. Separate executable cases confirm that a stale disposition and a new unreviewed shelf still fail, while exact-slug and ancestor collection detection reject an unrelated ancestor.
+
+This verification changes neither the pinned phone source nor any collection disposition. It extracts dependency-free policy helpers solely so fixture tests can execute the behavior without adding a test framework or loading the React application.
+
 ## What is implemented
 
 The mock desktop menu, mobile menu, category directory, aisle page, and nested category pages use the approved phone hierarchy. Mobile Phones, Tablets & E-Readers, Wearables, power/cables, protection/carry, audio/add-ons, phone parts, tablet accessories, and office telephony remain distinct. Canonical categories and shortcuts intentionally show no unverified counts.
