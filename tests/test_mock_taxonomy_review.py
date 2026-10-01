@@ -24,6 +24,7 @@ REVIEWED = {
     "home-appliances",
     "home-furniture-decor",
     "kitchen-dining-cookware",
+    "office-school-stationery",
     "phones-wearables",
     "tv-audio-home-entertainment",
 }
@@ -253,6 +254,43 @@ def test_pass_three_deep_review_uses_product_type_over_source_label():
         r"\{ departmentId: 'computing-networking', family: 'displays-replacement-screens'",
         source,
     )
+
+
+def test_pass_four_accounts_for_the_full_office_capture_once():
+    office_shelves = _captured_shelves()["office-school-stationery"]
+    keys = Counter(_placement_keys())
+    assert len(office_shelves) == 23
+    assert len(set(office_shelves)) == 23
+    assert not [slug for slug in office_shelves if keys[slug] != 1]
+
+
+def test_pass_four_uses_product_evidence_for_office_boundaries():
+    source = TREE.read_text()
+    expected = {
+        "notebook": ("computing-networking", "laptops"),
+        "packaging-bag": (None, "packaging-supplies"),
+        "empty-carton": (None, "packaging-supplies"),
+        "document-bag-274de3": (None, "pencil-cases-school-storage"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        if department:
+            assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    for mixed_slug in ("ultra-book", "pen", "tape-glue"):
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{mixed_slug}'" in line)
+        assert "family: 'needs-review'" in row
+
+
+def test_pass_four_keeps_printers_separate_from_office_consumables():
+    source = TREE.read_text()
+    printer_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'point-sale-retail-technology'" in line)
+    paper_row = next(line for line in source.splitlines() if "'photocopy-paper':" in line)
+    assert "departmentId:" not in printer_row
+    assert "family: 'printers-scanners'" in printer_row
+    assert "departmentId: 'office-school-stationery'" in paper_row
+    assert "family: 'paper-notebooks'" in paper_row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():

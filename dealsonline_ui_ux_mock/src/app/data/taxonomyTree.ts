@@ -312,6 +312,20 @@ addReviewedGroup(['accessorry'], { departmentId: 'computing-networking', family:
 addReviewedGroup(['cctv-surveillance'], { family: 'cameras-surveillance', familyLabel: 'Cameras & Surveillance' });
 addReviewedGroup(['selfie-stick-tripod', 'tripod-monopod'], { family: 'tripods-supports', familyLabel: 'Tripods & Supports' });
 
+// Pass 4: Office, School & Stationery. Mixed source shelves remain reviewable;
+// packaging and actual laptop collections follow the product evidence.
+addReviewedGroup(['office-school-supply'], { family: 'office-school-supplies', familyLabel: 'Office & School Supplies' });
+addReviewedGroup(['ultra-book', 'pen', 'tape-glue'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['receipt-note-book', 'diary-941f52', 'cash-book-c5d621'], { family: 'paper-notebooks', familyLabel: 'Paper & Notebooks' });
+addReviewedGroup(['notebook'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+addReviewedGroup(['packaging-bag', 'packaging-logistic-storage-supply', 'empty-carton'], { family: 'packaging-supplies', familyLabel: 'Packaging Supplies' });
+addReviewedGroup(['scissor'], { family: 'cutting-sewing-craft-tools', familyLabel: 'Cutting, Sewing & Craft Tools' });
+addReviewedGroup(['eraser-sharpener-e53643', 'pencil-4ab379', 'geometrical-set-e1deb5', 'chalk-b9b791', 'crayon', 'ruler-d60084'], { family: 'school-writing-drawing', familyLabel: 'School Writing & Drawing' });
+addReviewedGroup(['remarkable-marker'], { family: 'writing-correction', familyLabel: 'Writing & Correction' });
+addReviewedGroup(['file', 'cover-file-document-wallet'], { family: 'filing-document-storage', familyLabel: 'Filing & Document Storage' });
+addReviewedGroup(['calculator'], { family: 'calculators', familyLabel: 'Calculators' });
+addReviewedGroup(['document-bag-274de3'], { family: 'pencil-cases-school-storage', familyLabel: 'Pencil Cases & School Storage' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -323,6 +337,7 @@ const reviewedSourceDepartments = new Set([
   'phones-wearables',
   'tv-audio-home-entertainment',
   'cameras-security-surveillance',
+  'office-school-stationery',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
