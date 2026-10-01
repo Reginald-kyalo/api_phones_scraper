@@ -2,6 +2,11 @@ import type { LucideIcon } from 'lucide-react';
 import { PawPrint, SprayCan } from 'lucide-react';
 import { LIVE_SPINE_SHELVES, spineShelfDisplay, type LiveSpineShelf } from './liveSpineShelves';
 import { SPINE_DEPARTMENTS, type DemoSpineDepartment } from './spineDepartments';
+import {
+  createCollectionDetector,
+  shouldRetainTaxonomyDepartment,
+  validateReviewedTaxonomyInputs,
+} from './taxonomyValidation';
 
 /**
  * Legacy collection links derived from the generated shelf capture. This is
@@ -307,6 +312,20 @@ addReviewedGroup(['accessorry'], { departmentId: 'computing-networking', family:
 addReviewedGroup(['cctv-surveillance'], { family: 'cameras-surveillance', familyLabel: 'Cameras & Surveillance' });
 addReviewedGroup(['selfie-stick-tripod', 'tripod-monopod'], { family: 'tripods-supports', familyLabel: 'Tripods & Supports' });
 
+// Pass 4: Office, School & Stationery. Mixed source shelves remain reviewable;
+// packaging and actual laptop collections follow the product evidence.
+addReviewedGroup(['office-school-supply'], { family: 'office-school-supplies', familyLabel: 'Office & School Supplies' });
+addReviewedGroup(['ultra-book', 'pen', 'tape-glue'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['receipt-note-book', 'diary-941f52', 'cash-book-c5d621'], { family: 'paper-notebooks', familyLabel: 'Paper & Notebooks' });
+addReviewedGroup(['notebook'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+addReviewedGroup(['packaging-bag', 'packaging-logistic-storage-supply', 'empty-carton'], { family: 'packaging-supplies', familyLabel: 'Packaging Supplies' });
+addReviewedGroup(['scissor'], { family: 'cutting-sewing-craft-tools', familyLabel: 'Cutting, Sewing & Craft Tools' });
+addReviewedGroup(['eraser-sharpener-e53643', 'pencil-4ab379', 'geometrical-set-e1deb5', 'chalk-b9b791', 'crayon', 'ruler-d60084'], { family: 'school-writing-drawing', familyLabel: 'School Writing & Drawing' });
+addReviewedGroup(['remarkable-marker'], { family: 'writing-correction', familyLabel: 'Writing & Correction' });
+addReviewedGroup(['file', 'cover-file-document-wallet'], { family: 'filing-document-storage', familyLabel: 'Filing & Document Storage' });
+addReviewedGroup(['calculator'], { family: 'calculators', familyLabel: 'Calculators' });
+addReviewedGroup(['document-bag-274de3'], { family: 'pencil-cases-school-storage', familyLabel: 'Pencil Cases & School Storage' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -318,6 +337,7 @@ const reviewedSourceDepartments = new Set([
   'phones-wearables',
   'tv-audio-home-entertainment',
   'cameras-security-surveillance',
+  'office-school-stationery',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
@@ -386,12 +406,15 @@ departmentMap.set('pet-supplies', {
   families: new Map(),
 });
 
+validateReviewedTaxonomyInputs(
+  LIVE_SPINE_SHELVES,
+  Object.keys(explicitPlacements),
+  reviewedSourceDepartments,
+);
+
 for (const [sourceId, shelves] of Object.entries(LIVE_SPINE_SHELVES)) {
   for (const shelf of shelves) {
     const placement = explicitPlacements[shelf.slug];
-    if (!placement && reviewedSourceDepartments.has(sourceId)) {
-      throw new Error(`Reviewed taxonomy shelf has no disposition: ${sourceId}/${shelf.slug}`);
-    }
     const resolvedPlacement = placement ?? defaultFamily(sourceId, shelf);
     const targetId = resolvedPlacement.departmentId ?? sourceId;
     const target = departmentMap.get(targetId);
@@ -406,7 +429,7 @@ export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
   .map(({ base, families }) => makeDepartment(base, families))
   // Approved phone categories are independent of captured legacy collections.
   // Keep their department and aisle routable even when a capture has no phone shelves.
-  .filter((department) => department.id === 'phones-wearables' || department.families.length > 0);
+  .filter((department) => shouldRetainTaxonomyDepartment(department.id, department.families.length));
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);
@@ -416,13 +439,7 @@ const legacyPhoneCollectionSlugs = new Set(
     .flatMap((family) => family.shelves.map((shelf) => shelf.slug)),
 );
 
-export const isLegacyPhoneCollection = (
-  slug: string | undefined,
-  ancestorSlugs: readonly string[] = [],
-): boolean => Boolean(
-  (slug && legacyPhoneCollectionSlugs.has(slug))
-  || ancestorSlugs.some((ancestor) => legacyPhoneCollectionSlugs.has(ancestor)),
-);
+export const isLegacyPhoneCollection = createCollectionDetector(legacyPhoneCollectionSlugs);
 
 /** Fails fast if a capture or disposition change drops or duplicates a shelf. */
 export function assertTaxonomyIntegrity(): void {
@@ -433,11 +450,6 @@ export function assertTaxonomyIntegrity(): void {
   }
   if (source.length !== derived.length || source.some((id, index) => id !== derived[index])) {
     throw new Error('The derived taxonomy must contain every captured shelf exactly once.');
-  }
-  const captured = new Set(source);
-  const staleDisposition = Object.keys(explicitPlacements).find((shelfSlug) => !captured.has(shelfSlug));
-  if (staleDisposition) {
-    throw new Error(`Taxonomy disposition refers to a missing captured shelf: ${staleDisposition}`);
   }
   for (const department of TAXONOMY_DEPARTMENTS) {
     const labels = new Set<string>();
