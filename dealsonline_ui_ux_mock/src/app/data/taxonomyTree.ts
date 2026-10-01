@@ -385,6 +385,10 @@ addReviewedGroup(['insecticide'], { departmentId: 'household-cleaning', family: 
 addReviewedGroup(['udongo-1b3b46'], { family: 'needs-review', familyLabel: 'Needs Review' });
 addReviewedGroup(['planter-af536f'], { family: 'planters-pots', familyLabel: 'Planters & Pots' });
 
+// Pass 6: Classifieds. The current capture contains ordinary retail products,
+// not classified listings; each collection follows its evidenced product use.
+addReviewedGroup(['for-work-new'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -403,6 +407,7 @@ const reviewedSourceDepartments = new Set([
   'sports-outdoors-leisure',
   'automotive-motorcycle',
   'agriculture-agrovet',
+  'classifieds',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
@@ -494,7 +499,8 @@ export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
   .map(({ base, families }) => makeDepartment(base, families))
   // Approved phone categories are independent of captured legacy collections.
   // Keep their department and aisle routable even when a capture has no phone shelves.
-  .filter((department) => shouldRetainTaxonomyDepartment(department.id, department.families.length));
+  .filter((department) => reviewedSourceDepartments.has(department.id)
+    || shouldRetainTaxonomyDepartment(department.id, department.families.length));
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);

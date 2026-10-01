@@ -21,6 +21,7 @@ REVIEWED = {
     "baby-kids-toys",
     "building-electrical-hardware",
     "cameras-security-surveillance",
+    "classifieds",
     "computing-networking",
     "fashion-accessories",
     "groceries-everyday-essentials",
@@ -504,6 +505,34 @@ def test_pass_six_applies_approved_pet_and_poultry_corrections():
     assert "departmentId: 'pet-supplies'" in pet_row and "family: 'pet-care'" in pet_row
     assert "departmentId: 'groceries-everyday-essentials'" in poultry_row
     assert "family: 'meat-fish-seafood'" in poultry_row
+
+
+def test_pass_six_accounts_for_the_full_classifieds_capture_once():
+    classifieds_shelves = _captured_shelves()["classifieds"]
+    keys = Counter(_placement_keys())
+    assert len(classifieds_shelves) == 4
+    assert len(set(classifieds_shelves)) == 4
+    assert not [slug for slug in classifieds_shelves if keys[slug] != 1]
+
+
+def test_pass_six_classifieds_collections_follow_retail_product_evidence():
+    source = TREE.read_text()
+    expected = {
+        "pet": ("pet-supplies", "pet-care"),
+        "poultry": ("groceries-everyday-essentials", "meat-fish-seafood"),
+        "for-work-new": ("computing-networking", "laptops"),
+        "spoil-your-pet": ("pet-supplies", "toys-accessories"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if f"'{slug}'" in line and ("addReviewedGroup(" in line or f"'{slug}':" in line))
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+    assert "family: 'live-pets-livestock'" not in source
+
+
+def test_reviewed_classifieds_department_remains_routable_when_empty():
+    source = TREE.read_text()
+    assert "reviewedSourceDepartments.has(department.id)" in source
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():

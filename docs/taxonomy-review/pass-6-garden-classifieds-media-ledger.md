@@ -1,6 +1,6 @@
 # Pass 6 garden, classifieds and media category disposition ledger
 
-> Incremental scope: Garden, Agriculture & Agrovet is complete. Classifieds and Gaming, Books & Media remain pending.
+> Incremental scope: Garden, Agriculture & Agrovet and Classifieds are complete. Gaming, Books & Media remains pending.
 
 ## Evidence basis
 
@@ -47,4 +47,42 @@ These checks are separate from the four-shelf Garden source inventory.
 
 ## Remaining batch work
 
-Classifieds is the next parent. Gaming, Books & Media follows it. The approved `pet` and `poultry` corrections are incorporated into the Classifieds source inventory.
+## Classifieds inventory and decisions
+
+The Classifieds source inventory contains four captured retail shelves. All products were inspected, including the two large collections reconciled above. None contains evidenced person-to-person classified listings or live animals, so the review records that absence instead of manufacturing a Classifieds family from labels.
+
+| Source shelf / full captured breadcrumb | Evidence and coverage | Disposition / destination | Rationale |
+| --- | --- | --- | --- |
+| `pet` — Farm, Animals & Pets › Animal Feeds & Pets › Pets | all 459 / 7 retailers | moved → Pet Supplies › **Pet Care** | Retail pet food, litter, shampoo, collars and accessories dominate; no observed product is a live-animal classified. The user approved this correction. |
+| `poultry` — Fresh › Meat & Poultry › Poultry | all 66 / Carrefour and Greenspoon | moved → Groceries & Drinks › **Meat, Fish & Seafood** | Fresh/frozen chicken and turkey cuts, mince and sausages are grocery food, not live poultry. The user approved this correction. |
+| `for-work-new` — For Work (NEW) | all 14 / Laptop Clinic | moved → Computing & Networking › **Laptops** | Every product is a Lenovo or HP laptop. “For Work” is an audience/use label, not a classified-listing product type. |
+| `spoil-your-pet` — Hardware & Other › Hardware › Spoil Your Pet | all 4 / Carrefour | moved prior review → Pet Supplies › **Toys & Accessories** | The four products are packaged dog/cat foods. The existing broad pet-supplies destination remains preferable to Classifieds; no live animal is present. |
+
+## Classifieds incoming boundary checks
+
+| Incoming or adjacent shelf | Current placement | Boundary result |
+| --- | --- | --- |
+| `farm-animal-pet` | Pet Supplies › Pet Care | Its 466-product retail-supplies evidence corroborates the approved `pet` move and contains no observed live listing. |
+| `automotive` | Automotive › Automotive Accessories & Care | General retail vehicle accessories remain Automotive; “classifieds” is not used as a condition or sales-channel fallback. |
+| `power-electrical` | Computing › Laptops | Used/refurbished laptop wording does not make a retail collection a classified listing. Product type remains the navigation basis. |
+
+## Classifieds reconciliation and compatibility
+
+- **Originating inventory:** 4 examined, 4 explicitly dispositioned exactly once, 4 moved to evidence-supported retail destinations, and 0 unresolved.
+- **Incoming checks:** 3 boundary groups, counted separately.
+- There is no evidence-supported Classifieds collection in the current capture. The stable Classifieds department remains routable with zero collection families rather than displaying mislabeled retail links.
+- All four `/shelf/:slug` URLs and listing membership remain available at their destination families.
+- `classifieds` joins `reviewedSourceDepartments` only after complete explicit coverage; future shelves fail closed.
+- No product assignment, capture, backend record, canonical publication or phone hierarchy changed.
+
+## Implementation detail: empty reviewed department retention
+
+1. **Current assumption:** only Phones & Wearables needs explicit retention when it has no legacy collection families.
+2. **Contradicting evidence:** after all four Classifieds shelves receive evidence-backed retail destinations, filtering all empty departments would turn `/aisle/classifieds` into “No such department,” conflating “reviewed with no valid collections” with an invalid ID.
+3. **Alternative:** retain any fully reviewed source department even when all of its collections move elsewhere, while continuing the existing special retention of Phones for its independent canonical hierarchy.
+4. **Impact:** the stable Classifieds aisle remains routable and truthfully reports zero captured shelves. No shelf URL, membership, schema or category meaning changes; unreviewed empty departments still follow existing behavior.
+5. **Disposition:** applied within scope as a narrow implementation detail preserving stable navigation and existing fail-closed conventions.
+
+## Remaining batch work
+
+Gaming, Books & Media is the next and final source parent. After it, reconcile all navigation coverage separately from product assignment and production publication.
