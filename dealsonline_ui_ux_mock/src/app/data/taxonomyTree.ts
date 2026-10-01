@@ -338,6 +338,16 @@ addReviewedGroup(['crate'], { departmentId: 'office-school-stationery', family: 
 addReviewedGroup(['electrical-mount-box-bracket'], { departmentId: 'tv-audio-home-entertainment', family: 'tv-mounts-brackets', familyLabel: 'TV Mounts & Brackets' });
 addReviewedGroup(['detector-sensor'], { departmentId: 'cameras-security-surveillance', family: 'smart-home-sensors', familyLabel: 'Smart Home Sensors' });
 
+// Pass 4: Power, Solar & Energy. Device-charging and mislabeled computer
+// collections follow captured use; broad battery collections stay broad.
+addReviewedGroup(['battery-charger'], { family: 'charging-portable-power', familyLabel: 'Charging & Portable Power' });
+addReviewedGroup(['battery-b1164a', 'battery', 'drycell'], { family: 'batteries-power-storage', familyLabel: 'Batteries & Power Storage' });
+addReviewedGroup(['battery-charger-accessory'], { departmentId: 'phones-wearables', family: 'power-charging', familyLabel: 'Power & Charging' });
+addReviewedGroup(['extention-6cdc4d'], { departmentId: 'building-electrical-hardware', family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
+addReviewedGroup(['power-electrical'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+addReviewedGroup(['battery-power-storage'], { departmentId: 'computing-networking', family: 'laptop-parts', familyLabel: 'Laptop Parts' });
+addReviewedGroup(['portable-powerstation'], { family: 'solar-lighting', familyLabel: 'Solar Lighting' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -351,6 +361,7 @@ const reviewedSourceDepartments = new Set([
   'cameras-security-surveillance',
   'office-school-stationery',
   'building-electrical-hardware',
+  'power-solar-energy',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {

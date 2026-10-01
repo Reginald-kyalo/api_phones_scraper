@@ -1,6 +1,6 @@
 # Pass 4 office, building and power category disposition ledger
 
-> Incremental scope: Office, School & Stationery and Building, Electrical & Hardware are complete. Power, Solar & Energy remains pending and is not represented as reviewed.
+> Scope complete: Office, School & Stationery; Building, Electrical & Hardware; and Power, Solar & Energy.
 
 ## Evidence basis
 
@@ -98,6 +98,41 @@ The same capture provenance and evidence paths described above apply. All produc
 - Cross-parent destinations reuse current stable department IDs. The new TV mounts family describes the two captured mount products without narrowing or reusing an unrelated category ID.
 - `building-electrical-hardware` joins `reviewedSourceDepartments` only after complete explicit coverage; future unreviewed shelves fail closed.
 
-## Remaining batch work
+## Power, Solar & Energy inventory and decisions
 
-Power, Solar & Energy is the next parent and the last parent in this ledger batch. No Power status is advanced by the completed Office or Building sections.
+The same capture provenance and evidence paths described above apply. All products were inspected for each of the ten source shelves. The 553-product `battery-charger` shelf is single-retailer and broad; decisions therefore distinguish navigation intent without asserting clean product-level assignment.
+
+| Source shelf / full captured breadcrumb | Evidence and coverage | Disposition / destination | Rationale |
+| --- | --- | --- | --- |
+| `battery-charger` — Battery Chargers | all 553 / Jumia | retained/grouped → **Charging & Portable Power** | Phone chargers, charging cables and battery chargers coexist with portable power stations, rechargeable cells and solar controllers. The broad family exposes the collection without claiming one device type. |
+| `battery-b1164a` — Batteries & Adapters › Batteries (children: alkaline, packs, laptop batteries) | all 70 / 7 retailers | retained/grouped → **Batteries & Power Storage** | Household cells, power banks and laptop batteries are materially mixed but share a broad stored-power intent. It is not narrowed to household batteries or reassigned as pure laptop parts. |
+| `battery-charger-accessory` — Batteries, Chargers & Accessories › Chargers | all 58 / 4 device retailers | moved → Phones & Wearables › **Power & Charging** | Device chargers, cables, MagSafe packs and power banks dominate. A few phone/wearable records remain contamination; the placement is a broad device-charging collection, not a purity claim. |
+| `battery` — Batteries | all 35 / Eastmatt and Jumia | retained/grouped → **Batteries & Power Storage** | Phone, camera, tool and household cells coexist with controllers and portable power, plus two pasta contaminants. Broad placement is safer than type inference or a false pure family. |
+| `drycell` — DRYCELLS | all 28 / Cleanshelf | grouped → **Batteries & Power Storage** | All products are disposable or rechargeable household/watch cells. It joins the broad battery family without creating a chemistry-specific category. |
+| `extention-6cdc4d` — EXTENTIONS | all 8 / Cleanshelf and Eastmatt | moved → Building, Electrical & Hardware › **Electrical Supplies & Accessories** | Every product is a multi-way extension or surge-protected extension cable: installation/electrical accessory rather than an energy system. |
+| `power-electrical` — Power & Electricals › Generators & Portable Power | all 2 / LE | moved → Computing & Networking › **Laptops** | Both products are used HP/Lenovo laptops; the captured breadcrumb is contradicted by complete product evidence. |
+| `battery-power-storage` — Batteries and Power Storage | sole product / Digital Store | moved → Computing & Networking › **Laptop Parts** | The only product is an HP TouchSmart-series replacement battery, a device repair part rather than a general energy system. |
+| `portable-powerstation` — Portable Powerstation | sole product / Overtech | retained/renamed → **Solar Lighting** | The only product is an Itel solar-light kit with two bulbs, not a portable power station. The stable shelf ID and URL remain unchanged. |
+| `shower-water-heater` — Showers and water heaters › WATER HEATER | sole product / Eastmatt | retained prior move → Home Appliances › **Water Heating & Treatment** | A finished 220 V shower head/water heater belongs with the appliance outcome rather than installation hardware or general energy storage. |
+
+## Power incoming boundary checks
+
+| Incoming or adjacent shelf | Prior source / current placement | Boundary result |
+| --- | --- | --- |
+| `electrical-accessory` | Building › Electrical Supplies & Accessories | Extensions, plugs, protectors, bulbs, cells and testers remain a broad electrical-supplies collection. It is not promoted to an energy-system family. |
+| `hardware` | Building › Needs Review | The broad contaminated shelf includes isolated solar panels, batteries and an inverter among hundreds of hardware, cleaning, pet and agricultural products. It remains unresolved rather than being moved wholesale. |
+| `charger-7dd0d2`, `power-bank`, `phone-battery`, `cable-4b1baf` | Phones › Power & Charging | These accepted device-specific collections remain with Phones. The incoming `battery-charger-accessory` shares their broad navigation family. |
+| `adapter-charger` | Computing › Power & Adapters | Computing-specific power adapters remain with their device family; no label-only move into general energy is made. |
+| `laptop-battery`, `charger-6a5f2e` | Computing › Laptop Parts | Replacement laptop power parts remain distinct from general batteries, supporting the move of `battery-power-storage` while leaving the mixed `battery-b1164a` broad. |
+
+## Power reconciliation and compatibility
+
+- **Originating inventory:** 10 examined, 10 explicitly dispositioned exactly once, 10 decided at evidence-supported broad/grouped/moved granularity, and 0 unresolved. The broad battery families explicitly do not claim product purity.
+- **Incoming checks:** 5 boundary groups, counted separately.
+- Existing shelf IDs, URLs and listing membership remain unchanged. The misleading `power-electrical`, `portable-powerstation` and `battery-power-storage` slugs are preserved as compatibility keys.
+- `power-solar-energy` joins `reviewedSourceDepartments` only after complete explicit coverage; new shelves fail closed.
+- No product assignment, generated capture, backend fixture, canonical publication, or pinned phone hierarchy changed.
+
+## Pass 4 batch reconciliation
+
+Across the three source parents, 44 originating shelves were examined and dispositioned exactly once: Office 23 (20 decided, 3 unresolved), Building 11 (8 decided, 3 unresolved), and Power 10 (10 decided, 0 unresolved). Incoming boundary checks are reported separately and are not double-counted. The next parent is Fashion & Accessories in the Pass 5 ledger.

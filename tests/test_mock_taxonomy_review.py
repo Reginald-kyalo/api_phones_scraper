@@ -27,6 +27,7 @@ REVIEWED = {
     "kitchen-dining-cookware",
     "office-school-stationery",
     "phones-wearables",
+    "power-solar-energy",
     "tv-audio-home-entertainment",
 }
 
@@ -325,6 +326,38 @@ def test_pass_four_keeps_contaminated_building_shelves_reviewable():
 
     tape_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'tape-glue'" in line)
     assert "family: 'needs-review'" in tape_row
+
+
+def test_pass_four_accounts_for_the_full_power_capture_once():
+    power_shelves = _captured_shelves()["power-solar-energy"]
+    keys = Counter(_placement_keys())
+    assert len(power_shelves) == 10
+    assert len(set(power_shelves)) == 10
+    assert not [slug for slug in power_shelves if keys[slug] != 1]
+
+
+def test_pass_four_separates_energy_systems_from_device_accessories():
+    source = TREE.read_text()
+    expected = {
+        "battery-charger-accessory": ("phones-wearables", "power-charging"),
+        "extention-6cdc4d": ("building-electrical-hardware", "electrical-supplies-accessories"),
+        "power-electrical": ("computing-networking", "laptops"),
+        "battery-power-storage": ("computing-networking", "laptop-parts"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    solar_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'portable-powerstation'" in line)
+    assert "family: 'solar-lighting'" in solar_row
+
+
+def test_pass_four_keeps_battery_collections_broad():
+    source = TREE.read_text()
+    battery_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'battery-b1164a'" in line)
+    assert all(f"'{slug}'" in battery_row for slug in ("battery-b1164a", "battery", "drycell"))
+    assert "family: 'batteries-power-storage'" in battery_row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
