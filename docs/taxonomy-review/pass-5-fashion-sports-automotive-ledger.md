@@ -1,6 +1,6 @@
 # Pass 5 fashion, sports and automotive category disposition ledger
 
-> Incremental scope: Fashion & Accessories and Sports & Outdoors are complete. Automotive & Motorcycle remains pending.
+> Scope complete: Fashion & Accessories; Sports & Outdoors; and Automotive & Motorcycle.
 
 ## Evidence basis
 
@@ -82,6 +82,37 @@ The same capture revision and evidence conventions apply. All products were insp
 - `sports-outdoors-leisure` joins `reviewedSourceDepartments` only after complete explicit coverage; future shelves fail closed.
 - The absence of a clean outdoor-equipment source shelf is recorded as an evidence limitation, not filled using label or keyword fallback.
 
-## Remaining batch work
+## Automotive & Motorcycle inventory and decisions
 
-Automotive & Motorcycle is the next parent and the final parent in Pass 5.
+The same capture revision and evidence conventions apply. All products were inspected for each of the seven source shelves. The broad 290-product Automotive capture spans five general retailers; narrower shelves range from one specialist retailer to five general retailers.
+
+| Source shelf / full captured breadcrumb | Evidence and coverage | Disposition / destination | Rationale |
+| --- | --- | --- | --- |
+| `automotive` — Auto & Cycle Marts › Automotive | all 290 / 5 retailers | retained/grouped → **Automotive Accessories & Care** | Car air fresheners, cleaning and dashboard products, wipers, mats, first-aid kits and other vehicle accessories support a broad vehicle-use family. It is not narrowed to one part type. |
+| `coolant` — coolants | all 124 / Laptop Clinic | moved → Computing & Networking › **Laptop Parts** | Every captured product is a CPU cooling fan or heatsink for a laptop. The label does not provide evidence for automotive coolant. |
+| `lubricant-oil-fluid` — Lubricants, Oils & Fluids › Oils | all 54 / 5 retailers | unresolved → **Needs Review** | Cooking oils/fats, petroleum jelly, baby/body/hair oils and gift packs coexist, with no coherent automotive-fluid intent. Products cross Groceries, Health and Baby boundaries, so no single move is asserted. |
+| `car-accessory` — Audio, Video and Accessories › Accessories › Car Accessories | all 29 / Jumia | retained/grouped → **In-Car Phone & Charging Accessories** | Car chargers, phone mounts, holders, FM transmitters and in-car organizers are defined by vehicle use. The placement remains Automotive rather than treating them as general phone accessories. |
+| `carcare-a0f017` — CARCARE | all 7 / Eastmatt | retained/grouped → **Car Care** | Every product is dashboard cleaner or polish. |
+| `additive` — ADDITIVES | all 2 / Eastmatt | moved → Groceries & Drinks › **Pantry** | Citric acid and apple-cider vinegar are food/pantry inputs, not vehicle additives. |
+| `tool-garage` — Tools & Garage › Tools | all 2 / Naivas | moved → Building, Electrical & Hardware › **Hand Tools** | A magnetic screwdriver and garden rake are general hand/garden tools. The same two products occur under the already moved child `tool`; neither is vehicle-specific. |
+
+## Automotive incoming boundary checks
+
+| Incoming or adjacent shelf | Current placement | Boundary result |
+| --- | --- | --- |
+| `tool` | Phones → Building › Hand Tools | Complete evidence matches the `tool-garage` parent: screwdriver and rake. Both collection links share Building without deduplicating products or URLs. |
+| `battery-b1164a` | Power › Batteries & Power Storage | Household, power-bank and laptop batteries are mixed; there is no evidence to relabel the broad collection as automotive batteries. |
+| `electrical-plug-cap` | Building › Plugs & Surge Protection | Appliance protectors, a UK plug and a Starlink adapter are general electrical accessories, not vehicle electronics. |
+| `car-accessory` boundary | Automotive › In-Car Phone & Charging Accessories | Although products interact with phones, their mounts, chargers and holders are designed for in-car use. Vehicle context is the stable shopper intent; this is navigation placement, not reassignment. |
+
+## Automotive reconciliation and compatibility
+
+- **Originating inventory:** 7 examined, 7 explicitly dispositioned exactly once, 6 decided at evidence-supported broad/grouped/moved granularity, and 1 unresolved (`lubricant-oil-fluid`).
+- **Incoming checks:** 4 boundary groups, counted separately.
+- Every shelf ID, `/shelf/:slug` URL and listing membership remains unchanged. The misleading `coolant` and `additive` slugs remain compatibility keys.
+- `automotive-motorcycle` joins `reviewedSourceDepartments` only after complete explicit coverage; future shelves fail closed.
+- No product assignment, generated capture, canonical category, backend fixture or phone release changed.
+
+## Pass 5 batch reconciliation
+
+Across the three source parents, 25 originating shelves were examined and dispositioned exactly once: Fashion 13 (11 decided, 2 unresolved), Sports 5 (3 decided, 2 unresolved), and Automotive 7 (6 decided, 1 unresolved). Incoming boundary checks are separate and not double-counted. The next parent is Garden, Agriculture & Agrovet in the Pass 6 ledger.

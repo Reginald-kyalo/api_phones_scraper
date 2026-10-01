@@ -16,6 +16,7 @@ CAPTURE = ROOT / "dealsonline_ui_ux_mock/src/app/data/liveSpineShelves.ts"
 PHONE_NAVIGATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/phoneNavigation.json"
 VALIDATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyValidation.ts"
 REVIEWED = {
+    "automotive-motorcycle",
     "baby-kids-toys",
     "building-electrical-hardware",
     "cameras-security-surveillance",
@@ -428,6 +429,37 @@ def test_pass_five_keeps_contaminated_sports_shelves_reviewable():
     source = TREE.read_text()
     row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'sport-fitness'" in line)
     assert "'ball'" in row
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_five_accounts_for_the_full_automotive_capture_once():
+    automotive_shelves = _captured_shelves()["automotive-motorcycle"]
+    keys = Counter(_placement_keys())
+    assert len(automotive_shelves) == 7
+    assert len(set(automotive_shelves)) == 7
+    assert not [slug for slug in automotive_shelves if keys[slug] != 1]
+
+
+def test_pass_five_separates_vehicle_use_from_mislabeled_products():
+    source = TREE.read_text()
+    expected = {
+        "coolant": ("computing-networking", "laptop-parts"),
+        "additive": ("groceries-everyday-essentials", "pantry"),
+        "tool-garage": ("building-electrical-hardware", "hand-tools"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    car_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'car-accessory'" in line)
+    assert "departmentId:" not in car_row
+    assert "family: 'in-car-phone-charging'" in car_row
+
+
+def test_pass_five_keeps_non_automotive_oils_reviewable():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'lubricant-oil-fluid'" in line)
     assert "family: 'needs-review'" in row
 
 

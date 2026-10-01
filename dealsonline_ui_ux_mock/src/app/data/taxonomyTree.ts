@@ -368,6 +368,16 @@ addReviewedGroup(['sport-accessory'], { family: 'ball-sports-equipment', familyL
 addReviewedGroup(['rope-72c0d9'], { departmentId: 'building-electrical-hardware', family: 'ropes-chains', familyLabel: 'Ropes & Chains' });
 addReviewedGroup(['torch'], { departmentId: 'building-electrical-hardware', family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
 
+// Pass 5: Automotive & Motorcycle. Vehicle-use accessories stay Automotive;
+// mislabeled computer parts, food inputs, and general tools follow evidence.
+addReviewedGroup(['automotive'], { family: 'automotive-accessories-care', familyLabel: 'Automotive Accessories & Care' });
+addReviewedGroup(['coolant'], { departmentId: 'computing-networking', family: 'laptop-parts', familyLabel: 'Laptop Parts' });
+addReviewedGroup(['lubricant-oil-fluid'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['car-accessory'], { family: 'in-car-phone-charging', familyLabel: 'In-Car Phone & Charging Accessories' });
+addReviewedGroup(['carcare-a0f017'], { family: 'car-care', familyLabel: 'Car Care' });
+addReviewedGroup(['additive'], { departmentId: 'groceries-everyday-essentials', family: 'pantry', familyLabel: 'Pantry' });
+addReviewedGroup(['tool-garage'], { departmentId: 'building-electrical-hardware', family: 'hand-tools', familyLabel: 'Hand Tools' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -384,6 +394,7 @@ const reviewedSourceDepartments = new Set([
   'power-solar-energy',
   'fashion-accessories',
   'sports-outdoors-leisure',
+  'automotive-motorcycle',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
