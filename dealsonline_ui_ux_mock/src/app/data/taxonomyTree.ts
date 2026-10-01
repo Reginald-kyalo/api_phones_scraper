@@ -326,6 +326,18 @@ addReviewedGroup(['file', 'cover-file-document-wallet'], { family: 'filing-docum
 addReviewedGroup(['calculator'], { family: 'calculators', familyLabel: 'Calculators' });
 addReviewedGroup(['document-bag-274de3'], { family: 'pencil-cases-school-storage', familyLabel: 'Pencil Cases & School Storage' });
 
+// Pass 4: Building, Electrical & Hardware. Broad contaminated captures stay
+// reviewable; evidenced food, furnishings, packaging and device mounts move.
+addReviewedGroup(['hardware', 'industrial-raw-material', 'plate-box'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['electrical-accessory'], { family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
+addReviewedGroup(['nut'], { departmentId: 'groceries-everyday-essentials', family: 'nuts-seeds-dried-fruit', familyLabel: 'Nuts, Seeds & Dried Fruit' });
+addReviewedGroup(['tool-home-improvement'], { departmentId: 'home-furniture-decor', family: 'rugs-mats-home-accessories', familyLabel: 'Rugs, Mats & Home Accessories' });
+addReviewedGroup(['manilla-twine-rope'], { family: 'ropes-chains', familyLabel: 'Ropes & Chains' });
+addReviewedGroup(['electrical-plug-cap'], { family: 'plugs-surge-protection', familyLabel: 'Plugs & Surge Protection' });
+addReviewedGroup(['crate'], { departmentId: 'office-school-stationery', family: 'packaging-supplies', familyLabel: 'Packaging Supplies' });
+addReviewedGroup(['electrical-mount-box-bracket'], { departmentId: 'tv-audio-home-entertainment', family: 'tv-mounts-brackets', familyLabel: 'TV Mounts & Brackets' });
+addReviewedGroup(['detector-sensor'], { departmentId: 'cameras-security-surveillance', family: 'smart-home-sensors', familyLabel: 'Smart Home Sensors' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -338,6 +350,7 @@ const reviewedSourceDepartments = new Set([
   'tv-audio-home-entertainment',
   'cameras-security-surveillance',
   'office-school-stationery',
+  'building-electrical-hardware',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {

@@ -1,6 +1,6 @@
 # Pass 4 office, building and power category disposition ledger
 
-> Incremental scope: Office, School & Stationery is complete. Building, Electrical & Hardware and Power, Solar & Energy remain pending and are not represented as reviewed.
+> Incremental scope: Office, School & Stationery and Building, Electrical & Hardware are complete. Power, Solar & Energy remains pending and is not represented as reviewed.
 
 ## Evidence basis
 
@@ -62,6 +62,42 @@ These are not counted again in the 23-shelf Office source inventory.
 4. **Impact:** no IDs, URLs, membership or accepted prior semantics change; tests now pin both sides of the boundary.
 5. **Disposition:** applied within scope because it preserves the accepted Pass 3 decision and separates equipment from consumables.
 
+## Building, Electrical & Hardware inventory and decisions
+
+The same capture provenance and evidence paths described above apply. All products were inspected for each of the 11 source shelves. The broad `hardware` capture spans six general retailers; several smaller shelves have only one retailer, so those decisions are deliberately no narrower than their evidence.
+
+| Source shelf / full captured breadcrumb | Evidence and coverage | Disposition / destination | Rationale |
+| --- | --- | --- | --- |
+| `hardware` — Hardware & Other › Hardware | all 980 / 6 retailers; one `spoil-your-pet` child | unresolved → **Needs Review** | Genuine hand tools, fasteners, plumbing and safety stock coexist with cleaning tools, pet food, household containers, solar items and agricultural goods. A pure Hardware label would overclaim the collection. |
+| `industrial-raw-material` — Industrial Raw Materials | all 378 / Cleanshelf | unresolved → **Needs Review** | The shelf is largely commercial bakery ingredients, prepared foods, labels and food packaging, with occasional blades and cleaning inputs. Neither “industrial hardware” nor one grocery family describes it safely. |
+| `electrical-accessory` — Electrical Accessories › Electrical Cables | all 115 / 4 retailers | retained/grouped → **Electrical Supplies & Accessories** | Extensions, plugs, surge protectors, lamps, batteries, testers and cables form a broad electrical-supplies intent. A few unrelated toothpick records prevent narrower purity claims but do not change the broad navigation meaning. |
+| `nut` — Food Cupboard › NUTS | all 73 / 4 retailers | moved → Groceries & Drinks › **Nuts, Seeds & Dried Fruit** | Products are cashews, peanuts, macadamias and mixed nuts; “nut” is food evidence, not a fastener inference. |
+| `tool-home-improvement` — Tools & Home Improvement › Home Improvement | all 19 / Carrefour and Quickmart | moved → Home, Furniture & Décor › **Rugs, Mats & Home Accessories** | Seventeen products are carpets, rugs or mats; a mirror and wall hooks are still home accessories. No captured product is a general tool. |
+| `manilla-twine-rope` — MANILLA TWINES & ROPES | all 10 / Cleanshelf | retained/grouped → **Ropes & Chains** | Rope, clothesline and dog-chain products support a broad rope/chain hardware family. |
+| `plate-box` — Plates and Boxes › Electric Cookers & Hot Plates | all 7 / Eastmatt and Naivas | unresolved → **Needs Review** | Plates, cookers and perfumes are materially unrelated. No navigation family can imply a coherent product type. |
+| `electrical-plug-cap` — Electrical Plug Caps | all 4 / Naivas | retained/grouped → **Plugs & Surge Protection** | Three voltage/fridge protectors and a UK top plug support this electrical-accessory grouping; the Starlink adapter remains a noted contaminant. |
+| `crate` — EMPTY BOTTLES & CRATES › CRATES | all 2 / Cleanshelf and Eastmatt | moved → Office, School & Stationery › **Packaging Supplies** | Beer and bread crates are transport/packaging containers, not installation hardware. This reuses the accepted broad packaging family without changing membership. |
+| `electrical-mount-box-bracket` — Electrical Mount Boxes & Brackets | all 2 / Naivas | moved → TV, Audio & Music › **TV Mounts & Brackets** | Both products are television wall brackets, so device-use evidence overrides the electrical label. |
+| `detector-sensor` — Detectors & Sensors › Sensors | sole product / Gadget World | moved → Cameras, Security & Surveillance › **Smart Home Sensors** | The only product is the Xiaomi door/window sensor already represented by the descendant `sensor` collection. Both links share one navigation family; no product deduplication is claimed. |
+
+## Building incoming boundary checks
+
+| Incoming or adjacent shelf | Prior source / current placement | Boundary result |
+| --- | --- | --- |
+| `tool` | Phones & Wearables → Building › Hand Tools | Two products are a magnetic screwdriver and garden rake. The accepted move remains supported; it is not a phone repair-parts shelf. |
+| `tape-glue` | Office › Needs Review | Seven clear/masking tape products and two insulating tapes make the Office-versus-installation boundary genuinely mixed. It remains unresolved rather than being silently moved into electrical supplies. |
+| `shower-water-heater` | Home Appliances › Water Heating & Treatment | The captured electric shower head is a finished appliance, not merely installation hardware; the accepted placement remains supported. |
+| `bulb` | Home, Furniture & Décor › Lighting | All ten products are finished LED bulbs. The existing shopper-facing Lighting placement remains supported; no installation-parts claim is introduced. |
+| `sensor` | Cameras, Security & Surveillance › Smart Home Sensors | Same Xiaomi door/window product as the Building source parent. This confirms the shared destination family for the incoming `detector-sensor` collection. |
+
+## Building reconciliation and compatibility
+
+- **Originating inventory:** 11 examined, 11 explicitly dispositioned exactly once, 8 decided into retained/grouped/moved families, and 3 unresolved (`hardware`, `industrial-raw-material`, `plate-box`).
+- **Incoming checks:** 5 boundary checks, counted separately.
+- All legacy URLs remain collection links. No product assignment, capture, source bridge, canonical node or phone release changed.
+- Cross-parent destinations reuse current stable department IDs. The new TV mounts family describes the two captured mount products without narrowing or reusing an unrelated category ID.
+- `building-electrical-hardware` joins `reviewedSourceDepartments` only after complete explicit coverage; future unreviewed shelves fail closed.
+
 ## Remaining batch work
 
-Building, Electrical & Hardware is the next parent. Power, Solar & Energy follows it. No status for either parent is advanced by this ledger section.
+Power, Solar & Energy is the next parent and the last parent in this ledger batch. No Power status is advanced by the completed Office or Building sections.

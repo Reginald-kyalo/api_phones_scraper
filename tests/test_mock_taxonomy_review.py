@@ -17,6 +17,7 @@ PHONE_NAVIGATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/phoneNavigation.j
 VALIDATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyValidation.ts"
 REVIEWED = {
     "baby-kids-toys",
+    "building-electrical-hardware",
     "cameras-security-surveillance",
     "computing-networking",
     "groceries-everyday-essentials",
@@ -291,6 +292,39 @@ def test_pass_four_keeps_printers_separate_from_office_consumables():
     assert "family: 'printers-scanners'" in printer_row
     assert "departmentId: 'office-school-stationery'" in paper_row
     assert "family: 'paper-notebooks'" in paper_row
+
+
+def test_pass_four_accounts_for_the_full_building_capture_once():
+    building_shelves = _captured_shelves()["building-electrical-hardware"]
+    keys = Counter(_placement_keys())
+    assert len(building_shelves) == 11
+    assert len(set(building_shelves)) == 11
+    assert not [slug for slug in building_shelves if keys[slug] != 1]
+
+
+def test_pass_four_corrects_building_cross_parent_contamination():
+    source = TREE.read_text()
+    expected = {
+        "nut": ("groceries-everyday-essentials", "nuts-seeds-dried-fruit"),
+        "tool-home-improvement": ("home-furniture-decor", "rugs-mats-home-accessories"),
+        "crate": ("office-school-stationery", "packaging-supplies"),
+        "electrical-mount-box-bracket": ("tv-audio-home-entertainment", "tv-mounts-brackets"),
+        "detector-sensor": ("cameras-security-surveillance", "smart-home-sensors"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+
+def test_pass_four_keeps_contaminated_building_shelves_reviewable():
+    source = TREE.read_text()
+    for mixed_slug in ("hardware", "industrial-raw-material", "plate-box"):
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{mixed_slug}'" in line)
+        assert "family: 'needs-review'" in row
+
+    tape_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'tape-glue'" in line)
+    assert "family: 'needs-review'" in tape_row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
