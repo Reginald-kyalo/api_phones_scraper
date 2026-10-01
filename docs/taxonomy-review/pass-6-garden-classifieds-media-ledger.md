@@ -45,8 +45,6 @@ These checks are separate from the four-shelf Garden source inventory.
 4. **Impact:** two accepted Pass 2 semantic decisions, tests and ledger rows would change. Shelf IDs, URLs and membership would not; product reassignment and canonical publication remain out of scope. The Classifieds review must account for the absence of an evidenced live-animal shelf if approved.
 5. **Disposition:** approved by the user and applied. The Pass 2 ledger, implementation and regression expectations are reconciled; Classifieds review must not invent a replacement live-animal collection.
 
-## Remaining batch work
-
 ## Classifieds inventory and decisions
 
 The Classifieds source inventory contains four captured retail shelves. All products were inspected, including the two large collections reconciled above. None contains evidenced person-to-person classified listings or live animals, so the review records that absence instead of manufacturing a Classifieds family from labels.
