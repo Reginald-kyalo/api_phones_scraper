@@ -14,6 +14,7 @@ ROOT = Path(__file__).parents[1]
 TREE = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyTree.ts"
 CAPTURE = ROOT / "dealsonline_ui_ux_mock/src/app/data/liveSpineShelves.ts"
 PHONE_NAVIGATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/phoneNavigation.json"
+VALIDATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyValidation.ts"
 REVIEWED = {
     "baby-kids-toys",
     "cameras-security-surveillance",
@@ -66,7 +67,7 @@ def test_reviewed_departments_fail_closed_instead_of_using_keyword_fallbacks():
     source = TREE.read_text()
     for department in REVIEWED:
         assert f"  '{department}'," in source
-    assert "Reviewed taxonomy shelf has no disposition" in source
+    assert "Reviewed taxonomy shelf has no disposition" in VALIDATION.read_text()
 
 
 def test_cleaning_tools_and_consumables_have_one_household_owner():
