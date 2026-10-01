@@ -378,6 +378,13 @@ addReviewedGroup(['carcare-a0f017'], { family: 'car-care', familyLabel: 'Car Car
 addReviewedGroup(['additive'], { departmentId: 'groceries-everyday-essentials', family: 'pantry', familyLabel: 'Pantry' });
 addReviewedGroup(['tool-garage'], { departmentId: 'building-electrical-hardware', family: 'hand-tools', familyLabel: 'Hand Tools' });
 
+// Pass 6: Garden, Agriculture & Agrovet. Retail pet supplies and household
+// pest control follow captured products; ambiguous packaged clay remains visible.
+addReviewedGroup(['farm-animal-pet'], { departmentId: 'pet-supplies', family: 'pet-care', familyLabel: 'Pet Care' });
+addReviewedGroup(['insecticide'], { departmentId: 'household-cleaning', family: 'pest-control', familyLabel: 'Pest Control' });
+addReviewedGroup(['udongo-1b3b46'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['planter-af536f'], { family: 'planters-pots', familyLabel: 'Planters & Pots' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -395,6 +402,7 @@ const reviewedSourceDepartments = new Set([
   'fashion-accessories',
   'sports-outdoors-leisure',
   'automotive-motorcycle',
+  'agriculture-agrovet',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {

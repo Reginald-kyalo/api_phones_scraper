@@ -16,6 +16,7 @@ CAPTURE = ROOT / "dealsonline_ui_ux_mock/src/app/data/liveSpineShelves.ts"
 PHONE_NAVIGATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/phoneNavigation.json"
 VALIDATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyValidation.ts"
 REVIEWED = {
+    "agriculture-agrovet",
     "automotive-motorcycle",
     "baby-kids-toys",
     "building-electrical-hardware",
@@ -461,6 +462,43 @@ def test_pass_five_keeps_non_automotive_oils_reviewable():
     source = TREE.read_text()
     row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'lubricant-oil-fluid'" in line)
     assert "family: 'needs-review'" in row
+
+
+def test_pass_six_accounts_for_the_full_garden_capture_once():
+    garden_shelves = _captured_shelves()["agriculture-agrovet"]
+    keys = Counter(_placement_keys())
+    assert len(garden_shelves) == 4
+    assert len(set(garden_shelves)) == 4
+    assert not [slug for slug in garden_shelves if keys[slug] != 1]
+
+
+def test_pass_six_separates_retail_pet_and_household_pest_products():
+    source = TREE.read_text()
+    expected = {
+        "farm-animal-pet": ("pet-supplies", "pet-care"),
+        "insecticide": ("household-cleaning", "pest-control"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    planter_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'planter-af536f'" in line)
+    assert "family: 'planters-pots'" in planter_row
+
+
+def test_pass_six_keeps_packaged_clay_unresolved():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'udongo-1b3b46'" in line)
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_six_does_not_silently_overturn_prior_pet_and_poultry_rulings():
+    source = TREE.read_text()
+    for slug in ("pet", "poultry"):
+        row = next(line for line in source.splitlines() if f"'{slug}':" in line)
+        assert "departmentId" not in row
+        assert "family: 'live-pets-livestock'" in row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
