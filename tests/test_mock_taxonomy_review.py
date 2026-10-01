@@ -29,6 +29,7 @@ REVIEWED = {
     "office-school-stationery",
     "phones-wearables",
     "power-solar-energy",
+    "sports-outdoors-leisure",
     "tv-audio-home-entertainment",
 }
 
@@ -398,6 +399,36 @@ def test_pass_five_applies_the_approved_watch_correction():
     row = next(line for line in source.splitlines() if "'watch-3bab17':" in line)
     assert "departmentId: 'phones-wearables'" in row
     assert "family: 'wearables'" in row
+
+
+def test_pass_five_accounts_for_the_full_sports_capture_once():
+    sports_shelves = _captured_shelves()["sports-outdoors-leisure"]
+    keys = Counter(_placement_keys())
+    assert len(sports_shelves) == 5
+    assert len(set(sports_shelves)) == 5
+    assert not [slug for slug in sports_shelves if keys[slug] != 1]
+
+
+def test_pass_five_uses_sports_product_evidence_not_source_labels():
+    source = TREE.read_text()
+    expected = {
+        "rope-72c0d9": ("building-electrical-hardware", "ropes-chains"),
+        "torch": ("building-electrical-hardware", "electrical-supplies-accessories"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    equipment_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'sport-accessory'" in line)
+    assert "family: 'ball-sports-equipment'" in equipment_row
+
+
+def test_pass_five_keeps_contaminated_sports_shelves_reviewable():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'sport-fitness'" in line)
+    assert "'ball'" in row
+    assert "family: 'needs-review'" in row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():

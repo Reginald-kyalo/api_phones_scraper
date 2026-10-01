@@ -1,6 +1,6 @@
 # Pass 5 fashion, sports and automotive category disposition ledger
 
-> Incremental scope: Fashion & Accessories is complete. Sports & Outdoors and Automotive & Motorcycle remain pending.
+> Incremental scope: Fashion & Accessories and Sports & Outdoors are complete. Automotive & Motorcycle remains pending.
 
 ## Evidence basis
 
@@ -53,6 +53,35 @@ These checks are not counted again in the 13-shelf Fashion source inventory.
 4. **Impact:** one accepted cross-parent collection-navigation decision and its tests/Pass 3 ledger would change; IDs, URL and listing membership would not. Product reassignment and canonical publication remain out of scope.
 5. **Disposition:** approved by the user and applied. `watch-3bab17` now joins Phones & Wearables › Wearables; the Pass 3 ledger and regression expectations are reconciled.
 
+## Sports & Outdoors inventory and decisions
+
+The same capture revision and evidence conventions apply. All products were inspected for each of the five source shelves; the inventory is small enough that no sampling inference is needed. Retailer coverage is still limited to one to three general retailers per shelf.
+
+| Source shelf / full captured breadcrumb | Evidence and coverage | Disposition / destination | Rationale |
+| --- | --- | --- | --- |
+| `sport-fitness` — Sports and Fitness | all 25 / 3 retailers | unresolved → **Needs Review** | Seventeen grocery products coexist with seven sports balls and one skipping rope. The collection is neither a coherent sports shelf nor safely movable to one grocery family. |
+| `ball` — Sexual Health › Health & Wellness › BALLS | all 17 / 3 retailers | unresolved → **Needs Review** | Cotton wool/buds coexist with toilet and moth balls. The source and ancestor labels are both misleading, and the products cross Health, Baby and Household Cleaning boundaries. |
+| `sport-accessory` — Sports Accessories | all 8 / Naivas | retained/renamed → **Ball Sports Equipment** | Every product is a football, table-tennis ball or volleyball. The family describes sporting equipment without retaining the unsupported generic-accessory claim. |
+| `rope-72c0d9` — Ropes & Padlocks › ROPES | all 6 / Eastmatt | moved → Building, Electrical & Hardware › **Ropes & Chains** | All products are utility rope or heavy-duty clothesline; no captured climbing, skipping or sports rope supports an Outdoors placement. |
+| `torch` — Bulbs & Torches › TORCHES | all 3 / Eastmatt | moved → Building, Electrical & Hardware › **Electrical Supplies & Accessories** | Rechargeable torches and an emergency light are general electrical products, not evidenced outdoor equipment. |
+
+## Sports incoming boundary checks
+
+| Incoming or adjacent shelf | Current placement | Boundary result |
+| --- | --- | --- |
+| `golf-apparel-footwear` | Fashion › Footwear | All 146 captured products are ordinary shoes, sandals, slippers, boots or clogs. No golf evidence supports moving it to Sports. |
+| `manilla-twine-rope` | Building › Ropes & Chains | Utility rope, clothesline and dog chain support the same Building family as `rope-72c0d9`, not sporting equipment. |
+| `tool-home-improvement` | Home › Rugs, Mats & Home Accessories | Carpets and home mats are not outdoor sporting equipment; the accepted Home placement remains supported. |
+| `hardware` | Building › Needs Review | Garden tools and isolated outdoor items occur inside a heavily contaminated 980-product collection. It remains unresolved rather than being moved wholesale into Sports or Garden. |
+
+## Sports reconciliation and compatibility
+
+- **Originating inventory:** 5 examined, 5 explicitly dispositioned exactly once, 3 decided at evidence-supported retained/moved granularity, and 2 unresolved (`sport-fitness`, `ball`).
+- **Incoming checks:** 4 boundary groups, counted separately.
+- Every stable shelf ID, `/shelf/:slug` URL and listing membership remains unchanged. No product assignment, capture or canonical category was edited.
+- `sports-outdoors-leisure` joins `reviewedSourceDepartments` only after complete explicit coverage; future shelves fail closed.
+- The absence of a clean outdoor-equipment source shelf is recorded as an evidence limitation, not filled using label or keyword fallback.
+
 ## Remaining batch work
 
-Sports & Outdoors is the next parent. Automotive & Motorcycle follows it.
+Automotive & Motorcycle is the next parent and the final parent in Pass 5.

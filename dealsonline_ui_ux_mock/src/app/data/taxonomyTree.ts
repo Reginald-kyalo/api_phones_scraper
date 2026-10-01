@@ -361,6 +361,13 @@ addReviewedGroup(['laptop-backpack'], { family: 'bags-backpacks', familyLabel: '
 addReviewedGroup(['umbrella'], { family: 'bags-luggage-umbrellas', familyLabel: 'Bags, Luggage & Umbrellas' });
 addReviewedGroup(['shoe-jewelry-watch-accessory'], { departmentId: 'tv-audio-home-entertainment', family: 'headphones-earbuds', familyLabel: 'Headphones & Earbuds' });
 
+// Pass 5: Sports & Outdoors. Food/household contamination stays reviewable;
+// product-complete ball, rope, and torch shelves follow evidenced use.
+addReviewedGroup(['sport-fitness', 'ball'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['sport-accessory'], { family: 'ball-sports-equipment', familyLabel: 'Ball Sports Equipment' });
+addReviewedGroup(['rope-72c0d9'], { departmentId: 'building-electrical-hardware', family: 'ropes-chains', familyLabel: 'Ropes & Chains' });
+addReviewedGroup(['torch'], { departmentId: 'building-electrical-hardware', family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -376,6 +383,7 @@ const reviewedSourceDepartments = new Set([
   'building-electrical-hardware',
   'power-solar-energy',
   'fashion-accessories',
+  'sports-outdoors-leisure',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
