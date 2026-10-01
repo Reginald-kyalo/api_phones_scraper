@@ -348,6 +348,19 @@ addReviewedGroup(['power-electrical'], { departmentId: 'computing-networking', f
 addReviewedGroup(['battery-power-storage'], { departmentId: 'computing-networking', family: 'laptop-parts', familyLabel: 'Laptop Parts' });
 addReviewedGroup(['portable-powerstation'], { family: 'solar-lighting', familyLabel: 'Solar Lighting' });
 
+// Pass 5: Fashion & Accessories. Device-specific and mislabeled food,
+// cleaning, and audio collections follow product evidence; mixed bags remain visible.
+addReviewedGroup(['clothe'], { family: 'clothing', familyLabel: 'Clothing' });
+addReviewedGroup(['fashion-accessory', 'luggage-bag-133a33'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['golf-apparel-footwear'], { family: 'footwear', familyLabel: 'Footwear' });
+addReviewedGroup(['bag-umbrella'], { family: 'bags-luggage-umbrellas', familyLabel: 'Bags, Luggage & Umbrellas' });
+addReviewedGroup(['shoe-care-accessory', 'shoe-polish-c-4bfea2'], { family: 'shoe-care', familyLabel: 'Shoe Care' });
+addReviewedGroup(['brush'], { departmentId: 'household-cleaning', family: 'cleaning-tools', familyLabel: 'Cleaning Tools' });
+addReviewedGroup(['ethnic-ae09df'], { departmentId: 'groceries-everyday-essentials', family: 'ready-meals', familyLabel: 'Ready Meals' });
+addReviewedGroup(['laptop-backpack'], { family: 'bags-backpacks', familyLabel: 'Bags & Backpacks' });
+addReviewedGroup(['umbrella'], { family: 'bags-luggage-umbrellas', familyLabel: 'Bags, Luggage & Umbrellas' });
+addReviewedGroup(['shoe-jewelry-watch-accessory'], { departmentId: 'tv-audio-home-entertainment', family: 'headphones-earbuds', familyLabel: 'Headphones & Earbuds' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -362,6 +375,7 @@ const reviewedSourceDepartments = new Set([
   'office-school-stationery',
   'building-electrical-hardware',
   'power-solar-energy',
+  'fashion-accessories',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {

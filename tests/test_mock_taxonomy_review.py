@@ -20,6 +20,7 @@ REVIEWED = {
     "building-electrical-hardware",
     "cameras-security-surveillance",
     "computing-networking",
+    "fashion-accessories",
     "groceries-everyday-essentials",
     "health-beauty-personal-care",
     "home-appliances",
@@ -358,6 +359,45 @@ def test_pass_four_keeps_battery_collections_broad():
     battery_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'battery-b1164a'" in line)
     assert all(f"'{slug}'" in battery_row for slug in ("battery-b1164a", "battery", "drycell"))
     assert "family: 'batteries-power-storage'" in battery_row
+
+
+def test_pass_five_accounts_for_the_full_fashion_capture_once():
+    fashion_shelves = _captured_shelves()["fashion-accessories"]
+    keys = Counter(_placement_keys())
+    assert len(fashion_shelves) == 13
+    assert len(set(fashion_shelves)) == 13
+    assert not [slug for slug in fashion_shelves if keys[slug] != 1]
+
+
+def test_pass_five_separates_fashion_from_device_and_mislabeled_shelves():
+    source = TREE.read_text()
+    expected = {
+        "brush": ("household-cleaning", "cleaning-tools"),
+        "ethnic-ae09df": ("groceries-everyday-essentials", "ready-meals"),
+        "shoe-jewelry-watch-accessory": ("tv-audio-home-entertainment", "headphones-earbuds"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    watch_accessory_row = next(line for line in source.splitlines() if "'smart-watch-accessory':" in line)
+    assert "departmentId: 'phones-wearables'" in watch_accessory_row
+    assert "family: 'wearables'" in watch_accessory_row
+
+
+def test_pass_five_keeps_mixed_fashion_collections_reviewable():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'fashion-accessory'" in line)
+    assert "'luggage-bag-133a33'" in row
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_five_does_not_silently_overturn_the_accepted_watch_move():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "'watch-3bab17':" in line)
+    assert "departmentId: 'fashion-accessories'" in row
+    assert "family: 'watches-jewellery'" in row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
