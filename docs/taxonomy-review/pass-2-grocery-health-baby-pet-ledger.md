@@ -101,8 +101,8 @@ The second audit inspected representative titles and captured descendant paths f
 | moved | **Pet Care** (`pet-supplies`) | `pet-accessory-toy` |
 | moved | **Food & Treats** (`pet-supplies`) | `pet-pet-accessory-pet-food` |
 | moved | **Toys & Accessories** (`pet-supplies`) | `spoil-your-pet` |
-| retained | **Live Pets & Livestock** (`classifieds`) | `pet` |
-| retained | **Live Pets & Livestock** (`classifieds`) | `poultry` |
+| corrected in Pass 6 | **Pet Care** (`pet-supplies`) | `pet` |
+| corrected in Pass 6 | **Meat, Fish & Seafood** (`groceries-everyday-essentials`) | `poultry` |
 
 ## Representative evidence behind corrections
 
@@ -121,6 +121,6 @@ The second audit inspected representative titles and captured descendant paths f
 
 - Baby formula, toiletries, feeding, and maternity products remain under Baby.
 - Grocery skincare, shaving, first-aid, and oral-care products move to Health & Beauty.
-- Retail pet goods move to Pet Supplies; live `pet` and `poultry` listings remain Classifieds.
+- Retail pet goods move to Pet Supplies. Pass 6 corrected `pet` to Pet Care and `poultry` to grocery meat after complete current captures showed retail supplies and fresh/frozen food rather than live-animal listings.
 - Kenyan terms including `omena` and `mandazi` retain their unchanged searchable legacy slugs.
 - Every captured shelf in the three reviewed source departments has exactly one explicit disposition; no generated fixture is edited.

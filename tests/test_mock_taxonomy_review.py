@@ -121,13 +121,17 @@ def test_pass_two_keeps_baby_and_pet_products_out_of_groceries():
         )
 
 
-def test_live_animals_remain_classifieds_and_are_not_retail_pet_nodes():
+def test_approved_pet_and_poultry_corrections_follow_current_evidence():
     source = TREE.read_text()
-    for slug in ("pet", "poultry"):
+    expected = {
+        "pet": ("pet-supplies", "pet-care"),
+        "poultry": ("groceries-everyday-essentials", "meat-fish-seafood"),
+    }
+    for slug, (department, family) in expected.items():
         row = re.search(rf"^  '{slug}': \{{ ([^\n]+) \}},$", source, re.MULTILINE)
         assert row
-        assert "departmentId" not in row.group(1)
-        assert "live-pets-livestock" in row.group(1)
+        assert f"departmentId: '{department}'" in row.group(1)
+        assert f"family: '{family}'" in row.group(1)
 
 
 def test_evidence_review_resolves_coarse_grocery_shelves_by_stable_intent():
@@ -493,12 +497,13 @@ def test_pass_six_keeps_packaged_clay_unresolved():
     assert "family: 'needs-review'" in row
 
 
-def test_pass_six_does_not_silently_overturn_prior_pet_and_poultry_rulings():
+def test_pass_six_applies_approved_pet_and_poultry_corrections():
     source = TREE.read_text()
-    for slug in ("pet", "poultry"):
-        row = next(line for line in source.splitlines() if f"'{slug}':" in line)
-        assert "departmentId" not in row
-        assert "family: 'live-pets-livestock'" in row
+    pet_row = next(line for line in source.splitlines() if "'pet':" in line)
+    poultry_row = next(line for line in source.splitlines() if "'poultry':" in line)
+    assert "departmentId: 'pet-supplies'" in pet_row and "family: 'pet-care'" in pet_row
+    assert "departmentId: 'groceries-everyday-essentials'" in poultry_row
+    assert "family: 'meat-fish-seafood'" in poultry_row
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():

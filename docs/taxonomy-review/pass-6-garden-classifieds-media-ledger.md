@@ -23,8 +23,8 @@ These checks are separate from the four-shelf Garden source inventory.
 
 | Incoming or adjacent shelf | Current placement | Boundary result |
 | --- | --- | --- |
-| `pet` | Classifieds-style **Live Pets & Livestock** | The current 459-product capture is retail pet food, litter, shampoo, collars and accessories, with beverage contaminants and no observed live-animal listing. This contradicts the accepted Pass 2 rationale and is parked for user approval. |
-| `poultry` | Classifieds-style **Live Pets & Livestock** | The current 66-product capture contains fresh/frozen chicken, turkey products and sausages, not live poultry. This contradicts the accepted Pass 2 rationale and is parked for user approval. |
+| `pet` | Pet Supplies › **Pet Care** | The current 459-product capture is retail pet food, litter, shampoo, collars and accessories, with beverage contaminants and no observed live-animal listing. The user approved correcting the prior Classifieds-style placement. |
+| `poultry` | Groceries & Drinks › **Meat, Fish & Seafood** | The current 66-product capture contains fresh/frozen chicken, turkey products and sausages, not live poultry. The user approved correcting the prior Classifieds-style placement. |
 | `pet-care`, `pet-accessory-toy`, `pet-pet-accessory-pet-food` | Pet Supplies | Retail food, collars, leashes, toys and care products support keeping retail supplies separate from genuine live-animal classifieds. |
 | `hardware` | Building › Needs Review | Garden tools, sprayers, fertilizer and pet products are embedded in a heavily contaminated 980-product collection. It remains unresolved rather than being moved wholesale into Garden. |
 | `tool` / `tool-garage` | Building › Hand Tools | The rake shares a collection with a screwdriver; broad hand-tools placement remains safer than asserting a pure garden-tools collection. |
@@ -43,8 +43,8 @@ These checks are separate from the four-shelf Garden source inventory.
 2. **Contradicting evidence:** the complete current `pet` capture has 459 retail supply records and no observed live animal; the complete `poultry` capture has 66 fresh/frozen poultry-food products and no observed live animal. This is fact from the checked-in capture. It remains uncertain whether Pass 2 used different evidence or inferred semantics from labels.
 3. **Alternative:** move `pet` to Pet Supplies › Pet Care and `poultry` to Groceries & Drinks › Meat, Fish & Seafood (or a poultry-specific grocery family if later evidence justifies one), retaining both URLs.
 4. **Impact:** two accepted Pass 2 semantic decisions, tests and ledger rows would change. Shelf IDs, URLs and membership would not; product reassignment and canonical publication remain out of scope. The Classifieds review must account for the absence of an evidenced live-animal shelf if approved.
-5. **Disposition:** proposed for user decision and left unchanged in implementation. Independent Garden source review is complete.
+5. **Disposition:** approved by the user and applied. The Pass 2 ledger, implementation and regression expectations are reconciled; Classifieds review must not invent a replacement live-animal collection.
 
 ## Remaining batch work
 
-Classifieds is the next parent. Gaming, Books & Media follows it. The disputed incoming `pet` and `poultry` moves affect the Classifieds boundary, so their user decision should be incorporated while reviewing that parent.
+Classifieds is the next parent. Gaming, Books & Media follows it. The approved `pet` and `poultry` corrections are incorporated into the Classifieds source inventory.
