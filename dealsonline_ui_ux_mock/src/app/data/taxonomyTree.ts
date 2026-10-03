@@ -2,6 +2,11 @@ import type { LucideIcon } from 'lucide-react';
 import { PawPrint, SprayCan } from 'lucide-react';
 import { LIVE_SPINE_SHELVES, spineShelfDisplay, type LiveSpineShelf } from './liveSpineShelves';
 import { SPINE_DEPARTMENTS, type DemoSpineDepartment } from './spineDepartments';
+import {
+  createCollectionDetector,
+  shouldRetainTaxonomyDepartment,
+  validateReviewedTaxonomyInputs,
+} from './taxonomyValidation';
 
 /**
  * Legacy collection links derived from the generated shelf capture. This is
@@ -121,8 +126,8 @@ const explicitPlacements: Record<string, Placement> = {
   'pet-accessory-toy': { departmentId: 'pet-supplies', family: 'pet-care', familyLabel: 'Pet Care' },
   'pet-pet-accessory-pet-food': { departmentId: 'pet-supplies', family: 'food-treats', familyLabel: 'Food & Treats' },
   'spoil-your-pet': { departmentId: 'pet-supplies', family: 'toys-accessories', familyLabel: 'Toys & Accessories' },
-  'pet': { family: 'live-pets-livestock', familyLabel: 'Live Pets & Livestock' },
-  'poultry': { family: 'live-pets-livestock', familyLabel: 'Live Pets & Livestock' },
+  'pet': { departmentId: 'pet-supplies', family: 'pet-care', familyLabel: 'Pet Care' },
+  'poultry': { departmentId: 'groceries-everyday-essentials', family: 'meat-fish-seafood', familyLabel: 'Meat, Fish & Seafood' },
   'baby-food': { departmentId: 'baby-kids-toys', family: 'baby-food-formula', familyLabel: 'Baby Food & Formula' },
   'baby-toddler-formula': { departmentId: 'baby-kids-toys', family: 'baby-food-formula', familyLabel: 'Baby Food & Formula' },
   'baby-soap-shampoo': { departmentId: 'baby-kids-toys', family: 'baby-care', familyLabel: 'Baby Care' },
@@ -131,7 +136,7 @@ const explicitPlacements: Record<string, Placement> = {
   'shaving-cream-6bc9f0': { departmentId: 'health-beauty-personal-care', family: 'hair-removal', familyLabel: 'Hair Removal' },
   'external-hard-drive': { departmentId: 'computing-networking', family: 'storage', familyLabel: 'Storage' },
   'smart-watch-accessory': { departmentId: 'phones-wearables', family: 'wearables', familyLabel: 'Wearables' },
-  'watch-3bab17': { departmentId: 'fashion-accessories', family: 'watches-jewellery', familyLabel: 'Watches & Jewellery' },
+  'watch-3bab17': { departmentId: 'phones-wearables', family: 'wearables', familyLabel: 'Wearables' },
   'bulb': { departmentId: 'home-furniture-decor', family: 'lighting', familyLabel: 'Lighting' },
   'shower-water-heater': { departmentId: 'home-appliances', family: 'water-heating-treatment', familyLabel: 'Water Heating & Treatment' },
   'photocopy-paper': { departmentId: 'office-school-stationery', family: 'paper-notebooks', familyLabel: 'Paper & Notebooks' },
@@ -307,6 +312,83 @@ addReviewedGroup(['accessorry'], { departmentId: 'computing-networking', family:
 addReviewedGroup(['cctv-surveillance'], { family: 'cameras-surveillance', familyLabel: 'Cameras & Surveillance' });
 addReviewedGroup(['selfie-stick-tripod', 'tripod-monopod'], { family: 'tripods-supports', familyLabel: 'Tripods & Supports' });
 
+// Pass 4: Office, School & Stationery. Mixed source shelves remain reviewable;
+// packaging and actual laptop collections follow the product evidence.
+addReviewedGroup(['office-school-supply'], { family: 'office-school-supplies', familyLabel: 'Office & School Supplies' });
+addReviewedGroup(['ultra-book', 'pen', 'tape-glue'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['receipt-note-book', 'diary-941f52', 'cash-book-c5d621'], { family: 'paper-notebooks', familyLabel: 'Paper & Notebooks' });
+addReviewedGroup(['notebook'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+addReviewedGroup(['packaging-bag', 'packaging-logistic-storage-supply', 'empty-carton'], { family: 'packaging-supplies', familyLabel: 'Packaging Supplies' });
+addReviewedGroup(['scissor'], { family: 'cutting-sewing-craft-tools', familyLabel: 'Cutting, Sewing & Craft Tools' });
+addReviewedGroup(['eraser-sharpener-e53643', 'pencil-4ab379', 'geometrical-set-e1deb5', 'chalk-b9b791', 'crayon', 'ruler-d60084'], { family: 'school-writing-drawing', familyLabel: 'School Writing & Drawing' });
+addReviewedGroup(['remarkable-marker'], { family: 'writing-correction', familyLabel: 'Writing & Correction' });
+addReviewedGroup(['file', 'cover-file-document-wallet'], { family: 'filing-document-storage', familyLabel: 'Filing & Document Storage' });
+addReviewedGroup(['calculator'], { family: 'calculators', familyLabel: 'Calculators' });
+addReviewedGroup(['document-bag-274de3'], { family: 'pencil-cases-school-storage', familyLabel: 'Pencil Cases & School Storage' });
+
+// Pass 4: Building, Electrical & Hardware. Broad contaminated captures stay
+// reviewable; evidenced food, furnishings, packaging and device mounts move.
+addReviewedGroup(['hardware', 'industrial-raw-material', 'plate-box'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['electrical-accessory'], { family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
+addReviewedGroup(['nut'], { departmentId: 'groceries-everyday-essentials', family: 'nuts-seeds-dried-fruit', familyLabel: 'Nuts, Seeds & Dried Fruit' });
+addReviewedGroup(['tool-home-improvement'], { departmentId: 'home-furniture-decor', family: 'rugs-mats-home-accessories', familyLabel: 'Rugs, Mats & Home Accessories' });
+addReviewedGroup(['manilla-twine-rope'], { family: 'ropes-chains', familyLabel: 'Ropes & Chains' });
+addReviewedGroup(['electrical-plug-cap'], { family: 'plugs-surge-protection', familyLabel: 'Plugs & Surge Protection' });
+addReviewedGroup(['crate'], { departmentId: 'office-school-stationery', family: 'packaging-supplies', familyLabel: 'Packaging Supplies' });
+addReviewedGroup(['electrical-mount-box-bracket'], { departmentId: 'tv-audio-home-entertainment', family: 'tv-mounts-brackets', familyLabel: 'TV Mounts & Brackets' });
+addReviewedGroup(['detector-sensor'], { departmentId: 'cameras-security-surveillance', family: 'smart-home-sensors', familyLabel: 'Smart Home Sensors' });
+
+// Pass 4: Power, Solar & Energy. Device-charging and mislabeled computer
+// collections follow captured use; broad battery collections stay broad.
+addReviewedGroup(['battery-charger'], { family: 'charging-portable-power', familyLabel: 'Charging & Portable Power' });
+addReviewedGroup(['battery-b1164a', 'battery', 'drycell'], { family: 'batteries-power-storage', familyLabel: 'Batteries & Power Storage' });
+addReviewedGroup(['battery-charger-accessory'], { departmentId: 'phones-wearables', family: 'power-charging', familyLabel: 'Power & Charging' });
+addReviewedGroup(['extention-6cdc4d'], { departmentId: 'building-electrical-hardware', family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
+addReviewedGroup(['power-electrical'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+addReviewedGroup(['battery-power-storage'], { departmentId: 'computing-networking', family: 'laptop-parts', familyLabel: 'Laptop Parts' });
+addReviewedGroup(['portable-powerstation'], { family: 'solar-lighting', familyLabel: 'Solar Lighting' });
+
+// Pass 5: Fashion & Accessories. Device-specific and mislabeled food,
+// cleaning, and audio collections follow product evidence; mixed bags remain visible.
+addReviewedGroup(['clothe'], { family: 'clothing', familyLabel: 'Clothing' });
+addReviewedGroup(['fashion-accessory', 'luggage-bag-133a33'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['golf-apparel-footwear'], { family: 'footwear', familyLabel: 'Footwear' });
+addReviewedGroup(['bag-umbrella'], { family: 'bags-luggage-umbrellas', familyLabel: 'Bags, Luggage & Umbrellas' });
+addReviewedGroup(['shoe-care-accessory', 'shoe-polish-c-4bfea2'], { family: 'shoe-care', familyLabel: 'Shoe Care' });
+addReviewedGroup(['brush'], { departmentId: 'household-cleaning', family: 'cleaning-tools', familyLabel: 'Cleaning Tools' });
+addReviewedGroup(['ethnic-ae09df'], { departmentId: 'groceries-everyday-essentials', family: 'ready-meals', familyLabel: 'Ready Meals' });
+addReviewedGroup(['laptop-backpack'], { family: 'bags-backpacks', familyLabel: 'Bags & Backpacks' });
+addReviewedGroup(['umbrella'], { family: 'bags-luggage-umbrellas', familyLabel: 'Bags, Luggage & Umbrellas' });
+addReviewedGroup(['shoe-jewelry-watch-accessory'], { departmentId: 'tv-audio-home-entertainment', family: 'headphones-earbuds', familyLabel: 'Headphones & Earbuds' });
+
+// Pass 5: Sports & Outdoors. Food/household contamination stays reviewable;
+// product-complete ball, rope, and torch shelves follow evidenced use.
+addReviewedGroup(['sport-fitness', 'ball'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['sport-accessory'], { family: 'ball-sports-equipment', familyLabel: 'Ball Sports Equipment' });
+addReviewedGroup(['rope-72c0d9'], { departmentId: 'building-electrical-hardware', family: 'ropes-chains', familyLabel: 'Ropes & Chains' });
+addReviewedGroup(['torch'], { departmentId: 'building-electrical-hardware', family: 'electrical-supplies-accessories', familyLabel: 'Electrical Supplies & Accessories' });
+
+// Pass 5: Automotive & Motorcycle. Vehicle-use accessories stay Automotive;
+// mislabeled computer parts, food inputs, and general tools follow evidence.
+addReviewedGroup(['automotive'], { family: 'automotive-accessories-care', familyLabel: 'Automotive Accessories & Care' });
+addReviewedGroup(['coolant'], { departmentId: 'computing-networking', family: 'laptop-parts', familyLabel: 'Laptop Parts' });
+addReviewedGroup(['lubricant-oil-fluid'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['car-accessory'], { family: 'in-car-phone-charging', familyLabel: 'In-Car Phone & Charging Accessories' });
+addReviewedGroup(['carcare-a0f017'], { family: 'car-care', familyLabel: 'Car Care' });
+addReviewedGroup(['additive'], { departmentId: 'groceries-everyday-essentials', family: 'pantry', familyLabel: 'Pantry' });
+addReviewedGroup(['tool-garage'], { departmentId: 'building-electrical-hardware', family: 'hand-tools', familyLabel: 'Hand Tools' });
+
+// Pass 6: Garden, Agriculture & Agrovet. Retail pet supplies and household
+// pest control follow captured products; ambiguous packaged clay remains visible.
+addReviewedGroup(['farm-animal-pet'], { departmentId: 'pet-supplies', family: 'pet-care', familyLabel: 'Pet Care' });
+addReviewedGroup(['insecticide'], { departmentId: 'household-cleaning', family: 'pest-control', familyLabel: 'Pest Control' });
+addReviewedGroup(['udongo-1b3b46'], { family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['planter-af536f'], { family: 'planters-pots', familyLabel: 'Planters & Pots' });
+
+// Pass 6: Classifieds. The current capture contains ordinary retail products,
+// not classified listings; each collection follows its evidenced product use.
+addReviewedGroup(['for-work-new'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -318,6 +400,14 @@ const reviewedSourceDepartments = new Set([
   'phones-wearables',
   'tv-audio-home-entertainment',
   'cameras-security-surveillance',
+  'office-school-stationery',
+  'building-electrical-hardware',
+  'power-solar-energy',
+  'fashion-accessories',
+  'sports-outdoors-leisure',
+  'automotive-motorcycle',
+  'agriculture-agrovet',
+  'classifieds',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {
@@ -386,12 +476,15 @@ departmentMap.set('pet-supplies', {
   families: new Map(),
 });
 
+validateReviewedTaxonomyInputs(
+  LIVE_SPINE_SHELVES,
+  Object.keys(explicitPlacements),
+  reviewedSourceDepartments,
+);
+
 for (const [sourceId, shelves] of Object.entries(LIVE_SPINE_SHELVES)) {
   for (const shelf of shelves) {
     const placement = explicitPlacements[shelf.slug];
-    if (!placement && reviewedSourceDepartments.has(sourceId)) {
-      throw new Error(`Reviewed taxonomy shelf has no disposition: ${sourceId}/${shelf.slug}`);
-    }
     const resolvedPlacement = placement ?? defaultFamily(sourceId, shelf);
     const targetId = resolvedPlacement.departmentId ?? sourceId;
     const target = departmentMap.get(targetId);
@@ -406,7 +499,8 @@ export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
   .map(({ base, families }) => makeDepartment(base, families))
   // Approved phone categories are independent of captured legacy collections.
   // Keep their department and aisle routable even when a capture has no phone shelves.
-  .filter((department) => department.id === 'phones-wearables' || department.families.length > 0);
+  .filter((department) => reviewedSourceDepartments.has(department.id)
+    || shouldRetainTaxonomyDepartment(department.id, department.families.length));
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);
@@ -416,13 +510,7 @@ const legacyPhoneCollectionSlugs = new Set(
     .flatMap((family) => family.shelves.map((shelf) => shelf.slug)),
 );
 
-export const isLegacyPhoneCollection = (
-  slug: string | undefined,
-  ancestorSlugs: readonly string[] = [],
-): boolean => Boolean(
-  (slug && legacyPhoneCollectionSlugs.has(slug))
-  || ancestorSlugs.some((ancestor) => legacyPhoneCollectionSlugs.has(ancestor)),
-);
+export const isLegacyPhoneCollection = createCollectionDetector(legacyPhoneCollectionSlugs);
 
 /** Fails fast if a capture or disposition change drops or duplicates a shelf. */
 export function assertTaxonomyIntegrity(): void {
@@ -433,11 +521,6 @@ export function assertTaxonomyIntegrity(): void {
   }
   if (source.length !== derived.length || source.some((id, index) => id !== derived[index])) {
     throw new Error('The derived taxonomy must contain every captured shelf exactly once.');
-  }
-  const captured = new Set(source);
-  const staleDisposition = Object.keys(explicitPlacements).find((shelfSlug) => !captured.has(shelfSlug));
-  if (staleDisposition) {
-    throw new Error(`Taxonomy disposition refers to a missing captured shelf: ${staleDisposition}`);
   }
   for (const department of TAXONOMY_DEPARTMENTS) {
     const labels = new Set<string>();

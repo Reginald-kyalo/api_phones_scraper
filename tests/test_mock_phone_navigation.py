@@ -3,6 +3,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 import yaml
@@ -13,11 +14,23 @@ EXPORTER = DATA.parents[3] / "scripts/export_phone_navigation.py"
 PINNED_COMMIT = "e5e36c9cdd28c5e983c2a810b192b13361fbec4e"
 PINNED_SHA256 = "7fb474cade66b3c89c7b6037e7fcc1ab9d2b9a7fa3966d40ec2838c2a715f598"
 TEST_COMMIT = "test-source"
+VALIDATION = DATA.parent / "taxonomyValidation.ts"
 
 spec = importlib.util.spec_from_file_location("export_phone_navigation", EXPORTER)
 exporter = importlib.util.module_from_spec(spec)
 assert spec.loader
 spec.loader.exec_module(exporter)
+
+
+def run_validation_module(script):
+    """Execute the dependency-free TypeScript seam with Node's type stripping."""
+    return subprocess.run(
+        ["node", "--experimental-strip-types", "--input-type=module", "--eval", script],
+        cwd=DATA.parents[3],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 def source_bytes(nodes):
@@ -173,6 +186,55 @@ def test_navigation_contract_separates_categories_from_legacy_collections():
     assert "Counts below are collection counts" in directory
     assert "may contain mixed product types" in directory
     assert "legacy collection and may contain mixed product types" in shelf_page
-    assert "department.id === 'phones-wearables' || department.families.length > 0" in taxonomy
-    assert "ancestorSlugs.some" in taxonomy
     assert "isLegacyPhoneCollection(slug, node?.ancestors)" in shelf_page
+
+
+def test_consistent_empty_phone_capture_retains_the_approved_department():
+    result = run_validation_module(f"""
+      import {{ shouldRetainTaxonomyDepartment, validateReviewedTaxonomyInputs }} from {json.dumps(VALIDATION.as_uri())};
+      const captures = {{ 'phones-wearables': [] }};
+      validateReviewedTaxonomyInputs(captures, [], new Set(['phones-wearables']));
+      if (!shouldRetainTaxonomyDepartment('phones-wearables', 0)) process.exit(2);
+    """)
+    assert result.returncode == 0, result.stderr
+
+
+def test_removed_phone_shelf_with_stale_disposition_still_fails():
+    result = run_validation_module(f"""
+      import {{ validateReviewedTaxonomyInputs }} from {json.dumps(VALIDATION.as_uri())};
+      try {{
+        validateReviewedTaxonomyInputs({{ 'phones-wearables': [] }}, ['old-phone-shelf'], new Set(['phones-wearables']));
+      }} catch (error) {{
+        if (String(error).includes('missing captured shelf: old-phone-shelf')) process.exit(0);
+      }}
+      process.exit(2);
+    """)
+    assert result.returncode == 0, result.stderr
+
+
+def test_new_shelf_in_reviewed_phone_capture_still_fails_closed():
+    result = run_validation_module(f"""
+      import {{ validateReviewedTaxonomyInputs }} from {json.dumps(VALIDATION.as_uri())};
+      try {{
+        validateReviewedTaxonomyInputs(
+          {{ 'phones-wearables': [{{ slug: 'unreviewed-phone-shelf' }}] }},
+          [],
+          new Set(['phones-wearables']),
+        );
+      }} catch (error) {{
+        if (String(error).includes('no disposition: phones-wearables/unreviewed-phone-shelf')) process.exit(0);
+      }}
+      process.exit(2);
+    """)
+    assert result.returncode == 0, result.stderr
+
+
+def test_collection_detection_executes_exact_ancestor_and_negative_cases():
+    result = run_validation_module(f"""
+      import {{ createCollectionDetector }} from {json.dumps(VALIDATION.as_uri())};
+      const detects = createCollectionDetector(['legacy-phone-shelf']);
+      if (!detects('legacy-phone-shelf')) process.exit(2);
+      if (!detects('child-product', ['legacy-phone-shelf'])) process.exit(3);
+      if (detects('child-product', ['unrelated-ancestor'])) process.exit(4);
+    """)
+    assert result.returncode == 0, result.stderr

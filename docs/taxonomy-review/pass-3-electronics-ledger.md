@@ -42,7 +42,7 @@ Every captured shelf in these four sources has one explicit disposition. Legacy 
 | moved | **Packaging Supplies** (`office-school-stationery`) | `bag-fd8696` |
 | retained / grouped | **Power & Charging** (`phones-wearables`) | `charger-7dd0d2`, `power-bank`, `phone-battery`, `cable-4b1baf` |
 | moved | **Drinkware** (`kitchen-dining-cookware`) | `glass` |
-| moved | **Watches & Jewellery** (`fashion-accessories`) | `watch-3bab17` |
+| retained / corrected in Pass 5 | **Wearables** (`phones-wearables`) | `watch-3bab17` |
 | retained / grouped | **Phones** (`phones-wearables`) | `certified-pre-loved-smartphone`, `foldable-phone`, `new-phone`, `ip-feature-phone`, `deskphone`, `gaming-phone`, `kabambe-phone-mulika-mwizi`, `neon-phone` |
 | retained / grouped | **Cases, Covers & Wallets** (`phones-wearables`) | `tablet-bag-cover`, `magsafe-wallet`, `original-accessory` |
 | retained / grouped | **Wearables** (`phones-wearables`) | `smartwatch` |
@@ -88,7 +88,7 @@ Every captured shelf in these four sources has one explicit disposition. Legacy 
 - `landline-phone-accessory` contains both devices and accessories and therefore stays broad. Tablet covers, MagSafe wallets, SmartTags, and SIM trays are separated by product type.
 - `interactive-display` is dominated by replacement touch displays with some conference displays and moves to Computing. `tv-entertainment` contains earbuds and joins Headphones & Earbuds.
 - The so-called CCTV shelf publishes a Cameras child and representative body/action cameras, so it remains broad Cameras & Surveillance rather than being narrowed to CCTV.
-- Smartwatches remain Wearables and ordinary watches remain Fashion. TP-Link, Razer Blade, Mac, and X380 do not become brand/model families.
+- Smartwatches remain Wearables and ordinary watches remain Fashion. Pass 5 corrected `watch-3bab17` after its complete current capture showed only Samsung/Huawei wearables; TP-Link, Razer Blade, Mac, and X380 do not become brand/model families.
 
 ## Compatibility checks
 

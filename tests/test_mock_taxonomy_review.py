@@ -14,16 +14,25 @@ ROOT = Path(__file__).parents[1]
 TREE = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyTree.ts"
 CAPTURE = ROOT / "dealsonline_ui_ux_mock/src/app/data/liveSpineShelves.ts"
 PHONE_NAVIGATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/phoneNavigation.json"
+VALIDATION = ROOT / "dealsonline_ui_ux_mock/src/app/data/taxonomyValidation.ts"
 REVIEWED = {
+    "agriculture-agrovet",
+    "automotive-motorcycle",
     "baby-kids-toys",
+    "building-electrical-hardware",
     "cameras-security-surveillance",
+    "classifieds",
     "computing-networking",
+    "fashion-accessories",
     "groceries-everyday-essentials",
     "health-beauty-personal-care",
     "home-appliances",
     "home-furniture-decor",
     "kitchen-dining-cookware",
+    "office-school-stationery",
     "phones-wearables",
+    "power-solar-energy",
+    "sports-outdoors-leisure",
     "tv-audio-home-entertainment",
 }
 
@@ -66,7 +75,7 @@ def test_reviewed_departments_fail_closed_instead_of_using_keyword_fallbacks():
     source = TREE.read_text()
     for department in REVIEWED:
         assert f"  '{department}'," in source
-    assert "Reviewed taxonomy shelf has no disposition" in source
+    assert "Reviewed taxonomy shelf has no disposition" in VALIDATION.read_text()
 
 
 def test_cleaning_tools_and_consumables_have_one_household_owner():
@@ -113,13 +122,17 @@ def test_pass_two_keeps_baby_and_pet_products_out_of_groceries():
         )
 
 
-def test_live_animals_remain_classifieds_and_are_not_retail_pet_nodes():
+def test_approved_pet_and_poultry_corrections_follow_current_evidence():
     source = TREE.read_text()
-    for slug in ("pet", "poultry"):
+    expected = {
+        "pet": ("pet-supplies", "pet-care"),
+        "poultry": ("groceries-everyday-essentials", "meat-fish-seafood"),
+    }
+    for slug, (department, family) in expected.items():
         row = re.search(rf"^  '{slug}': \{{ ([^\n]+) \}},$", source, re.MULTILINE)
         assert row
-        assert "departmentId" not in row.group(1)
-        assert "live-pets-livestock" in row.group(1)
+        assert f"departmentId: '{department}'" in row.group(1)
+        assert f"family: '{family}'" in row.group(1)
 
 
 def test_evidence_review_resolves_coarse_grocery_shelves_by_stable_intent():
@@ -215,7 +228,7 @@ def test_pass_three_corrects_cross_department_electronics_shelves():
         "laptop-tablet": ("computing-networking", "laptops"),
         "screen-replacement": ("computing-networking", "laptop-parts"),
         "accessory-kit": ("cameras-security-surveillance", "content-creation-accessories"),
-        "watch-3bab17": ("fashion-accessories", "watches-jewellery"),
+        "watch-3bab17": ("phones-wearables", "wearables"),
     }
     for slug, (department, family) in expected.items():
         assert department in source and family in source
@@ -252,6 +265,274 @@ def test_pass_three_deep_review_uses_product_type_over_source_label():
         r"\{ departmentId: 'computing-networking', family: 'displays-replacement-screens'",
         source,
     )
+
+
+def test_pass_four_accounts_for_the_full_office_capture_once():
+    office_shelves = _captured_shelves()["office-school-stationery"]
+    keys = Counter(_placement_keys())
+    assert len(office_shelves) == 23
+    assert len(set(office_shelves)) == 23
+    assert not [slug for slug in office_shelves if keys[slug] != 1]
+
+
+def test_pass_four_uses_product_evidence_for_office_boundaries():
+    source = TREE.read_text()
+    expected = {
+        "notebook": ("computing-networking", "laptops"),
+        "packaging-bag": (None, "packaging-supplies"),
+        "empty-carton": (None, "packaging-supplies"),
+        "document-bag-274de3": (None, "pencil-cases-school-storage"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        if department:
+            assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    for mixed_slug in ("ultra-book", "pen", "tape-glue"):
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{mixed_slug}'" in line)
+        assert "family: 'needs-review'" in row
+
+
+def test_pass_four_keeps_printers_separate_from_office_consumables():
+    source = TREE.read_text()
+    printer_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'point-sale-retail-technology'" in line)
+    paper_row = next(line for line in source.splitlines() if "'photocopy-paper':" in line)
+    assert "departmentId:" not in printer_row
+    assert "family: 'printers-scanners'" in printer_row
+    assert "departmentId: 'office-school-stationery'" in paper_row
+    assert "family: 'paper-notebooks'" in paper_row
+
+
+def test_pass_four_accounts_for_the_full_building_capture_once():
+    building_shelves = _captured_shelves()["building-electrical-hardware"]
+    keys = Counter(_placement_keys())
+    assert len(building_shelves) == 11
+    assert len(set(building_shelves)) == 11
+    assert not [slug for slug in building_shelves if keys[slug] != 1]
+
+
+def test_pass_four_corrects_building_cross_parent_contamination():
+    source = TREE.read_text()
+    expected = {
+        "nut": ("groceries-everyday-essentials", "nuts-seeds-dried-fruit"),
+        "tool-home-improvement": ("home-furniture-decor", "rugs-mats-home-accessories"),
+        "crate": ("office-school-stationery", "packaging-supplies"),
+        "electrical-mount-box-bracket": ("tv-audio-home-entertainment", "tv-mounts-brackets"),
+        "detector-sensor": ("cameras-security-surveillance", "smart-home-sensors"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+
+def test_pass_four_keeps_contaminated_building_shelves_reviewable():
+    source = TREE.read_text()
+    for mixed_slug in ("hardware", "industrial-raw-material", "plate-box"):
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{mixed_slug}'" in line)
+        assert "family: 'needs-review'" in row
+
+    tape_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'tape-glue'" in line)
+    assert "family: 'needs-review'" in tape_row
+
+
+def test_pass_four_accounts_for_the_full_power_capture_once():
+    power_shelves = _captured_shelves()["power-solar-energy"]
+    keys = Counter(_placement_keys())
+    assert len(power_shelves) == 10
+    assert len(set(power_shelves)) == 10
+    assert not [slug for slug in power_shelves if keys[slug] != 1]
+
+
+def test_pass_four_separates_energy_systems_from_device_accessories():
+    source = TREE.read_text()
+    expected = {
+        "battery-charger-accessory": ("phones-wearables", "power-charging"),
+        "extention-6cdc4d": ("building-electrical-hardware", "electrical-supplies-accessories"),
+        "power-electrical": ("computing-networking", "laptops"),
+        "battery-power-storage": ("computing-networking", "laptop-parts"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    solar_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'portable-powerstation'" in line)
+    assert "family: 'solar-lighting'" in solar_row
+
+
+def test_pass_four_keeps_battery_collections_broad():
+    source = TREE.read_text()
+    battery_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'battery-b1164a'" in line)
+    assert all(f"'{slug}'" in battery_row for slug in ("battery-b1164a", "battery", "drycell"))
+    assert "family: 'batteries-power-storage'" in battery_row
+
+
+def test_pass_five_accounts_for_the_full_fashion_capture_once():
+    fashion_shelves = _captured_shelves()["fashion-accessories"]
+    keys = Counter(_placement_keys())
+    assert len(fashion_shelves) == 13
+    assert len(set(fashion_shelves)) == 13
+    assert not [slug for slug in fashion_shelves if keys[slug] != 1]
+
+
+def test_pass_five_separates_fashion_from_device_and_mislabeled_shelves():
+    source = TREE.read_text()
+    expected = {
+        "brush": ("household-cleaning", "cleaning-tools"),
+        "ethnic-ae09df": ("groceries-everyday-essentials", "ready-meals"),
+        "shoe-jewelry-watch-accessory": ("tv-audio-home-entertainment", "headphones-earbuds"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    watch_accessory_row = next(line for line in source.splitlines() if "'smart-watch-accessory':" in line)
+    assert "departmentId: 'phones-wearables'" in watch_accessory_row
+    assert "family: 'wearables'" in watch_accessory_row
+
+
+def test_pass_five_keeps_mixed_fashion_collections_reviewable():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'fashion-accessory'" in line)
+    assert "'luggage-bag-133a33'" in row
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_five_applies_the_approved_watch_correction():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "'watch-3bab17':" in line)
+    assert "departmentId: 'phones-wearables'" in row
+    assert "family: 'wearables'" in row
+
+
+def test_pass_five_accounts_for_the_full_sports_capture_once():
+    sports_shelves = _captured_shelves()["sports-outdoors-leisure"]
+    keys = Counter(_placement_keys())
+    assert len(sports_shelves) == 5
+    assert len(set(sports_shelves)) == 5
+    assert not [slug for slug in sports_shelves if keys[slug] != 1]
+
+
+def test_pass_five_uses_sports_product_evidence_not_source_labels():
+    source = TREE.read_text()
+    expected = {
+        "rope-72c0d9": ("building-electrical-hardware", "ropes-chains"),
+        "torch": ("building-electrical-hardware", "electrical-supplies-accessories"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    equipment_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'sport-accessory'" in line)
+    assert "family: 'ball-sports-equipment'" in equipment_row
+
+
+def test_pass_five_keeps_contaminated_sports_shelves_reviewable():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'sport-fitness'" in line)
+    assert "'ball'" in row
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_five_accounts_for_the_full_automotive_capture_once():
+    automotive_shelves = _captured_shelves()["automotive-motorcycle"]
+    keys = Counter(_placement_keys())
+    assert len(automotive_shelves) == 7
+    assert len(set(automotive_shelves)) == 7
+    assert not [slug for slug in automotive_shelves if keys[slug] != 1]
+
+
+def test_pass_five_separates_vehicle_use_from_mislabeled_products():
+    source = TREE.read_text()
+    expected = {
+        "coolant": ("computing-networking", "laptop-parts"),
+        "additive": ("groceries-everyday-essentials", "pantry"),
+        "tool-garage": ("building-electrical-hardware", "hand-tools"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    car_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'car-accessory'" in line)
+    assert "departmentId:" not in car_row
+    assert "family: 'in-car-phone-charging'" in car_row
+
+
+def test_pass_five_keeps_non_automotive_oils_reviewable():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'lubricant-oil-fluid'" in line)
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_six_accounts_for_the_full_garden_capture_once():
+    garden_shelves = _captured_shelves()["agriculture-agrovet"]
+    keys = Counter(_placement_keys())
+    assert len(garden_shelves) == 4
+    assert len(set(garden_shelves)) == 4
+    assert not [slug for slug in garden_shelves if keys[slug] != 1]
+
+
+def test_pass_six_separates_retail_pet_and_household_pest_products():
+    source = TREE.read_text()
+    expected = {
+        "farm-animal-pet": ("pet-supplies", "pet-care"),
+        "insecticide": ("household-cleaning", "pest-control"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    planter_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'planter-af536f'" in line)
+    assert "family: 'planters-pots'" in planter_row
+
+
+def test_pass_six_keeps_packaged_clay_unresolved():
+    source = TREE.read_text()
+    row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'udongo-1b3b46'" in line)
+    assert "family: 'needs-review'" in row
+
+
+def test_pass_six_applies_approved_pet_and_poultry_corrections():
+    source = TREE.read_text()
+    pet_row = next(line for line in source.splitlines() if "'pet':" in line)
+    poultry_row = next(line for line in source.splitlines() if "'poultry':" in line)
+    assert "departmentId: 'pet-supplies'" in pet_row and "family: 'pet-care'" in pet_row
+    assert "departmentId: 'groceries-everyday-essentials'" in poultry_row
+    assert "family: 'meat-fish-seafood'" in poultry_row
+
+
+def test_pass_six_accounts_for_the_full_classifieds_capture_once():
+    classifieds_shelves = _captured_shelves()["classifieds"]
+    keys = Counter(_placement_keys())
+    assert len(classifieds_shelves) == 4
+    assert len(set(classifieds_shelves)) == 4
+    assert not [slug for slug in classifieds_shelves if keys[slug] != 1]
+
+
+def test_pass_six_classifieds_collections_follow_retail_product_evidence():
+    source = TREE.read_text()
+    expected = {
+        "pet": ("pet-supplies", "pet-care"),
+        "poultry": ("groceries-everyday-essentials", "meat-fish-seafood"),
+        "for-work-new": ("computing-networking", "laptops"),
+        "spoil-your-pet": ("pet-supplies", "toys-accessories"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if f"'{slug}'" in line and ("addReviewedGroup(" in line or f"'{slug}':" in line))
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+    assert "family: 'live-pets-livestock'" not in source
+
+
+def test_reviewed_classifieds_department_remains_routable_when_empty():
+    source = TREE.read_text()
+    assert "reviewedSourceDepartments.has(department.id)" in source
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
