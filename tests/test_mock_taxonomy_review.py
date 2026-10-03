@@ -24,6 +24,7 @@ REVIEWED = {
     "classifieds",
     "computing-networking",
     "fashion-accessories",
+    "gaming-books-media",
     "groceries-everyday-essentials",
     "health-beauty-personal-care",
     "home-appliances",
@@ -533,6 +534,37 @@ def test_pass_six_classifieds_collections_follow_retail_product_evidence():
 def test_reviewed_classifieds_department_remains_routable_when_empty():
     source = TREE.read_text()
     assert "reviewedSourceDepartments.has(department.id)" in source
+
+
+def test_pass_six_accounts_for_the_full_gaming_media_capture_once():
+    gaming_shelves = _captured_shelves()["gaming-books-media"]
+    keys = Counter(_placement_keys())
+    assert len(gaming_shelves) == 4
+    assert len(set(gaming_shelves)) == 4
+    assert not [slug for slug in gaming_shelves if keys[slug] != 1]
+
+
+def test_pass_six_separates_gaming_from_furniture_and_hardware():
+    source = TREE.read_text()
+    expected = {
+        "hardware-other": ("building-electrical-hardware", "needs-review"),
+        "chair": ("home-furniture-decor", "furniture"),
+    }
+    for slug, (department, family) in expected.items():
+        row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and f"'{slug}'" in line)
+        assert f"departmentId: '{department}'" in row
+        assert f"family: '{family}'" in row
+
+    gaming_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'gaming']" in line)
+    console_row = next(line for line in source.splitlines() if "addReviewedGroup(" in line and "'gaming-console'" in line)
+    assert "family: 'gaming-hardware-computers'" in gaming_row
+    assert "family: 'gaming-consoles'" in console_row
+
+
+def test_pass_six_does_not_invent_uncaptured_books_or_media_families():
+    source = TREE.read_text()
+    gaming_rows = [line for line in source.splitlines() if "// Pass 6: Gaming" in line or "addReviewedGroup(" in line]
+    assert not any("family: 'books'" in row or "family: 'media'" in row for row in gaming_rows)
 
 
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():

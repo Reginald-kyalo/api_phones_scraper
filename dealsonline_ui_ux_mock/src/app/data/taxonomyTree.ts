@@ -389,6 +389,13 @@ addReviewedGroup(['planter-af536f'], { family: 'planters-pots', familyLabel: 'Pl
 // not classified listings; each collection follows its evidenced product use.
 addReviewedGroup(['for-work-new'], { departmentId: 'computing-networking', family: 'laptops', familyLabel: 'Laptops' });
 
+// Pass 6: Gaming, Books & Media. Gaming-intent devices stay broad; ordinary
+// furniture and the duplicated contaminated hardware collection move.
+addReviewedGroup(['hardware-other'], { departmentId: 'building-electrical-hardware', family: 'needs-review', familyLabel: 'Needs Review' });
+addReviewedGroup(['gaming'], { family: 'gaming-hardware-computers', familyLabel: 'Gaming Hardware & Computers' });
+addReviewedGroup(['chair'], { departmentId: 'home-furniture-decor', family: 'furniture', familyLabel: 'Furniture' });
+addReviewedGroup(['gaming-console'], { family: 'gaming-consoles', familyLabel: 'Gaming Consoles' });
+
 const reviewedSourceDepartments = new Set([
   'home-appliances',
   'home-furniture-decor',
@@ -408,6 +415,7 @@ const reviewedSourceDepartments = new Set([
   'automotive-motorcycle',
   'agriculture-agrovet',
   'classifieds',
+  'gaming-books-media',
 ]);
 
 const departmentOverrides: Record<string, Pick<TaxonomyDepartment, 'label'>> = {

@@ -1,6 +1,6 @@
 # Pass 6 garden, classifieds and media category disposition ledger
 
-> Incremental scope: Garden, Agriculture & Agrovet and Classifieds are complete. Gaming, Books & Media remains pending.
+> Scope complete: Garden, Agriculture & Agrovet; Classifieds; and Gaming, Books & Media.
 
 ## Evidence basis
 
@@ -81,6 +81,35 @@ The Classifieds source inventory contains four captured retail shelves. All prod
 4. **Impact:** the stable Classifieds aisle remains routable and truthfully reports zero captured shelves. No shelf URL, membership, schema or category meaning changes; unreviewed empty departments still follow existing behavior.
 5. **Disposition:** applied within scope as a narrow implementation detail preserving stable navigation and existing fail-closed conventions.
 
-## Remaining batch work
+## Gaming, Books & Media inventory and decisions
 
-Gaming, Books & Media is the next and final source parent. After it, reconcile all navigation coverage separately from product assignment and production publication.
+The same capture revision and evidence conventions apply. All products were inspected for each of the four source shelves. Despite the department display label, the capture contains no book or general-media shelf; that absence is retained as an evidence limitation rather than filled through label inference.
+
+| Source shelf / full captured breadcrumb | Evidence and coverage | Disposition / destination | Rationale |
+| --- | --- | --- | --- |
+| `hardware-other` — Hardware & Other › Hardware | all 980 / 6 retailers | moved/unresolved → Building, Electrical & Hardware › **Needs Review** | This parent collection duplicates the already reviewed `hardware` product set: real tools and fasteners coexist with cleaning, pet, agricultural, household and power items. It has no gaming, book or media intent and remains visibly unresolved in the supported parent. |
+| `gaming` — Gaming › Controllers | all 9 / 4 specialist retailers | retained/grouped → **Gaming Hardware & Computers** | Gaming laptops dominate alongside a gaming headset and handheld console; one access-control bundle is contamination. A broad gaming-hardware family preserves shopper intent without calling every item a console or moving gaming laptops into generic Computing. |
+| `chair` — Chairs & Tables › CHAIRS | all 2 / Eastmatt | moved → Home, Furniture & Décor › **Furniture** | Both products are ordinary plastic chairs with no gaming-specific evidence. |
+| `gaming-console` — Electronics & Computers › Electronics › Gaming & Consoles | all 2 / 2 device retailers | retained/grouped → **Gaming Consoles** | Lenovo Legion Go S and ASUS ROG Xbox Ally X are handheld gaming devices/consoles. |
+
+## Gaming, Books & Media incoming boundary checks
+
+| Incoming or adjacent shelf | Current placement | Boundary result |
+| --- | --- | --- |
+| `hardware` | Building › Needs Review | It shares the full contaminated product set with `hardware-other`; both collection links belong in the same unresolved Building family. |
+| `computer`, gaming laptops and general laptops | Computing families | General/mixed computers stay Computing, while the nine-item `gaming` collection retains its explicit gaming shopper intent. This does not reassign individual laptop products. |
+| `toy-game-bike` | Baby, Kids & Toys | Physical toys, dolls, toy vehicles and playing cards remain Toys; label overlap with “game” does not make the collection electronic gaming. |
+| `headphone` and TV/audio collections | TV, Audio & Music | General and gaming headsets remain in their established audio collections unless they are members of the broad `gaming` source shelf; no audio-equipment family is duplicated in Gaming. |
+
+## Gaming, Books & Media reconciliation and compatibility
+
+- **Originating inventory:** 4 examined, 4 explicitly dispositioned exactly once, 3 decided at evidence-supported retained/moved granularity, and 1 moved while remaining unresolved (`hardware-other`).
+- **Incoming checks:** 4 boundary groups, counted separately.
+- No captured book or general-media collection exists. No empty family or speculative category is created.
+- Every stable shelf ID, `/shelf/:slug` URL and listing membership remains unchanged.
+- `gaming-books-media` joins `reviewedSourceDepartments` only after complete explicit coverage; future shelves fail closed.
+- No product assignment, capture, backend record, canonical publication or phone hierarchy changed.
+
+## Pass 6 batch reconciliation
+
+Across the three source parents, 12 originating shelves were examined and dispositioned exactly once: Garden 4 (3 decided, 1 unresolved), Classifieds 4 (4 decided, 0 unresolved), and Gaming/Books/Media 4 (3 decided, 1 unresolved). Incoming boundary checks are separate and not double-counted. All nine continuation parents are now reviewed; navigation-wide reconciliation remains separate from product assignment and production publication.
