@@ -567,6 +567,35 @@ def test_pass_six_does_not_invent_uncaptured_books_or_media_families():
     assert not any("family: 'books'" in row or "family: 'media'" in row for row in gaming_rows)
 
 
+def test_completed_review_reconciles_all_original_source_departments():
+    captured = _captured_shelves()
+    assert set(captured) == REVIEWED
+    assert sum(len(shelves) for shelves in captured.values()) == 483
+    keys = Counter(_placement_keys())
+    assert not [slug for shelves in captured.values() for slug in shelves if keys[slug] != 1]
+
+
+def test_completed_review_names_every_explicitly_unresolved_collection():
+    source = TREE.read_text()
+    unresolved = {
+        "plotter", "electronic", "home-garden-kid", "cooking-equipment-fuel-c23ce7",
+        "ultra-book", "pen", "tape-glue", "hardware", "industrial-raw-material", "plate-box",
+        "fashion-accessory", "luggage-bag-133a33", "lubricant-oil-fluid", "sport-fitness", "ball",
+        "udongo-1b3b46", "hardware-other",
+    }
+    for slug in unresolved:
+        row = next(line for line in source.splitlines() if f"'{slug}'" in line and ("addReviewedGroup(" in line or f"'{slug}':" in line))
+        assert "family: 'needs-review'" in row
+
+
+def test_navigation_additions_remain_separate_from_original_source_inventory():
+    source = TREE.read_text()
+    assert "id: 'household-cleaning', label: 'Household Cleaning & Essentials'" in source
+    assert "id: 'pet-supplies', label: 'Pet Supplies'" in source
+    assert "household-cleaning" not in _captured_shelves()
+    assert "pet-supplies" not in _captured_shelves()
+
+
 def test_phone_and_tablet_intents_are_separate_from_mixed_legacy_shelves():
     source = TREE.read_text()
     assert "family: 'phones', familyLabel: 'Phones'" in source
