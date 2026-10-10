@@ -44,3 +44,28 @@ export const PLACEMENTS: Record<Placement, { label: string; height: number; desk
 
 /** Grid positions (0-based) for sponsored tiles on a 48-card page: 3rd and 15th. */
 export const LISTING_TILE_POSITIONS = [2, 14];
+
+/**
+ * Homepage hero campaign (design review §4.4): the right 40% of the hero can
+ * carry one retailer's sale, sold directly and never programmatic. Up to three
+ * rotate, no faster than every 8 seconds. Empty = the hero shows its own
+ * comparison card, which is also the fallback whenever a campaign ends.
+ *
+ * Every field is supplied by the retailer and checked by us; `href` must be a
+ * page on our site (a shop or listing), never a direct ad URL.
+ */
+export interface HeroCampaign {
+  id: string;
+  shop: string;
+  /** One line, sentence case, no exclamation marks. */
+  headline: string;
+  /** Optional supporting line, e.g. the dates the offer runs. */
+  detail?: string;
+  image?: string;
+  href: string;
+  cta: string;
+}
+
+export const HERO_CAMPAIGNS: HeroCampaign[] = [];
+export const HERO_ROTATE_MS = 8000;
+export const HERO_MAX_CAMPAIGNS = 3;

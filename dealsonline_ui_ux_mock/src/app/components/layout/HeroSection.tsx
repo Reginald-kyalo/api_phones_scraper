@@ -4,6 +4,8 @@ import { ImageWithFallback } from '../common/ImageWithFallback';
 import { SavingBadge } from '../common/SavingBadge';
 import type { ClusterDetail } from '../../lib/api';
 import { clusterSaving, formatPrice, hasPrice } from '../../lib/format';
+import { HERO_CAMPAIGNS } from '../../lib/ads';
+import { HeroCampaign } from '../ads/HeroCampaign';
 
 interface HeroSectionProps {
   productCount?: number;
@@ -22,7 +24,8 @@ interface HeroSectionProps {
  * Flat on purpose (DESIGN_RULES.md §2): a 1px border on the light canvas, no
  * shadows, no device mock-up, no floating cards. The right column is also the
  * slot a sold "campaign card" will take later (design review §4.4), which is
- * why it is a plain card of fixed size rather than a decoration.
+ * why it is a plain card of fixed size rather than a decoration. When
+ * HERO_CAMPAIGNS has entries the campaign card takes that place instead.
  */
 export default function HeroSection({ productCount, showcase }: HeroSectionProps) {
   // Real per-store offers, cheapest first. Stores stay anonymous by design — a
@@ -63,9 +66,12 @@ export default function HeroSection({ productCount, showcase }: HeroSectionProps
             </p>
           </div>
 
-          {/* Right: one real comparison, the product's own job made literal */}
+          {/* Right: a sold campaign if there is one, else one real comparison */}
           <div className="w-full max-w-sm mx-auto lg:mx-0 lg:ml-auto">
-            <div className="rounded-md border border-border bg-white p-4">
+            {HERO_CAMPAIGNS.length > 0 ? (
+              <HeroCampaign campaigns={HERO_CAMPAIGNS} />
+            ) : (
+            <div className="h-[326px] rounded-md border border-border bg-white p-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-14 h-14 rounded-md bg-surface-alt overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {showcase?.image ? (
@@ -128,6 +134,7 @@ export default function HeroSection({ productCount, showcase }: HeroSectionProps
                 <SavingBadge saving={saving} />
               </div>
             </div>
+            )}
           </div>
         </div>
       </section>
