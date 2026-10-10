@@ -1,13 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { storeInitial } from '../../lib/storeIdentity';
+
+const ICON_BASE = `${import.meta.env.BASE_URL}shop-icons/`;
+let iconIndex: Promise<Record<string, string>> | null = null;
+
+/** {host: file} for every shop with a hosted icon; fetched once per visit. */
+function loadIconIndex(): Promise<Record<string, string>> {
+  iconIndex ??= fetch(`${ICON_BASE}index.json`)
+    .then((res) => (res.ok ? res.json() : {}))
+    .catch(() => ({}));
+  return iconIndex;
+}
 
 /**
  * A shop's identity on an offer row: its favicon, or a neutral initial tile
  * when there is none. One component on every row, so no shop looks more
  * "real" than another (DESIGN_RULES.md §5).
  *
- * ⚠️ Favicons come from a public favicon service for now. Before launch, fetch
- * and cache the ~36 shop logos once and serve them ourselves.
+ * Icons are served from public/shop-icons/, downloaded once by
+ * scripts/fetch_shop_icons.py. A shop without one gets the initial tile; no
+ * request ever goes to a third party at view time.
  */
 export function StoreMark({
   store,
@@ -20,7 +32,16 @@ export function StoreMark({
   size?: number;
 }) {
   const [failed, setFailed] = useState(false);
+  const [file, setFile] = useState<string | null>(null);
   const host = hostFor(store, url);
+
+  useEffect(() => {
+    let live = true;
+    if (host) loadIconIndex().then((index) => live && setFile(index[host] ?? null));
+    return () => {
+      live = false;
+    };
+  }, [host]);
 
   return (
     <span
@@ -28,9 +49,9 @@ export function StoreMark({
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {host && !failed ? (
+      {file && !failed ? (
         <img
-          src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`}
+          src={`${ICON_BASE}${file}`}
           alt=""
           width={size - 12}
           height={size - 12}

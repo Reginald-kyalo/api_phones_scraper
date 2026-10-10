@@ -114,7 +114,7 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 
 ### Retailer identity
 
-- `StoreMark` renders a shop's favicon from its domain, falling back to a neutral initial tile. One component on every offer row.
+- `StoreMark` renders the shop's icon from `public/shop-icons/` (downloaded once by `scripts/fetch_shop_icons.py`; re-run after a re-capture), falling back to a neutral initial tile. One component on every offer row. No third-party request at view time.
 
 ### Sponsored slots: `AdSlot`, `SponsoredLabel`, `withSponsoredTiles` (`src/app/components/ads/AdSlot.tsx`)
 
