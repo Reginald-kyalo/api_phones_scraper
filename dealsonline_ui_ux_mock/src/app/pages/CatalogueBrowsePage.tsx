@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { clustersApi } from '../lib/api';
+import { brandName } from '../lib/format';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
@@ -67,6 +68,38 @@ export default function CatalogueBrowsePage() {
     window.scrollTo({ top: 0 });
   };
 
+  // Quick chips (benchmark §2.4, idealo and Geizhals): one tap for the
+  // filters most shoppers reach for. The cheapest range comes from the price
+  // ranges, the brands are the category's biggest four.
+  const cheapest = result?.prices?.[0];
+  const quickChips = [
+    {
+      label: 'Sold by 2+ shops',
+      on: filters.multiShop,
+      toggle: () => ({ ...filters, multiShop: !filters.multiShop }),
+    },
+    ...(cheapest?.max != null
+      ? [{
+          label: `Under KES ${(cheapest.max + 1).toLocaleString('en-GB')}`,
+          on: filters.min == null && filters.max === cheapest.max,
+          toggle: () =>
+            filters.min == null && filters.max === cheapest.max
+              ? { ...filters, max: null }
+              : { ...filters, min: null, max: cheapest.max },
+        }]
+      : []),
+    ...brands.slice(0, 4).map((b) => ({
+      label: brandName(b.value),
+      on: filters.brands.includes(b.value),
+      toggle: () => ({
+        ...filters,
+        brands: filters.brands.includes(b.value)
+          ? filters.brands.filter((x) => x !== b.value)
+          : [...filters.brands, b.value],
+      }),
+    })),
+  ];
+
   const matching = result?.count ?? 0;
   const total = matching;
   const from = matching ? safePage * PAGE_SIZE + 1 : 0;
@@ -106,6 +139,25 @@ export default function CatalogueBrowsePage() {
             </aside>
 
             <div className="min-w-0">
+              {quickChips.length > 0 && (
+                <div className="mb-4 flex gap-2 overflow-x-auto scrollbar-hide" role="group" aria-label="Quick filters">
+                  {quickChips.map((chip) => (
+                    <button
+                      key={chip.label}
+                      type="button"
+                      aria-pressed={chip.on}
+                      onClick={() => update(chip.toggle())}
+                      className={`h-8 flex-shrink-0 rounded-full border px-3 text-xs font-medium transition-colors active:translate-y-px ${
+                        chip.on
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-card text-foreground hover:border-muted-foreground'
+                      }`}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground" aria-live="polite">
                   {loading
