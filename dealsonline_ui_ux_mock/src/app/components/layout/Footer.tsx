@@ -75,8 +75,8 @@ export default function Footer() {
         </div>
 
         {/* ── Middle: brand + link columns ── */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 py-12">
-          <div className="col-span-2 md:col-span-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 py-12">
+          <div className="col-span-2 md:col-span-4 lg:col-span-2">
             <Logo variant="light" size={28} />
             <p className="text-xs leading-relaxed mt-3 max-w-xs">
               Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops.
@@ -105,6 +105,14 @@ export default function Footer() {
             {FOOTER_CATEGORIES.map((c) => (
               <FooterLink key={c.to} to={c.to}>{c.label}</FooterLink>
             ))}
+          </FooterCol>
+
+          {/* The B2B door (benchmark §2.13): PriceRunner and PriceSpy sell to
+              shops and brands from exactly this column. */}
+          <FooterCol title="For shops and brands">
+            <FooterLink to="/for-business#list-your-shop">List your shop</FooterLink>
+            <FooterLink to="/for-business#advertise">Advertise</FooterLink>
+            <FooterLink to="/for-business#price-data">Price data and API</FooterLink>
           </FooterCol>
 
           <FooterCol title="Company">

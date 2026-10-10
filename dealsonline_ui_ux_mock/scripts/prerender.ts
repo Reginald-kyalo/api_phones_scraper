@@ -278,6 +278,7 @@ async function main() {
   const prose: [path: string, title: string, description: string][] = [
     ['/about', 'About us', 'SokoPulse compares prices across Kenyan shops so you can find the real lowest price for the exact product you want.'],
     ['/how-we-make-money', 'How we make money', MONEY_LINE],
+    ['/for-business', 'For shops and brands', 'List your shop, advertise, or buy Kenyan price data and an API from SokoPulse.'],
     ['/contact', 'Contact', 'How to reach SokoPulse.'],
     ['/privacy', 'Privacy policy', 'How SokoPulse handles your data.'],
     ['/terms', 'Terms of service', 'The terms for using SokoPulse.'],

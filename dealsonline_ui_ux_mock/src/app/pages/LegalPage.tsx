@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation, Link } from 'react-router';
 import { Seo } from '../components/common/Seo';
 import { BRAND, MONEY_LINE } from '../lib/brand';
@@ -149,6 +150,38 @@ const pages: Record<string, { title: string; content: React.ReactNode }> = {
       </div>
     ),
   },
+  'for-business': {
+    title: 'For shops and brands',
+    content: (
+      <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
+        <p className="text-foreground">
+          Shoppers use SokoPulse to compare the same product across Kenyan shops. Here is how
+          shops and brands can work with us.
+        </p>
+        <h2 id="list-your-shop" className="scroll-mt-24 text-base font-semibold text-foreground">List your shop</h2>
+        <p>
+          Listing is free. Send us your shop's website and we will add your prices to every
+          product you sell, in the same price-sorted list as everyone else.
+        </p>
+        <h2 id="advertise" className="scroll-mt-24 text-base font-semibold text-foreground">Advertise</h2>
+        <p>
+          Sponsored spots sit in clearly labelled boxes beside products you actually sell, never
+          inside the price list. {MONEY_LINE}
+        </p>
+        <h2 id="price-data" className="scroll-mt-24 text-base font-semibold text-foreground">Price data and API</h2>
+        <p>
+          Daily prices across Kenyan shops, matched product by product, with price history: as a
+          dashboard, a regular file or an API. Useful for brands watching their prices and for
+          retailers watching the market.
+        </p>
+        <h2 className="text-base font-semibold text-foreground">Talk to us</h2>
+        <p>
+          Email <a href={`mailto:${BRAND.supportEmail}`} className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">{BRAND.supportEmail}</a> and
+          say which of these you are interested in.
+        </p>
+      </div>
+    ),
+  },
   'how-we-make-money': {
     title: 'How we make money',
     content: (
@@ -181,6 +214,14 @@ export default function LegalPage() {
   const location = useLocation();
   const slug = location.pathname.slice(1);
   const page = pages[slug];
+
+  // Footer links point at sections (/for-business#advertise); the router does
+  // not scroll to a hash by itself, and Root scrolls to the top on navigation.
+  useEffect(() => {
+    if (!location.hash) return;
+    const id = decodeURIComponent(location.hash.slice(1));
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+  }, [location.pathname, location.hash]);
 
   if (!page) {
     return (
