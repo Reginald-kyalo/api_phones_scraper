@@ -27,9 +27,8 @@ import { ChevronRight, RefreshCw } from 'lucide-react';
  * One category of the catalogue: filters on the left, 48 cards per page.
  *
  * Filters, sort and page live in the URL so a listing position is linkable and
- * Back works. They run client-side over the category's rows (see
- * getCategoryRows): the whole category everywhere except the two largest,
- * where it is the 5,000 best-ranked products and the page says so.
+ * Back works. They run client-side over every product in the category, from
+ * the compact card index (see getCategoryRows).
  */
 export default function CatalogueBrowsePage() {
   const { productType = '' } = useParams<{ productType: string }>();

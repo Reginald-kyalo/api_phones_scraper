@@ -608,7 +608,7 @@ export const clustersApi = {
   /** One page of a category listing (0-based); the catalogue is too big to load whole. */
   getCategoryPage: (slug: string, page = 0) => demoSource.getCategoryPage(slug, page),
 
-  /** Up to the first 5,000 rows of a category, for client-side filter and sort. */
+  /** Every product in a category (compact card index), for client-side filter and sort. */
   getCategoryRows: (slug: string) => demoSource.getCategoryRows(slug),
 
   /** Search hits with their listing rows, for card results. */

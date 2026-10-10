@@ -192,28 +192,74 @@ export async function getShelfClusters(
   return { node: tree.parent, count: rows.length, total, results: rows };
 }
 
-/**
- * The first `maxPages` capture pages of a category, concatenated, in capture
- * rank order (image > spread > stores > listings).
- *
- * Browse filters and sorts run over these rows client-side. Ten pages is the
- * whole category for every category except groceries and phone accessories,
- * where it is the 5,000 best-ranked products; callers say so on screen.
- */
-export const FILTERABLE_PAGES = 10;
+/** One row of public/demo/cards/<slug>.json — see scripts/build-card-index.mjs. */
+type CardRow = [
+  id: string,
+  name: string,
+  brand: string | null,
+  bestPrice: number | null,
+  nStoresPriced: number | null,
+  nStores: number | null,
+  spreadPct: number | null,
+  cheapestStore: number,
+  image: string | null,
+  likelyUsed: 0 | 1,
+];
 
+/**
+ * Turn a compact card row back into the summary shape every card and filter
+ * reads. Only the fields cards use are real; the rest are neutral defaults
+ * (cards never read them, and the product page fetches the full detail).
+ */
+function fromCard(slug: string, stores: string[], r: CardRow): ClusterSummary {
+  return {
+    cluster_id: r[0],
+    title: r[1],
+    display_name: r[1],
+    representative_title: null,
+    category: slug,
+    primary_facet: null,
+    spec_facets: {},
+    comparison_grade: true,
+    brand: r[2],
+    canonical_name: null,
+    n_listings: null,
+    n_stores: r[5],
+    n_stores_priced: r[4],
+    stores: null,
+    is_multi_store: (r[4] ?? r[5] ?? 0) >= 2,
+    best_price: r[3],
+    cheapest_store: r[7] >= 0 ? stores[r[7]] : null,
+    condition_basis: r[9] ? 'likely_used' : 'new',
+    n_confident: null,
+    n_likely_used: null,
+    likely_used_best_price: null,
+    n_used: 0,
+    used_best_price: null,
+    like_for_like_spread_pct: r[6],
+    cross_store_spread_pct: null,
+    configs: [],
+    best_by_store: {},
+    data_warning: null,
+    image: r[8],
+  };
+}
+
+/**
+ * Every product in a category, in capture rank order, from the compact card
+ * index. Browse filters and sorts run over these client-side, so they cover
+ * the whole category — 42,673 groceries included (~1.8 MB gzipped).
+ */
 export async function getCategoryRows(
   slug: string,
-  maxPages = FILTERABLE_PAGES,
 ): Promise<{ rows: ClusterSummary[]; count: number; complete: boolean }> {
   const meta = await getCategoryMeta(slug);
-  const pages = Math.min(meta.pages, maxPages);
-  const chunks = await Promise.all(
-    Array.from({ length: pages }, (_, i) =>
-      load<ClusterSummary[]>(`categories/${encodeURIComponent(slug)}-${pad(i)}.json`),
-    ),
-  );
-  return { rows: chunks.flat(), count: meta.count, complete: pages >= meta.pages };
+  const index = await load<{ stores: string[]; rows: CardRow[] }>(`cards/${encodeURIComponent(slug)}.json`);
+  return {
+    rows: index.rows.map((r) => fromCard(slug, index.stores, r)),
+    count: meta.count,
+    complete: true,
+  };
 }
 
 /**

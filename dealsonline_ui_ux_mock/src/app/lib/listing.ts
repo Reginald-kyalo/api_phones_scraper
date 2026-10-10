@@ -56,10 +56,15 @@ export function activeFilterCount(f: ListingFilters): number {
 const brandKey = (row: ClusterSummary) => (row.brand ?? '').trim().toLowerCase();
 
 /** Listing-title words the brand extractor sometimes mistakes for a brand. */
-const NOT_BRANDS = new Set(['offer', 'limited time', 'new', 'sale', 'original', 'brand new', 'hot']);
+// Shop names show up as a brand on own-label listings; they are not a brand a
+// shopper filters by.
+const NOT_BRANDS = new Set([
+  'offer', 'limited time', 'new', 'sale', 'original', 'brand new', 'hot',
+  'cleanshelf', 'carrefour', 'naivas', 'quickmart', 'jumia', 'kilimall',
+]);
 
 /** Brands present in the rows, most products first, for the brand filter. */
-export function brandFacets(rows: ClusterSummary[], limit = 16): { value: string; count: number }[] {
+export function brandFacets(rows: ClusterSummary[], limit = 200): { value: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const row of rows) {
     const key = brandKey(row);

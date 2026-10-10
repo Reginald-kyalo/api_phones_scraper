@@ -38,7 +38,20 @@ export function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: 
 }
 
 /** Filter controls: the desktop sidebar body, and the mobile sheet body. */
+const BRANDS_COLLAPSED = 12;
+
 export function FilterControls({ filters, brands, onChange }: PanelProps) {
+  const [showAllBrands, setShowAllBrands] = useState(false);
+  const [brandQuery, setBrandQuery] = useState('');
+  // Selected brands always stay visible, so a filter can be undone from the
+  // sidebar even when the brand is outside the top of the list.
+  const q = brandQuery.trim().toLowerCase();
+  const matching = q ? brands.filter((b) => b.value.includes(q)) : brands;
+  const top = showAllBrands || q ? matching : matching.slice(0, BRANDS_COLLAPSED);
+  const pinned = filters.brands
+    .filter((v) => !top.some((b) => b.value === v))
+    .map((v) => brands.find((b) => b.value === v) ?? { value: v, count: 0 });
+  const shownBrands = [...pinned, ...top];
   const [min, setMin] = useState(filters.min?.toString() ?? '');
   const [max, setMax] = useState(filters.max?.toString() ?? '');
   useEffect(() => {
@@ -112,8 +125,17 @@ export function FilterControls({ filters, brands, onChange }: PanelProps) {
       {brands.length > 1 && (
         <fieldset>
           <legend className="microcopy-label mb-2">Brand</legend>
-          <ul className="space-y-2">
-            {brands.map((b) => (
+          {brands.length > BRANDS_COLLAPSED && (
+            <Input
+              aria-label="Find a brand"
+              placeholder="Find a brand"
+              value={brandQuery}
+              onChange={(e) => setBrandQuery(e.target.value)}
+              className="h-9 mb-3"
+            />
+          )}
+          <ul className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+            {shownBrands.map((b) => (
               <li key={b.value}>
                 <label className="flex items-center gap-2 text-sm text-foreground">
                   <Checkbox
@@ -125,7 +147,17 @@ export function FilterControls({ filters, brands, onChange }: PanelProps) {
                 </label>
               </li>
             ))}
+            {shownBrands.length === 0 && <li className="text-sm text-muted-foreground">No brand matches.</li>}
           </ul>
+          {!q && brands.length > BRANDS_COLLAPSED && (
+            <Button
+              variant="link"
+              className="h-auto p-0 mt-2 text-sm"
+              onClick={() => setShowAllBrands((v) => !v)}
+            >
+              {showAllBrands ? 'Show fewer brands' : `Show all ${brands.length} brands`}
+            </Button>
+          )}
         </fieldset>
       )}
 

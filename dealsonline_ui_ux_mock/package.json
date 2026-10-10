@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "demo:prepare": "node scripts/prepare-demo-dataset.mjs",
-    "predev": "npm run demo:prepare",
+    "predev": "npm run demo:prepare && npm run demo:cards",
     "dev": "vite",
-    "prebuild": "npm run demo:prepare",
+    "prebuild": "npm run demo:prepare && npm run demo:cards",
     "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
     "check:phone-navigation": "python3 scripts/export_phone_navigation.py --check && python3 -m pytest ../tests/test_mock_phone_navigation.py",
     "type-check": "tsc --noEmit && tsc -p tsconfig.functions.json",
-    "check:design": "node scripts/check-design-tokens.mjs"
+    "check:design": "node scripts/check-design-tokens.mjs",
+    "demo:cards": "node scripts/build-card-index.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",
