@@ -6,6 +6,7 @@ import type { DemoManifest } from '../lib/demoTypes';
 import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { categoryLabel } from './CatalogueCategoriesPage';
+import { imageUsable } from '../lib/images';
 import HeroSection from '../components/layout/HeroSection';
 import CategoryStrip from '../components/layout/CategoryStrip';
 import HowItWorks from '../components/layout/HowItWorks';
@@ -15,21 +16,6 @@ import { PriceOrDash } from '../components/common/PriceOrDash';
 import { Button } from '../components/ui/button';
 import { Package, ArrowRight, ListOrdered, Receipt, Tag } from 'lucide-react';
 
-/**
- * Retailer CDNs can hotlink-block at view time even when the capture-time URL
- * was healthy. The hero is the first thing a shopper sees, so it must not be
- * chosen from a host that consistently refuses browser requests.
- */
-const BLOCKED_HERO_IMAGE_HOSTS = new Set(['pictures-kenya.jijistatic.com']);
-
-function heroImageUsable(image?: string | null): boolean {
-  if (!image) return false;
-  try {
-    return !BLOCKED_HERO_IMAGE_HOSTS.has(new URL(image).hostname);
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Homepage cards must have a photo and, for deal rails, a saving we are
@@ -37,7 +23,7 @@ function heroImageUsable(image?: string | null): boolean {
  * packet is the first thing a shopper would see, so it never gets the slot.
  */
 function homepageWorthy(cluster: ClusterSummary): boolean {
-  return heroImageUsable(cluster.image) && hasPrice(cluster.best_price);
+  return imageUsable(cluster.image) && hasPrice(cluster.best_price);
 }
 
 function diverseDeals(rows: ClusterSummary[]): ClusterSummary[] {
@@ -216,7 +202,7 @@ export default function HomePage() {
           d.results.find(showcaseworthy) ??
           d.results.find((c) => acceptable(c) && device(c)) ??
           d.results.find(acceptable) ??
-          d.results.find((c) => heroImageUsable(c.image)) ??
+          d.results.find((c) => imageUsable(c.image)) ??
           d.results[0] ??
           null;
         if (hero) {
@@ -225,8 +211,8 @@ export default function HomePage() {
             .then((full) => {
               if (cancelled) return;
               const usableImage =
-                full.image_candidates?.find((image) => heroImageUsable(image)) ??
-                (heroImageUsable(full.image) ? full.image : null);
+                full.image_candidates?.find((image) => imageUsable(image)) ??
+                (imageUsable(full.image) ? full.image : null);
               setShowcase(usableImage ? { ...full, image: usableImage } : full);
             })
             .catch(() => {});

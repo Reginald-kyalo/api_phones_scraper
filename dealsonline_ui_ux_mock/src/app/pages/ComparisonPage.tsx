@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useLocalComparison } from '../hooks/useLocalStorage';
-import { formatPrice } from '../lib/format';
+import { formatPrice, pricedShopCount } from '../lib/format';
 import { type ClusterSummary } from '../lib/api';
 import { Button } from '../components/ui/button';
 import {
@@ -35,7 +35,7 @@ export default function ComparisonPage() {
         name: product.display_name ?? product.title,
         image: product.image ?? '',
         price: product.best_price ?? 0,
-        numStores: product.n_stores ?? 0,
+        numStores: pricedShopCount(product),
         categoryName: product.category ?? '',
         categoryUrl: '',
         productType: product.category ?? '',

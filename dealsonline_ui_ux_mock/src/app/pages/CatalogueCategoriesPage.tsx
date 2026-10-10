@@ -1,3 +1,4 @@
+import { familyDisplayLabel } from '../lib/navLabels';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { clustersApi } from '../lib/api';
@@ -63,7 +64,7 @@ export default function CatalogueCategoriesPage() {
           {manifest.multi_store_clusters.toLocaleString()} compared across 2+ stores
         </p>
 
-        <h2 className="mt-8 mb-3 text-lg font-semibold text-foreground">Departments</h2>
+        <h2 className="mt-8 mb-3 section-title">Departments</h2>
         <div className="space-y-12">
           {TAXONOMY_DEPARTMENTS.map((department) => {
             return (
@@ -80,14 +81,13 @@ export default function CatalogueCategoriesPage() {
                 {department.id === 'phones-wearables' && <div className="mb-5"><PhoneCategoryChoices parentId="phones-wearables" /></div>}
                 {department.id === 'phones-wearables' && (
                   <div className="mb-3">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Existing collections</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Counts below are collection counts. A collection may contain mixed product types.</p>
+                    <h3 className="text-sm font-semibold text-muted-foreground">More collections</h3>
                   </div>
                 )}
                 <div className="space-y-4">
                   {department.families.map((family) => (
                     <section key={family.id} aria-labelledby={`${department.id}-${family.id}`}>
-                      <h3 id={`${department.id}-${family.id}`} className="mb-2 text-sm font-semibold text-muted-foreground">{family.label}</h3>
+                      <h3 id={`${department.id}-${family.id}`} className="mb-2 text-sm font-semibold text-muted-foreground">{familyDisplayLabel(family)}</h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                         {family.shelves.map((shelf) => (
                           <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40">
@@ -106,9 +106,9 @@ export default function CatalogueCategoriesPage() {
           })}
         </div>
 
-        <h2 className="mt-12 mb-3 text-lg font-semibold text-foreground">Captured demo categories</h2>
+        <h2 className="mt-12 mb-3 section-title">Compare by product type</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          These are the catalogue slices this static build actually ships under `/browse/`.
+          Product types with prices from several shops.
         </p>
 
         <h3 className="mb-3 text-sm font-semibold text-foreground">Price comparison</h3>

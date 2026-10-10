@@ -6,6 +6,7 @@ import { storeName } from '../../../lib/storeIdentity';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { SavingBadge } from '../../../components/common/SavingBadge';
 import { PriceOrDash } from '../../../components/common/PriceOrDash';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 /**
  * The one product grid.
@@ -89,5 +90,28 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Loading state for any PRODUCT_GRID: the exact card shape, so nothing shifts
+ * when the real cards land (DESIGN_RULES.md §4).
+ */
+export function ClusterGridSkeleton({ count = 12 }: { count?: number }) {
+  return (
+    <div className={PRODUCT_GRID} aria-busy="true" aria-label="Loading products">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="flex flex-col overflow-hidden rounded-md border border-border">
+          <Skeleton className="aspect-square w-full rounded-none" />
+          <div className="space-y-2 p-3 pt-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="mt-3 h-5 w-24" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

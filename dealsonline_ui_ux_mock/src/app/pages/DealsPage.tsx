@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { clustersApi, type ClusterSummary } from '../lib/api';
 import { Button } from '../components/ui/button';
-import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
-import { Loader2, Tag, RefreshCw } from 'lucide-react';
-import { savingPct } from '../lib/format';
+import { ClusterCard, ClusterGridSkeleton, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
+import { Loader2, RefreshCw } from 'lucide-react';
+import { clusterSaving, MAX_DISPLAY_SAVING_PCT, MIN_DISPLAY_SAVING_KES } from '../lib/format';
+import { imageUsable } from '../lib/images';
 
 /**
  * Thresholds on the SAVING, matching the badge on every card.
@@ -18,7 +19,7 @@ import { savingPct } from '../lib/format';
  * page rather than an honest absence.
  */
 const SAVING_FILTERS = [
-  { label: 'All deals', min: 0 },
+  { label: 'All', min: 0 },
   { label: 'Save 10%+', min: 10 },
   { label: 'Save 20%+', min: 20 },
   { label: 'Save 30%+', min: 30 },
@@ -71,38 +72,38 @@ export default function DealsPage() {
     load();
   }, [load]);
 
-  const filtered = useMemo(
-    () =>
-      clusters.filter((c) => (savingPct(c.like_for_like_spread_pct) ?? 0) >= minSaving),
-    [clusters, minSaving],
+  // Guard rails (DESIGN_RULES.md §5): a deal needs a photo and a saving we
+  // are willing to show — between 1% and 60%, and at least KES 50. Cards that
+  // fail either are not deals worth a shopper's attention, so they are left
+  // out of this page rather than pushed down it.
+  const showable = useMemo(
+    () => clusters.filter((c) => imageUsable(c.image) && clusterSaving(c) != null),
+    [clusters],
   );
-
-  if (loading) {
-    return (
-      <div className="page-container py-16 flex justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-label="Loading deals" />
-      </div>
-    );
-  }
+  const filtered = useMemo(
+    () => showable.filter((c) => (clusterSaving(c)?.pct ?? 0) >= minSaving),
+    [showable, minSaving],
+  );
 
   return (
     <div className="bg-white">
       <div className="page-container py-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Tag className="w-5 h-5 text-teal-deep" aria-hidden="true" />
-            <h1 className="page-title">Today's best deals</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Same product, different stores — ranked by how much you save buying at the cheapest, for the same configuration.
-            {total > 0 && (
-              <> {total.toLocaleString()} cross-store deals found.</>
-            )}
+          <h1 className="page-title mb-1">Deals</h1>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            The same product, cheaper at one shop than another. Ranked by how much you save buying
+            the same configuration at the cheapest shop.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            We leave out savings over {MAX_DISPLAY_SAVING_PCT}% or under KES {MIN_DISPLAY_SAVING_KES}: those are
+            almost always two different products, not a deal.
           </p>
         </div>
 
-        {error ? (
+        {loading ? (
+          <ClusterGridSkeleton />
+        ) : error ? (
           <div className="text-center py-16">
             <p className="text-sm text-muted-foreground mb-4">
               We couldn't load today's deals. Check your connection and try again.
@@ -122,7 +123,8 @@ export default function DealsPage() {
                   size="sm"
                   variant={minSaving === f.min ? 'default' : 'outline'}
                   onClick={() => setMinSaving(f.min)}
-                  className={`h-8 text-xs rounded-full ${minSaving === f.min ? '' : 'hover:border-primary/40'}`}
+                  aria-pressed={minSaving === f.min}
+                  className="h-8 text-xs rounded-full"
                 >
                   {f.label}
                 </Button>
@@ -143,7 +145,8 @@ export default function DealsPage() {
                       {loadingMore ? 'Loading' : 'Load more deals'}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      Showing {clusters.length.toLocaleString()} of {total.toLocaleString()}
+                      {showable.length.toLocaleString()} deals shown from the first{' '}
+                      {clusters.length.toLocaleString()} of {total.toLocaleString()} compared products
                     </p>
                   </div>
                 )}
@@ -152,12 +155,12 @@ export default function DealsPage() {
               <div className="text-center py-16 text-muted-foreground">
                 <p>
                   {minSaving === 0
-                    ? 'No cross-store deals right now — check back soon.'
+                    ? 'No deals right now. Prices are checked daily.'
                     : `No deals saving ${minSaving}% or more.`}
                 </p>
                 {minSaving > 0 && (
                   <Button variant="link" onClick={() => setMinSaving(0)} className="mt-2">
-                    Show all deals
+                    Show all
                   </Button>
                 )}
               </div>

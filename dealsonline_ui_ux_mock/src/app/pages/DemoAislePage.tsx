@@ -1,3 +1,4 @@
+import { familyDisplayLabel } from '../lib/navLabels';
 import { Link, useParams } from 'react-router';
 import { spineShelfDisplay, taxonomyDepartmentById, type TaxonomyDepartment } from '../data/taxonomyTree';
 import { ChevronRight } from 'lucide-react';
@@ -7,7 +8,7 @@ function ShelfCollections({ department }: { department: TaxonomyDepartment }) {
   return <div className="space-y-8">
     {department.families.map((family) => (
       <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
-        <h2 id={`${department.id}-${family.id}`} className="mb-3 text-lg font-semibold text-foreground">{family.label}</h2>
+        <h2 id={`${department.id}-${family.id}`} className="mb-3 text-lg font-semibold text-foreground">{familyDisplayLabel(family)}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {family.shelves.map((shelf) => (
             <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40">
@@ -65,13 +66,13 @@ export default function DemoAislePage() {
         </nav>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl ultra-border flex items-center justify-center">
-            <Icon className="w-6 h-6 text-teal-deep" strokeWidth={1.75} aria-hidden="true" />
+          <div className="w-12 h-12 rounded-md ultra-border flex items-center justify-center">
+            <Icon className="w-6 h-6 text-foreground" strokeWidth={1.75} aria-hidden="true" />
           </div>
           <div>
             <h1 className="page-title">{department.label}</h1>
             <p className="text-sm text-muted-foreground">
-              {department.n_shelves.toLocaleString()} captured shelves, organised for easier browsing
+              {department.n_shelves.toLocaleString()} categories
             </p>
           </div>
         </div>
@@ -81,8 +82,8 @@ export default function DemoAislePage() {
             <h2 className="mb-3 text-lg font-semibold text-foreground">Shop by product type</h2>
             <PhoneCategoryChoices parentId="phones-wearables" />
             <details className="mt-8 border-t border-border pt-6">
-              <summary className="cursor-pointer text-lg font-semibold text-foreground">Existing collections</summary>
-              <p className="mb-5 text-sm text-muted-foreground">These source shelves retain their original links while products are assigned to the new categories. Some collections contain more than one product type.</p>
+              <summary className="cursor-pointer section-title">More collections</summary>
+              <div className="mb-5" />
               <ShelfCollections department={department} />
             </details>
           </>
@@ -94,7 +95,7 @@ export default function DemoAislePage() {
                 .filter((family) => family.id !== 'needs-review')
                 .map((family) => (
                   <a key={family.id} href={`#${family.id}`} className="rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary">
-                    {family.label}
+                    {familyDisplayLabel(family)}
                   </a>
                 ))}
             </nav>

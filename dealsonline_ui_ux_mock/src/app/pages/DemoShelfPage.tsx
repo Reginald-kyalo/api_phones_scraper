@@ -197,7 +197,7 @@ export default function DemoShelfPage() {
           <div className="py-12 text-center">
             <p className="text-base font-medium text-foreground mb-1">No such category</p>
             <p className="text-sm text-muted-foreground mb-4">
-              <span className="font-mono">{slug}</span> is not a shelf in this catalogue.
+              We couldn’t find that category. It may have moved.
             </p>
             <Link to="/browse" className="text-sm text-link hover:text-link-hover underline">
               Browse all categories
@@ -213,12 +213,11 @@ export default function DemoShelfPage() {
           <>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <FolderTree className="w-5 h-5 text-teal-deep" aria-hidden="true" />
-                <h1 className="page-title">{heading}</h1>
+                                <h1 className="page-title">{heading}</h1>
               </div>
               <p className="text-sm text-muted-foreground">
                 {isLegacyPhoneCollection(slug, node?.ancestors)
-                  ? 'This is a legacy collection and may contain mixed product types.'
+                  ? 'Related products from Kenyan shops.'
                   : node?.coarse
                   ? 'A grouping of several departments — pick one below to narrow it down.'
                   : node?.unsorted

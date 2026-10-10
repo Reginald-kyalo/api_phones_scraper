@@ -183,10 +183,14 @@ def test_navigation_contract_separates_categories_from_legacy_collections():
     assert "Legacy collection links" in taxonomy
     assert "phoneNavigation.json" in taxonomy
     assert "`/shelf/:slug`" in taxonomy
-    assert "Counts below are collection counts" in directory
-    assert "may contain mixed product types" in directory
-    assert "legacy collection and may contain mixed product types" in shelf_page
+    # Legacy collections stay separate from approved categories, but the
+    # shopper-facing copy no longer exposes pipeline caveats (SokoPulse design
+    # rules: never expose the pipeline).
+    assert "More collections" in directory
     assert "isLegacyPhoneCollection(slug, node?.ancestors)" in shelf_page
+    for page in (directory, shelf_page):
+        assert "mixed product types" not in page
+        assert "collection counts" not in page
 
 
 def test_consistent_empty_phone_capture_retains_the_approved_department():

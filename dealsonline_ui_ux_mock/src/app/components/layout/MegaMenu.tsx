@@ -1,3 +1,4 @@
+import { familyDisplayLabel } from '../../lib/navLabels';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, X } from 'lucide-react';
@@ -100,11 +101,11 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[420px] overflow-y-auto pr-2">
                       {phoneChildren('phones-wearables').map((family) => (
                         <section key={family.id}>
-                          <Link to={phoneCategoryHref(family.id)} onClick={onClose} className="text-sm font-semibold text-foreground hover:text-link hover:underline">{family.label}</Link>
+                          <Link to={phoneCategoryHref(family.id)} onClick={onClose} className="text-sm font-semibold text-foreground hover:text-link hover:underline">{familyDisplayLabel(family)}</Link>
                           <ul className="mt-1 space-y-1">
                             {phoneChildren(family.id).map((child) => <li key={child.id}>
                               <Link to={phoneCategoryHref(child.id)} onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground hover:underline">{child.label}</Link>
-                              {phoneChildren(child.id).filter((node) => node.kind === 'shortcut').map((shortcut) => <Link key={shortcut.id} to={phoneCategoryHref(shortcut.id)} onClick={onClose} className="ml-2 text-xs text-link hover:underline">{shortcut.label} <span className="text-muted-foreground">· pending</span></Link>)}
+                              {phoneChildren(child.id).filter((node) => node.kind === 'shortcut').map((shortcut) => <Link key={shortcut.id} to={phoneCategoryHref(shortcut.id)} onClick={onClose} className="ml-2 text-xs text-link hover:underline">{shortcut.label}</Link>)}
                             </li>)}
                           </ul>
                         </section>
@@ -115,7 +116,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                       {active.families.map((family) => (
                         <section key={family.id} aria-labelledby={`family-${active.id}-${family.id}`}>
                           <h4 id={`family-${active.id}-${family.id}`} className="mb-1 text-xs font-semibold uppercase tracking-wide text-foreground">
-                            {family.label}
+                            {familyDisplayLabel(family)}
                           </h4>
                           <ul className="space-y-0.5">
                             {family.shelves.map((shelf) => (
