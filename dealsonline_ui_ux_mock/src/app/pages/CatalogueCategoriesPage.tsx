@@ -7,25 +7,9 @@ import { Loader2, ChevronRight } from 'lucide-react';
 import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../data/taxonomyTree';
 import PhoneCategoryChoices from '../components/categories/PhoneCategoryChoices';
 
-const LABELS: Record<string, string> = {
-  'groceries': 'Groceries',
-  'mobile-phones': 'Phones',
-  'mobile-phone-accessories': 'Phone accessories',
-  'laptops': 'Laptops',
-  'tablets': 'Tablets',
-  'audio-systems': 'Audio systems',
-  'headphones': 'Headphones',
-  'wearables': 'Wearables',
-  'speakers': 'Speakers',
-  'routers': 'Routers',
-  'monitors': 'Monitors',
-  'tvs': 'TVs',
-  'printers': 'Printers',
-  'digital-cameras': 'Cameras',
-  'desktop-computers': 'Desktops',
-};
-
-export const categoryLabel = (slug: string) => LABELS[slug] ?? slug.replace(/-/g, ' ');
+// Re-exported for the pages that import it from here.
+export { categoryLabel } from '../lib/categories';
+import { categoryLabel } from '../lib/categories';
 
 /**
  * All categories, now in two honest layers:

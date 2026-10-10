@@ -192,6 +192,58 @@ export async function getShelfClusters(
   return { node: tree.parent, count: rows.length, total, results: rows };
 }
 
+/**
+ * The first `maxPages` capture pages of a category, concatenated, in capture
+ * rank order (image > spread > stores > listings).
+ *
+ * Browse filters and sorts run over these rows client-side. Ten pages is the
+ * whole category for every category except groceries and phone accessories,
+ * where it is the 5,000 best-ranked products; callers say so on screen.
+ */
+export const FILTERABLE_PAGES = 10;
+
+export async function getCategoryRows(
+  slug: string,
+  maxPages = FILTERABLE_PAGES,
+): Promise<{ rows: ClusterSummary[]; count: number; complete: boolean }> {
+  const meta = await getCategoryMeta(slug);
+  const pages = Math.min(meta.pages, maxPages);
+  const chunks = await Promise.all(
+    Array.from({ length: pages }, (_, i) =>
+      load<ClusterSummary[]>(`categories/${encodeURIComponent(slug)}-${pad(i)}.json`),
+    ),
+  );
+  return { rows: chunks.flat(), count: meta.count, complete: pages >= meta.pages };
+}
+
+/**
+ * Search hits joined to their listing rows, so results render as the same
+ * cards as every other page. Hits outside the loaded rows (deep in the two
+ * largest categories) come back as null and render as a plain row.
+ */
+export async function searchSummaries(
+  query: string,
+  options: { slug?: string; limit?: number } = {},
+): Promise<{ results: { hit: SearchRow; row: ClusterSummary | null }[]; count: number }> {
+  const res = await search(query, { slug: options.slug, limit: options.limit ?? 240 });
+  const slugs = [...new Set(res.results.map((r) => r.id.split('::')[0]))];
+  const byId = new Map<string, ClusterSummary>();
+  await Promise.all(
+    slugs.map(async (slug) => {
+      try {
+        const { rows } = await getCategoryRows(slug);
+        for (const row of rows) byId.set(row.cluster_id, row);
+      } catch {
+        /* unknown slug: its hits render as plain rows */
+      }
+    }),
+  );
+  return {
+    results: res.results.map((hit) => ({ hit, row: byId.get(hit.id) ?? null })),
+    count: res.count,
+  };
+}
+
 export interface SearchRow {
   id: string;
   /** lowercased, whitespace-folded title */

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { Search, X, Package, ChevronRight } from 'lucide-react';
+import { Search, X, LayoutGrid, ChevronRight } from 'lucide-react';
 import { Input } from '../../../components/ui/input';
+import { clustersApi } from '../../../lib/api';
+import { categoryLabel } from '../../../lib/categories';
 
 interface SearchBarProps {
   className?: string;
@@ -10,13 +12,13 @@ interface SearchBarProps {
   onSearch?: () => void;
 }
 
-// Mock predictive results
-const MOCK_SUGGESTIONS = [
-  { id: '1', name: 'iPhone 15 Pro Max', category: 'Phones', type: 'phones_wearables' },
-  { id: '2', name: 'Samsung Galaxy S24 Ultra', category: 'Phones', type: 'phones_wearables' },
-  { id: '3', name: 'Sony PlayStation 5', category: 'Gaming', type: 'gaming_entertainment' },
-  { id: '4', name: 'Apple MacBook Pro M3', category: 'Laptops', type: 'computing' },
-];
+/**
+ * Suggestions are categories whose name matches what is typed, linking to a
+ * real listing. (They were four hard-coded products linking to category slugs
+ * that did not exist.) Product matches come from the search page itself:
+ * the full index is several MB, too heavy to load on every keystroke.
+ */
+type Suggestion = { slug: string; label: string; count: number };
 
 export default function SearchBar({
   className = '',
@@ -28,6 +30,18 @@ export default function SearchBar({
   const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [categories, setCategories] = useState<Suggestion[]>([]);
+
+  // The manifest is already cached by the time anyone types; fetch on focus.
+  useEffect(() => {
+    if (!isFocused || categories.length) return;
+    clustersApi
+      .getManifest()
+      .then((m) =>
+        setCategories(m.categories.map((c) => ({ slug: c.slug, label: categoryLabel(c.slug), count: c.count }))),
+      )
+      .catch(() => {});
+  }, [isFocused, categories.length]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -51,10 +65,9 @@ export default function SearchBar({
   };
 
   const showDropdown = isFocused && query.length > 1;
-  const filteredSuggestions = MOCK_SUGGESTIONS.filter(s => 
-    s.name.toLowerCase().includes(query.toLowerCase()) || 
-    s.category.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredSuggestions = categories
+    .filter((c) => c.label.toLowerCase().includes(query.trim().toLowerCase()))
+    .slice(0, 4);
 
   const renderDropdown = () => {
     if (!showDropdown) return null;
@@ -62,13 +75,11 @@ export default function SearchBar({
       <div className="absolute top-full mt-2 w-full bg-white rounded-md shadow-raised ultra-border overflow-hidden z-50">
         {filteredSuggestions.length > 0 ? (
           <div className="py-2">
-            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Suggestions
-            </div>
+            <div className="px-4 py-2 microcopy-label">Categories</div>
             {filteredSuggestions.map((s) => (
               <Link
-                key={s.id}
-                to={`/browse/${s.type}?q=${encodeURIComponent(s.name)}`}
+                key={s.slug}
+                to={`/browse/${s.slug}`}
                 onClick={() => {
                   setQuery('');
                   setIsFocused(false);
@@ -77,26 +88,25 @@ export default function SearchBar({
                 className="flex items-center gap-3 px-4 py-3 hover:bg-surface-alt transition-colors group"
               >
                 <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-white ultra-border">
-                  <Package className="w-4 h-4 text-muted-foreground" />
+                  <LayoutGrid className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.category}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{s.label}</p>
+                  <p className="text-xs text-muted-foreground">{s.count.toLocaleString()} products</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/40" aria-hidden="true" />
               </Link>
             ))}
           </div>
         ) : (
-          <div className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">No suggestions for "{query}"</p>
-            <button 
-              onClick={handleSubmit}
-              className="mt-2 text-sm text-primary hover:underline font-medium"
-            >
-              Search all products
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-surface-alt"
+          >
+            <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            Search all products for “{query.trim()}”
+          </button>
         )}
       </div>
     );
