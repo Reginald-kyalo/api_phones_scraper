@@ -102,7 +102,7 @@ export default function CatalogueBrowsePage() {
         ) : (
           <div className="mt-6 grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="hidden lg:block" aria-label="Filters">
-              <FilterControls filters={filters} brands={brands} onChange={(f) => update(f)} />
+              <FilterControls filters={filters} brands={brands} prices={result?.prices} onChange={(f) => update(f)} />
             </aside>
 
             <div className="min-w-0">
@@ -115,7 +115,7 @@ export default function CatalogueBrowsePage() {
                       : 'No products match'}
                 </p>
                 <div className="flex items-center gap-2">
-                  <MobileFilters filters={filters} brands={brands} onChange={(f) => update(f)} />
+                  <MobileFilters filters={filters} brands={brands} prices={result?.prices} onChange={(f) => update(f)} />
                   <SortSelect value={filters.sort} onChange={(sort) => update({ ...filters, sort })} />
                 </div>
               </div>

@@ -18,7 +18,7 @@ import type { SearchRow } from './demoSource';
 import type { DemoManifest, DemoShelfTreeResponse, DemoBrowseNode } from './demoTypes';
 import { clusterSaving } from './format';
 import { imageUsable } from './images';
-import { applyFilters, brandFacets, PAGE_SIZE, type ListingFilters } from './listing';
+import { applyFilters, brandFacets, PAGE_SIZE, priceBuckets, type ListingFilters } from './listing';
 
 /** The most products any one response carries. */
 export const MAX_ROWS = 96;
@@ -47,6 +47,7 @@ export async function browse(slug: string, filters: ListingFilters, page = 0) {
     /** Products in the category. */
     total: count,
     brands: brandFacets(rows),
+    prices: priceBuckets(rows, filters),
   };
 }
 

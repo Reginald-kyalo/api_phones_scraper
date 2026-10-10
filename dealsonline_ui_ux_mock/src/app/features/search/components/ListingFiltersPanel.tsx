@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../.
 import {
   activeFilterCount,
   SORT_OPTIONS,
+  type PriceBucket,
   type ListingFilters,
   type SortKey,
 } from '../../../lib/listing';
@@ -14,6 +15,8 @@ import {
 interface PanelProps {
   filters: ListingFilters;
   brands: { value: string; count: number }[];
+  /** Price ranges with counts; the custom min/max form stays below them. */
+  prices?: PriceBucket[];
   onChange: (next: ListingFilters) => void;
 }
 
@@ -40,7 +43,7 @@ export function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: 
 /** Filter controls: the desktop sidebar body, and the mobile sheet body. */
 const BRANDS_COLLAPSED = 12;
 
-export function FilterControls({ filters, brands, onChange }: PanelProps) {
+export function FilterControls({ filters, brands, prices = [], onChange }: PanelProps) {
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [brandQuery, setBrandQuery] = useState('');
   // Selected brands always stay visible, so a filter can be undone from the
@@ -90,6 +93,32 @@ export function FilterControls({ filters, brands, onChange }: PanelProps) {
 
       <fieldset>
         <legend className="microcopy-label mb-2">Price (KES)</legend>
+        {prices.length > 0 && (
+          <ul className="mb-3 space-y-1">
+            {prices.map((b) => {
+              const on = filters.min === b.min && filters.max === b.max;
+              const k = (n: number) => n.toLocaleString('en-GB');
+              const label =
+                b.min == null ? `Under ${k(b.max! + 1)}` : b.max == null ? `${k(b.min)} and over` : `${k(b.min)} to ${k(b.max + 1)}`;
+              return (
+                <li key={label}>
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    disabled={!b.count && !on}
+                    onClick={() => onChange({ ...filters, min: on ? null : b.min, max: on ? null : b.max })}
+                    className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm transition-colors disabled:opacity-40 ${
+                      on ? 'bg-primary/10 font-medium text-foreground' : 'text-foreground hover:bg-surface-alt'
+                    }`}
+                  >
+                    <span>{label}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{b.count.toLocaleString('en-GB')}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         <form
           className="flex items-center gap-2"
           onSubmit={(e) => {

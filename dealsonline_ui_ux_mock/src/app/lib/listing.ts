@@ -112,3 +112,41 @@ export function applyFilters(rows: ClusterSummary[], f: ListingFilters): Cluster
   }
   return out;
 }
+
+export interface PriceBucket {
+  min: number | null;
+  max: number | null;
+  count: number;
+}
+
+/** 14,700 → 15,000; 2,340 → 2,500: a boundary a shopper would type. */
+function niceRound(n: number): number {
+  const mag = 10 ** Math.floor(Math.log10(Math.max(n, 1)));
+  const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10];
+  return mag * steps.reduce((best, s) => (Math.abs(s * mag - n) < Math.abs(best * mag - n) ? s : best), 1);
+}
+
+/**
+ * Four price ranges fitted to the category's real spread (benchmark §2.4),
+ * with how many products fall in each under the other active filters. The
+ * boundaries are the quartiles, rounded, so each range holds a fair share.
+ */
+export function priceBuckets(rows: ClusterSummary[], f: ListingFilters): PriceBucket[] {
+  const others = applyFilters(rows, { ...f, min: null, max: null, sort: 'relevance' });
+  const prices = others.map((r) => r.best_price).filter(hasPrice).sort((a, b) => a - b);
+  if (prices.length < 8) return [];
+  const q = (p: number) => niceRound(prices[Math.floor(prices.length * p)]);
+  const cuts = [...new Set([q(0.25), q(0.5), q(0.75)])].sort((a, b) => a - b);
+  const edges: [number | null, number | null][] = [
+    [null, cuts[0]],
+    ...cuts.slice(1).map((c, i) => [cuts[i], c] as [number, number]),
+    [cuts[cuts.length - 1], null],
+  ];
+  // The listing's min and max are both inclusive, so a range stops one
+  // shilling below the next one's start: KES 20,000 is in exactly one range.
+  return edges.map(([min, max]) => ({
+    min,
+    max: max == null ? null : max - 1,
+    count: prices.filter((p) => (min == null || p >= min) && (max == null || p < max)).length,
+  }));
+}
