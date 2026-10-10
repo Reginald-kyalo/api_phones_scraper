@@ -143,7 +143,7 @@ export function ReportDialog({
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground">
           <Flag className="h-3.5 w-3.5" aria-hidden="true" />
-          Report a problem
+          Report a wrong price or match
         </Button>
       </DialogTrigger>
 

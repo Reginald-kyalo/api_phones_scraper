@@ -295,7 +295,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
 
             {/* Mobile: photo and best price come before the list. */}
             <div className="mt-5 space-y-4 lg:hidden">
-              <ProductPhoto image={image} />
+              <ProductPhoto image={image} compact />
               <div ref={mobileCardRef}>{bestCard}</div>
             </div>
 
@@ -576,9 +576,18 @@ function BestPriceCard({
   );
 }
 
-function ProductPhoto({ image }: { image: string | null }) {
+/**
+ * `compact` is the phone layout: a 160px strip instead of a 4:3 frame, so the
+ * best price and the first rows of the price list land on the first screen
+ * (benchmark §2.6) rather than one photo filling it.
+ */
+function ProductPhoto({ image, compact = false }: { image: string | null; compact?: boolean }) {
   return (
-    <div className="relative flex aspect-[4/3] items-center justify-center rounded-md border border-border bg-photo p-3 lg:aspect-square">
+    <div
+      className={`relative flex items-center justify-center rounded-md border border-border bg-photo p-3 ${
+        compact ? 'h-40' : 'aspect-square'
+      }`}
+    >
       <Package className="absolute h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
       {image && (
         <ImageWithFallback

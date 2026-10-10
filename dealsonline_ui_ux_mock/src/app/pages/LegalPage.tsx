@@ -115,7 +115,7 @@ const pages: Record<string, { title: string; content: React.ReactNode }> = {
         </ul>
         <h2 className="text-base font-semibold text-foreground">Report a wrong price</h2>
         <p>
-          Every product page has a “Report a wrong price” link. You can also email us with the
+          Every product page has a “Report a wrong price or match” link. You can also email us with the
           product name and the shop in question.
         </p>
         <h2 className="text-base font-semibold text-foreground">Shops and advertisers</h2>
