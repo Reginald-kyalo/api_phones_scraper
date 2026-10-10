@@ -7,7 +7,7 @@ import { categoryLabel } from '../../../lib/categories';
 
 interface SearchBarProps {
   className?: string;
-  variant?: 'compact' | 'hero';
+  variant?: 'compact' | 'header' | 'hero';
   placeholder?: string;
   onSearch?: () => void;
 }
@@ -111,6 +111,39 @@ export default function SearchBar({
       </div>
     );
   };
+
+  // The header search is the centre of the top row (benchmark direction A): a
+  // 6px-radius field with the teal button joined to its right edge, so it
+  // reads as one control and not as PriceRunner's grey pill.
+  if (variant === 'header') {
+    return (
+      <div ref={containerRef} className={`relative ${className}`}>
+        <form onSubmit={handleSubmit} role="search" className="flex h-10">
+          <div className="relative flex-1 min-w-0">
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="search"
+              name="q"
+              autoComplete="off"
+              aria-label="Search products"
+              placeholder={placeholder}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              className="h-10 w-full rounded-l-md border border-r-0 border-border bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus-visible:ring-2 focus-visible:ring-ring/40"
+            />
+          </div>
+          <button
+            type="submit"
+            className="h-10 rounded-r-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-teal-deep active:translate-y-px"
+          >
+            Search
+          </button>
+        </form>
+        {renderDropdown()}
+      </div>
+    );
+  }
 
   if (variant === 'hero') {
     return (

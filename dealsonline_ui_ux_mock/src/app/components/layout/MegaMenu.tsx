@@ -41,7 +41,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
 
       <div
         ref={panelRef}
-        className="fixed left-0 right-0 top-[57px] z-50 bg-popover border-b border-border shadow-raised"
+        className="absolute left-0 right-0 top-full z-50 bg-popover border-b border-border shadow-raised"
         role="dialog"
         aria-modal="true"
         aria-label="All categories"

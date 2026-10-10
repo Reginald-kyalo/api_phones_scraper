@@ -57,7 +57,9 @@ export default function HeroSection({ productCount, showcase }: HeroSectionProps
               when we last checked it.
             </p>
 
-            <SearchBar variant="hero" placeholder="Search any product…" className="max-w-xl" />
+            <div id="hero-search">
+              <SearchBar variant="hero" placeholder="Search any product…" className="max-w-xl" />
+            </div>
 
             <p className="text-xs mt-4 text-muted-foreground">
               {productCount != null

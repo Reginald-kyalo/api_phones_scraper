@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { Heart, Bell, LogOut, LogIn, Menu, Settings, Search, X, Tag, Clock, Home } from 'lucide-react';
+import { Heart, Bell, LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   DropdownMenu,
@@ -16,21 +16,106 @@ import Logo from './Logo';
 import MegaMenu from './MegaMenu';
 import MobileCategoryNav from '../../features/categories/MobileCategoryNav';
 import { MyProductsContent } from '../../features/user/components/MyProducts';
+import { useLocalFavorites, useLocalPRAlerts } from '../../hooks/useLocalStorage';
+
+/**
+ * The departments named in the second header row, with short labels; the full
+ * name is on the department page. The rest are one click away in "All
+ * categories". Plain links, so crawlers see the store's shape too.
+ */
+const HEADER_DEPARTMENTS = [
+  { id: 'phones-wearables', label: 'Phones' },
+  { id: 'computing-networking', label: 'Computing' },
+  { id: 'tv-audio-home-entertainment', label: 'TV & audio' },
+  { id: 'home-appliances', label: 'Appliances' },
+  { id: 'kitchen-dining-cookware', label: 'Kitchen' },
+  { id: 'groceries-everyday-essentials', label: 'Groceries' },
+  { id: 'health-beauty-personal-care', label: 'Beauty' },
+  { id: 'home-furniture-decor', label: 'Home' },
+];
+
+/**
+ * On the homepage the hero owns the search. Report whether it is on screen, so
+ * the header search can stay out of the way until the hero scrolls off.
+ */
+function useHeroSearchVisible(isHome: boolean) {
+  const [visible, setVisible] = useState(isHome);
+  useEffect(() => {
+    if (!isHome) {
+      setVisible(false);
+      return;
+    }
+    setVisible(true);
+    let observer: IntersectionObserver | null = null;
+    const watch = (hero: HTMLElement) => {
+      observer = new IntersectionObserver(
+        ([entry]) => setVisible(entry.isIntersecting),
+        // Treat the hero as gone once it passes under the 64px sticky row.
+        { rootMargin: '-64px 0px 0px 0px' },
+      );
+      observer.observe(hero);
+    };
+    // The homepage is a lazy route, so the hero can mount well after the
+    // header. Wait for it rather than guessing a frame.
+    const hero = document.getElementById('hero-search');
+    let waiting: MutationObserver | null = null;
+    if (hero) {
+      watch(hero);
+    } else {
+      waiting = new MutationObserver(() => {
+        const found = document.getElementById('hero-search');
+        if (found) {
+          waiting?.disconnect();
+          waiting = null;
+          watch(found);
+        }
+      });
+      waiting.observe(document.body, { childList: true, subtree: true });
+    }
+    return () => {
+      waiting?.disconnect();
+      observer?.disconnect();
+    };
+  }, [isHome]);
+  return visible;
+}
+
+/** Header tool: icon with a label from xl up, and a count in ink when there is one. */
+function ToolLink({ to, icon, label, count, active }: {
+  to: string; icon: React.ReactNode; label: string; count?: number; active?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      aria-label={count ? `${label} (${count})` : label}
+      aria-current={active ? 'page' : undefined}
+      className={`relative inline-flex h-10 items-center gap-2 rounded-md px-2.5 text-sm font-medium transition-colors hover:bg-surface-alt hover:text-foreground ${
+        active ? 'text-foreground' : 'text-muted-foreground'
+      }`}
+    >
+      <span className="relative" aria-hidden="true">
+        {icon}
+        {count ? (
+          <span className="price-num absolute -right-2 -top-1.5 min-w-4 rounded-full bg-foreground px-1 text-center text-[10px] leading-4 text-background">
+            {count > 99 ? '99+' : count}
+          </span>
+        ) : null}
+      </span>
+      <span className="hidden xl:inline">{label}</span>
+    </Link>
+  );
+}
 
 export default function Header() {
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const onBrowse =
-    pathname === '/browse' ||
-    pathname.startsWith('/browse/') ||
-    pathname.startsWith('/aisle/');
-  // The homepage has its own large search bar in the hero — don't duplicate it
-  // in the header (matches PriceRunner: header search only on inner pages).
   const isHome = pathname === '/';
-  const { user, isAuthenticated, logout } = useAuth();
+  const heroSearchVisible = useHeroSearchVisible(isHome);
+  const { user, logout } = useAuth();
+  const { favorites } = useLocalFavorites();
+  const { alerts } = useLocalPRAlerts();
 
   useEffect(() => {
     setMenuOpen(false);
@@ -52,99 +137,75 @@ export default function Header() {
     return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const departmentActive = (id: string) =>
+    pathname === `/aisle/${id}` || (id === 'phones-wearables' && pathname.startsWith('/category/'));
+  const browseActive = pathname === '/browse' || pathname.startsWith('/browse/');
+
   return (
     <>
-      <header className="bg-background border-b border-border sticky top-0 z-50 w-full">
+      {/* Row 1: logo, search, tools. Sticky. On phones the search drops to its
+          own full-width line inside the sticky block, so it never hides behind
+          an icon. */}
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
         <div className="page-container">
-          <div className="flex items-center justify-between h-14">
-            {/* ── Left: Logo + Nav links ── */}
-            <div className="flex items-center gap-6">
-              {/* Logo */}
-              <Logo size={30} className="gap-2" />
+          <div className="flex h-14 items-center gap-4 md:h-16 lg:gap-8">
+            <Logo size={30} className="gap-2" />
 
-              {/* Desktop nav links */}
-              <nav className="hidden lg:flex items-center gap-1">
-                <button
-                  onClick={() => setMenuOpen((v) => !v)}
-                  aria-expanded={menuOpen}
-                  aria-haspopup="dialog"
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    menuOpen || onBrowse
-                      ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-surface-alt'
-                  }`}
-                >
-                  {menuOpen
-                    ? <X aria-hidden="true" className="w-4 h-4" />
-                    : <Menu aria-hidden="true" className="w-4 h-4" />}
-                  All categories
-                </button>
-                <Link
-                  to="/deals"
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    pathname === '/deals'
-                      ? 'text-foreground bg-surface-alt'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-surface-alt'
-                  }`}
-                >
-                  Deals
-                </Link>
-                <Link
-                  to="/about"
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-surface-alt transition-colors"
-                >
-                  About
-                </Link>
-              </nav>
+            {/* Desktop search, centred. On the homepage it waits, invisible but
+                still taking its space, until the hero search scrolls away. */}
+            <div className="hidden flex-1 justify-center md:flex">
+              <SearchBar
+                className={`w-full max-w-[600px] transition-opacity duration-150 ease-out ${
+                  heroSearchVisible ? 'invisible opacity-0' : 'opacity-100'
+                }`}
+                variant="header"
+                placeholder="Search products, brands and shops"
+              />
             </div>
 
-            {/* ── Right: Search + Auth ── */}
-            <div className="flex items-center gap-3">
-              {/* Desktop Search — hidden on homepage (hero owns search there) */}
-              {!isHome && (
-                <SearchBar
-                  className="hidden md:block w-[300px] lg:w-[350px]"
-                  variant="compact"
-                  placeholder="Search products…"
+            <div className="ml-auto flex items-center gap-1 md:ml-0">
+              <ToolLink
+                to="/alerts"
+                label="Price alerts"
+                icon={<Bell className="h-5 w-5" />}
+                count={alerts.length}
+                active={pathname === '/alerts'}
+              />
+              <span className="hidden sm:contents">
+                <ToolLink
+                  to="/favorites"
+                  label="Favourites"
+                  icon={<Heart className="h-5 w-5" />}
+                  count={favorites.length}
+                  active={pathname === '/favorites'}
                 />
-              )}
+              </span>
 
-              {/* Mobile search toggle */}
-              {!isHome && (
-                <button
-                  className="md:hidden p-2 rounded-md hover:bg-surface-alt transition-colors"
-                  onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-                  aria-label="Search"
-                >
-                  <Search className="w-5 h-5 text-muted-foreground" />
-                </button>
-              )}
-
-              {/* My products: recently viewed, favourites, alerts. Was a fixed
-                  dock that covered prices; now a menu like any other. */}
+              {/* Recently viewed, favourites and alerts in one panel. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-                    <Clock aria-hidden="true" className="w-4 h-4" />
-                    <span className="text-sm font-medium hidden lg:inline">My products</span>
-                    <span className="sr-only lg:hidden">My products</span>
-                  </Button>
+                  <button
+                    type="button"
+                    aria-label="Recently viewed"
+                    className="hidden h-10 items-center rounded-md px-2.5 text-muted-foreground transition-colors hover:bg-surface-alt hover:text-foreground sm:inline-flex"
+                  >
+                    <Clock aria-hidden="true" className="h-5 w-5" />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="p-0">
                   <MyProductsContent />
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Desktop auth area */}
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex">
                 {currentUser ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-                        <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                      <Button variant="ghost" className="h-10 gap-2 text-muted-foreground hover:text-foreground">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                           {getInitials()}
-                        </div>
-                        <span className="text-sm font-medium hidden lg:inline">
+                        </span>
+                        <span className="hidden text-sm font-medium xl:inline">
                           {currentUser.name.split(' ')[0]}
                         </span>
                       </Button>
@@ -176,17 +237,15 @@ export default function Header() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button asChild variant="outline" size="sm" className="gap-1.5 text-sm">
-                    <Link to="/auth">Sign in</Link>
-                  </Button>
+                  <ToolLink to="/auth" label="Sign in" icon={<UserRound className="h-5 w-5" />} active={pathname === '/auth'} />
                 )}
               </div>
 
-              {/* Mobile hamburger */}
+              {/* Phones and tablets: departments and account live in the menu. */}
               <div className="lg:hidden">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open menu">
+                    <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="Open menu">
                       <Menu aria-hidden="true" className="w-5 h-5" />
                     </Button>
                   </SheetTrigger>
@@ -202,30 +261,68 @@ export default function Header() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Mobile search bar (expandable) */}
-        {mobileSearchOpen && (
-          <div className="md:hidden border-t border-border px-4 py-3 bg-card">
-            <div className="flex items-center gap-2">
-              <SearchBar
-                className="flex-1"
-                variant="compact"
-                placeholder="Search products…"
-                onSearch={() => setMobileSearchOpen(false)}
-              />
-              <button
-                onClick={() => setMobileSearchOpen(false)}
-                className="p-2 rounded-md hover:bg-surface-alt"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
+          {/* Phones: search on its own line, always there. The homepage hero
+              already puts one at the top of the page. */}
+          {!isHome && (
+            <div className="pb-3 md:hidden">
+              <SearchBar variant="header" placeholder="Search products and brands" />
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
-      <MegaMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      {/* Row 2: departments in plain text. Not sticky, so it scrolls away and
+          leaves only the search row pinned. Desktop only. */}
+      <nav aria-label="Departments" className="relative z-40 hidden border-b border-border bg-background lg:block">
+        <div className="page-container flex h-10 items-stretch gap-1 text-sm">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-haspopup="dialog"
+            className={`-ml-2 flex items-center gap-2 px-2 font-medium transition-colors ${
+              menuOpen || browseActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {menuOpen
+              ? <X aria-hidden="true" className="h-4 w-4" />
+              : <Menu aria-hidden="true" className="h-4 w-4" />}
+            All categories
+          </button>
+          <span className="my-2.5 w-px bg-border" aria-hidden="true" />
+          {HEADER_DEPARTMENTS.map((d) => {
+            const on = departmentActive(d.id);
+            return (
+              <Link
+                key={d.id}
+                to={`/aisle/${d.id}`}
+                aria-current={on ? 'page' : undefined}
+                className={`flex items-center border-b-2 px-2 transition-colors ${
+                  on
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {d.label}
+              </Link>
+            );
+          })}
+          <Link
+            to="/deals"
+            aria-current={pathname === '/deals' ? 'page' : undefined}
+            className={`ml-auto flex items-center gap-1.5 border-b-2 px-2 font-medium transition-colors ${
+              pathname === '/deals'
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-foreground hover:text-primary'
+            }`}
+          >
+            <Tag aria-hidden="true" className="h-4 w-4" />
+            Deals
+          </Link>
+        </div>
+        <MegaMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      </nav>
     </>
   );
 }
