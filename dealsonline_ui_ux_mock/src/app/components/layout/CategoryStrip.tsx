@@ -41,7 +41,7 @@ const SHORT_LABEL: Record<string, string> = {
 // "Phones…" at every width told the shopper nothing.
 const TILE =
   'group flex flex-col items-center gap-2 px-2 py-1.5 text-muted-foreground hover:text-foreground transition-colors w-[92px] flex-shrink-0';
-// The badge border stays put: the icon's 2px lift (`.tile-icon`) is the hover.
+// The badge border stays put: the icon's own scene (icon-motion.css) is the hover.
 const BADGE =
   'w-12 h-12 rounded-md ultra-border flex items-center justify-center';
 
@@ -61,6 +61,7 @@ export default function CategoryStrip() {
               >
                 <div className={BADGE}>
                   <Icon
+                    data-anim={department.id}
                     className="tile-icon w-5 h-5 flex-shrink-0"
                     strokeWidth={1.75}
                     aria-hidden="true"
@@ -80,6 +81,7 @@ export default function CategoryStrip() {
           >
             <div className={BADGE}>
               <LayoutGrid
+                data-anim="all"
                 className="tile-icon w-5 h-5 flex-shrink-0"
                 strokeWidth={1.75}
                 aria-hidden="true"

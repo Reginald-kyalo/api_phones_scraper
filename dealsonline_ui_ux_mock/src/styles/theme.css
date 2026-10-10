@@ -416,22 +416,14 @@
     border-color: var(--muted-foreground);
   }
 
-  /* Department tiles: the icon rises 2px on hover or keyboard focus, once,
-     and stays until the pointer leaves. That lift is the tile's one hover
-     channel (DESIGN_RULES.md §3); nothing loops, nothing bounces. */
+  /* Department tiles: the icon darkens on hover; its motion, one small
+     scene per department, is in icon-motion.css. */
   .tile-icon {
-    transition: transform var(--motion-micro) ease-out, color var(--motion-micro) ease-out;
+    transition: color var(--motion-micro) ease-out;
   }
   .group:hover .tile-icon,
   .group:focus-visible .tile-icon {
-    transform: translateY(-2px);
     color: var(--foreground);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .group:hover .tile-icon,
-    .group:focus-visible .tile-icon {
-      transform: none;
-    }
   }
 
   .microcopy-label {

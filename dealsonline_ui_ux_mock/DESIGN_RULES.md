@@ -92,6 +92,7 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 - One orchestrated moment per visit, on the homepage hero. Everything below the fold renders at rest: no scroll-reveal on catalogue pages.
 - Skeletons in the exact shape of the content, never spinners for page loads. Reserve image heights so nothing shifts.
 - Reduced motion is respected globally (`theme.css`).
+- **Department icons are the one exception to "nothing slower than 200ms"**: on the homepage department strip, each icon acts out its subject once on hover or keyboard focus (the pot's lid lifts and closes, the pen writes its line, the drum turns), about 560ms, ease-out, never looping, and not at all under reduced motion. Scenes live in `src/styles/icon-motion.css`, one per department; a new department gets a scene there. Nowhere else animates icons.
 
 ---
 

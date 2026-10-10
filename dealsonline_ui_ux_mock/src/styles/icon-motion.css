@@ -1,0 +1,369 @@
+/*
+ * Department icons that act out their subject (DESIGN_RULES.md §4).
+ *
+ * Homepage department strip only. On hover or keyboard focus each icon plays
+ * one short scene, once, and comes to rest exactly as drawn: the pot's lid
+ * lifts and closes, the pen writes its line, the washing machine's drum
+ * turns. Nothing loops, and with reduced motion nothing moves at all.
+ *
+ * The icons are Lucide SVGs; `[data-anim]` names the department and
+ * :nth-child picks the part of the drawing to move (path order per icon in
+ * node_modules/lucide-react/dist/esm/icons/<name>.js). transform-box:
+ * view-box keeps every origin in the icon's own 24x24 units.
+ */
+[data-anim] > * {
+  transform-box: view-box;
+}
+
+/* One trigger for every scene. The scene names its own keyframes and
+   origin; duration and easing are shared. */
+.group:hover [data-anim] > *,
+.group:focus-visible [data-anim] > *,
+.group:hover [data-anim],
+.group:focus-visible [data-anim] {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim],
+  [data-anim] > * {
+    animation: none !important;
+  }
+}
+
+/* ── Phones: the phone buzzes ─────────────────────────────────────────── */
+@keyframes ico-buzz {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-9deg); }
+  40% { transform: rotate(8deg); }
+  60% { transform: rotate(-5deg); }
+  80% { transform: rotate(3deg); }
+}
+.group:hover [data-anim='phones-wearables'],
+.group:focus-visible [data-anim='phones-wearables'] {
+  animation-name: ico-buzz;
+  transform-origin: center;
+}
+
+/* ── Groceries: something drops into the basket ───────────────────────── */
+@keyframes ico-drop {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(2px); }
+  65% { transform: translateY(-0.5px); }
+}
+.group:hover [data-anim='groceries-everyday-essentials'],
+.group:focus-visible [data-anim='groceries-everyday-essentials'] {
+  animation-name: ico-drop;
+}
+
+/* ── TV: the antenna searches for a signal ────────────────────────────── */
+@keyframes ico-antenna {
+  0%, 100% { transform: rotate(0); }
+  30% { transform: rotate(-14deg); }
+  65% { transform: rotate(10deg); }
+}
+@keyframes ico-flicker {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.35; }
+  55% { opacity: 1; }
+  70% { opacity: 0.6; }
+}
+.group:hover [data-anim='tv-audio-home-entertainment'] > :nth-child(2),
+.group:focus-visible [data-anim='tv-audio-home-entertainment'] > :nth-child(2) {
+  animation-name: ico-antenna;
+  transform-origin: 12px 7px;
+}
+.group:hover [data-anim='tv-audio-home-entertainment'] > :nth-child(1),
+.group:focus-visible [data-anim='tv-audio-home-entertainment'] > :nth-child(1) {
+  animation-name: ico-flicker;
+}
+
+/* ── Computing: the laptop opens ──────────────────────────────────────── */
+@keyframes ico-open {
+  0% { transform: scaleY(0.55); }
+  100% { transform: scaleY(1); }
+}
+.group:hover [data-anim='computing-networking'],
+.group:focus-visible [data-anim='computing-networking'] {
+  animation-name: ico-open;
+  transform-origin: 12px 16px;
+}
+
+/* ── Beauty: the sparkles twinkle in turn ─────────────────────────────── */
+@keyframes ico-twinkle {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes ico-turn {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(18deg); }
+}
+.group:hover [data-anim='health-beauty-personal-care'] > :nth-child(1),
+.group:focus-visible [data-anim='health-beauty-personal-care'] > :nth-child(1) {
+  animation-name: ico-turn;
+  transform-origin: 12px 12px;
+}
+.group:hover [data-anim='health-beauty-personal-care'] > :nth-child(n + 2):nth-child(-n + 3),
+.group:focus-visible [data-anim='health-beauty-personal-care'] > :nth-child(n + 2):nth-child(-n + 3) {
+  animation-name: ico-twinkle;
+  transform-origin: 20px 5px;
+}
+.group:hover [data-anim='health-beauty-personal-care'] > :nth-child(n + 4),
+.group:focus-visible [data-anim='health-beauty-personal-care'] > :nth-child(n + 4) {
+  animation-name: ico-twinkle;
+  animation-delay: 160ms;
+  transform-origin: 4px 18px;
+}
+
+/* ── Appliances: the drum turns ───────────────────────────────────────── */
+@keyframes ico-spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+.group:hover [data-anim='home-appliances'] > :nth-child(5),
+.group:focus-visible [data-anim='home-appliances'] > :nth-child(5) {
+  animation-name: ico-spin;
+  transform-origin: 12px 13px;
+}
+
+/* ── Home & furniture: someone sits down ──────────────────────────────── */
+@keyframes ico-sit {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(1.5px) scaleY(0.94); }
+}
+.group:hover [data-anim='home-furniture-decor'] > :nth-child(2),
+.group:focus-visible [data-anim='home-furniture-decor'] > :nth-child(2) {
+  animation-name: ico-sit;
+  transform-origin: 12px 18px;
+}
+
+/* ── Kitchen: the lid lifts, lets the steam out, and closes ───────────── */
+@keyframes ico-lid {
+  0%, 100% { transform: rotate(0); }
+  40% { transform: rotate(-16deg) translateY(-1px); }
+}
+.group:hover [data-anim='kitchen-dining-cookware'] > :nth-child(n + 3),
+.group:focus-visible [data-anim='kitchen-dining-cookware'] > :nth-child(n + 3) {
+  animation-name: ico-lid;
+  transform-origin: 4px 8px;
+}
+
+/* ── Office & school: the pen writes its line ─────────────────────────── */
+@keyframes ico-write-line {
+  from { stroke-dashoffset: 9; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ico-write-pen {
+  0% { transform: translate(-1px, 0) rotate(-8deg); }
+  25% { transform: translate(1px, -1px) rotate(4deg); }
+  50% { transform: translate(3px, 0) rotate(-6deg); }
+  75% { transform: translate(5px, -1px) rotate(3deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+.group:hover [data-anim='office-school-stationery'] > :nth-child(1),
+.group:focus-visible [data-anim='office-school-stationery'] > :nth-child(1) {
+  stroke-dasharray: 9;
+  animation-name: ico-write-line;
+}
+.group:hover [data-anim='office-school-stationery'] > :nth-child(2),
+.group:focus-visible [data-anim='office-school-stationery'] > :nth-child(2) {
+  animation-name: ico-write-pen;
+  transform-origin: 4px 20px;
+}
+
+/* ── Building & hardware: the hammer strikes ──────────────────────────── */
+@keyframes ico-strike {
+  0%, 100% { transform: rotate(0); }
+  35% { transform: rotate(-24deg); }
+  60% { transform: rotate(4deg); }
+}
+.group:hover [data-anim='building-electrical-hardware'],
+.group:focus-visible [data-anim='building-electrical-hardware'] {
+  animation-name: ico-strike;
+  transform-origin: 4px 20px;
+}
+
+/* ── Fashion: the shirt sways on its hanger ───────────────────────────── */
+@keyframes ico-sway {
+  0%, 100% { transform: rotate(0); }
+  30% { transform: rotate(7deg); }
+  65% { transform: rotate(-4deg); }
+}
+.group:hover [data-anim='fashion-accessories'],
+.group:focus-visible [data-anim='fashion-accessories'] {
+  animation-name: ico-sway;
+  transform-origin: 12px 2px;
+}
+
+/* ── Power & solar: the bolt strikes, drawn top to bottom ─────────────── */
+@keyframes ico-draw {
+  from { stroke-dashoffset: 80; }
+  to { stroke-dashoffset: 0; }
+}
+.group:hover [data-anim='power-solar-energy'] > *,
+.group:focus-visible [data-anim='power-solar-energy'] > * {
+  stroke-dasharray: 80;
+  animation-name: ico-draw;
+}
+
+/* ── Baby & kids: the baby tilts its head and smiles ──────────────────── */
+@keyframes ico-tilt {
+  0%, 100% { transform: rotate(0); }
+  45% { transform: rotate(-10deg); }
+}
+@keyframes ico-smile {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.35, 1.6); }
+}
+.group:hover [data-anim='baby-kids-toys'],
+.group:focus-visible [data-anim='baby-kids-toys'] {
+  animation-name: ico-tilt;
+  transform-origin: 12px 21px;
+}
+.group:hover [data-anim='baby-kids-toys'] > :nth-child(3),
+.group:focus-visible [data-anim='baby-kids-toys'] > :nth-child(3) {
+  animation-name: ico-smile;
+  transform-origin: 12px 16px;
+}
+
+/* ── Classifieds: the lines of the ad are written in ──────────────────── */
+@keyframes ico-type {
+  from { stroke-dashoffset: 8; }
+  to { stroke-dashoffset: 0; }
+}
+.group:hover [data-anim='classifieds'] > :nth-child(-n + 2),
+.group:focus-visible [data-anim='classifieds'] > :nth-child(-n + 2) {
+  stroke-dasharray: 8;
+  animation-name: ico-type;
+}
+.group:hover [data-anim='classifieds'] > :nth-child(1),
+.group:focus-visible [data-anim='classifieds'] > :nth-child(1) {
+  animation-delay: 140ms;
+}
+
+/* ── Cameras & security: the shutter clicks ───────────────────────────── */
+@keyframes ico-shutter {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(0.25); }
+}
+.group:hover [data-anim='cameras-security-surveillance'] > :nth-child(2),
+.group:focus-visible [data-anim='cameras-security-surveillance'] > :nth-child(2) {
+  animation-name: ico-shutter;
+  transform-origin: 12px 13px;
+}
+
+/* ── Car & motorcycle: the car pulls up ─────────────────────────────── */
+@keyframes ico-drive {
+  0% { transform: translateX(-3px); }
+  70% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+.group:hover [data-anim='automotive-motorcycle'],
+.group:focus-visible [data-anim='automotive-motorcycle'] {
+  animation-name: ico-drive;
+}
+
+/* ── Sports: the dumbbell is lifted ───────────────────────────────────── */
+@keyframes ico-lift {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  45% { transform: translateY(-3px) rotate(-12deg); }
+}
+.group:hover [data-anim='sports-outdoors-leisure'],
+.group:focus-visible [data-anim='sports-outdoors-leisure'] {
+  animation-name: ico-lift;
+  transform-origin: center;
+}
+
+/* ── Garden & farm: the leaves grow ───────────────────────────────────── */
+@keyframes ico-grow {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+.group:hover [data-anim='agriculture-agrovet'] > :nth-child(3),
+.group:focus-visible [data-anim='agriculture-agrovet'] > :nth-child(3) {
+  animation-name: ico-grow;
+  transform-origin: 12px 13px;
+}
+.group:hover [data-anim='agriculture-agrovet'] > :nth-child(4),
+.group:focus-visible [data-anim='agriculture-agrovet'] > :nth-child(4) {
+  animation-name: ico-grow;
+  animation-delay: 140ms;
+  transform-origin: 13px 10px;
+}
+
+/* ── Gaming: the buttons are pressed ──────────────────────────────────── */
+@keyframes ico-press {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(0.4); }
+}
+.group:hover [data-anim='gaming-books-media'] > :nth-child(-n + 2),
+.group:focus-visible [data-anim='gaming-books-media'] > :nth-child(-n + 2) {
+  animation-name: ico-press;
+  transform-origin: 8px 11px;
+}
+.group:hover [data-anim='gaming-books-media'] > :nth-child(3),
+.group:focus-visible [data-anim='gaming-books-media'] > :nth-child(3) {
+  animation-name: ico-press;
+  animation-delay: 120ms;
+  transform-origin: 15px 12px;
+}
+.group:hover [data-anim='gaming-books-media'] > :nth-child(4),
+.group:focus-visible [data-anim='gaming-books-media'] > :nth-child(4) {
+  animation-name: ico-press;
+  animation-delay: 220ms;
+  transform-origin: 18px 10px;
+}
+
+/* ── Cleaning: the can sprays ─────────────────────────────────────────── */
+@keyframes ico-puff {
+  0% { opacity: 0; transform: translateX(3px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.group:hover [data-anim='household-cleaning'] > :nth-child(-n + 6),
+.group:focus-visible [data-anim='household-cleaning'] > :nth-child(-n + 6) {
+  animation-name: ico-puff;
+}
+.group:hover [data-anim='household-cleaning'] > :nth-child(-n + 3),
+.group:focus-visible [data-anim='household-cleaning'] > :nth-child(-n + 3) {
+  animation-delay: 120ms;
+}
+
+/* ── Pets: the paw is pressed down, toe by toe ────────────────────────── */
+@keyframes ico-step {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+.group:hover [data-anim='pet-supplies'] > :nth-child(-n + 3),
+.group:focus-visible [data-anim='pet-supplies'] > :nth-child(-n + 3) {
+  animation-name: ico-step;
+  transform-origin: 14px 12px;
+}
+.group:hover [data-anim='pet-supplies'] > :nth-child(2),
+.group:focus-visible [data-anim='pet-supplies'] > :nth-child(2) {
+  animation-delay: 100ms;
+}
+.group:hover [data-anim='pet-supplies'] > :nth-child(3),
+.group:focus-visible [data-anim='pet-supplies'] > :nth-child(3) {
+  animation-delay: 200ms;
+}
+
+/* ── All categories: the tiles shuffle into place ─────────────────────── */
+@keyframes ico-settle {
+  0% { transform: scale(0.6); }
+  100% { transform: scale(1); }
+}
+.group:hover [data-anim='all'] > *,
+.group:focus-visible [data-anim='all'] > * {
+  animation-name: ico-settle;
+  transform-origin: 12px 12px;
+}
+.group:hover [data-anim='all'] > :nth-child(2),
+.group:focus-visible [data-anim='all'] > :nth-child(2) { animation-delay: 70ms; }
+.group:hover [data-anim='all'] > :nth-child(3),
+.group:focus-visible [data-anim='all'] > :nth-child(3) { animation-delay: 140ms; }
+.group:hover [data-anim='all'] > :nth-child(4),
+.group:focus-visible [data-anim='all'] > :nth-child(4) { animation-delay: 210ms; }
