@@ -1,7 +1,7 @@
 # Homepage Design Audit & Plan
 
 **Scope:** Homepage only (`pages/HomePage.tsx` + its layout components). Visual/UX only — see
-[DESIGN_HANDOFF.md](DESIGN_HANDOFF.md) for the design system and [BEHAVIORAL_PRINCIPLES.md](BEHAVIORAL_PRINCIPLES.md)
+[DESIGN_RULES.md](DESIGN_RULES.md) for the design system and [BEHAVIORAL_PRINCIPLES.md](BEHAVIORAL_PRINCIPLES.md)
 for the *why*. Conducted with the `design-audit` skill methodology.
 
 **Goal of this round:** elevate the homepage to a premium feel — edit the back half (which read
@@ -87,8 +87,8 @@ Easing token: `--ease-out-premium: cubic-bezier(0.16, 1, 0.3, 1)`.
 
 - **Mobile hero showcase** (condensed phone vs strengthened price-spread) — needs a decision.
 - **Wire real data** for rails + featured deal (currently `homepageMock`); add skeletons
-  (`ProductCardSkeleton`) and empty states. (Tracked in DESIGN_HANDOFF §5.)
-- **Currency/price-font cascade** app-wide (DESIGN_HANDOFF §5.1).
+  (`ProductCardSkeleton`) and empty states. (Tracked in DESIGN_RULES.md.)
+- **Currency/price-font cascade** app-wide (DESIGN_RULES.md).
 
 ---
 

@@ -8,7 +8,7 @@ import { formatPrice } from '../../lib/format';
 
 // The faux alert demonstrates the product doing its job: on reveal the price
 // counts down from the old price to below target, then "Price dropped" lands.
-// Generic title only — marketing/decorative UI stays anonymous (DESIGN_HANDOFF
+// Generic title only — marketing/decorative UI stays anonymous (DESIGN_RULES.md
 // rule; BEHAVIORAL_PRINCIPLES.md §5).
 /* Fallback only, used until the real cluster resolves. Every figure below
    prefers the passed-in cluster's own store prices. */

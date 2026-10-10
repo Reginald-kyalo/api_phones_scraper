@@ -1,6 +1,6 @@
 # DealsOnline — Behavioral Design Principles
 
-**Purpose:** This is the *why* behind the design. [DESIGN_HANDOFF.md](DESIGN_HANDOFF.md) records
+**Purpose:** This is the *why* behind the design. [DESIGN_RULES.md](DESIGN_RULES.md) records
 what the interface looks like and which tokens to use; this document records the human-behavior
 reasoning that decides what we build and how we frame it. When a future page raises a "should we
 ask for X here?" or "how do we phrase this CTA?" question, the answer lives here.
@@ -83,7 +83,7 @@ believe what they watch happen more than what they're told.
 
 **How we apply it:**
 - Explain the product by *animating it doing its job*, not with paragraphs.
-- Motion is in service of comprehension, never decoration (see [DESIGN_HANDOFF.md](DESIGN_HANDOFF.md)
+- Motion is in service of comprehension, never decoration (see [DESIGN_RULES.md](DESIGN_RULES.md)
   motion rules and [HOMEPAGE_AUDIT.md](HOMEPAGE_AUDIT.md) for the motion budget).
 
 **Where it shows:**
