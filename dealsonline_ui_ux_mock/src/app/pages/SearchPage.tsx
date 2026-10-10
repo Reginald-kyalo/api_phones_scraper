@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Seo } from '../components/common/Seo';
 import { Link, useSearchParams } from 'react-router';
 import { clustersApi, type ClusterSummary } from '../lib/api';
 import type { SearchRow } from '../lib/demoSource';
@@ -94,6 +95,7 @@ export default function SearchPage() {
 
   return (
     <div className="bg-background min-h-screen">
+      <Seo title={query ? `Results for “${query}”` : 'Search'} noindex />
       <div className="page-container py-8">
         <h1 className="page-title">{query ? <>Results for “{query}”</> : 'Search'}</h1>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Seo } from '../components/common/Seo';
 import { Link } from 'react-router';
 import { Bell } from 'lucide-react';
 import { useLocalAlerts, type LocalPriceAlert } from '../hooks/useLocalStorage';
@@ -41,6 +42,7 @@ export default function PriceAlertsPage() {
 
   return (
     <div className="page-container py-6">
+      <Seo title="Price alerts" noindex />
       {/* Header */}
       <div className="mb-6">
         <h1 className="page-title">Price alerts</h1>

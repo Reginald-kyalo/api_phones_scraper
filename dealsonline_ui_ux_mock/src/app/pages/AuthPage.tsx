@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router';
+import { Seo } from '../components/common/Seo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { LoginForm } from '../features/auth/components/LoginForm';
 import { RegisterForm } from '../features/auth/components/RegisterForm';
@@ -10,6 +11,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+      <Seo title="Sign in" noindex />
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">

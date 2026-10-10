@@ -1,4 +1,5 @@
 import { familyDisplayLabel } from '../lib/navLabels';
+import { Seo } from '../components/common/Seo';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { clustersApi } from '../lib/api';
@@ -47,6 +48,7 @@ export default function CatalogueCategoriesPage() {
 
   return (
     <div className="bg-background min-h-screen">
+      <Seo title="All categories" description="Browse every category SokoPulse compares, from phones and laptops to groceries." />
       <div className="page-container py-8">
         <h1 className="page-title">All categories</h1>
         <p className="mt-1 text-sm text-muted-foreground">

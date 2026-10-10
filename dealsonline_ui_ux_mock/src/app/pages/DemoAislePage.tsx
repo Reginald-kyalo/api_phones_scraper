@@ -1,4 +1,5 @@
 import { familyDisplayLabel } from '../lib/navLabels';
+import { Seo } from '../components/common/Seo';
 import { Link, useParams } from 'react-router';
 import { spineShelfDisplay, taxonomyDepartmentById, type TaxonomyDepartment } from '../data/taxonomyTree';
 import { ChevronRight } from 'lucide-react';
@@ -54,6 +55,7 @@ export default function DemoAislePage() {
   const { Icon } = department;
   return (
     <div className="bg-background min-h-screen">
+      <Seo title={department.label} description={`Compare ${department.label.toLowerCase()} prices across Kenyan shops.`} />
       <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground">Home</Link>

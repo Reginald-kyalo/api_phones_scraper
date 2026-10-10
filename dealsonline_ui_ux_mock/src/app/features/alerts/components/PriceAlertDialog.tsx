@@ -9,7 +9,6 @@ import {
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Slider } from '../../../components/ui/slider';
-import { Checkbox } from '../../../components/ui/checkbox';
 import { Package } from 'lucide-react';
 import { useLocalPRAlerts } from '../../../hooks/useLocalStorage';
 import { formatPrice } from '../../../lib/format';
@@ -31,8 +30,6 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
   const { addPRAlert } = useLocalPRAlerts();
   const [mode, setMode] = useState<'drop' | 'target'>('target');
   const [targetPrice, setTargetPrice] = useState(Math.round(product.price * 0.9));
-  const [reduceBy, setReduceBy] = useState(1);
-  const [reduceEnabled, setReduceEnabled] = useState(true);
 
   const maxPrice = Math.ceil(product.price);
   const minPrice = 1;
@@ -40,8 +37,8 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
   const handleCreate = () => {
     const price = mode === 'drop' ? product.price - 1 : targetPrice;
     addPRAlert(product, Math.max(minPrice, price));
-    toast.success('Price alert created', {
-      description: `We'll notify you when ${product.name} drops to ${formatPrice(Math.max(minPrice, price))}`,
+    toast.success('Price alert set', {
+      description: `We’ll tell you when ${product.name} is ${formatPrice(Math.max(minPrice, price))} or less.`,
     });
     onOpenChange(false);
   };
@@ -74,7 +71,7 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
           <button
             type="button"
             onClick={() => setMode('drop')}
-            className={`w-full flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors text-left ${
+            className={`w-full flex items-center gap-3 p-4 rounded-md border cursor-pointer transition-colors text-left ${
               mode === 'drop' ? 'border-foreground' : 'border-border hover:bg-surface-alt'
             }`}
           >
@@ -83,12 +80,12 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
             }`}>
               {mode === 'drop' && <span className="w-2.5 h-2.5 rounded-full bg-foreground" />}
             </span>
-            <span className="text-sm">Notify me when the price has dropped</span>
+            <span className="text-sm">Tell me whenever the price drops</span>
           </button>
 
           {/* Mode: Target price */}
           <div
-            className={`w-full rounded-lg border transition-colors ${
+            className={`w-full rounded-md border transition-colors ${
               mode === 'target' ? 'border-foreground' : 'border-border'
             }`}
           >
@@ -102,21 +99,23 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
               }`}>
                 {mode === 'target' && <span className="w-2.5 h-2.5 rounded-full bg-foreground" />}
               </span>
-              <span className="text-sm">Notify me when my target price has been reached</span>
+              <span className="text-sm">Tell me when it reaches my target price</span>
             </button>
 
             {mode === 'target' && (
               <div className="px-4 pb-4 space-y-3">
-                <div className="relative">
-                  <div className="relative">
-                    <span className="absolute left-3 top-0 text-[10px] text-muted-foreground">Price</span>
+                <div>
+                  <label htmlFor="alert-target" className="microcopy-label">Target price</label>
+                  <div className="relative mt-1">
                     <Input
+                      id="alert-target"
+                      inputMode="numeric"
                       type="number"
                       min={minPrice}
                       max={maxPrice}
                       value={targetPrice}
                       onChange={(e) => setTargetPrice(Math.max(minPrice, Math.min(maxPrice, Number(e.target.value) || 0)))}
-                      className="pr-12 pt-4 h-12"
+                      className="pr-12 h-11 price-num"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">KES</span>
                   </div>
@@ -130,49 +129,25 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
                   step={1}
                   className="w-full"
                 />
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{minPrice}</span>
-                  <span>{Math.round(maxPrice * 0.2)}</span>
-                  <span>{Math.round(maxPrice * 0.4)}</span>
-                  <span>{Math.round(maxPrice * 0.6)}</span>
-                  <span>{Math.round(maxPrice * 0.8)}</span>
-                  <span>{maxPrice}</span>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span className="price-num">{formatPrice(minPrice)}</span>
+                  <span>Best price now <span className="price-num">{formatPrice(maxPrice)}</span></span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Reduce by */}
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="reduce-by"
-              checked={reduceEnabled}
-              onCheckedChange={(v) => setReduceEnabled(v === true)}
-            />
-            <label htmlFor="reduce-by" className="text-sm text-foreground cursor-pointer">
-              And each time the price is reduced by
-            </label>
-          </div>
-          {reduceEnabled && (
-            <div className="relative">
-              <Input
-                type="number"
-                min={1}
-                value={reduceBy}
-                onChange={(e) => setReduceBy(Math.max(1, Number(e.target.value) || 1))}
-                className="pr-12"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">KES</span>
-            </div>
-          )}
         </div>
 
-        <div className="flex gap-3 px-6 pb-6 pt-2">
+        <p className="px-6 text-xs text-muted-foreground">
+          Alerts are saved on this device. Sign in to get them by email.
+        </p>
+        <div className="flex gap-3 px-6 pb-6 pt-3">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-11">
             Cancel
           </Button>
           <Button onClick={handleCreate} className="flex-1 h-11">
-            Create price alert
+            Set price alert
           </Button>
         </div>
       </DialogContent>

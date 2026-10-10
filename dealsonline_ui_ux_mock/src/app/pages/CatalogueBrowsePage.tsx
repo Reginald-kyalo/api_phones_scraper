@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Seo } from '../components/common/Seo';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { clustersApi, type ClusterSummary } from '../lib/api';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
@@ -77,6 +78,7 @@ export default function CatalogueBrowsePage() {
 
   return (
     <div className="bg-background min-h-screen">
+      <Seo title={`${label} prices in Kenya`} description={`Compare ${label.toLowerCase()} prices across Kenyan shops, sorted by price.`} />
       <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground hover:underline underline-offset-4">Home</Link>

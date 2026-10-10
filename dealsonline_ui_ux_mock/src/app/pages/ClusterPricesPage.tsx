@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Seo } from '../components/common/Seo';
 import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
 import {
@@ -202,6 +203,14 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
 
   return (
     <div className="bg-background">
+      <Seo
+        title={lowest ? `${name}: ${formatPrice(lowest[1].price)} at ${storeName(lowest[0])}` : name}
+        description={
+          lowest
+            ? `${name} from ${formatPrice(lowest[1].price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`
+            : `Compare ${name} prices across Kenyan shops.`
+        }
+      />
       <div className="page-container py-6 lg:py-8">
         <Breadcrumbs cluster={cluster} />
 

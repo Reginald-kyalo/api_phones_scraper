@@ -1,195 +1,124 @@
+import { Bell, ExternalLink } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { PRProductCardGrid } from '../features/product/components/ProductCard';
-import { Package, Store, Bell, GitCompareArrows, Heart, Search, TrendingDown, Tag } from 'lucide-react';
+import { SavingBadge } from '../components/common/SavingBadge';
+import { StoreMark } from '../components/common/StoreMark';
+import { AdSlot, SponsoredLabel } from '../components/ads/AdSlot';
+import { Seo } from '../components/common/Seo';
 
-const MOCK_PRODUCT = {
-  id: 'style-guide-prod',
-  name: 'Premium Style Guide Product',
-  description: 'A sample product to demonstrate design tokens and component consistency.',
-  image: null,
-  price: 999.99,
-  numStores: 12,
-  categoryName: 'Design System',
-  categoryUrl: '/design',
-  productUrl: '/design',
-  productType: 'design_system',
-};
+/**
+ * Internal reference for the design rules (DESIGN_RULES.md), rendered with the
+ * real components so it can never drift from them. Not linked from the site
+ * and marked noindex. Sample values below are illustrative, not catalogue data.
+ */
+const SWATCHES = [
+  { name: 'Ink', cls: 'bg-ink', note: 'All text' },
+  { name: 'Background', cls: 'bg-background border border-border', note: 'Page' },
+  { name: 'Surface', cls: 'bg-surface-alt border border-border', note: 'Bands, image wells' },
+  { name: 'Border', cls: 'bg-border', note: '1px hairlines' },
+  { name: 'Muted text', cls: 'bg-muted-foreground', note: 'Secondary text' },
+  { name: 'Teal', cls: 'bg-primary', note: 'Action only' },
+  { name: 'Saving', cls: 'bg-saving', note: 'Money saved' },
+  { name: 'Success', cls: 'bg-success', note: 'In stock, done' },
+  { name: 'Warning', cls: 'bg-warning', note: 'Caveats' },
+  { name: 'Destructive', cls: 'bg-destructive', note: 'Errors only' },
+];
 
 export default function StyleGuidePage() {
   return (
-    <div className="bg-background min-h-screen pb-20">
-      <div className="max-w-[1200px] mx-auto px-4 py-12">
-        <header className="mb-12 border-b pb-8">
-          <h1 className="page-title mb-2">Design System & Style Guide</h1>
-          <p className="text-muted-foreground text-lg italic font-serif">
-            The "Ultra PriceRunner" visual language. Use this page to verify design evolution.
-          </p>
-        </header>
+    <div className="page-container py-10 space-y-12">
+      <Seo title="Style guide" noindex />
+      <header>
+        <p className="microcopy-label">Internal</p>
+        <h1 className="page-title mt-1">SokoPulse style guide</h1>
+        <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+          The rules live in DESIGN_RULES.md. This page renders them with the real components. Switch the
+          theme in the footer to check dark mode.
+        </p>
+      </header>
 
-        <div className="space-y-16">
-          {/* 1. Typography */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">1</span>
-              Typography
-            </h2>
-            <div className="grid gap-6 bg-surface-alt p-8 rounded-xl ultra-border">
-              <div>
-                <p className="microcopy-label mb-2">Heading 1</p>
-                <h1>Ultra PriceRunner Typography H1</h1>
-              </div>
-              <div>
-                <p className="microcopy-label mb-2">Heading 2</p>
-                <h2>Subheading Level 2 Example</h2>
-              </div>
-              <div>
-                <p className="microcopy-label mb-2">Heading 3</p>
-                <h3>Heading Level 3 Example</h3>
-              </div>
-              <div>
-                <p className="microcopy-label mb-2">Body Text</p>
-                <p className="text-sm leading-relaxed max-w-2xl">
-                  This is the standard body text. It uses the "Inter" font family with a size of 14px.
-                  The line height is optimized for readability in data-dense comparison tables.
-                  <span className="font-bold"> Bold text </span> and <span className="italic"> italic text </span> variations.
-                </p>
-              </div>
-              <div>
-                <p className="microcopy-label mb-2">Microcopy</p>
-                <p className="microcopy-label text-primary">Department / Category Name / Brand</p>
-              </div>
+      <Section title="Colour">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {SWATCHES.map((s) => (
+            <div key={s.name}>
+              <div className={`h-14 rounded-md ${s.cls}`} />
+              <p className="mt-2 text-sm font-medium text-foreground">{s.name}</p>
+              <p className="text-xs text-muted-foreground">{s.note}</p>
             </div>
-          </section>
-
-          {/* 2. Colors */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">2</span>
-              Color Palette
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-              {[
-                { name: 'Primary', class: 'bg-primary', text: 'text-primary-foreground' },
-                { name: 'Secondary', class: 'bg-secondary', text: 'text-secondary-foreground' },
-                { name: 'Background', class: 'bg-background', text: 'text-foreground', border: 'border' },
-                { name: 'Surface Alt', class: 'bg-surface-alt', text: 'text-foreground', border: 'border' },
-                { name: 'Muted', class: 'bg-muted', text: 'text-muted-foreground' },
-                { name: 'Accent', class: 'bg-accent', text: 'text-accent-foreground' },
-                { name: 'Destructive', class: 'bg-destructive', text: 'text-destructive-foreground' },
-                { name: 'Price', class: 'bg-price', text: 'text-white' },
-                { name: 'Success', class: 'bg-success', text: 'text-white' },
-                { name: 'Warning', class: 'bg-warning', text: 'text-white' },
-              ].map((c) => (
-                <div key={c.name} className="space-y-2">
-                  <div className={`aspect-square rounded-lg ${c.class} ${c.border || ''} flex items-end p-3`}>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest ${c.text}`}>Aa</span>
-                  </div>
-                  <p className="text-[11px] font-semibold text-center uppercase tracking-tighter">{c.name}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 3. Interactive Elements */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">3</span>
-              Buttons & Inputs
-            </h2>
-            <div className="space-y-8 bg-card p-8 rounded-xl ultra-border">
-              <div className="flex flex-wrap gap-4">
-                <Button>Default Primary</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="outline">Outline</Button>
-                <Button variant="ghost">Ghost</Button>
-                <Button variant="destructive">Destructive</Button>
-                <Button variant="link">Link Style</Button>
-              </div>
-              <div className="flex flex-wrap gap-4 items-center">
-                <Button size="sm">Small Button</Button>
-                <Button size="default">Default Button</Button>
-                <Button size="lg">Large Button</Button>
-                <Button size="icon"><Heart className="h-4 w-4" /></Button>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-6 max-w-xl">
-                <div className="space-y-2">
-                  <p className="microcopy-label">Standard Input</p>
-                  <Input placeholder="Enter text..." />
-                </div>
-                <div className="space-y-2">
-                  <p className="microcopy-label">Input with Icon (Search)</p>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search..." className="pl-9" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 4. Atomic Components */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">4</span>
-              Badges & Indicators
-            </h2>
-            <div className="flex flex-wrap gap-4 items-center bg-surface-alt p-8 rounded-xl ultra-border">
-              <Badge>Default Badge</Badge>
-              <Badge variant="secondary">Secondary Badge</Badge>
-              <Badge variant="outline">Outline Badge</Badge>
-              <Badge variant="destructive">Price Drop</Badge>
-            </div>
-          </section>
-
-          {/* 5. Feature Components */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">5</span>
-              Card Variants
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <PRProductCardGrid product={MOCK_PRODUCT} />
-              
-              {/* Manual Card Construction for Custom UI */}
-              <Card className="ultra-border overflow-hidden">
-                <CardHeader className="bg-surface-alt border-b p-4">
-                  <CardTitle className="text-sm font-bold flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-success" />
-                    Custom Widget
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                    Example of a custom card layout using the ultra-border utility class.
-                  </p>
-                  <Button variant="outline" size="sm" className="w-full">Action</Button>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
-
-          {/* 6. Feedback & Toasts */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">6</span>
-              Semantic Feedback
-            </h2>
-            <div className="grid gap-4 max-w-2xl">
-              <div className="flex items-center gap-3 p-4 bg-success/10 border border-success/30 rounded-lg">
-                <Package className="w-5 h-5 text-success" />
-                <p className="text-sm text-success font-medium">Operation completed successfully.</p>
-              </div>
-              <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <Bell className="w-5 h-5 text-destructive" />
-                <p className="text-sm text-destructive font-medium">Critical warning or error message.</p>
-              </div>
-            </div>
-          </section>
+          ))}
         </div>
-      </div>
+      </Section>
+
+      <Section title="Type">
+        <div className="space-y-3">
+          <p className="font-display text-[44px] font-bold leading-[1.08] tracking-tight text-ink">Hero, 44px</p>
+          <p className="page-title">Page title, 28px</p>
+          <p className="section-title">Section title, 20px</p>
+          <p className="text-base text-foreground">Body, 16px Hanken Grotesk</p>
+          <p className="microcopy-label">Eyebrow and column label</p>
+          <p className="price-num text-2xl font-bold text-foreground">KES 52,000</p>
+        </div>
+      </Section>
+
+      <Section title="Buttons">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button>Go to shop <ExternalLink className="h-4 w-4" aria-hidden="true" /></Button>
+          <Button variant="outline"><Bell className="h-4 w-4" aria-hidden="true" /> Set a price alert</Button>
+          <Button variant="ghost">Clear filters</Button>
+          <Button variant="link">How we make money</Button>
+          <button type="button" className="h-9 rounded-full border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground">
+            Selected chip
+          </button>
+          <button type="button" className="h-9 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground">
+            Chip
+          </button>
+        </div>
+      </Section>
+
+      <Section title="Saving and price">
+        <div className="flex flex-wrap items-center gap-4">
+          <SavingBadge saving={{ pct: 18, kes: 9400 }} />
+          <span className="price-num text-lg font-bold text-foreground">KES 52,000</span>
+          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground">Lowest</span>
+        </div>
+      </Section>
+
+      <Section title="Offer row">
+        <div className="rounded-md border border-border">
+          <div className="flex items-center gap-4 px-4 py-3">
+            <StoreMark store="jumia.co.ke" url="https://jumia.co.ke" size={36} />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">Jumia</p>
+              <p className="truncate text-xs text-muted-foreground">Exact listing title as the shop wrote it</p>
+            </div>
+            <span className="price-num text-base font-bold text-foreground">KES 52,000</span>
+            <Button size="sm" className="h-9 px-4 text-xs">Go to shop</Button>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Sponsored">
+        <div className="space-y-3">
+          <SponsoredLabel />
+          <AdSlot placement="product-sponsored-shop" />
+        </div>
+      </Section>
+
+      <Section title="Elevation">
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div className="rounded-md border border-border p-6 text-sm text-muted-foreground">Resting: border only</div>
+          <div className="rounded-md bg-popover p-6 text-sm text-muted-foreground shadow-raised">Raised: menus, sticky bars</div>
+          <div className="rounded-md bg-popover p-6 text-sm text-muted-foreground shadow-overlay">Overlay: dialogs, sheets</div>
+        </div>
+      </Section>
     </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h2 className="section-title mb-4">{title}</h2>
+      {children}
+    </section>
   );
 }

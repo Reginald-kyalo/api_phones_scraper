@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Seo } from '../components/common/Seo';
 import { Link } from 'react-router';
 import { clusterSaving, formatPrice, hasPrice, pricedShopCount, shopLabel } from '../lib/format';
 import { clustersApi, type ClusterDetail, type ClusterSummary } from '../lib/api';
@@ -244,6 +245,7 @@ export default function HomePage() {
 
   return (
     <div className="bg-background">
+      <Seo description="Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops. Every shop’s price, sorted by price." />
       <HeroSection productCount={manifest?.total_clusters} showcase={showcase} />
       <div className="mt-5">
         <CategoryStrip />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Seo } from '../components/common/Seo';
 import { clustersApi, type ClusterSummary } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { ClusterCard, ClusterGridSkeleton, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
@@ -88,6 +89,7 @@ export default function DealsPage() {
 
   return (
     <div className="bg-background">
+      <Seo title="Deals" description="The same product, cheaper at one Kenyan shop than another. Real savings between shops, checked daily." />
       <div className="page-container py-8">
         {/* Header */}
         <div className="mb-6">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Seo } from '../components/common/Seo';
 import { useNavigate } from 'react-router';
 import { User as UserIcon, Bell as BellIcon, CreditCard, Shield, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -49,6 +50,7 @@ export default function AccountPage() {
 
   return (
     <div className="prose-container py-8">
+      <Seo title="Your account" noindex />
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between">

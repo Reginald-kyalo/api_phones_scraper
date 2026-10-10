@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'react-router';
+import { Seo } from '../components/common/Seo';
 import { BRAND, MONEY_LINE } from '../lib/brand';
 import {
   Breadcrumb,
@@ -191,6 +192,7 @@ export default function LegalPage() {
 
   return (
     <div className="prose-container py-8">
+      <Seo title={page.title} />
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>

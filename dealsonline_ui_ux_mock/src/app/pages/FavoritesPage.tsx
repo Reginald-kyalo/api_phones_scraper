@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { Seo } from '../components/common/Seo';
 import { Heart, Trash2 } from 'lucide-react';
 import { useLocalFavorites } from '../hooks/useLocalStorage';
 import { Button } from '../components/ui/button';
@@ -23,6 +24,7 @@ export default function FavoritesPage() {
 
   return (
     <div className="page-container py-6">
+      <Seo title="Favourites" noindex />
       {/* Breadcrumb */}
       <Breadcrumb className="mb-4">
         <BreadcrumbList>

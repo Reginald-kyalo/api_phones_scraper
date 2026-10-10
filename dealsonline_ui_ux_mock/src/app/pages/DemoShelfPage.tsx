@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Seo } from '../components/common/Seo';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ChevronRight, PackageOpen } from 'lucide-react';
 import { browseApi, type BrowseNode, type ClusterSummary } from '../lib/api';
@@ -170,6 +171,7 @@ export default function DemoShelfPage() {
 
   return (
     <div className="bg-background min-h-screen">
+      <Seo title={heading} description={`Compare ${heading.toLowerCase()} prices across Kenyan shops.`} />
       <div className="page-container py-8">
         {error !== 'missing' && <Crumbs node={node} />}
 

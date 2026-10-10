@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { Seo } from '../components/common/Seo';
 import { Link, useNavigate } from 'react-router';
 import { useLocalComparison } from '../hooks/useLocalStorage';
 import { pricedShopCount, shopLabel } from '../lib/format';
@@ -47,6 +48,7 @@ export default function ComparisonPage() {
   if (comparisonItems.length === 0) {
     return (
       <div className="page-container py-6">
+      <Seo title="Compare products" noindex />
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
@@ -81,6 +83,7 @@ export default function ComparisonPage() {
 
   return (
     <div className="page-container py-6">
+      <Seo title={title} noindex />
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
