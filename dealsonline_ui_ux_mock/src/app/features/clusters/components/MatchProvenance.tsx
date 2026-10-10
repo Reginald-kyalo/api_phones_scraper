@@ -21,7 +21,7 @@ export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
   const members = cluster.mvp_merged_members ?? [];
 
   return (
-    <div className="mb-4 rounded-lg ultra-border">
+    <div className="rounded-md ultra-border">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -60,9 +60,6 @@ export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
                 </li>
               ))}
             </ul>
-          )}
-          {cluster.mvp_rule && (
-            <p className="mt-2 break-words font-mono text-[11px]">{cluster.mvp_rule}</p>
           )}
         </div>
       )}

@@ -1,37 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
-import { comparedLabel, formatPrice, savingPct, shopLabel } from '../lib/format';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
 import {
-  ChevronDown,
-  ExternalLink,
-  Loader2,
-  AlertTriangle,
-  ArrowLeft,
-  RefreshCw,
-  Package,
-  TrendingDown,
-} from 'lucide-react';
-import { storeName, storeInitial } from '../lib/storeIdentity';
+  checkedAgo,
+  clusterSaving,
+  displaySaving,
+  formatPrice,
+  hasPrice,
+  shopLabel,
+} from '../lib/format';
+import { bestImage } from '../lib/images';
+import { categoryLabel } from './CatalogueCategoriesPage';
+import { Button } from '../components/ui/button';
+import { Skeleton } from '../components/ui/skeleton';
+import { Bell, ChevronRight, ExternalLink, Info, Package, RefreshCw } from 'lucide-react';
+import { storeName } from '../lib/storeIdentity';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
+import { SavingBadge } from '../components/common/SavingBadge';
+import { StoreMark } from '../components/common/StoreMark';
 import { MatchProvenance } from '../features/clusters/components/MatchProvenance';
 import { SpreadEvidence } from '../features/clusters/components/SpreadEvidence';
 import { ReportDialog } from '../features/clusters/components/ReportDialog';
 import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
+import PriceAlertDialog from '../features/alerts/components/PriceAlertDialog';
 
 type Config = ClusterDetail['configs'][number];
+type Offer = [store: string, offer: ClusterStore];
 
-/**
- * The shops that can actually PRICE one configuration, cheapest first.
- *
- * This is intentionally derived from the rows that will render rather than
- * `n_stores`, because the config-level count is not served by the API.
- */
-function pricedOffers(byStore: Record<string, ClusterStore> | null | undefined): [string, ClusterStore][] {
+/** Shops that can actually PRICE something, cheapest first. */
+function pricedOffers(byStore: Record<string, ClusterStore> | null | undefined): Offer[] {
   return Object.entries(byStore ?? {})
-    .filter(([, offer]) => offer != null && offer.price != null && offer.price >= 1)
+    .filter(([, offer]) => offer != null && hasPrice(offer.price))
     .sort(([, a], [, b]) => (a.price as number) - (b.price as number));
 }
 
@@ -40,117 +40,17 @@ function variantLabel(config: Config): string {
 }
 
 /**
- * One configuration of a cluster, with the per-store comparison it carries.
+ * The product page: the one page where a shopper has decided to buy.
  *
- * The static mock used to render only `from PRICE at STORE · N shops` and drop
- * `configs[].by_store` — a full `{price, url, title}` map per shop. This block
- * renders that same variant comparison as the live app.
- */
-function VariantBlock({ config }: { config: Config }) {
-  const [open, setOpen] = useState(false);
-  const offers = pricedOffers(config.by_store);
-  const label = variantLabel(config);
-  const spread = config.spread_pct;
-  const comparable = offers.length > 1;
-
-  return (
-    <div data-testid="variant" className="rounded-xl ultra-border overflow-hidden">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="w-full text-left p-4 flex items-baseline justify-between gap-2 flex-wrap
-                   hover:bg-surface-alt transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          <span className="font-semibold text-sm text-foreground">{label}</span>
-          {spread != null && spread > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-deep
-                             bg-teal/10 rounded-md px-1.5 py-0.5">
-              <TrendingDown className="h-3 w-3" aria-hidden="true" />
-              {Math.round(spread)}%
-            </span>
-          )}
-        </span>
-        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-          from{' '}
-          <span className="price-num font-bold text-foreground">
-            {formatPrice(config.best_price)}
-          </span>
-          {config.cheapest_store ? ` at ${storeName(config.cheapest_store)}` : ''}
-          {' · '}
-          {comparedLabel(offers.length)}
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
-            aria-hidden="true"
-          />
-        </span>
-      </button>
-      {open && (
-        <div className="px-4 pb-4">
-          {offers.length > 0 ? (
-            <>
-              <ul aria-label={`${label} prices`} className="space-y-2 list-none p-0">
-                {offers.map(([rawStore, offer], idx) => (
-                  <li
-                    key={rawStore}
-                    className={`flex items-center gap-4 rounded-xl p-3 transition-colors ultra-border hover:bg-surface-alt ${
-                      idx === 0 ? 'border-primary/20' : 'border-border'
-                    }`}
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-foreground text-background font-bold text-xs">
-                      {storeInitial(rawStore)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-foreground">{storeName(rawStore)}</span>
-                        {idx === 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-teal/10 text-teal-deep border-primary/20">
-                            Best price
-                          </Badge>
-                        )}
-                      </div>
-                      {offer.title && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{offer.title}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <span className="price-num text-base font-bold text-foreground">
-                        {formatPrice(offer.price)}
-                      </span>
-                      <Button asChild size="sm" className="text-xs h-8 px-4">
-                        <a href={offer.url} target="_blank" rel="noopener noreferrer">
-                          Go to store
-                          <ExternalLink className="h-3 w-3 ml-1" aria-hidden="true" />
-                        </a>
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              {comparable && spread != null && spread > 0 && (
-                <p className="text-xs text-teal-deep mt-2">
-                  {Math.round(spread)}% between the cheapest and dearest {label} — same
-                  configuration, so this saving is real.
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No usable price for this configuration right now.
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * Live cross-store price comparison for one cluster (the matching engine's
- * output). Renders the honest-price contract: condition_basis labels the
- * headline, data_warning is surfaced as a caveat, comparison_grade=false gets
- * an accessory disclaimer, and per-store rows carry real click-through URLs.
+ * Layout per the design review §3.3. Left: name, variant selector, a one-line
+ * summary, the price list sorted by price, history, and "about this
+ * comparison". Right (sticky on desktop): photo, best-price card with "Go to
+ * shop" and "Set a price alert", then the reserved sponsored slot. On mobile
+ * a bottom bar carries the best price once its card scrolls away.
+ *
+ * Renders the honest-price contract: condition_basis labels the headline,
+ * data_warning and comparison_grade=false become plain notes, and every row
+ * carries the shop's own listing title and a real click-through URL.
  */
 export default function ClusterPricesPage() {
   const { clusterId } = useParams<{ clusterId: string }>();
@@ -158,6 +58,7 @@ export default function ClusterPricesPage() {
   const [capturedAt, setCapturedAt] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const { addItem } = useRecentlyViewed();
 
   const load = useCallback(async () => {
     if (!clusterId) return;
@@ -177,233 +78,432 @@ export default function ClusterPricesPage() {
     load();
   }, [load]);
 
-  if (loading) {
-    return (
-      <div className="page-container py-16 flex justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-label="Loading price comparison" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!cluster) return;
+    addItem({
+      id: cluster.cluster_id,
+      name: cluster.display_name ?? cluster.title,
+      image: bestImage(cluster) ?? '',
+      category: categoryLabel(cluster.category ?? ''),
+    });
+  }, [cluster, addItem]);
+
+  if (loading) return <ProductPageSkeleton />;
 
   if (error || !cluster) {
     return (
       <div className="page-container py-16 text-center">
-        <p className="text-sm text-muted-foreground mb-4">We couldn't load this price comparison.</p>
-        <div className="flex justify-center gap-3">
-          <Button variant="outline" onClick={load} className="gap-2">
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            Try again
-          </Button>
-          <Button asChild variant="ghost">
-            <Link to="/deals">All deals</Link>
-          </Button>
-        </div>
+        <p className="text-sm text-muted-foreground mb-4">We couldn’t load this product. Try again.</p>
+        <Button variant="outline" onClick={load} className="gap-2">
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          Try again
+        </Button>
       </div>
     );
   }
 
+  return <ProductView cluster={cluster} capturedAt={capturedAt} />;
+}
+
+function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; capturedAt?: string }) {
   const name = cluster.display_name ?? cluster.title;
   const likelyUsed = cluster.condition_basis === 'likely_used';
-  const rows = Object.entries(cluster.best_by_store)
-    .filter(([, s]) => s.price != null && s.price >= 1)
-    .sort(([, a], [, b]) => (a.price as number) - (b.price as number));
-  // A saving, never the raw spread — the API's percentage divides by the
-  // cheapest price, so it is a markup, not what the shopper keeps. See savingPct.
-  const saving = savingPct(cluster.like_for_like_spread_pct);
-  const facetChips = Object.entries(cluster.spec_facets).flatMap(([k, vals]) =>
-    vals.map((v) => `${k.toUpperCase()} ${v}`),
+  const image = bestImage(cluster);
+
+  // Variant selector. With several configurations the default is the one most
+  // shops price, so the first list a shopper sees is like-for-like; "Any
+  // variant" shows each shop's cheapest offer whatever the configuration.
+  const configs = useMemo(
+    () => cluster.configs.filter((c) => pricedOffers(c.by_store).length > 0),
+    [cluster.configs],
+  );
+  const defaultConfig = useMemo(() => {
+    if (configs.length < 2) return -1;
+    let best = 0;
+    configs.forEach((c, i) => {
+      if (pricedOffers(c.by_store).length > pricedOffers(configs[best].by_store).length) best = i;
+    });
+    return best;
+  }, [configs]);
+  const [selected, setSelected] = useState(defaultConfig);
+  useEffect(() => setSelected(defaultConfig), [defaultConfig]);
+
+  const config = selected >= 0 ? configs[selected] : null;
+  const offers = config ? pricedOffers(config.by_store) : pricedOffers(cluster.best_by_store);
+  const lowest = offers[0] ?? null;
+  const highest = offers.length > 1 ? offers[offers.length - 1] : null;
+  const saving = config
+    ? offers.length > 1
+      ? displaySaving(config.spread_pct, lowest?.[1].price)
+      : null
+    : clusterSaving(cluster);
+  const checked = checkedAgo(cluster.last_seen);
+
+  const [alertOpen, setAlertOpen] = useState(false);
+  const alertProduct = {
+    id: cluster.cluster_id,
+    name,
+    price: lowest?.[1].price ?? cluster.best_price ?? 0,
+    image,
+    categoryName: categoryLabel(cluster.category ?? ''),
+  };
+
+  // Mobile sticky bar appears once the in-flow best-price card has scrolled off.
+  const mobileCardRef = useRef<HTMLDivElement>(null);
+  const [showBar, setShowBar] = useState(false);
+  useEffect(() => {
+    const el = mobileCardRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([entry]) =>
+      setShowBar(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const bestCard = (
+    <BestPriceCard
+      offer={lowest}
+      likelyUsed={likelyUsed}
+      saving={saving}
+      onAlert={() => setAlertOpen(true)}
+    />
   );
 
   return (
-    <div className="bg-white min-h-screen">
-      <div className="page-container py-8">
-        <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 gap-1">
-          <Link to="/deals">
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            All deals
+    <div className="bg-white">
+      <div className="page-container py-6 lg:py-8">
+        <Breadcrumbs cluster={cluster} />
+
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
+          {/* ── Left column ── */}
+          <div className="min-w-0">
+            {cluster.brand && <p className="microcopy-label">{cluster.brand}</p>}
+            <h1 className="page-title mt-1">{name}</h1>
+
+            {configs.length > 1 && (
+              <div role="radiogroup" aria-label="Variant" className="mt-4 flex flex-wrap gap-2">
+                {configs.map((c, i) => (
+                  <VariantChip key={i} active={selected === i} onClick={() => setSelected(i)}>
+                    {variantLabel(c)}
+                  </VariantChip>
+                ))}
+                <VariantChip active={selected === -1} onClick={() => setSelected(-1)}>
+                  Any variant
+                </VariantChip>
+              </div>
+            )}
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              {lowest ? (
+                <>
+                  <span className="price-num text-foreground">{formatPrice(lowest[1].price)}</span>
+                  {highest && (
+                    <>
+                      {' '}to <span className="price-num text-foreground">{formatPrice(highest[1].price)}</span>
+                    </>
+                  )}{' '}
+                  across {shopLabel(offers.length)}
+                </>
+              ) : (
+                'No shop has a current price for this.'
+              )}
+              {checked && <> · checked {checked}</>}
+            </p>
+
+            {/* Mobile: photo and best price come before the list. */}
+            <div className="mt-5 space-y-4 lg:hidden">
+              <ProductPhoto image={image} />
+              <div ref={mobileCardRef}>{bestCard}</div>
+            </div>
+
+            {(!cluster.comparison_grade || cluster.data_warning) && (
+              <div className="mt-6 space-y-2">
+                {!cluster.comparison_grade && (
+                  <Note>
+                    Accessory listings vary in exact model, so we don’t claim a saving here. Check the
+                    shop titles match before you buy.
+                  </Note>
+                )}
+                {cluster.data_warning && <Note>{cluster.data_warning}</Note>}
+              </div>
+            )}
+
+            {/* ── The price list ── */}
+            <section aria-labelledby="prices" className="mt-8">
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 id="prices" className="section-title">
+                  {likelyUsed ? 'Used and refurbished prices' : 'Prices'}
+                </h2>
+                <p className="microcopy-label">Sorted by price</p>
+              </div>
+
+              {offers.length > 0 ? (
+                <ul aria-label={`${name} prices`} className="divide-y divide-border rounded-md border border-border list-none p-0">
+                  {offers.map(([store, offer], idx) => (
+                    <OfferRow key={store} store={store} offer={offer} lowest={idx === 0 && offers.length > 1} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No shop has a usable price for this variant right now.</p>
+              )}
+
+              {!likelyUsed && cluster.likely_used_best_price != null && (cluster.n_likely_used ?? 0) > 0 && (
+                <details className="mt-3 rounded-md border border-border">
+                  <summary className="cursor-pointer px-4 py-3 text-sm text-muted-foreground">
+                    Used and refurbished from{' '}
+                    <span className="price-num text-foreground">{formatPrice(cluster.likely_used_best_price)}</span>{' '}
+                    ({cluster.n_likely_used} {cluster.n_likely_used === 1 ? 'listing' : 'listings'})
+                  </summary>
+                  <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+                    Kept out of the list above so new and used prices are never compared with each other.
+                  </p>
+                </details>
+              )}
+            </section>
+
+            {/* Real history only — never synthesised to fill the slot. */}
+            {cluster.price_history && cluster.price_history.length >= 2 && (
+              <section className="mt-10">
+                <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
+              </section>
+            )}
+
+            {/* ── About this comparison ── */}
+            <section aria-labelledby="about-comparison" className="mt-10 space-y-3">
+              <h2 id="about-comparison" className="section-title">About this comparison</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We match the same product across shops by its listing details, then sort every price by
+                price. Each row shows the shop’s own listing title so you can check the match.
+                {cluster.last_seen && (
+                  <>
+                    {' '}Last full check{' '}
+                    {new Date(cluster.last_seen).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                    .
+                  </>
+                )}{' '}
+                <Link to="/how-we-make-money" className="text-link hover:underline underline-offset-4">
+                  How we make money
+                </Link>
+              </p>
+              <SpreadEvidence cluster={cluster} />
+              <MatchProvenance cluster={cluster} />
+              <div className="-ml-3">
+                <ReportDialog cluster={cluster} capturedAt={capturedAt} />
+              </div>
+            </section>
+          </div>
+
+          {/* ── Right column (desktop) ── */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-20 space-y-4">
+              <ProductPhoto image={image} />
+              {bestCard}
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      {/* Mobile sticky bar: the ORGANIC best price, never a sponsored one. */}
+      {lowest && (
+        <div
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-4 py-3 shadow-raised transition-transform duration-150 ease-out lg:hidden ${
+            showBar ? 'translate-y-0' : 'translate-y-full'
+          }`}
+          aria-hidden={!showBar}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-xs text-muted-foreground">Lowest at {storeName(lowest[0])}</p>
+              <p className="price-num text-base font-bold text-foreground">{formatPrice(lowest[1].price)}</p>
+            </div>
+            <Button asChild className="h-10 px-5" tabIndex={showBar ? 0 : -1}>
+              <a href={lowest[1].url} target="_blank" rel="noopener noreferrer">
+                Go to shop
+              </a>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {alertOpen && (
+        <PriceAlertDialog open={alertOpen} onOpenChange={setAlertOpen} product={alertProduct} />
+      )}
+    </div>
+  );
+}
+
+function Breadcrumbs({ cluster }: { cluster: ClusterDetail }) {
+  const slug = cluster.category ?? '';
+  return (
+    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+      <Link to="/" className="hover:text-foreground hover:underline underline-offset-4">Home</Link>
+      {slug && (
+        <>
+          <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          <Link to={`/browse/${slug}`} className="hover:text-foreground hover:underline underline-offset-4">
+            {categoryLabel(slug)}
           </Link>
+        </>
+      )}
+      {cluster.brand && (
+        <>
+          <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          <span className="text-foreground capitalize">{cluster.brand}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+function VariantChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={`h-9 rounded-full border px-4 text-sm font-medium transition-colors active:translate-y-px ${
+        active
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-white text-foreground hover:border-muted-foreground'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function OfferRow({ store, offer, lowest }: { store: string; offer: ClusterStore; lowest: boolean }) {
+  return (
+    <li className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-4">
+      <StoreMark store={store} url={offer.url} size={36} />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">{storeName(store)}</span>
+          {lowest && (
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground">
+              Lowest
+            </span>
+          )}
+        </div>
+        {offer.title && <p className="mt-0.5 truncate text-xs text-muted-foreground">{offer.title}</p>}
+      </div>
+      <div className="flex flex-shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-4">
+        <span className="price-num text-base font-bold text-foreground">{formatPrice(offer.price)}</span>
+        <Button asChild size="sm" className="h-9 px-4 text-xs">
+          <a href={offer.url} target="_blank" rel="noopener noreferrer">
+            Go to shop
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
         </Button>
+      </div>
+    </li>
+  );
+}
 
-        <p className="microcopy-label">
-          {[cluster.brand, cluster.category].filter(Boolean).join(' · ') || 'Price comparison'}
-        </p>
-        <h1 className="page-title mt-1 mb-3">{name}</h1>
+function BestPriceCard({
+  offer,
+  likelyUsed,
+  saving,
+  onAlert,
+}: {
+  offer: Offer | null;
+  likelyUsed: boolean;
+  saving: ReturnType<typeof displaySaving>;
+  onAlert: () => void;
+}) {
+  return (
+    <div className="rounded-md border border-border p-5">
+      <p className="microcopy-label">{likelyUsed ? 'Lowest asking price (used)' : 'Best price'}</p>
+      {offer ? (
+        <>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="price-num text-3xl font-bold text-foreground">{formatPrice(offer[1].price)}</span>
+            <SavingBadge saving={saving} />
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">at {storeName(offer[0])}</p>
+          <Button asChild className="mt-4 h-11 w-full">
+            <a href={offer[1].url} target="_blank" rel="noopener noreferrer">
+              Go to shop
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </Button>
+        </>
+      ) : (
+        <p className="mt-1 text-sm text-muted-foreground">No current price.</p>
+      )}
+      <Button variant="outline" className="mt-2 h-11 w-full" onClick={onAlert}>
+        <Bell className="h-4 w-4" aria-hidden="true" />
+        Set a price alert
+      </Button>
+    </div>
+  );
+}
 
-        {facetChips.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {facetChips.map((chip) => (
-              <Badge key={chip} variant="secondary" className="text-[11px] bg-teal/10 text-teal-deep border-primary/20">
-                {chip}
-              </Badge>
+function ProductPhoto({ image }: { image: string | null }) {
+  return (
+    <div className="relative flex aspect-[4/3] items-center justify-center rounded-md border border-border bg-white p-3 lg:aspect-square">
+      <Package className="absolute h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
+      {image && (
+        <ImageWithFallback
+          src={image}
+          alt=""
+          className="relative max-h-full max-w-full object-contain"
+          fallback={<span className="sr-only">Image unavailable</span>}
+        />
+      )}
+    </div>
+  );
+}
+
+function Note({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex items-start gap-2 rounded-md bg-surface-alt px-3 py-2.5 text-sm text-muted-foreground">
+      <Info className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function ProductPageSkeleton() {
+  return (
+    <div className="page-container py-6 lg:py-8" aria-busy="true" aria-label="Loading product">
+      <Skeleton className="mb-4 h-4 w-48" />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
+        <div>
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="mt-2 h-8 w-3/4" />
+          <Skeleton className="mt-4 h-4 w-80" />
+          <div className="mt-8 space-y-0 rounded-md border border-border">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-0">
+                <Skeleton className="h-9 w-9" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+                <Skeleton className="h-9 w-40" />
+              </div>
             ))}
           </div>
-        )}
-
-        {cluster.image && (
-          <div className="relative mb-4 flex h-56 items-center justify-center rounded-xl bg-white p-4 ultra-border">
-            {/* Retailer CDNs are slow (~5% of URLs are genuinely dead), so the mark
-                sits UNDERNEATH: the frame is never blank while an image decodes,
-                and a failure just leaves the mark showing. */}
-            <Package
-              className="absolute h-10 w-10 text-muted-foreground/20"
-              aria-hidden="true"
-            />
-            <ImageWithFallback
-              src={cluster.image}
-              alt=""
-              className="relative max-h-full max-w-full object-contain"
-              fallback={<span className="sr-only">Image unavailable</span>}
-            />
-          </div>
-        )}
-
-        <MatchProvenance cluster={cluster} />
-
-        {/* ⛔ This used to read "treat this spread as a guide" — a caveat about a
-            number that is never on the page. Measured over the 88,137 shipped
-            clusters, `comparison_grade: false` and "no spread" are the SAME SET,
-            zero exceptions: the spread needs a primary_facet and accessories have
-            none. So the honest job here is to explain an ABSENCE, not to hedge a
-            figure. 35,577 clusters (40% of the catalogue) show this, 654 of them
-            with two or more shops. */}
-        {!cluster.comparison_grade && (
-          <div className="flex items-start gap-2 rounded-lg ultra-border p-3 mb-4 text-sm text-muted-foreground">
-            <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
-            <span>
-              Accessory listings vary in exact model, so we don&rsquo;t claim a
-              like-for-like saving here.{' '}
-              {rows.length > 1
-                ? 'Compare the shop prices below and check the titles match.'
-                : 'Only one shop currently lists it.'}
-            </span>
-          </div>
-        )}
-        {cluster.data_warning && (
-          <div className="flex items-start gap-2 rounded-lg ultra-border p-3 mb-4 text-sm text-muted-foreground">
-            <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
-            {cluster.data_warning}
-          </div>
-        )}
-
-        {/* Honest two-tier price block */}
-        <div className="bg-surface-alt rounded-xl p-4 mb-6 inline-flex flex-col ultra-border">
-          <p className="microcopy-label mb-0.5">
-            {likelyUsed ? 'Lowest asking price (used/refurb)' : 'Best price (new)'}
-          </p>
-          <div className="flex items-end gap-3">
-            <span className="price-num text-3xl font-bold text-foreground">{formatPrice(cluster.best_price)}</span>
-            {/* ⛔ rows.length, NOT n_stores. n_stores counts stores that may have
-                no usable price, and those are dropped from best_by_store — so on
-                1,777 of the 88,137 shipped clusters this read "across 2 shops"
-                above a single store row. Same defect as the hero's "5 OFFERS"
-                over six rows: a count sourced from something other than the thing
-                being counted. */}
-            {rows.length > 0 && (
-              <span className="text-sm text-muted-foreground mb-1">across {shopLabel(rows.length)}</span>
-            )}
-          </div>
-          {/* Stated once. Where spread_basis exists the panel below makes the same
-              claim WITH its two offers attached, and repeating the bare number
-              above it would just be the unevidenced version of the same sentence. */}
-          {saving != null && !cluster.spread_basis && (
-            <p className="text-xs text-teal-deep mt-1">
-              Buying at the cheapest shop saves up to {Math.round(saving)}% on the same
-              configuration.
-            </p>
-          )}
-          {!likelyUsed && cluster.likely_used_best_price != null && (cluster.n_likely_used ?? 0) > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Used/refurb asking from {formatPrice(cluster.likely_used_best_price)} ({cluster.n_likely_used} listings)
-            </p>
-          )}
         </div>
-
-        <SpreadEvidence cluster={cluster} />
-
-        {/* Store rows — real prices, real click-through */}
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Price comparison</h2>
-          {/* Stale rows never ship, so this only ever confirms freshness or says
-              the source dates nothing — it is never a warning. */}
-          {cluster.last_seen && (
-            <p className="text-xs text-muted-foreground">
-              Last checked{' '}
-              {new Date(cluster.last_seen).toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
-            </p>
-          )}
-          {/* ⛔ Removed: a "this store doesn't publish a date" line for
-              freshness_basis === 'unknown'. It blamed the retailer for what was
-              actually our own staleness — six categories were stuck on 2026-06-30
-              builds, not undated at source. After the re-cluster the bucket is
-              empty: 0 of 88,137 clusters are 'unknown' and 0 lack last_seen. */}
+        <div className="hidden lg:block space-y-4">
+          <Skeleton className="aspect-square w-full" />
+          <Skeleton className="h-48 w-full" />
         </div>
-        <div className="space-y-3 mb-8">
-          {rows.map(([rawStore, offer], idx) => (
-            <div
-              key={rawStore}
-              className={`flex items-center gap-4 rounded-xl p-4 transition-colors ultra-border hover:bg-surface-alt ${
-                idx === 0 ? 'border-primary/20' : 'border-border'
-              }`}
-            >
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-foreground text-background font-bold text-sm">
-                {storeInitial(rawStore)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-foreground">{storeName(rawStore)}</span>
-                  {idx === 0 && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-teal/10 text-teal-deep border-primary/20">
-                      Best price
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{offer.title}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                <span className="price-num text-lg font-bold text-foreground">{formatPrice(offer.price)}</span>
-                <Button asChild size="sm" className="text-xs h-8 px-4">
-                  <a href={offer.url} target="_blank" rel="noopener noreferrer">
-                    Go to store
-                    <ExternalLink className="h-3 w-3 ml-1" aria-hidden="true" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="-mt-4 mb-8 flex justify-end">
-          <ReportDialog cluster={cluster} capturedAt={capturedAt} />
-        </div>
-
-        {/* Per-configuration splits */}
-        {cluster.configs.length > 1 && (
-          <>
-            <h2 className="text-lg font-semibold text-foreground mb-1">By configuration</h2>
-            <p className="text-sm text-muted-foreground mb-3">
-              Like-for-like prices per variant — the honest comparison. The list above takes each
-              shop's best offer whatever the variant, so it can put a 128GB price beside a 256GB
-              one; these do not.
-            </p>
-            <div className="space-y-3">
-              {cluster.configs.map((cfg, i) => (
-                <VariantBlock key={i} config={cfg} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Real history only — 13,287 of 61,473 clusters (21.6%) have >=2 dated
-            points, groceries included (24.2%). Never synthesised to fill the slot. */}
-        {cluster.price_history && cluster.price_history.length >= 2 && (
-          <div className="mt-8">
-            <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
-          </div>
-        )}
       </div>
     </div>
   );

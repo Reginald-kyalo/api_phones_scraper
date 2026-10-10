@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import type { ClusterDetail } from '../../../lib/api';
-import { formatPrice, savingPct } from '../../../lib/format';
+import { displaySaving, formatPrice } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 
 /**
@@ -26,25 +26,27 @@ export function SpreadEvidence({ cluster }: { cluster: ClusterDetail }) {
   // The panel headlines the SAVING, matching the card the reader arrived from.
   // `spread_pct` is a markup over the cheapest price and would read ~27 points
   // higher for the same two offers — see savingPct.
-  const pct = savingPct(basis?.spread_pct);
-
-  if (!basis || !low || !high || pct == null) return null;
+  if (!basis || !low || !high) return null;
   if (low.price == null || high.price == null) return null;
+  // Same capped number as the badge. When the gap is too big to call a saving
+  // (usually two different products) the evidence still shows, unlabelled, so
+  // the reader can see why.
+  const saving = displaySaving(basis.spread_pct, low.price);
 
   // The engine writes "—" when a category has no facet to split on, which is not
   // a configuration a reader can be told two offers share.
   const facet = basis.facet_label && basis.facet_label !== '—' ? basis.facet_label : null;
 
   return (
-    <section aria-labelledby="spread-evidence" className="mb-6 rounded-xl ultra-border p-4">
+    <section aria-labelledby="spread-evidence" className="rounded-md ultra-border p-4">
       <h2 id="spread-evidence" className="microcopy-label mb-3">
-        What the {Math.round(pct)}% saving compares
+        {saving ? `What the ${saving.pct}% saving compares` : 'The two prices behind the gap'}
         {facet ? ` · ${facet}` : ''}
       </h2>
 
       <div className="space-y-2">
         {[
-          { offer: low, tone: 'text-teal-deep' },
+          { offer: low, tone: 'text-foreground' },
           { offer: high, tone: 'text-muted-foreground' },
         ].map(({ offer, tone }, i) => (
           <div key={i} className="flex items-baseline gap-3">
