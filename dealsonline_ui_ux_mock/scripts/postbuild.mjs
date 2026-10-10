@@ -8,8 +8,12 @@
  *    sitemap.xml and robots.txt, and makes 404.html the app shell
  *    (scripts/prerender.ts, bundled here with esbuild so it can import the
  *    app's own TypeScript).
+ * 3. With VITE_CATALOGUE=api, takes the dataset OUT of the site: dist/demo
+ *    moves to .catalogue/, which `npm run catalogue:upload` copies to the
+ *    private R2 bucket the catalogue function reads. The deploy then has no
+ *    public dataset files at all.
  */
-import { writeFileSync } from 'node:fs';
+import { existsSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
@@ -36,3 +40,10 @@ await build({
   define: { 'import.meta.env.BASE_URL': JSON.stringify(base) },
 });
 await import(pathToFileURL(bundle).href);
+
+if (process.env.VITE_CATALOGUE === 'api') {
+  const out = join(process.cwd(), '.catalogue');
+  rmSync(out, { recursive: true, force: true });
+  if (existsSync(join(dist, 'demo'))) renameSync(join(dist, 'demo'), out);
+  console.log('postbuild: catalogue moved out of dist to .catalogue/ (upload with npm run catalogue:upload)');
+}

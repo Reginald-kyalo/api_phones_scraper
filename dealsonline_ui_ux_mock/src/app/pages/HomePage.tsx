@@ -171,7 +171,7 @@ export default function HomePage() {
       try {
         const [m, d] = await Promise.all([
           clustersApi.getManifest(),
-          clustersApi.getDeals(),
+          clustersApi.getDeals({ limit: 96 }),
         ]);
         if (cancelled) return;
         setManifest(m);
@@ -222,7 +222,7 @@ export default function HomePage() {
 
         const featured = m.categories.filter((c) => c.comparison_grade).slice(0, 4);
         const pages = await Promise.all(
-          featured.map((c) => clustersApi.getCategoryPage(c.slug, 0)),
+          featured.map((c) => clustersApi.getCategoryPage(c.slug, 24)),
         );
         if (cancelled) return;
         setRails(featured.map((c, i) => ({ slug: c.slug, rows: pages[i].results.slice(0, 24) })));

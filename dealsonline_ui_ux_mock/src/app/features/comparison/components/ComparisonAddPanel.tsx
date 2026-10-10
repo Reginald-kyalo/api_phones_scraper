@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { clustersApi, type ClusterSummary } from '../../../lib/api';
+import { readFilters } from '../../../lib/listing';
 import { formatPrice, productName } from '../../../lib/format';
 import { categoryLabel } from '../../../lib/categories';
 import { type LocalComparisonItem } from '../../../hooks/useLocalStorage';
@@ -37,7 +38,7 @@ export function ComparisonAddPanel({
     setLoadingSimilar(true);
     (async () => {
       try {
-        const res = await clustersApi.getCategoryPage(scopedProductType, 0);
+        const res = await clustersApi.getCategoryPage(scopedProductType, 48);
         if (!cancelled) {
           const ids = new Set(comparisonItems.map(c => c.product_id));
           setSimilar(res.results.filter(p => !ids.has(p.cluster_id)).slice(0, 30));
@@ -59,11 +60,12 @@ export function ComparisonAddPanel({
     setLoading(true);
     try {
       // Listing rows, not one detail shard per hit (each shard is ~400 KB).
-      const hits = await clustersApi.searchSummaries(q.trim(), {
+      const hits = await clustersApi.search(q.trim(), {
         slug: scopedProductType || undefined,
-        limit: 60,
+        filters: readFilters(new URLSearchParams()),
+        limit: 20,
       });
-      setSearchResults(hits.results.flatMap((h) => (h.row ? [h.row] : [])).slice(0, 20));
+      setSearchResults(hits.results);
     } catch {
       setSearchResults([]);
     } finally {

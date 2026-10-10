@@ -85,6 +85,43 @@ sitemap use it (default: the placeholder in `src/app/lib/brand.ts`).
 `PRERENDER_MAX_PRODUCTS` caps product pages (default 12,000) so a deploy stays
 under Cloudflare Pages' 20,000-file limit.
 
+## Private catalogue (R2), so the dataset is not downloadable
+
+By default the build ships the dataset in `dist/demo/` and the browser reads it
+directly: anyone can copy every file. With **`VITE_CATALOGUE=api`** the browser
+instead asks `/api/catalogue/*` (a Pages Function) for one page at a time, at
+most 96 products, and the dataset lives in a private R2 bucket. Same queries
+both ways (`src/app/lib/catalogueQueries.ts`), so results do not change.
+
+One-time setup, in this order (the site breaks if the variable is set before
+the bucket is filled):
+
+1. **Create the bucket.** Cloudflare dashboard → R2 → Create bucket, name
+   `sokopulse-catalogue`. Leave public access off.
+2. **Create an API token** for uploads: My Profile → API Tokens → Create token →
+   "Edit Cloudflare Workers" template, or a custom token with *Account · Workers
+   R2 Storage · Edit*. Note your Account ID (R2 overview page, right column).
+3. **Fill the bucket** from this folder:
+   ```bash
+   VITE_CATALOGUE=api npm run build
+   CLOUDFLARE_ACCOUNT_ID=<id> CLOUDFLARE_API_TOKEN=<token> npm run catalogue:upload
+   ```
+   About 4,100 files; roughly 15 minutes. Safe to re-run.
+4. **Bind it:** Pages → the project → Settings → Functions → R2 bucket bindings
+   → variable `CATALOGUE`, bucket `sokopulse-catalogue` (Production and Preview).
+5. **Switch the site over:** Pages → Settings → Environment variables → add
+   `VITE_CATALOGUE` = `api`, then redeploy.
+6. **Rate-limit it:** Security → WAF → Rate limiting rules → URI path starts with
+   `/api/catalogue/`, e.g. more than 60 requests per minute per IP → challenge.
+
+After every dataset re-capture, repeat step 3 before deploying.
+
+Without the binding the function falls back to the site's own `/demo/` files,
+which is what `wrangler pages dev dist` uses locally on a normal build. To test
+the R2 path locally: `VITE_CATALOGUE=api npm run build`,
+`node scripts/upload-catalogue.mjs --local`, then
+`wrangler pages dev dist --r2 CATALOGUE=sokopulse-catalogue`.
+
 ## Host notes
 
 - **Cloudflare Pages (the target)** — connect the GitHub repo; build command

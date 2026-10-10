@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { clustersApi, type ClusterSummary } from '../lib/api';
+import { clustersApi } from '../lib/api';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
@@ -13,9 +13,6 @@ import {
   SortSelect,
 } from '../features/search/components/ListingFiltersPanel';
 import {
-  activeFilterCount,
-  applyFilters,
-  brandFacets,
   PAGE_SIZE,
   readFilters,
   writeFilters,
@@ -36,34 +33,33 @@ export default function CatalogueBrowsePage() {
   const filters = useMemo(() => readFilters(searchParams), [searchParams]);
   const page = Math.max(0, (Number(searchParams.get('page') ?? '1') || 1) - 1);
 
-  const [rows, setRows] = useState<ClusterSummary[]>([]);
-  const [meta, setMeta] = useState<{ count: number; complete: boolean }>({ count: 0, complete: true });
+  const [result, setResult] = useState<Awaited<ReturnType<typeof clustersApi.browse>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // One page at a time: filters, sort and paging run where the data is (the
+  // catalogue function in production), so the browser never holds the
+  // whole category.
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await clustersApi.getCategoryRows(productType);
-      setRows(res.rows);
-      setMeta({ count: res.count, complete: res.complete });
+      setResult(await clustersApi.browse(productType, filters, page));
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [productType]);
+  }, [productType, filters, page]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const brands = useMemo(() => brandFacets(rows), [rows]);
-  const filtered = useMemo(() => applyFilters(rows, filters), [rows, filters]);
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pages - 1);
-  const visible = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const brands = result?.brands ?? [];
+  const visible = result?.results ?? [];
+  const pages = result?.pages ?? 1;
+  const safePage = result?.page ?? 0;
   const label = categoryLabel(productType);
 
   const update = (next: ListingFilters, nextPage = 0) => {
@@ -71,9 +67,10 @@ export default function CatalogueBrowsePage() {
     window.scrollTo({ top: 0 });
   };
 
-  const total = activeFilterCount(filters) > 0 || !meta.complete ? filtered.length : meta.count;
-  const from = filtered.length ? safePage * PAGE_SIZE + 1 : 0;
-  const to = Math.min(filtered.length, (safePage + 1) * PAGE_SIZE);
+  const matching = result?.count ?? 0;
+  const total = matching;
+  const from = matching ? safePage * PAGE_SIZE + 1 : 0;
+  const to = Math.min(matching, (safePage + 1) * PAGE_SIZE);
 
   return (
     <div className="bg-background min-h-screen">
@@ -91,9 +88,7 @@ export default function CatalogueBrowsePage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {loading
             ? ' '
-            : meta.complete
-              ? `${meta.count.toLocaleString()} products`
-              : `${meta.count.toLocaleString()} products · filtering the ${rows.length.toLocaleString()} most compared`}
+            : `${(result?.total ?? 0).toLocaleString()} products`}
         </p>
 
         {error ? (
@@ -115,7 +110,7 @@ export default function CatalogueBrowsePage() {
                 <p className="text-sm text-muted-foreground" aria-live="polite">
                   {loading
                     ? ' '
-                    : filtered.length
+                    : matching
                       ? `${from.toLocaleString()}–${to.toLocaleString()} of ${total.toLocaleString()}`
                       : 'No products match'}
                 </p>

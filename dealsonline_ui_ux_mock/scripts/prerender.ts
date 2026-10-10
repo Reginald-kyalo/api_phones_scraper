@@ -395,7 +395,11 @@ async function main() {
   console.log(`prerender: ${written} pages (${products} products), sitemap ${sitemap.length} URLs`);
 }
 
-main().catch((err) => {
+// Awaited at the top level, so postbuild.mjs's `await import()` returns only
+// when every page is written (it moves dist/demo away right after).
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

@@ -10,7 +10,7 @@
  * may load "everything" eagerly. Listings are paginated and details are sharded;
  * page counts and bucket counts are per category and come from the manifest.
  */
-import type { ClusterDetail, ClusterSummary } from './api';
+import type { ClusterDetail, ClusterSummary } from './clusterTypes';
 import type {
   DemoBrowseNode,
   DemoManifest,
@@ -18,23 +18,50 @@ import type {
   DemoShelfTreeResponse,
 } from './demoTypes';
 
-const BASE = `${import.meta.env.BASE_URL}demo`;
+// `import.meta.env` exists in Vite builds only; the catalogue function
+// (functions/api/catalogue) runs this module too, with its own loader.
+const BASE = `${import.meta.env?.BASE_URL ?? '/'}demo`;
 /** Must match SHELF_PAGE_SIZE in scripts/capture_demo_shelves.py. */
 const SHELF_PAGE_SIZE = 100;
 /** Must match SHELF_DETAIL_BUCKETS in scripts/capture_demo_shelves.py. */
 const SHELF_DETAIL_BUCKETS = 256;
+/**
+ * Parsed files, newest last. Capped: a Worker isolate has 128 MB, and the
+ * groceries card index alone parses to tens of MB.
+ */
 const cache = new Map<string, Promise<unknown>>();
+const CACHE_LIMIT = 48;
+
+/** Reads one dataset file (a path under demo/) and parses its JSON. */
+export type Loader = (path: string) => Promise<unknown>;
+
+let fetchFile: Loader = (path) =>
+  fetch(`${BASE}/${path}`).then((res) => {
+    if (!res.ok) throw new Error(`demo fixture missing: ${path} (${res.status})`);
+    return res.json();
+  });
+
+/**
+ * Where files come from. The browser fetches /demo/ (local mode); the
+ * catalogue function reads the private R2 bucket. Clears the cache.
+ */
+export function setLoader(loader: Loader) {
+  fetchFile = loader;
+  cache.clear();
+}
 
 function load<T>(path: string): Promise<T> {
   let hit = cache.get(path);
-  if (!hit) {
-    hit = fetch(`${BASE}/${path}`).then((res) => {
-      if (!res.ok) throw new Error(`demo fixture missing: ${path} (${res.status})`);
-      return res.json();
-    });
+  if (hit) {
+    // Refresh recency.
+    cache.delete(path);
+    cache.set(path, hit);
+  } else {
+    hit = fetchFile(path);
     // Don't memoise failures — a transient error would poison the route forever.
     hit.catch(() => cache.delete(path));
     cache.set(path, hit);
+    if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value as string);
   }
   return hit as Promise<T>;
 }

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link, useSearchParams } from 'react-router';
-import { clustersApi, type ClusterSummary } from '../lib/api';
-import type { SearchRow } from '../lib/demoSource';
+import { clustersApi } from '../lib/api';
+import type { SearchResult } from '../lib/catalogueQueries';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Pagination } from '../components/common/Pagination';
@@ -10,10 +10,11 @@ import { AdSlot } from '../components/ads/AdSlot';
 import { PriceOrDash } from '../components/common/PriceOrDash';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
 import { SortSelect } from '../features/search/components/ListingFiltersPanel';
-import { applyFilters, PAGE_SIZE, readFilters, writeFilters } from '../lib/listing';
+import { readFilters, writeFilters } from '../lib/listing';
 import { Package, Search as SearchIcon } from 'lucide-react';
 
-type Result = { hit: SearchRow; row: ClusterSummary | null };
+/** Hits considered per query (catalogueQueries.search). */
+const SEARCH_LIMIT = 480;
 
 /**
  * Search across the whole catalogue, rendered as the same cards as every
@@ -30,24 +31,24 @@ export default function SearchPage() {
   const filters = useMemo(() => readFilters(searchParams), [searchParams]);
   const page = Math.max(0, (Number(searchParams.get('page') ?? '1') || 1) - 1);
 
-  const [results, setResults] = useState<Result[]>([]);
-  const [count, setCount] = useState(0);
+  const [res, setRes] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // One page per request, scoped and filtered where the data is.
   useEffect(() => {
     let cancelled = false;
     if (!query.trim()) {
-      setResults([]);
-      setCount(0);
+      setRes(null);
       return;
     }
     setLoading(true);
     clustersApi
-      .searchSummaries(query, { limit: 480 })
-      .then((res) => {
-        if (cancelled) return;
-        setResults(res.results);
-        setCount(res.count);
+      .search(query, { slug, filters, page })
+      .then((r) => {
+        if (!cancelled) setRes(r);
+      })
+      .catch(() => {
+        if (!cancelled) setRes(null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -55,31 +56,14 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [query]);
+  }, [query, slug, filters, page]);
 
-  // Category chips come from the results themselves, biggest first.
-  const categories = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const r of results) {
-      const c = r.hit.c ?? r.hit.id.split('::')[0];
-      counts.set(c, (counts.get(c) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
-  }, [results]);
-
-  const scoped = useMemo(
-    () => (slug ? results.filter((r) => (r.hit.c ?? r.hit.id.split('::')[0]) === slug) : results),
-    [results, slug],
-  );
-  const cards = useMemo(
-    () => applyFilters(scoped.flatMap((r) => (r.row ? [r.row] : [])), filters),
-    [scoped, filters],
-  );
-  const plain = useMemo(() => scoped.filter((r) => !r.row).map((r) => r.hit), [scoped]);
-
-  const pages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
-  const safePage = Math.min(page, pages - 1);
-  const visible = cards.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const count = res?.count ?? 0;
+  const categories = res?.categories ?? [];
+  const visible = res?.results ?? [];
+  const plain = res?.plain ?? [];
+  const pages = res?.pages ?? 1;
+  const safePage = res?.page ?? 0;
   const lastPage = safePage === pages - 1;
 
   const setParams = (next: { slug?: string | null; page?: number; sort?: typeof filters.sort }) => {
@@ -107,7 +91,7 @@ export default function SearchPage() {
           <div className="mt-6">
             <ClusterGridSkeleton />
           </div>
-        ) : results.length === 0 ? (
+        ) : count === 0 ? (
           <div className="py-16 text-center">
             <SearchIcon className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
             <p className="text-sm text-muted-foreground mb-3">Nothing matches “{query}”. Try fewer words.</p>
@@ -119,7 +103,7 @@ export default function SearchPage() {
           <>
             <p className="mt-1 text-sm text-muted-foreground">
               {count.toLocaleString()} {count === 1 ? 'product' : 'products'}
-              {count > results.length && ` · showing the ${results.length.toLocaleString()} closest matches`}
+              {count > SEARCH_LIMIT && ` · showing the ${SEARCH_LIMIT.toLocaleString()} closest matches`}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">

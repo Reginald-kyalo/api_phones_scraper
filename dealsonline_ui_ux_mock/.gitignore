@@ -9,3 +9,5 @@ dist/
 # Pages re-clones on every build.
 public/demo/
 public/.demo-staging-*
+.catalogue/
+.wrangler/

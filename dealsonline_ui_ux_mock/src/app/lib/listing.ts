@@ -1,4 +1,4 @@
-import type { ClusterSummary } from './api';
+import type { ClusterSummary } from './clusterTypes';
 import { clusterSaving, hasPrice, pricedShopCount } from './format';
 import { withPhotosFirst } from './images';
 

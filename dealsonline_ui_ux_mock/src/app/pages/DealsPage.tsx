@@ -42,10 +42,9 @@ export default function DealsPage() {
     setLoading(true);
     setError(false);
     try {
-      // The captured feed is already multi-store, new-condition and
-      // floor-filtered — it reproduces /api/clusters/deals exactly. It is
-      // paginated rather than capped, so the first page is a page, not the lot.
-      const res = await clustersApi.getDeals();
+      // One page of deals that pass the guard rails below, filtered where the
+      // data is; changing the minimum saving starts again from page one.
+      const res = await clustersApi.getDeals({ minSaving });
       setClusters(res.results);
       setTotal(res.count);
       setPages(res.pages);
@@ -55,12 +54,12 @@ export default function DealsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [minSaving]);
 
   const loadMore = useCallback(async () => {
     setLoadingMore(true);
     try {
-      const res = await clustersApi.getDeals({ page: page + 1 });
+      const res = await clustersApi.getDeals({ page: page + 1, minSaving });
       setClusters((prev) => [...prev, ...res.results]);
       setPage(res.page);
     } catch {
@@ -68,7 +67,7 @@ export default function DealsPage() {
     } finally {
       setLoadingMore(false);
     }
-  }, [page]);
+  }, [page, minSaving]);
 
   useEffect(() => {
     load();
