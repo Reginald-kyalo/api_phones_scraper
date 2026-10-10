@@ -5,6 +5,7 @@ import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
 import {
   checkedAgo,
   checkedAt,
+  priceVerdict,
   clusterSaving,
   displaySaving,
   formatPrice,
@@ -163,6 +164,10 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
       : null
     : clusterSaving(cluster);
   const checked = checkedAgo(cluster.last_seen);
+  // History is recorded for the product, not per variant or for used stock:
+  // a 128GB price judged against 256GB history would mislead. Only products
+  // with a single configuration get a verdict.
+  const verdict = configs.length < 2 && !likelyUsed ? priceVerdict(cluster.price_history, lowest?.[1].price) : null;
 
   const [alertOpen, setAlertOpen] = useState(false);
   const alertProduct = {
@@ -279,6 +284,15 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               )}
             </p>
 
+            {verdict && (
+              <p className="mt-1 text-sm text-foreground">
+                {verdict}{' '}
+                <a href="#price-history" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
+                  Price history
+                </a>
+              </p>
+            )}
+
             {/* Mobile: photo and best price come before the list. */}
             <div className="mt-5 space-y-4 lg:hidden">
               <ProductPhoto image={image} />
@@ -335,7 +349,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
 
             {/* Real history only — never synthesised to fill the slot. */}
             {cluster.price_history && cluster.price_history.length >= 2 && (
-              <section className="mt-10">
+              <section id="price-history" className="mt-10 scroll-mt-24">
                 <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
               </section>
             )}

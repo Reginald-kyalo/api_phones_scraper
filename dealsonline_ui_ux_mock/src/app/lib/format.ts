@@ -185,3 +185,33 @@ export function productName(row: { display_name?: string | null; title: string }
 export function brandName(brand: string): string {
   return tidyWords(brand.replace(/(^|[\s-])([a-z])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase()));
 }
+
+/**
+ * One line answering "is now a good time to buy?", from the recorded history
+ * (benchmark §2.6). Null unless the data can support it: three or more
+ * plausible prices in the last 90 days. Never says "deal" or "cheap": it
+ * states where today's price sits against what we recorded.
+ */
+export function priceVerdict(
+  history: { t: string; price: number }[] | null | undefined,
+  current: number | null | undefined,
+): string | null {
+  if (!history?.length || !hasPrice(current)) return null;
+  const valid = history.filter((p) => p.price >= 1 && !Number.isNaN(Date.parse(p.t)));
+  const ordered = valid.map((p) => p.price).sort((a, b) => a - b);
+  const median = ordered[Math.floor(ordered.length / 2)] ?? 0;
+  // Same guard as the chart: a misplaced decimal point is not a price.
+  const sane = valid.filter((p) => p.price <= median * 5 && p.price >= median / 5);
+  if (!sane.length) return null;
+  const newest = Math.max(...sane.map((p) => Date.parse(p.t)));
+  const recent = sane.filter((p) => Date.parse(p.t) >= newest - 90 * 86_400_000);
+  if (recent.length < 3) return null;
+  const prices = recent.map((p) => p.price);
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const low = Math.min(...prices);
+  const threshold = Math.max(50, avg * 0.03);
+  if (current <= low && Math.max(...prices) - low >= threshold) return 'The lowest price we have recorded in 90 days.';
+  if (avg - current >= threshold) return `${formatPrice(avg - current)} below its 90-day average.`;
+  if (current - avg >= threshold) return `${formatPrice(current - avg)} above its 90-day average.`;
+  return 'About its usual price over the last 90 days.';
+}
