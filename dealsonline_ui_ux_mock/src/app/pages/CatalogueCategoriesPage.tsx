@@ -32,7 +32,7 @@ export default function CatalogueCategoriesPage() {
   if (!manifest) {
     return (
       <div className="page-container py-8" aria-busy="true" aria-label="Loading categories">
-        <Skeleton className="h-8 w-56" />
+        <h1 className="page-title">All categories</h1>
         <Skeleton className="mt-2 h-4 w-80" />
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: 9 }).map((_, i) => (

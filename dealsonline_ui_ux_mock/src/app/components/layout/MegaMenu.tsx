@@ -148,7 +148,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                     <Link
                       to={`/aisle/${active.id}`}
                       onClick={onClose}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-link hover:underline underline-offset-4"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-link underline underline-offset-4 decoration-link/40 hover:decoration-link"
                     >
                       All of {active.label}{active.id === 'phones-wearables' ? '' : ` (${active.n_clusters.toLocaleString()})`}
                       <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />

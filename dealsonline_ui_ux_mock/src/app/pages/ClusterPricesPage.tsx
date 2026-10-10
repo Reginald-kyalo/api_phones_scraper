@@ -328,7 +328,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                     .
                   </>
                 )}{' '}
-                <Link to="/how-we-make-money" className="text-link hover:underline underline-offset-4">
+                <Link to="/how-we-make-money" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
                   How we make money
                 </Link>
               </p>
@@ -525,7 +525,7 @@ function BestPriceCard({
         </button>
       </div>
       {comparing && (
-        <Link to="/compare" className="mt-2 block text-sm text-link hover:underline underline-offset-4">
+        <Link to="/compare" className="mt-2 block text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
           View comparison
         </Link>
       )}

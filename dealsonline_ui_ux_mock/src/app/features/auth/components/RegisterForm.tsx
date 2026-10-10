@@ -96,6 +96,8 @@ export function RegisterForm({ redirect = '/' }: { redirect?: string }) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -118,17 +120,18 @@ export function RegisterForm({ redirect = '/' }: { redirect?: string }) {
         <div className="flex items-start space-x-2">
           <Checkbox
             id="agreeTerms"
+            aria-label="I agree to the terms of service and privacy policy"
             checked={agreeTerms}
             onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
             className="mt-1"
           />
           <label htmlFor="agreeTerms" className="text-sm cursor-pointer leading-relaxed">
             I agree to the{' '}
-            <Link to="/terms" target="_blank" className="text-sm text-link hover:underline underline-offset-4">
+            <Link to="/terms" target="_blank" className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
               terms of service
             </Link>{' '}
             and{' '}
-            <Link to="/privacy" target="_blank" className="text-sm text-link hover:underline underline-offset-4">
+            <Link to="/privacy" target="_blank" className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
               privacy policy
             </Link>
           </label>

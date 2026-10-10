@@ -58,7 +58,7 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="flex-1 h-11 px-4 rounded-md bg-white/10 text-white placeholder:text-white/40 text-sm outline-none ring-1 ring-white/15 focus:ring-white/40 transition"
+                  className="flex-1 h-11 px-4 rounded-md bg-white/10 text-white placeholder:text-white/60 text-sm outline-none ring-1 ring-white/15 focus:ring-white/40 transition"
                 />
                 <button
                   type="submit"
@@ -68,7 +68,7 @@ export default function Footer() {
                 </button>
               </form>
             )}
-            <p className="text-[11px] text-white/40 mt-2">
+            <p className="text-[11px] text-white/60 mt-2">
               One email a week. Unsubscribe from any email.
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function Footer() {
         </div>
 
         {/* ── Bottom bar ── */}
-        <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-white/40">
+        <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-white/60">
           <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
           <ThemeSwitch />
           <button
@@ -194,7 +194,7 @@ function ThemeSwitch() {
           aria-checked={choice === o.value}
           onClick={() => setChoice(o.value)}
           className={`rounded-sm px-2.5 py-1 text-[12px] transition-colors ${
-            choice === o.value ? 'bg-white/15 text-white' : 'text-white/50 hover:text-white'
+            choice === o.value ? 'bg-white/15 text-white' : 'text-white/65 hover:text-white'
           }`}
         >
           {o.label}

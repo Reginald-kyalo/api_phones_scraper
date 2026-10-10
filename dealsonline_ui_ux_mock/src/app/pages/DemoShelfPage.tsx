@@ -158,7 +158,7 @@ export default function DemoShelfPage() {
       <div className="bg-background min-h-screen">
         <div className="page-container py-16 text-center">
           <p className="section-title mb-2">We couldn’t find that category</p>
-          <Link to="/browse" className="text-sm text-link hover:underline underline-offset-4">
+          <Link to="/browse" className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
             Browse all categories
           </Link>
         </div>
@@ -179,7 +179,7 @@ export default function DemoShelfPage() {
           <div className="py-12 text-center">
             <p className="section-title mb-2">We couldn’t find that category</p>
             <p className="text-sm text-muted-foreground mb-4">It may have moved.</p>
-            <Link to="/browse" className="text-sm text-link hover:underline underline-offset-4">
+            <Link to="/browse" className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
               Browse all categories
             </Link>
           </div>

@@ -84,7 +84,7 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 - **Allowed on hover:** colour, border colour, opacity, transforms up to 2px. Never scale a card or an image.
 - **Buttons darken, they do not glow.** No shadow on hover, no gradient.
 - **Press state exists:** `active:translate-y-px` on buttons. Phone users only ever see this one.
-- **Links underline on hover only** (at rest only in legal prose).
+- **Links inside sentences are underlined at rest** (a soft 40% underline that firms up on hover), so they are distinguishable without colour (WCAG 1.4.1). Standalone links (nav, "All deals") underline on hover only.
 
 ## 4. Motion
 

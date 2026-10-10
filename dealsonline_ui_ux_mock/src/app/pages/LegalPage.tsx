@@ -142,7 +142,7 @@ const pages: Record<string, { title: string; content: React.ReactNode }> = {
         <h2 className="text-base font-semibold text-foreground">How we make money</h2>
         <p>{MONEY_LINE}</p>
         <p>
-          <Link to="/how-we-make-money" className="text-link hover:underline underline-offset-4">
+          <Link to="/how-we-make-money" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
             More on how we make money
           </Link>
         </p>

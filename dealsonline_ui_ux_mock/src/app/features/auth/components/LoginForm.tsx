@@ -66,6 +66,8 @@ export function LoginForm({ redirect = '/' }: { redirect?: string }) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -77,6 +79,7 @@ export function LoginForm({ redirect = '/' }: { redirect?: string }) {
           <div className="flex items-center space-x-2">
             <Checkbox
               id="rememberMe"
+              aria-label="Remember me"
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(checked as boolean)}
             />
@@ -84,7 +87,7 @@ export function LoginForm({ redirect = '/' }: { redirect?: string }) {
               Remember me
             </label>
           </div>
-          <a href={`mailto:${BRAND.supportEmail}?subject=Reset%20my%20password`} className="text-sm text-link hover:underline underline-offset-4">
+          <a href={`mailto:${BRAND.supportEmail}?subject=Reset%20my%20password`} className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
             Forgot your password?
           </a>
         </div>

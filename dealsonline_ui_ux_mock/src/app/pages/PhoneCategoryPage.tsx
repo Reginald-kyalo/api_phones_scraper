@@ -31,7 +31,7 @@ export default function PhoneCategoryPage() {
       <div className="mt-8 rounded-md border border-border bg-surface-alt p-5">
         <p className="font-medium text-foreground">Looking for prices?</p>
         <p className="mt-1 text-sm text-muted-foreground">Every phone and accessory we compare is in Phones &amp; wearables.</p>
-        <Link to="/aisle/phones-wearables" className="mt-3 inline-block text-sm text-link hover:underline underline-offset-4">See all phones and wearables</Link>
+        <Link to="/aisle/phones-wearables" className="mt-3 inline-block text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">See all phones and wearables</Link>
       </div>
     </div>
   );

@@ -73,7 +73,7 @@ function FeaturedDeal({ cluster }: { cluster: ClusterSummary }) {
 
         <div className="p-6 md:p-10 flex flex-col justify-center">
           <p className="microcopy-label">{cluster.brand ?? categoryLabel(cluster.category ?? '')}</p>
-          <h3 className="section-title mt-1 mb-3">{name}</h3>
+          <h2 className="section-title mt-1 mb-3">{name}</h2>
 
           <div className="flex flex-wrap items-center gap-3 mb-1">
             <PriceOrDash value={cluster.best_price} className="text-2xl md:text-3xl font-bold text-foreground" />

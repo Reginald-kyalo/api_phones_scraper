@@ -40,7 +40,7 @@ export default function HowItWorks() {
       </ol>
       <p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto mt-8 leading-relaxed">
         <span className="font-semibold text-foreground">How SokoPulse makes money.</span> {MONEY_LINE}{' '}
-        <Link to="/how-we-make-money" className="text-link hover:underline underline-offset-4">
+        <Link to="/how-we-make-money" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
           Read more
         </Link>
       </p>
