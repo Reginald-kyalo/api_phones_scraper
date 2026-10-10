@@ -84,3 +84,18 @@ CREATE INDEX IF NOT EXISTS idx_facets_kind     ON report_facets (kind, subject);
 --   FROM report_facets f
 --   WHERE f.kind = 'grouping' AND f.value = 'wrong'
 --   GROUP BY f.subject ORDER BY votes DESC;
+
+-- Honeypot (functions/data/[[path]].ts). Only scrapers that ignore robots.txt
+-- and follow hidden links land here. Kept for abuse handling: list the IPs and
+-- challenge or block them with a Cloudflare rule.
+--   SELECT ip, COUNT(*) hits, MAX(created_at) last, MAX(user_agent) ua
+--   FROM honeypot_hits GROUP BY ip ORDER BY hits DESC LIMIT 50;
+CREATE TABLE IF NOT EXISTS honeypot_hits (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip          TEXT,
+  user_agent  TEXT,
+  path        TEXT,
+  country     TEXT,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_honeypot_ip ON honeypot_hits (ip, created_at);

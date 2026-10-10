@@ -250,13 +250,23 @@ function fromCard(slug: string, stores: string[], r: CardRow): ClusterSummary {
  * index. Browse filters and sorts run over these client-side, so they cover
  * the whole category — 42,673 groceries included (~1.8 MB gzipped).
  */
+/**
+ * fnv1a hashes of the trap entries scripts/prerender.ts adds to the card
+ * index (list: scripts/trap-products.json, kept out of the build). Hashes,
+ * not ids, so the bundle does not name them. Rows matching one are dropped
+ * here, so no shopper ever sees them.
+ */
+export const TRAP_HASHES = new Set([1307616523, 2135535200, 846462178, 3218239141, 2112927251, 351530489]);
+
 export async function getCategoryRows(
   slug: string,
 ): Promise<{ rows: ClusterSummary[]; count: number; complete: boolean }> {
   const meta = await getCategoryMeta(slug);
   const index = await load<{ stores: string[]; rows: CardRow[] }>(`cards/${encodeURIComponent(slug)}.json`);
   return {
-    rows: index.rows.map((r) => fromCard(slug, index.stores, r)),
+    rows: index.rows
+      .filter((r) => !TRAP_HASHES.has(fnv1a(r[0])))
+      .map((r) => fromCard(slug, index.stores, r)),
     count: meta.count,
     complete: true,
   };

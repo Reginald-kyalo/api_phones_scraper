@@ -104,7 +104,9 @@ function shell(body: string): string {
     `<header class="border-b border-border"><div class="page-container flex h-16 items-center">` +
     `<a href="${href('/')}" class="font-display text-lg font-bold text-foreground">${BRAND.name}</a>` +
     `</div></header>` +
-    `<main class="page-container py-8">${body}</main>`
+    `<main class="page-container py-8">${body}</main>` +
+    // Honeypot, as in the footer: hidden, nofollow, disallowed in robots.txt.
+    `<a href="${href('/data/catalogue-export')}" rel="nofollow" tabindex="-1" aria-hidden="true" class="sr-only">Catalogue export</a>`
   );
 }
 
@@ -210,6 +212,26 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
       dateModified: cluster.last_seen ?? capturedAt,
     },
   };
+}
+
+/** Add the trap products (scripts/trap-products.json) to dist's card index. */
+function plantTraps() {
+  const { products } = JSON.parse(readFileSync(join(process.cwd(), 'scripts', 'trap-products.json'), 'utf8')) as {
+    products: { slug: string; id: string; name: string; brand: string; price: number; store: string }[];
+  };
+  for (const p of products) {
+    if (!demo.TRAP_HASHES.has(demo.fnv1a(p.id))) {
+      throw new Error(`prerender: trap ${p.id} is missing from TRAP_HASHES in demoSource.ts`);
+    }
+    const file = join(DIST, 'demo', 'cards', `${p.slug}.json`);
+    const index = JSON.parse(readFileSync(file, 'utf8')) as { stores: string[]; rows: unknown[][] };
+    let store = index.stores.indexOf(p.store);
+    if (store < 0) store = index.stores.push(p.store) - 1;
+    // Same shape as a real row (see CardRow): one shop, no spread, no photo.
+    // Placed mid-list, where a bulk copy keeps it and a skim misses it.
+    index.rows.splice(Math.floor(index.rows.length / 2), 0, [p.id, p.name, p.brand, p.price, 1, 1, null, store, null, 0]);
+    writeFileSync(file, JSON.stringify(index));
+  }
 }
 
 async function main() {
@@ -356,7 +378,11 @@ async function main() {
       sitemap.map((u) => `  <url><loc>${esc(u)}</loc></url>`).join('\n') +
       `\n</urlset>\n`,
   );
-  writeFileSync(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}${BASE}sitemap.xml\n`);
+  writeFileSync(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: ${BASE}data/\n\nSitemap: ${ORIGIN}${BASE}sitemap.xml\n`);
+
+  // Trap entries go into the card index last, after every page above was
+  // built from it, so they reach the bulk data file and nothing else.
+  plantTraps();
 
   // Anything not prerendered boots the app at its own URL (with a 404 status
   // from the host). No snapshot, and noindex, so it never competes with a

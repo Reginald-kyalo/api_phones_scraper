@@ -120,6 +120,12 @@ export default function Footer() {
         {/* ── Bottom bar ── */}
         <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-white/60">
           <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
+          {/* Honeypot (functions/data/[[path]].ts): invisible, unreachable by
+              keyboard and screen readers, nofollow and disallowed in
+              robots.txt. Only a scraper walking every href ever requests it. */}
+          <a href="/data/catalogue-export" rel="nofollow" tabIndex={-1} aria-hidden="true" className="sr-only">
+            Catalogue export
+          </a>
           <ThemeSwitch />
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

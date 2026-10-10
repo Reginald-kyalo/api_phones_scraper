@@ -1,0 +1,11 @@
+{
+  "_comment": "Trap entries (strategy/paywall-and-anti-scraping.md, layer 4). Invented products that exist only in the bulk card index the browser downloads, never on a page, in search or in the sitemap. If one shows up on another site, that site copied our data file. Keep this list private: it is in the repo, not in the build output. Their fnv1a hashes are in TRAP_HASHES in src/app/lib/demoSource.ts, which hides them from listings; scripts/prerender.ts refuses to build if the two disagree.",
+  "products": [
+    { "slug": "mobile-phones", "id": "mobile-phones::kalembe::k7-lite", "name": "Kalembe K7 Lite 64GB", "brand": "kalembe", "price": 11450, "store": "jumia.co.ke" },
+    { "slug": "laptops", "id": "laptops::orvanta::airbook-13-n4", "name": "Orvanta AirBook 13 N4", "brand": "orvanta", "price": 38700, "store": "jumia.co.ke" },
+    { "slug": "tvs", "id": "tvs::sevora::43-smart-sv43f2", "name": "Sevora 43 Inch Smart TV SV43F2", "brand": "sevora", "price": 24350, "store": "jumia.co.ke" },
+    { "slug": "headphones", "id": "headphones::mbuyu::mb-40-anc", "name": "Mbuyu MB-40 ANC Headphones", "brand": "mbuyu", "price": 3180, "store": "jumia.co.ke" },
+    { "slug": "groceries", "id": "groceries::shambora::sunflower-oil-3l", "name": "Shambora Sunflower Oil 3L", "brand": "shambora", "price": 1135, "store": "jumia.co.ke" },
+    { "slug": "printers", "id": "printers::inkora::ip-220w", "name": "Inkora IP-220W Wireless Printer", "brand": "inkora", "price": 8890, "store": "jumia.co.ke" }
+  ]
+}
