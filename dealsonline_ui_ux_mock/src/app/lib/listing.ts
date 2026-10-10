@@ -99,8 +99,16 @@ export function applyFilters(rows: ClusterSummary[], f: ListingFilters): Cluster
       out = [...out].sort((a, b) => kes(b) - kes(a));
       break;
     }
-    default:
-      out = withPhotosFirst(out);
+    default: {
+      // "Most compared" means what it says: the most shops priced first. The
+      // capture's own rank put single-shop listings with a nonsense spread
+      // (22,977%) at the top of Phones. Cards with photos stay ahead of
+      // those without (DESIGN_RULES.md §5); sort is stable, so capture order
+      // breaks the remaining ties.
+      out = withPhotosFirst(
+        [...out].sort((a, b) => pricedShopCount(b) - pricedShopCount(a)),
+      );
+    }
   }
   return out;
 }

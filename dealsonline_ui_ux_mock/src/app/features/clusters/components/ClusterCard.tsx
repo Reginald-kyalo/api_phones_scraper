@@ -3,6 +3,7 @@ import { Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
 import { clusterSaving, pricedShopCount, productName, shopLabel } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
+import { categoryLabel } from '../../../lib/categories';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { SavingBadge } from '../../../components/common/SavingBadge';
 import { PriceOrDash } from '../../../components/common/PriceOrDash';
@@ -35,6 +36,7 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   // The priced count, not `n_stores` — see pricedShopCount.
   const stores = pricedShopCount(cluster);
   const likelyUsed = cluster.condition_basis === 'likely_used';
+  const shop = cluster.cheapest_store ? storeName(cluster.cheapest_store) : null;
 
   return (
     <Link
@@ -66,26 +68,33 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
       </div>
 
       <div className="flex flex-1 flex-col p-3 pt-2">
-        <p className="microcopy-label">{cluster.brand ?? cluster.category ?? 'Product'}</p>
+        <p className="microcopy-label">{cluster.brand ?? (cluster.category ? categoryLabel(cluster.category) : 'Product')}</p>
         {/* Exactly two lines (h-10 = 2 x 20px line-height), never min-height: a
             1-line title against min-h-[2.5em] measured 35px where a 2-line one
             measured 40px, drifting card heights by 5px between rails. */}
         <p className="mt-0.5 line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
         <div className="mt-auto pt-2">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            {/* "from" when it is the lowest of several prices (PriceSpy's
+                wording): the card is a starting point, not the only price. */}
+            {stores >= 2 && <span className="text-xs text-muted-foreground">from</span>}
             <PriceOrDash value={cluster.best_price} className="text-base font-bold text-foreground" />
-            <SavingBadge saving={saving} />
           </div>
-          {/* Both meta lines are single-line and always occupy their row, even
-              when there is nothing to say. A long store name used to wrap and a
-              single-store product dropped the shop count entirely, so card
-              heights drifted by up to 21px within one row. */}
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {likelyUsed ? 'used/refurb asking' : 'lowest price'}
-            {cluster.cheapest_store ? ` · ${storeName(cluster.cheapest_store)}` : ''}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {stores >= 2 ? shopLabel(stores) : ' '}
+          {/* Every line below keeps its row, filled or not, so prices and
+              shop lines sit at the same height across a grid row. */}
+          <div className="mt-1 flex h-5 items-center">
+            {saving ? (
+              <SavingBadge saving={saving} />
+            ) : likelyUsed ? (
+              <span className="text-xs text-muted-foreground">Used or refurbished</span>
+            ) : null}
+          </div>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            {shop
+              ? stores >= 2
+                ? <><span className="text-foreground">{shop}</span> +{shopLabel(stores - 1)}</>
+                : <>Only at <span className="text-foreground">{shop}</span></>
+              : stores >= 2 ? shopLabel(stores) : '\u00a0'}
           </p>
         </div>
       </div>
