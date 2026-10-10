@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { clustersApi } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
 import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../data/taxonomyTree';
 import PhoneCategoryChoices from '../components/categories/PhoneCategoryChoices';
 
@@ -29,8 +30,14 @@ export default function CatalogueCategoriesPage() {
 
   if (!manifest) {
     return (
-      <div className="page-container py-16 flex justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-label="Loading categories" />
+      <div className="page-container py-8" aria-busy="true" aria-label="Loading categories">
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="mt-2 h-4 w-80" />
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-md" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -43,9 +50,8 @@ export default function CatalogueCategoriesPage() {
       <div className="page-container py-8">
         <h1 className="page-title">All categories</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {manifest.total_clusters.toLocaleString()} products from{' '}
-          {manifest.total_stores} Kenyan stores ·{' '}
-          {manifest.multi_store_clusters.toLocaleString()} compared across 2+ stores
+          {manifest.total_clusters.toLocaleString()} products from {manifest.total_stores} Kenyan shops ·{' '}
+          {manifest.multi_store_clusters.toLocaleString()} sold by 2 or more shops
         </p>
 
         <h2 className="mt-8 mb-3 section-title">Departments</h2>
@@ -56,7 +62,7 @@ export default function CatalogueCategoriesPage() {
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3">
                   <Link
                     to={`/aisle/${department.id}`}
-                    className="text-lg font-semibold text-foreground hover:text-primary"
+                    className="section-title hover:underline underline-offset-4"
                   >
                     {department.label}
                   </Link>
@@ -74,9 +80,9 @@ export default function CatalogueCategoriesPage() {
                       <h3 id={`${department.id}-${family.id}`} className="mb-2 text-sm font-semibold text-muted-foreground">{familyDisplayLabel(family)}</h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
                         {family.shelves.map((shelf) => (
-                          <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40">
+                          <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-md p-3 card-interactive">
                             <span className="text-sm font-medium text-foreground">{spineShelfDisplay(shelf)}</span>
-                            <span className="price-num text-xs text-muted-foreground">
+                            <span className="tabular-nums text-xs text-muted-foreground">
                               {shelf.count.toLocaleString()}<span className="sr-only"> items in collection</span>
                             </span>
                           </Link>
@@ -101,16 +107,16 @@ export default function CatalogueCategoriesPage() {
             <Link
               key={c.slug}
               to={`/browse/${c.slug}`}
-              className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40"
+              className="group flex flex-col rounded-md p-4 card-interactive"
             >
               <span className="font-semibold text-foreground">{categoryLabel(c.slug)}</span>
-              <span className="price-num mt-2 text-2xl font-bold text-foreground">
+              <span className="mt-2 text-2xl font-semibold text-foreground tabular-nums">
                 {c.count.toLocaleString()}
               </span>
               <span className="text-xs text-muted-foreground">
-                {c.multi_store.toLocaleString()} compared across stores
+                {c.multi_store.toLocaleString()} sold by 2 or more shops
               </span>
-              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-link">
                 Browse <ChevronRight className="h-3 w-3" aria-hidden="true" />
               </span>
             </Link>
@@ -119,7 +125,7 @@ export default function CatalogueCategoriesPage() {
 
         <h3 className="mt-8 mb-1 text-sm font-semibold text-foreground">Also tracking</h3>
         <p className="mb-3 text-sm text-muted-foreground">
-          Browsable, but too few products appear at more than one store for a
+          Browsable, but too few products appear at more than one shop for a
           reliable price comparison.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -127,10 +133,10 @@ export default function CatalogueCategoriesPage() {
             <Link
               key={c.slug}
               to={`/browse/${c.slug}`}
-              className="flex items-baseline justify-between gap-2 rounded-lg p-3 ultra-border transition-colors hover:border-primary/40"
+              className="flex items-baseline justify-between gap-2 rounded-md p-3 card-interactive"
             >
               <span className="text-sm font-medium text-foreground">{categoryLabel(c.slug)}</span>
-              <span className="price-num text-xs text-muted-foreground">
+              <span className="tabular-nums text-xs text-muted-foreground">
                 {c.count.toLocaleString()}
               </span>
             </Link>

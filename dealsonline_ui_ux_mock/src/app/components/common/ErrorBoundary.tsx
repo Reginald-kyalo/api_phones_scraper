@@ -22,20 +22,20 @@ export default class ErrorBoundary extends Component<Props, State> {
         <div className="page-container py-16 text-center">
           <h1 className="page-title mb-3">Something went wrong</h1>
           <p className="text-muted-foreground mb-6">
-            An unexpected error occurred. Please try again.
+            This page didn’t load properly. Try again, or start from the homepage.
           </p>
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-teal-deep active:translate-y-px transition-colors"
             >
               Try again
             </button>
             <Link
               to="/"
-              className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-foreground hover:bg-surface-alt transition-colors"
+              className="inline-flex h-10 items-center rounded-md border border-border px-5 text-sm font-medium text-foreground hover:bg-surface-alt active:translate-y-px transition-colors"
             >
-              Go home
+              Go to the homepage
             </Link>
           </div>
         </div>

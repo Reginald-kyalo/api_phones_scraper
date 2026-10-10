@@ -1,17 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import {
-  ChevronRight,
-  FolderTree,
-  Loader2,
-  PackageOpen,
-  Store,
-} from 'lucide-react';
+import { ChevronRight, PackageOpen } from 'lucide-react';
 import { browseApi, type BrowseNode, type ClusterSummary } from '../lib/api';
-import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
+import { ClusterCard, ClusterGridSkeleton, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
+import { Pagination } from '../components/common/Pagination';
+import { Skeleton } from '../components/ui/skeleton';
+import { PAGE_SIZE } from '../lib/listing';
 import { isLegacyPhoneCollection } from '../data/taxonomyTree';
 
-const PAGE = 24;
 
 /** Render a shop-written browse-node label without echoing its ALL-CAPS form. */
 function browseLabel(node: Pick<BrowseNode, 'slug' | 'label'>): string {
@@ -86,6 +82,7 @@ export default function DemoShelfPage() {
   const { slug } = useParams<{ slug: string }>();
   const [params, setParams] = useSearchParams();
   const multiStoreOnly = params.get('multi_store') === '1';
+  const page = Math.max(0, (Number(params.get('page') ?? '1') || 1) - 1);
 
   const [node, setNode] = useState<BrowseNode | null>(null);
   const [children, setChildren] = useState<BrowseNode[]>([]);
@@ -93,7 +90,6 @@ export default function DemoShelfPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<'missing' | 'failed' | null>(null);
 
   useEffect(() => {
@@ -129,7 +125,7 @@ export default function DemoShelfPage() {
     setProductsLoading(true);
     setClusters([]);
     browseApi
-      .getClusters(slug, { limit: PAGE, multiStoreOnly })
+      .getClusters(slug, { limit: PAGE_SIZE, offset: page * PAGE_SIZE, multiStoreOnly })
       .then((res) => {
         if (cancelled) return;
         setClusters(res.results);
@@ -145,30 +141,14 @@ export default function DemoShelfPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, multiStoreOnly]);
+  }, [slug, multiStoreOnly, page]);
 
-  const loadMore = useCallback(() => {
-    if (!slug || loadingMore) return;
-    setLoadingMore(true);
-    browseApi
-      .getClusters(slug, { limit: PAGE, offset: clusters.length, multiStoreOnly })
-      .then((res) => {
-        setClusters((prev) => {
-          const seen = new Set(prev.map((cluster) => cluster.cluster_id));
-          return [...prev, ...res.results.filter((cluster) => !seen.has(cluster.cluster_id))];
-        });
-        setTotal(res.total);
-      })
-      .catch(() => {
-        // Leave what is already on screen; the button stays available to retry.
-      })
-      .finally(() => setLoadingMore(false));
-  }, [slug, clusters.length, loadingMore, multiStoreOnly]);
 
   const toggleMultiStore = useCallback(() => {
     const next = new URLSearchParams(params);
     if (multiStoreOnly) next.delete('multi_store');
     else next.set('multi_store', '1');
+    next.delete('page');
     setParams(next, { replace: true });
   }, [params, multiStoreOnly, setParams]);
 
@@ -176,8 +156,8 @@ export default function DemoShelfPage() {
     return (
       <div className="bg-background min-h-screen">
         <div className="page-container py-16 text-center">
-          <p className="text-base font-medium text-foreground mb-1">No such category</p>
-          <Link to="/browse" className="text-sm text-link hover:text-link-hover underline">
+          <p className="section-title mb-2">We couldn’t find that category</p>
+          <Link to="/browse" className="text-sm text-link hover:underline underline-offset-4">
             Browse all categories
           </Link>
         </div>
@@ -195,41 +175,37 @@ export default function DemoShelfPage() {
 
         {error === 'missing' ? (
           <div className="py-12 text-center">
-            <p className="text-base font-medium text-foreground mb-1">No such category</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              We couldn’t find that category. It may have moved.
-            </p>
-            <Link to="/browse" className="text-sm text-link hover:text-link-hover underline">
+            <p className="section-title mb-2">We couldn’t find that category</p>
+            <p className="text-sm text-muted-foreground mb-4">It may have moved.</p>
+            <Link to="/browse" className="text-sm text-link hover:underline underline-offset-4">
               Browse all categories
             </Link>
           </div>
         ) : error === 'failed' ? (
           <p className="text-sm text-muted-foreground py-8">
-            That category could not be loaded. Please try again.
+            We couldn’t load this category. Refresh the page to try again.
           </p>
         ) : null}
 
         {error === null && (
           <>
             <div className="mb-6">
-              <div className="flex items-center gap-2 mb-1">
-                                <h1 className="page-title">{heading}</h1>
-              </div>
+              <h1 className="page-title mb-1">{heading}</h1>
               <p className="text-sm text-muted-foreground">
                 {isLegacyPhoneCollection(slug, node?.ancestors)
                   ? 'Related products from Kenyan shops.'
                   : node?.coarse
-                  ? 'A grouping of several departments — pick one below to narrow it down.'
+                  ? 'Choose a category below to narrow it down.'
                   : node?.unsorted
-                    ? 'A single shelf — everything here is listed below.'
-                    : 'Categories built from what Kenyan shops actually stock.'}
+                    ? 'Every product in this category is listed below.'
+                    : 'Prices from Kenyan shops, compared.'}
               </p>
             </div>
 
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-16 rounded-lg bg-muted/40" />
+                  <Skeleton key={i} className="h-12 rounded-md" />
                 ))}
               </div>
             ) : shownChildren.length > 0 ? (
@@ -239,8 +215,7 @@ export default function DemoShelfPage() {
                     <Link
                       key={child.slug}
                       to={`/shelf/${encodeURIComponent(child.slug)}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-border
-                                 px-4 py-3 hover:border-teal-deep hover:bg-muted/40 transition-colors"
+                      className="flex items-center justify-between gap-2 rounded-md card-interactive px-4 py-3"
                     >
                       <span className="text-sm font-medium text-foreground truncate">
                         {browseLabel(child)}
@@ -256,29 +231,25 @@ export default function DemoShelfPage() {
 
             <section aria-label="Products">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="section-title">
                   {total > 0 ? `${total.toLocaleString()} products` : 'Products'}
                 </h2>
                 <button
                   type="button"
                   onClick={toggleMultiStore}
                   aria-pressed={multiStoreOnly}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm
-                              transition-colors ${
+                  className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors active:translate-y-px ${
                     multiStoreOnly
-                      ? 'border-teal-deep bg-teal/10 text-teal-deep font-medium'
-                      : 'border-border text-muted-foreground hover:text-foreground hover:border-teal-deep'
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card text-foreground hover:border-muted-foreground'
                   }`}
                 >
-                  <Store className="w-3.5 h-3.5" aria-hidden="true" />
-                  Only compared across 2+ shops
+                  Sold by 2 or more shops
                 </button>
               </div>
 
               {productsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" aria-label="Loading products" />
-                </div>
+                <ClusterGridSkeleton />
               ) : clusters.length > 0 ? (
                 <>
                   <div className={PRODUCT_GRID}>
@@ -286,32 +257,25 @@ export default function DemoShelfPage() {
                       <ClusterCard key={cluster.cluster_id} cluster={cluster} />
                     ))}
                   </div>
-                  {clusters.length < total && (
-                    <div className="flex flex-col items-center gap-2 pt-8">
-                      <button
-                        type="button"
-                        onClick={loadMore}
-                        disabled={loadingMore}
-                        className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5
-                                   text-sm font-medium text-foreground hover:border-teal-deep
-                                   hover:bg-muted/40 transition-colors disabled:opacity-60"
-                      >
-                        {loadingMore && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
-                        {loadingMore ? 'Loading…' : 'Show more products'}
-                      </button>
-                      <p className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
-                        Showing {clusters.length.toLocaleString()} of {total.toLocaleString()}
-                      </p>
-                    </div>
-                  )}
+                  <Pagination
+                    page={page}
+                    pages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                    onChange={(p) => {
+                      const next = new URLSearchParams(params);
+                      if (p > 0) next.set('page', String(p + 1));
+                      else next.delete('page');
+                      setParams(next);
+                      window.scrollTo({ top: 0 });
+                    }}
+                  />
                 </>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
-                  <PackageOpen className="w-8 h-8 mx-auto mb-2" aria-hidden="true" />
+                  <PackageOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" aria-hidden="true" />
                   <p className="text-sm">
                     {multiStoreOnly
-                      ? 'No products on this shelf are priced at 2+ shops.'
-                      : 'No products on this shelf.'}
+                      ? 'Nothing here is sold by 2 or more shops yet.'
+                      : 'No products here yet.'}
                   </p>
                 </div>
               )}

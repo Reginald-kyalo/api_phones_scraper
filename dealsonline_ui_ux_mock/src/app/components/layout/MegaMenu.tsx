@@ -37,7 +37,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 bg-canvas-ink/30 z-40" onClick={onClose} aria-hidden="true" />
 
       <div
         ref={panelRef}
@@ -49,16 +49,16 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
         <div className="page-container py-6">
           <button
             onClick={onClose}
-            className="absolute top-4 right-6 w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+            className="absolute top-4 right-6 w-8 h-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
             aria-label="Close categories menu"
           >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          <div className="flex gap-8 min-h-[320px]">
+          <div className="flex gap-8 min-h-[320px] max-h-[min(75vh,680px)]">
             <nav
               aria-label="Departments"
-              className="w-72 flex-shrink-0 border-r border-border pr-6 max-h-[420px] overflow-y-auto"
+              className="w-72 flex-shrink-0 border-r border-border pr-6 overflow-y-auto"
             >
               <ul className="space-y-0.5">
                 {TAXONOMY_DEPARTMENTS.map((department) => {
@@ -72,7 +72,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                         onFocus={() => setActiveId(department.id)}
                         onClick={onClose}
                         aria-current={on ? 'true' : undefined}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        className={`flex items-center gap-3 px-3 py-1.5 rounded-md text-sm transition-colors ${
                           on
                             ? 'bg-muted text-foreground font-medium'
                             : 'text-muted-foreground hover:bg-surface-alt hover:text-foreground'
@@ -89,16 +89,16 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
               </ul>
             </nav>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex flex-col">
               {active && (
                 <>
                   <div className="flex items-baseline gap-2 mb-4">
-                    <h3 className="text-lg font-semibold text-foreground">{active.label}</h3>
+                    <h3 className="section-title">{active.label}</h3>
                     {active.id !== 'phones-wearables' && <span className="text-sm text-muted-foreground">{active.n_clusters.toLocaleString()} products</span>}
                   </div>
 
                   {active.id === 'phones-wearables' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[420px] overflow-y-auto pr-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 flex-1 overflow-y-auto pr-2">
                       {phoneChildren('phones-wearables').map((family) => (
                         <section key={family.id}>
                           <Link to={phoneCategoryHref(family.id)} onClick={onClose} className="text-sm font-semibold text-foreground hover:text-link hover:underline">{familyDisplayLabel(family)}</Link>
@@ -112,10 +112,10 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                       ))}
                     </div>
                   ) : active.families.length > 0 ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 max-h-[420px] overflow-y-auto pr-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 flex-1 overflow-y-auto pr-2">
                       {active.families.map((family) => (
                         <section key={family.id} aria-labelledby={`family-${active.id}-${family.id}`}>
-                          <h4 id={`family-${active.id}-${family.id}`} className="mb-1 text-xs font-semibold uppercase tracking-wide text-foreground">
+                          <h4 id={`family-${active.id}-${family.id}`} className="mb-1 microcopy-label !text-foreground">
                             {familyDisplayLabel(family)}
                           </h4>
                           <ul className="space-y-0.5">
@@ -137,27 +137,28 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-40 bg-surface-alt rounded-lg border border-border">
+                    <div className="flex items-center justify-center h-40 bg-surface-alt rounded-md border border-border">
                       <p className="text-sm text-muted-foreground">
-                        {active.label} is a single shelf.
+                        Open {active.label} to see every product.
                       </p>
                     </div>
                   )}
 
-                  <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-4">
+                  <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-4 flex-shrink-0">
                     <Link
                       to={`/aisle/${active.id}`}
                       onClick={onClose}
-                      className="text-sm font-medium text-link hover:text-link-hover transition-colors"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-link hover:underline underline-offset-4"
                     >
-                      Show all {active.label}{active.id === 'phones-wearables' ? '' : ` (${active.n_clusters.toLocaleString()})`} →
+                      All of {active.label}{active.id === 'phones-wearables' ? '' : ` (${active.n_clusters.toLocaleString()})`}
+                      <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </Link>
                     <Link
                       to="/browse"
                       onClick={onClose}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                     >
-                      All categories →
+                      All categories <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </Link>
                   </div>
                 </>

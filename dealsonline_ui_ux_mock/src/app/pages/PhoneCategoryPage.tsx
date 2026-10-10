@@ -14,7 +14,8 @@ export default function PhoneCategoryPage() {
     <div className="page-container py-8">
       <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1">
-          <li><Link to="/browse" className="hover:underline">All categories</Link></li>
+          <li><Link to="/" className="hover:underline underline-offset-4">Home</Link></li>
+          <li className="flex items-center gap-1"><ChevronRight className="h-3 w-3" aria-hidden="true" /><Link to="/browse" className="hover:underline underline-offset-4">All categories</Link></li>
           {path.map((part, index) => (
             <li key={part.id} className="flex items-center gap-1">
               <ChevronRight className="h-3 w-3" aria-hidden="true" />
@@ -27,10 +28,10 @@ export default function PhoneCategoryPage() {
       </nav>
       <h1 className="page-title mb-5">{category.label}</h1>
       <PhoneCategoryChoices parentId={category.id} />
-      <div className="mt-8 rounded-lg border border-border bg-surface-alt p-5">
-        <p className="font-medium text-foreground">Listings are not connected to this category yet.</p>
-        <p className="mt-1 text-sm text-muted-foreground">The category is ready to browse; products are still being assigned.</p>
-        <Link to="/aisle/phones-wearables" className="mt-3 inline-block text-sm text-link underline">Browse existing phone collections</Link>
+      <div className="mt-8 rounded-md border border-border bg-surface-alt p-5">
+        <p className="font-medium text-foreground">Looking for prices?</p>
+        <p className="mt-1 text-sm text-muted-foreground">Every phone and accessory we compare is in Phones &amp; wearables.</p>
+        <Link to="/aisle/phones-wearables" className="mt-3 inline-block text-sm text-link hover:underline underline-offset-4">See all phones and wearables</Link>
       </div>
     </div>
   );

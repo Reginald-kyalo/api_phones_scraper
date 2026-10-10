@@ -8,14 +8,14 @@ function ShelfCollections({ department }: { department: TaxonomyDepartment }) {
   return <div className="space-y-8">
     {department.families.map((family) => (
       <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
-        <h2 id={`${department.id}-${family.id}`} className="mb-3 text-lg font-semibold text-foreground">{familyDisplayLabel(family)}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <h2 id={`${department.id}-${family.id}`} className="mb-3 section-title">{familyDisplayLabel(family)}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {family.shelves.map((shelf) => (
-            <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="group flex flex-col rounded-xl p-4 ultra-border transition-colors hover:border-primary/40">
-              <span className="font-semibold text-foreground">{spineShelfDisplay(shelf)}</span>
-              <span className="price-num mt-2 text-2xl font-bold text-foreground">{shelf.count.toLocaleString()}</span>
-              <span className="text-xs text-muted-foreground">items in this collection</span>
-              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-deep">Browse <ChevronRight className="h-3 w-3" aria-hidden="true" /></span>
+            <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-md card-interactive px-4 py-3">
+              <span className="text-sm font-medium text-foreground">{spineShelfDisplay(shelf)}</span>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {shelf.count.toLocaleString()}<span className="sr-only"> products</span>
+              </span>
             </Link>
           ))}
         </div>
@@ -41,11 +41,9 @@ export default function DemoAislePage() {
     return (
       <div className="bg-background min-h-screen">
         <div className="page-container py-16 text-center">
-          <p className="text-base font-medium text-foreground mb-1">No such department</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            <span className="font-mono">{id}</span> is not one of this demo’s design departments.
-          </p>
-          <Link to="/browse" className="text-sm text-link hover:text-link-hover underline">
+          <p className="section-title mb-2">We couldn’t find that department</p>
+          <p className="text-sm text-muted-foreground mb-4">It may have moved.</p>
+          <Link to="/browse" className="text-sm text-link hover:underline underline-offset-4">
             Browse all categories
           </Link>
         </div>
@@ -79,7 +77,7 @@ export default function DemoAislePage() {
 
 {department.id === 'phones-wearables' && (
           <>
-            <h2 className="mb-3 text-lg font-semibold text-foreground">Shop by product type</h2>
+            <h2 className="mb-3 section-title">Shop by product type</h2>
             <PhoneCategoryChoices parentId="phones-wearables" />
             <details className="mt-8 border-t border-border pt-6">
               <summary className="cursor-pointer section-title">More collections</summary>
@@ -94,7 +92,7 @@ export default function DemoAislePage() {
               {department.families
                 .filter((family) => family.id !== 'needs-review')
                 .map((family) => (
-                  <a key={family.id} href={`#${family.id}`} className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary">
+                  <a key={family.id} href={`#${family.id}`} className="h-9 inline-flex items-center rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:border-muted-foreground">
                     {familyDisplayLabel(family)}
                   </a>
                 ))}
