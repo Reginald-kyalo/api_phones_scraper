@@ -8,6 +8,8 @@ import {
   displaySaving,
   formatPrice,
   hasPrice,
+  brandName,
+  productName,
   shopLabel,
 } from '../lib/format';
 import { bestImage } from '../lib/images';
@@ -36,6 +38,25 @@ function pricedOffers(byStore: Record<string, ClusterStore> | null | undefined):
   return Object.entries(byStore ?? {})
     .filter(([, offer]) => offer != null && hasPrice(offer.price))
     .sort(([, a], [, b]) => (a.price as number) - (b.price as number));
+}
+
+/**
+ * The capture's data_warning is written for us, not for shoppers
+ * ("classifieds/refurb asking price"). Say what it means for the buyer, and
+ * say nothing for a warning we have no wording for (DESIGN_RULES.md §6).
+ */
+function warningCopy(warning: string | null | undefined): string | null {
+  if (!warning) return null;
+  if (warning.startsWith('no confident retail price')) {
+    return 'We found no shop selling this new. These prices are for used or refurbished listings.';
+  }
+  if (warning.startsWith('implausibly low best price')) {
+    return 'One price here looks too low for the same item. Check the listing before you buy.';
+  }
+  if (warning.startsWith('wide price spread')) {
+    return 'Prices vary a lot between shops. Check each listing is the same item and condition.';
+  }
+  return null;
 }
 
 function variantLabel(config: Config): string {
@@ -85,7 +106,7 @@ export default function ClusterPricesPage() {
     if (!cluster) return;
     addItem({
       id: cluster.cluster_id,
-      name: cluster.display_name ?? cluster.title,
+      name: productName(cluster),
       image: bestImage(cluster) ?? '',
       category: categoryLabel(cluster.category ?? ''),
     });
@@ -109,7 +130,7 @@ export default function ClusterPricesPage() {
 }
 
 function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; capturedAt?: string }) {
-  const name = cluster.display_name ?? cluster.title;
+  const name = productName(cluster);
   const likelyUsed = cluster.condition_basis === 'likely_used';
   const image = bestImage(cluster);
 
@@ -256,7 +277,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               <div ref={mobileCardRef}>{bestCard}</div>
             </div>
 
-            {(!cluster.comparison_grade || cluster.data_warning) && (
+            {(!cluster.comparison_grade || warningCopy(cluster.data_warning)) && (
               <div className="mt-6 space-y-2">
                 {!cluster.comparison_grade && (
                   <Note>
@@ -264,7 +285,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                     shop titles match before you buy.
                   </Note>
                 )}
-                {cluster.data_warning && <Note>{cluster.data_warning}</Note>}
+                {warningCopy(cluster.data_warning) && <Note>{warningCopy(cluster.data_warning)}</Note>}
               </div>
             )}
 
@@ -396,7 +417,7 @@ function Breadcrumbs({ cluster }: { cluster: ClusterDetail }) {
       {cluster.brand && (
         <>
           <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <span className="text-foreground capitalize">{cluster.brand}</span>
+          <span className="text-foreground">{brandName(cluster.brand)}</span>
         </>
       )}
     </nav>

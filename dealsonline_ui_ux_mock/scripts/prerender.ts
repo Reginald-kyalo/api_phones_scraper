@@ -27,7 +27,7 @@ import * as demo from '../src/app/lib/demoSource';
 import type { ClusterDetail, ClusterStore, ClusterSummary } from '../src/app/lib/api';
 import { BRAND, MONEY_LINE } from '../src/app/lib/brand';
 import { categoryLabel } from '../src/app/lib/categories';
-import { formatPrice, hasPrice, shopLabel } from '../src/app/lib/format';
+import { brandName, formatPrice, hasPrice, productName, shopLabel } from '../src/app/lib/format';
 import { storeName } from '../src/app/lib/storeIdentity';
 import { bestImage } from '../src/app/lib/images';
 import { browseLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
@@ -122,7 +122,7 @@ function productList(rows: ClusterSummary[]): string {
     `<ul class="mt-6 space-y-2">` +
     rows
       .map((r) => {
-        const name = r.display_name ?? r.title;
+        const name = productName(r);
         const shops = r.n_stores_priced ?? r.n_stores ?? 0;
         const price = hasPrice(r.best_price)
           ? ` · from <span class="price-num">${esc(formatPrice(r.best_price))}</span>`
@@ -159,7 +159,7 @@ function offersOf(cluster: ClusterDetail): Offer[] {
 }
 
 function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
-  const name = cluster.display_name ?? cluster.title;
+  const name = productName(cluster);
   const offers = offersOf(cluster);
   if (offers.length < 2) return null;
   const [lowStore, low] = offers[0];
@@ -188,7 +188,7 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
       '@context': 'https://schema.org',
       '@type': 'Product',
       name,
-      ...(cluster.brand ? { brand: { '@type': 'Brand', name: cluster.brand } } : {}),
+      ...(cluster.brand ? { brand: { '@type': 'Brand', name: brandName(cluster.brand) } } : {}),
       ...(bestImage(cluster) ? { image: bestImage(cluster) } : {}),
       category: slug ? categoryLabel(slug) : undefined,
       offers: {

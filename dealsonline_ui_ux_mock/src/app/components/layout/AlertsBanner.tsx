@@ -4,7 +4,7 @@ import { Bell, TrendingDown, ArrowDown } from 'lucide-react';
 import { m, useReducedMotion } from 'motion/react';
 import { Button } from '../ui/button';
 import { CountUp } from '../common/Reveal';
-import { formatPrice, pricedShopCount } from '../../lib/format';
+import { formatPrice, pricedShopCount, productName } from '../../lib/format';
 
 // The faux alert demonstrates the product doing its job: on reveal the price
 // counts down from the old price to below target, then "Price dropped" lands.
@@ -30,7 +30,7 @@ export default function AlertsBanner({ example }: { example?: ClusterDetail | Cl
     : example?.best_price != null && spreadPct != null
       ? Math.round(example.best_price * (1 + spreadPct / 100))
       : OLD_PRICE;
-  const label = example ? (example.display_name ?? example.title) : 'Wireless headphones';
+  const label = example ? productName(example) : 'Wireless headphones';
   const reduce = useReducedMotion();
 
   return (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { clustersApi, type ClusterSummary } from '../../../lib/api';
-import { formatPrice } from '../../../lib/format';
+import { formatPrice, productName } from '../../../lib/format';
 import { categoryLabel } from '../../../lib/categories';
 import { type LocalComparisonItem } from '../../../hooks/useLocalStorage';
 import { Button } from '../../../components/ui/button';
@@ -151,7 +151,7 @@ export function ComparisonAddPanel({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium line-clamp-2 leading-snug">{p.display_name ?? p.title}</p>
+                  <p className="text-sm font-medium line-clamp-2 leading-snug">{productName(p)}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <p className="price-num text-sm font-bold">

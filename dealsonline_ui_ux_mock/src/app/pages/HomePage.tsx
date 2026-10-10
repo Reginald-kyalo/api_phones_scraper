@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link } from 'react-router';
-import { clusterSaving, formatPrice, hasPrice, pricedShopCount, shopLabel } from '../lib/format';
+import { clusterSaving, formatPrice, hasPrice, pricedShopCount, productName, shopLabel } from '../lib/format';
 import { clustersApi, type ClusterDetail, type ClusterSummary } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
 import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
@@ -44,7 +44,7 @@ function diverseDeals(rows: ClusterSummary[]): ClusterSummary[] {
 
 /** The one large card on the page: a real cross-shop gap on a real product. */
 function FeaturedDeal({ cluster }: { cluster: ClusterSummary }) {
-  const name = cluster.display_name ?? cluster.title;
+  const name = productName(cluster);
   const saving = clusterSaving(cluster);
   const stores = pricedShopCount(cluster);
   const href = `/prices/${encodeURIComponent(cluster.cluster_id)}`;

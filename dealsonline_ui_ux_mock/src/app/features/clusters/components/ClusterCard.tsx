@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
-import { clusterSaving, pricedShopCount, shopLabel } from '../../../lib/format';
+import { clusterSaving, pricedShopCount, productName, shopLabel } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { SavingBadge } from '../../../components/common/SavingBadge';
@@ -28,7 +28,7 @@ export const PRODUCT_GRID =
  * price instead of a saving, so the spread badge and shop count are conditional.
  */
 export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
-  const name = cluster.display_name ?? cluster.title;
+  const name = productName(cluster);
   // Capped and floored in one place, so this card, the deals filter and the
   // product page always agree. See displaySaving.
   const saving = clusterSaving(cluster);

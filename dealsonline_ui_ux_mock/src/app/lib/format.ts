@@ -147,3 +147,33 @@ export function checkedAgo(iso: string | null | undefined, now = Date.now()): st
   if (days <= 14) return `${days} ${days === 1 ? 'day' : 'days'} ago`;
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+/**
+ * Brands and units that are written in capitals. The capture title-cases
+ * names ("Jbl Bar 1000 Mk2", "Tcl 55 Inch Led Tv"); a shopper reads JBL, TCL,
+ * LED and TV. Only title-cased words are touched, so "Oppo" and "Sony" stay.
+ */
+const CAPS = new Set([
+  'jbl', 'tcl', 'hp', 'lg', 'tp', 'jvc', 'aoc', 'msi', 'zte', 'htc', 'akg', 'rca', 'hmd',
+  'usb', 'hdmi', 'led', 'oled', 'qled', 'tv', 'ssd', 'hdd', 'ram', 'uhd', 'fhd', 'hd',
+  'nfc', 'gps', 'ac', 'dc', 'lcd', 'cpu', 'gpu',
+]);
+
+function tidyWords(text: string): string {
+  return text
+    .replace(/\b([A-Za-z]+)\b/g, (word) =>
+      CAPS.has(word.toLowerCase()) && word !== word.toUpperCase() ? word.toUpperCase() : word,
+    )
+    // 128Gb, 2Tb, 4k: the unit in capitals, as on the box.
+    .replace(/\b(\d+)(gb|tb|mb|k)\b/gi, (_, n: string, unit: string) => `${n}${unit.toUpperCase()}`);
+}
+
+/** The name to show for a product, with brand and unit capitals restored. */
+export function productName(row: { display_name?: string | null; title: string }): string {
+  return tidyWords(row.display_name ?? row.title);
+}
+
+/** A brand as written by the brand: "jbl" → "JBL", "samsung" → "Samsung". */
+export function brandName(brand: string): string {
+  return tidyWords(brand.replace(/(^|[\s-])([a-z])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase()));
+}

@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link, useNavigate } from 'react-router';
 import { useLocalComparison } from '../hooks/useLocalStorage';
-import { pricedShopCount, shopLabel } from '../lib/format';
+import { pricedShopCount, productName, shopLabel } from '../lib/format';
 import { categoryLabel } from '../lib/categories';
 import { PriceOrDash } from '../components/common/PriceOrDash';
 import { type ClusterSummary } from '../lib/api';
@@ -28,7 +28,7 @@ export default function ComparisonPage() {
     (product: ClusterSummary) => {
       addToComparison({
         id: product.cluster_id,
-        name: product.display_name ?? product.title,
+        name: productName(product),
         image: product.image ?? '',
         price: product.best_price ?? 0,
         numStores: pricedShopCount(product),

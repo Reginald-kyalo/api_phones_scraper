@@ -10,6 +10,7 @@ import {
 } from '../../../components/ui/dialog';
 import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/textarea';
+import { productName } from '../../../lib/format';
 import { Label } from '../../../components/ui/label';
 import type { ClusterDetail } from '../../../lib/api';
 import { storeName } from '../../../lib/storeIdentity';
@@ -109,7 +110,7 @@ export function ReportDialog({
           scope: 'cluster',
           cluster_id: cluster.cluster_id,
           note,
-          title: cluster.display_name ?? cluster.title,
+          title: productName(cluster),
           category: cluster.category,
           captured_at: capturedAt ?? null,
           page_url: location.href,
@@ -150,7 +151,7 @@ export function ReportDialog({
         <DialogHeader>
           <DialogTitle>Report a problem</DialogTitle>
           <DialogDescription>
-            {cluster.display_name ?? cluster.title}
+            {productName(cluster)}
           </DialogDescription>
         </DialogHeader>
 

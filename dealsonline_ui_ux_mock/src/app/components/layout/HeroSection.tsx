@@ -3,7 +3,7 @@ import SearchBar from '../../features/search/components/SearchBar';
 import { ImageWithFallback } from '../common/ImageWithFallback';
 import { SavingBadge } from '../common/SavingBadge';
 import type { ClusterDetail } from '../../lib/api';
-import { clusterSaving, formatPrice, hasPrice } from '../../lib/format';
+import { clusterSaving, formatPrice, hasPrice, productName } from '../../lib/format';
 import { HERO_CAMPAIGNS } from '../../lib/ads';
 import { HeroCampaign } from '../ads/HeroCampaign';
 
@@ -40,7 +40,7 @@ export default function HeroSection({ productCount, showcase }: HeroSectionProps
     bar: ['w-14', 'w-10', 'w-16', 'w-12', 'w-9'][i],
     price,
   }));
-  const name = showcase ? (showcase.display_name ?? showcase.title) : null;
+  const name = showcase ? productName(showcase) : null;
 
   return (
     <div className="page-container pt-6">
