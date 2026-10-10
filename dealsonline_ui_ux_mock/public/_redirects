@@ -1,40 +1,14 @@
-# SPA fallback. One line per top-level route in src/app/routes.ts.
+# No rewrite rules, on purpose.
 #
-# ⛔ THE DESTINATION MUST BE `/`, NEVER `/index.html`. Cloudflare Pages strips
-# `.html` and `index` from URLs, so any rule pointing at /index.html is either
-# rejected outright ("Infinite loop detected in this rule and has been ignored")
-# or, for a non-wildcard source, silently downgraded from a 200 rewrite to a
-# 308 REDIRECT to `/` — which drops the path and lands every shared deep link on
-# the homepage. Measured in `wrangler pages dev`, which reproduces production.
+# Every page worth a search result is prerendered to its own HTML file by
+# scripts/prerender.ts (products sold by 2+ shops, categories, departments,
+# shelves, static pages). Cloudflare Pages applies _redirects BEFORE static
+# files, so the old `/prices/*  /  200` style rules would have served the
+# homepage in place of every prerendered page. Measured in `wrangler pages dev`.
 #
-# ⛔ AND THERE IS NO CATCH-ALL. `/*` matches `/` itself, which is what trips the
-# loop detector; the previous single line `/*  /index.html  200` parsed as ZERO
-# valid rules, so nothing here was in effect at all. Routes are listed
-# explicitly instead — tests/test_capture_demo_dataset.py::
-# test_every_route_has_a_spa_redirect_rule fails when routes.ts gains one that
-# is missing here.
+# Anything not prerendered (single-shop products, typos) gets dist/404.html,
+# which prerender.ts writes as the app shell: the app boots at the requested
+# URL and renders the page or its own "not found", with a 404 status.
 #
-# Unlisted paths still 404 to public/404.html, which parks the URL and bounces —
-# correct for genuine typos, and the only mechanism GitHub Pages has.
-# ⚠️ Do not delete 404.html to "let Pages do SPA routing": tested, and Pages then
-# serves a bare contentless 404 for every deep link.
-
-/browse/*       /   200
-/aisle/*        /   200
-/shelf/*        /   200
-/prices/*       /   200
-/product/*      /   200
-/category/*     /   200
-/browse         /   200
-/search         /   200
-/deals          /   200
-/favorites      /   200
-/alerts         /   200
-/account        /   200
-/auth           /   200
-/privacy        /   200
-/terms          /   200
-/cookie-policy  /   200
-/contact        /   200
-/compare        /   200
-/style-guide    /   200
+# ⛔ Never point a rule at /index.html (Pages strips .html and loops), and
+# never add a `/*` catch-all.

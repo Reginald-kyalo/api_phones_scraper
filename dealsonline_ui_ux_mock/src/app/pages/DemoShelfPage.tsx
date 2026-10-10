@@ -8,18 +8,9 @@ import { Pagination } from '../components/common/Pagination';
 import { Skeleton } from '../components/ui/skeleton';
 import { PAGE_SIZE } from '../lib/listing';
 import { isLegacyPhoneCollection } from '../data/taxonomyTree';
+import { browseLabel } from '../lib/navLabels';
 
 
-/** Render a shop-written browse-node label without echoing its ALL-CAPS form. */
-function browseLabel(node: Pick<BrowseNode, 'slug' | 'label'>): string {
-  const raw = (node.label ?? '').trim();
-  if (!raw) return node.slug;
-  if (raw === raw.toUpperCase() && /[A-Z]{2,}/.test(raw)) {
-    return raw.toLowerCase().replace(/(^|[\s/()-])([a-z])/g, (_: string, sep: string, ch: string) => sep + ch.toUpperCase());
-  }
-  if (raw === raw.toLowerCase()) return raw.replace(/^[a-z]/, (c) => c.toUpperCase());
-  return raw;
-}
 
 /**
  * Drop a child that merely restates its parent (`Phones` under `Smartphones`).

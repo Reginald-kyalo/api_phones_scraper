@@ -70,33 +70,33 @@ renders NotFound on every page — it reads as a data failure, not a routing one
 
 | need | why | provided by |
 |---|---|---|
-| SPA fallback | `/deals` is not a file; a hard refresh or shared link would 404 | `public/_redirects` (Netlify/Cloudflare) and `public/404.html` (GitHub Pages) |
+| Real HTML per page | crawlers and link previews do not run JavaScript | `scripts/prerender.ts`, run by `scripts/postbuild.mjs`: one HTML file per product sold by 2+ shops, category, department, shelf and static page, plus `sitemap.xml` and `robots.txt` |
+| Fallback for everything else | single-shop products and typos are not files | `dist/404.html`, written by the prerender as the app shell: the app boots at the requested URL (status 404) |
 | Long cache on `/demo/*` | ~143 MB of content-stable JSON | `dist/_headers`, written by `scripts/postbuild.mjs` |
 
-**How the GitHub Pages path works:** the host serves `404.html` for unknown
-paths; it parks `location.href` in `sessionStorage` and bounces to the app root,
-and an inline script in `index.html` `<head>` puts the URL back before the
-router reads it.
-
-⛔ That restore **must** stay a classic inline script in `<head>`. ES imports are
-hoisted, so anything in `main.tsx` runs *after* `routes.ts` has already called
-`createBrowserRouter` — which snapshots `location.pathname`. Placing it there
-looks correct and silently sends every deep link to the homepage.
-`tests/test_capture_demo_dataset.py::test_spa_deeplink_restore_runs_before_modules`
+⛔ **No rewrite rules in `_redirects`.** Cloudflare Pages applies them before
+static files, so `/prices/*  /  200` would serve the homepage in place of every
+prerendered product (measured in `wrangler pages dev`).
+`tests/test_capture_demo_dataset.py::test_redirects_carry_no_rewrite_rules`
 guards this.
+
+Set `SITE_URL` at build time once the domain is live; canonical URLs and the
+sitemap use it (default: the placeholder in `src/app/lib/brand.ts`).
+`PRERENDER_MAX_PRODUCTS` caps product pages (default 12,000) so a deploy stays
+under Cloudflare Pages' 20,000-file limit.
 
 ## Host notes
 
 - **Cloudflare Pages (the target)** — connect the GitHub repo; build command
-  `npm run build`, output `dist`. `_redirects` and `_headers` are read
+  `npm run build`, output `dist`. `_headers` and `404.html` are read
   automatically. Reporting needs a one-time D1 setup, below.
-- **Vercel** — add a rewrite of `/(.*)` to `/index.html`; it does not read
-  `_redirects`.
+- **Vercel** — enable clean URLs (`cleanUrls: true`) so `/deals` serves
+  `deals.html`, and make `404.html` the not-found page.
 - **GitHub Pages** — build with `BASE_PATH=/<repo>/` and publish `dist`.
-  `404.html` supplies the fallback. Note Pages ignores `_headers`, so the
+  `404.html` boots the app for unknown paths. Note Pages ignores `_headers`, so the
   dataset is not long-cached there.
-- **S3 / CloudFront** — set the error document to `index.html` (200), or upload
-  `404.html` as the 404 document.
+- **S3 / CloudFront** — set `404.html` as the error document, and map
+  extensionless paths to their `.html` file.
 
 ## Regenerating the dataset
 

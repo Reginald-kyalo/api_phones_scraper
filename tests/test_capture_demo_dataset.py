@@ -493,42 +493,41 @@ def test_packing_round_trips_every_file(tmp_path):
         assert (out / "demo" / name).read_text() == body, f"{name} did not survive"
 
 
-def test_every_route_has_a_spa_redirect_rule():
-    """public/_redirects must cover every top-level route in routes.ts.
+def test_redirects_carry_no_rewrite_rules():
+    """public/_redirects must not rewrite any path.
 
-    ⛔ There is no catch-all to fall back on. `/*` matches `/` itself, which trips
-    Cloudflare's loop detector, so the old single line `/*  /index.html  200`
-    parsed as ZERO valid rules — the file looked correct and did nothing. Rules
-    are enumerated instead, which means adding a route to routes.ts and
-    forgetting this file silently costs that route its clean 200.
+    Cloudflare Pages applies _redirects BEFORE static files. With the old
+    `/prices/*  /  200` rules, every prerendered page (scripts/prerender.ts)
+    was replaced by the homepage. Verified in `wrangler pages dev`: a file at
+    dist/prices/abc.html is served at /prices/abc only when no rule matches.
+    Pages that are not prerendered get dist/404.html, the app shell.
+    """
+    rules = (
+        Path(__file__).resolve().parents[1]
+        / "dealsonline_ui_ux_mock" / "public" / "_redirects"
+    ).read_text()
+    active = [l for l in rules.splitlines() if l.strip() and not l.lstrip().startswith("#")]
+    assert not active, f"rewrite rules would shadow prerendered pages: {active}"
 
-    Verified in `wrangler pages dev`, which reproduces production: with the rules
-    below every deep link is 200 with the path intact; without them it is a 404
-    served through the bounce page.
+
+def test_every_static_route_is_prerendered():
+    """Each top-level route without a parameter has a prerendered page.
+
+    Without one, the host serves 404.html: the app still boots, but with a 404
+    status and no title for crawlers. Parameter routes (browse/:slug and the
+    rest) are generated from the dataset in prerender.ts.
     """
     root = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock"
     routes_src = (root / "src" / "app" / "routes.ts").read_text()
-    rules = (root / "public" / "_redirects").read_text()
-
-    covered = {
-        line.split()[0].rstrip("*").rstrip("/")
-        for line in rules.splitlines()
-        if line.strip() and not line.startswith("#")
-    }
-
-    # `path: "browse/:productType"` -> "browse"; index/splat routes are not paths.
-    declared = {
-        m.group(1).split("/")[0]
+    prerender = (root / "scripts" / "prerender.ts").read_text()
+    static = {
+        m.group(1)
         for m in re.finditer(r'path:\s*"([^"]+)"', routes_src)
-        if m.group(1) not in ("/", "*")
+        if m.group(1) not in ("/", "*") and ":" not in m.group(1)
     }
-    assert declared, "no routes parsed from routes.ts — the regex has gone stale"
-
-    missing = {p for p in declared if f"/{p}" not in covered}
-    assert not missing, (
-        f"routes with no _redirects rule: {sorted(missing)}. On Cloudflare these "
-        f"deep-link to a 404 that bounces via 404.html instead of resolving 200."
-    )
+    assert static, "no routes parsed from routes.ts — the regex has gone stale"
+    missing = {p for p in static if f"'/{p}'" not in prerender}
+    assert not missing, f"static routes prerender.ts does not write: {sorted(missing)}"
 
 
 def test_spa_redirects_never_target_index_html():
@@ -549,28 +548,3 @@ def test_spa_redirects_never_target_index_html():
             assert "index.html" not in line, (
                 f"rule targets index.html and will 308 away the path: {line!r}"
             )
-
-
-def test_spa_deeplink_restore_runs_before_modules():
-    """The 404.html restore must be a classic inline script in index.html <head>.
-
-    ES imports are hoisted, so anything placed in main.tsx runs AFTER routes.ts
-    has already called createBrowserRouter — which snapshots location.pathname.
-    Putting the restore there looks correct and silently sends every deep link to
-    the homepage on any host without a rewrite rule (GitHub Pages). Proven red by
-    moving the block into main.tsx.
-    """
-    root = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock"
-    index = (root / "index.html").read_text()
-    head = index.split("</head>")[0]
-
-    assert "spa-redirect" in head, "deep-link restore is not in index.html <head>"
-    assert 'type="module"' not in head.split("spa-redirect")[0].rsplit("<script", 1)[-1], (
-        "the restore script is a module — it would run after the router is built"
-    )
-    assert "spa-redirect" not in (root / "src" / "main.tsx").read_text(), (
-        "restore lives in main.tsx, where import hoisting makes it too late"
-    )
-    assert "spa-redirect" in (root / "public" / "404.html").read_text(), (
-        "404.html no longer parks the requested URL"
-    )
