@@ -19,8 +19,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="max-w-[1400px] mx-auto px-4 py-16 text-center">
-          <h1 className="text-4xl font-bold text-foreground mb-3">Something went wrong</h1>
+        <div className="page-container py-16 text-center">
+          <h1 className="page-title mb-3">Something went wrong</h1>
           <p className="text-muted-foreground mb-6">
             An unexpected error occurred. Please try again.
           </p>
@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </button>
             <Link
               to="/"
-              className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-foreground hover:bg-gray-50 transition-colors"
+              className="inline-flex h-10 items-center rounded-lg border border-border px-5 text-sm font-medium text-foreground hover:bg-surface-alt transition-colors"
             >
               Go home
             </Link>

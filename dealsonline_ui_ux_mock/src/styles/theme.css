@@ -4,54 +4,55 @@
   --font-display: 'Space Grotesk', var(--font-family);
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
 
-  /* ── Premium identity: refined teal accent + ink canvas ──
-     (introduced for the hero rebuild; brand cascade follows once locked) */
-  --teal: #0E7C8B;            /* brand / action / "lowest" on light */
-  --teal-bright: #2BC2D4;     /* accent / glow / "lowest" on dark */
+  /* ── SokoPulse identity (see DESIGN_RULES.md §2) ──
+     Teal means ACTION and nothing else: buttons, links, focus, selected filter. */
+  --teal: #0E7C8B;            /* action */
+  --teal-bright: #2BC2D4;     /* small accents on dark surfaces only */
   --teal-deep: #0A5C68;       /* hover / pressed */
+  --saving: #1F6B4A;          /* money saved: the saving chip, nothing else */
   --canvas-ink: #0A0F12;      /* dark hero/footer canvas */
   --canvas-ink-2: #0E161A;    /* raised surface on dark */
   --canvas-light: #F8FAFA;    /* light premium canvas */
   --ink: #0C1416;             /* premium near-black text */
 
-  /* ── Core palette (PriceRunner-aligned) ── */
+  /* ── Core palette: one ink, a five-step grey ramp with a slight teal bias ── */
   --background: #FFFFFF;
-  --foreground: #0f172a;
+  --foreground: #0C1416;
   --card: #FFFFFF;
-  --card-foreground: #0f172a;
+  --card-foreground: #0C1416;
   --popover: #FFFFFF;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #0C1416;
   --primary: #0E7C8B;
   --primary-foreground: #FFFFFF;
-  --secondary: #f1f5f9;
+  --secondary: #EEF3F3;
   --secondary-foreground: #0C1416;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
+  --muted: #EEF3F3;
+  --muted-foreground: #5B6B6E;
+  --accent: #EEF3F3;
   --accent-foreground: #0C1416;
   --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --input-background: #f8fafc;
-  --switch-background: #cbd5e1;
+  --border: #DFE6E7;
+  --input: #DFE6E7;
+  --input-background: #F8FAFA;
+  --switch-background: #C5D0D2;
   --ring: #0E7C8B;
 
   /* ── Semantic tokens ── */
   --hero-bg: #0A0F12;
   --hero-gradient: linear-gradient(135deg, #0A0F12 0%, #0A5C68 100%);
-  --badge-discount: #0E7C8B;
-  --badge-success: #0E7C8B;
-  --badge-warning: #F59E0B;
+  --badge-discount: #1F6B4A;
+  --badge-success: #16A34A;
+  --badge-warning: #B45309;
   --price-color: #0C1416;
-  --price-old: #64748b;
+  --price-old: #5B6B6E;
   --link-color: #0E7C8B;
   --link-hover: #0A5C68;
   --success: #16A34A;
-  --warning: #F59E0B;
-  --surface-alt: #f8fafc;
+  --warning: #B45309;
+  --surface-alt: #F4F7F7;
   --category-strip-bg: #FFFFFF;
-  --category-strip-border: #e2e8f0;
+  --category-strip-border: #DFE6E7;
 
   /* ── Chart colors ── */
   --chart-1: #0E7C8B;
@@ -60,8 +61,12 @@
   --chart-4: #F59E0B;
   --chart-5: #E8364F;
 
-  /* ── Radius (PriceRunner: sharp/minimal) ── */
-  --radius: 0.5rem;
+  /* ── Radius: one 6px radius; 8px for big surfaces only (DESIGN_RULES.md §2) ── */
+  --radius: 6px;
+
+  /* ── Shadow: two levels, both mean "floating and temporary" ── */
+  --shadow-raised-value: 0 4px 12px rgba(12, 20, 22, 0.08), 0 1px 2px rgba(12, 20, 22, 0.06);
+  --shadow-overlay-value: 0 16px 40px rgba(12, 20, 22, 0.16);
 
   /* ── Motion (see HOMEPAGE_AUDIT.md "Motion budget") ──
      Restrained by policy: transform/opacity only, reduced-motion gated,
@@ -78,12 +83,12 @@
 
   /* ── Sidebar (keep for shadcn compatibility) ── */
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #0f172a;
+  --sidebar-foreground: #0C1416;
   --sidebar-primary: #0E7C8B;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
+  --sidebar-accent: #EEF3F3;
+  --sidebar-accent-foreground: #0C1416;
+  --sidebar-border: #DFE6E7;
   --sidebar-ring: #0E7C8B;
 }
 
@@ -127,6 +132,7 @@
   --color-link: var(--link-color);
   --color-link-hover: var(--link-hover);
   --color-success: var(--success);
+  --color-saving: var(--saving);
   --color-warning: var(--warning);
   --color-surface-alt: var(--surface-alt);
 
@@ -141,10 +147,19 @@
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* One radius. sm/md/lg all resolve to 6px so legacy classes converge;
+     xl and above cap at 8px, reserved for big surfaces. */
+  --radius-xs: 4px;
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --radius-3xl: 8px;
+  --radius-4xl: 8px;
+
+  --shadow-raised: var(--shadow-raised-value);
+  --shadow-overlay: var(--shadow-overlay-value);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -282,16 +297,6 @@
     color: var(--price-old);
   }
 
-  .discount-badge {
-    display: inline-flex;
-    align-items: center;
-    background-color: var(--badge-discount);
-    color: #FFFFFF;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.25rem;
-  }
 
   .section-header {
     display: flex;
@@ -312,15 +317,57 @@
   }
 
   /* ── Ultra Design Utilities ── */
+  /* A resting 1px hairline. Static on purpose: hover feedback belongs only on
+     things that are clickable, via .card-interactive or a hover:border-* class. */
   .ultra-border {
     border: 1px solid var(--border);
-    box-shadow: none !important;
-    transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
   }
-  
-  .ultra-border:hover {
+
+  /* Three heading sizes (DESIGN_RULES.md §2): hero 44px on the homepage only,
+     page title 28px, section 20px. */
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  @media (min-width: 768px) {
+    .page-title { font-size: 1.75rem; }
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  /* Two content widths: 1200 for listings and the product page, 760 for prose. */
+  .page-container {
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 1024px) {
+    .page-container { padding-inline: 1.5rem; }
+  }
+  .prose-container {
+    max-width: 760px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  /* One hover channel for anything clickable that rests on the page: the
+     border darkens. No lift, no shadow, no tint on top. */
+  .card-interactive {
+    border: 1px solid var(--border);
+    transition: border-color var(--motion-micro) ease-out;
+  }
+  .card-interactive:hover {
     border-color: var(--muted-foreground);
-    background-color: var(--surface-alt);
   }
 
   .microcopy-label {

@@ -28,7 +28,7 @@ export function PRProductCard({ product }: { product: PRProduct }) {
                     loading="lazy"
                   />
                 ) : (
-                  <Package className="h-12 w-12 text-gray-300" />
+                  <Package className="h-12 w-12 text-muted-foreground/40" />
                 )}
               </div>
               <button
@@ -51,7 +51,7 @@ export function PRProductCard({ product }: { product: PRProduct }) {
                   } as any);
                 }}
                 className={`absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ultra-border z-10 ${
-                  isFav ? 'bg-red-50 text-red-500 border-red-100' : 'bg-white/90 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100'
+                  isFav ? 'bg-white text-foreground border-foreground/30 [&_svg]:fill-current' : 'bg-white/90 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
@@ -135,7 +135,7 @@ export function PRProductCardGrid({ product }: { product: PRProduct }) {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Package className="h-12 w-12 text-gray-300" />
+                  <Package className="h-12 w-12 text-muted-foreground/40" />
                 </div>
               )}
               <button
@@ -158,7 +158,7 @@ export function PRProductCardGrid({ product }: { product: PRProduct }) {
                   } as any);
                 }}
                 className={`absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ultra-border z-10 ${
-                  isFav ? 'bg-red-50 text-red-500 border-red-100' : 'bg-white/90 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100'
+                  isFav ? 'bg-white text-foreground border-foreground/30 [&_svg]:fill-current' : 'bg-white/90 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />

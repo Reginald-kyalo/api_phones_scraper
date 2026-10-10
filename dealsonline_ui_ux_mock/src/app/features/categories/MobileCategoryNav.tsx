@@ -33,7 +33,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
                 type="button"
                 onClick={() => setOpenId(isOpen ? null : department.id)}
                 aria-expanded={isOpen}
-                className="w-full flex items-center gap-3 px-5 py-3 text-sm text-left text-foreground hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-3 px-5 py-3 text-sm text-left text-foreground hover:bg-surface-alt transition-colors"
               >
                 <Icon className="w-4 h-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />
                 <span className="flex-1 truncate">{department.label}</span>
@@ -47,7 +47,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
               </button>
 
               {isOpen && (
-                <div className="pb-2 bg-gray-50/60">
+                <div className="pb-2 bg-surface-alt">
                   {department.id === 'phones-wearables' ? (
                     <div className="px-5 py-2 space-y-2">
                       {phoneChildren('phones-wearables').map((family) => (

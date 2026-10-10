@@ -37,7 +37,7 @@ export default function AccountPage() {
 
   if (authLoading) {
     return (
-      <div className="max-w-[1400px] mx-auto px-4 py-16 flex justify-center">
+      <div className="page-container py-16 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -48,7 +48,7 @@ export default function AccountPage() {
   const displayName = user.username || user.email.split('@')[0];
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-8">
+    <div className="page-container py-8">
       {/* Header */}
       <div className="bg-card border border-border rounded-lg p-8 mb-8">
         <div className="flex items-start justify-between">
@@ -59,7 +59,7 @@ export default function AccountPage() {
               </span>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">{displayName}</h1>
+              <h1 className="page-title mb-1">{displayName}</h1>
               <p className="text-muted-foreground">{user.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge>Free Plan</Badge>
@@ -248,23 +248,23 @@ export default function AccountPage() {
                 <h3 className="font-bold mb-4">Premium Features</h3>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2">
-                    <span className="text-green-600">✓</span>
+                    <span className="text-success">✓</span>
                     <span>Unlimited price alerts</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-green-600">✓</span>
+                    <span className="text-success">✓</span>
                     <span>Advanced price history (90 days)</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-green-600">✓</span>
+                    <span className="text-success">✓</span>
                     <span>Priority notifications</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-green-600">✓</span>
+                    <span className="text-success">✓</span>
                     <span>Export price data</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-green-600">✓</span>
+                    <span className="text-success">✓</span>
                     <span>No ads</span>
                   </li>
                 </ul>
@@ -297,13 +297,13 @@ export default function AccountPage() {
               </div>
 
               <div className="pt-6 border-t">
-                <h3 className="font-bold mb-2 text-red-600">Danger Zone</h3>
+                <h3 className="font-bold mb-2 text-destructive">Danger Zone</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
-                <Button variant="outline" className="text-red-600 hover:text-red-700 border-red-300" disabled>
+                <Button variant="outline" className="text-destructive hover:text-destructive/80 border-destructive/30" disabled>
                   Delete Account
-                  <Badge variant="outline" className="ml-2 text-[10px] border-red-300 text-red-500">Coming soon</Badge>
+                  <Badge variant="outline" className="ml-2 text-[10px] border-destructive/30 text-destructive">Coming soon</Badge>
                 </Button>
               </div>
             </div>

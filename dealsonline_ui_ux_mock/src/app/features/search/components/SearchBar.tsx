@@ -59,7 +59,7 @@ export default function SearchBar({
   const renderDropdown = () => {
     if (!showDropdown) return null;
     return (
-      <div className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-xl ultra-border overflow-hidden z-50">
+      <div className="absolute top-full mt-2 w-full bg-white rounded-md shadow-raised ultra-border overflow-hidden z-50">
         {filteredSuggestions.length > 0 ? (
           <div className="py-2">
             <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -76,14 +76,14 @@ export default function SearchBar({
                 }}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-surface-alt transition-colors group"
               >
-                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-white ultra-border">
-                  <Package className="w-4 h-4 text-gray-500" />
+                <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-white ultra-border">
+                  <Package className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
                   <p className="text-xs text-muted-foreground">{s.category}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
               </Link>
             ))}
           </div>
@@ -107,7 +107,7 @@ export default function SearchBar({
       <div ref={containerRef} className={`relative ${className}`}>
         <form onSubmit={handleSubmit}>
           <div className="relative">
-            <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="search"
               name="q"
@@ -117,7 +117,7 @@ export default function SearchBar({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setIsFocused(true)}
-              className="w-full h-12 pl-12 pr-14 rounded-full bg-white text-gray-900 text-sm placeholder:text-gray-400 outline-none shadow-lg ultra-border"
+              className="w-full h-12 pl-12 pr-14 rounded-full bg-white text-foreground text-sm placeholder:text-muted-foreground outline-none ultra-border"
             />
             <button
               type="submit"
@@ -138,7 +138,7 @@ export default function SearchBar({
     <div ref={containerRef} className={`relative ${className}`}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
-          <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="search"
             name="q"
@@ -160,7 +160,7 @@ export default function SearchBar({
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-muted-foreground" />
             </button>
           )}
         </div>

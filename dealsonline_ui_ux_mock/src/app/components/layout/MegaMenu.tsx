@@ -40,18 +40,18 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
 
       <div
         ref={panelRef}
-        className="fixed left-0 right-0 top-[57px] z-50 bg-white border-b border-border shadow-lg"
+        className="fixed left-0 right-0 top-[57px] z-50 bg-white border-b border-border shadow-raised"
         role="dialog"
         aria-modal="true"
         aria-label="All categories"
       >
-        <div className="max-w-[1400px] mx-auto px-6 py-6">
+        <div className="page-container py-6">
           <button
             onClick={onClose}
-            className="absolute top-4 right-6 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            className="absolute top-4 right-6 w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
             aria-label="Close categories menu"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
 
           <div className="flex gap-8 min-h-[320px]">
@@ -73,8 +73,8 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                         aria-current={on ? 'true' : undefined}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                           on
-                            ? 'bg-gray-100 text-foreground font-medium'
-                            : 'text-muted-foreground hover:bg-gray-50 hover:text-foreground'
+                            ? 'bg-muted text-foreground font-medium'
+                            : 'text-muted-foreground hover:bg-surface-alt hover:text-foreground'
                         }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.75} />
@@ -136,7 +136,7 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                       ))}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border border-border">
+                    <div className="flex items-center justify-center h-40 bg-surface-alt rounded-lg border border-border">
                       <p className="text-sm text-muted-foreground">
                         {active.label} is a single shelf.
                       </p>

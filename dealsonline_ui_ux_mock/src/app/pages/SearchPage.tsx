@@ -44,8 +44,8 @@ export default function SearchPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[1100px] mx-auto px-4 lg:px-6 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+      <div className="page-container py-8">
+        <h1 className="page-title">
           {query ? <>Results for &ldquo;{query}&rdquo;</> : 'Search'}
         </h1>
 
@@ -78,7 +78,7 @@ export default function SearchPage() {
                 <li key={row.id}>
                   <Link
                     to={`/prices/${encodeURIComponent(row.id)}`}
-                    className="flex items-baseline justify-between gap-4 py-3 transition-colors hover:bg-gray-50"
+                    className="flex items-baseline justify-between gap-4 py-3 transition-colors hover:bg-surface-alt"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">

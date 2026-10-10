@@ -51,14 +51,14 @@ export default function ComparisonPage() {
   // Empty state
   if (comparisonItems.length === 0) {
     return (
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
+      <div className="page-container py-6">
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
-        <h1 className="text-3xl font-bold mb-2">Product comparison</h1>
+        <h1 className="page-title mb-2">Product comparison</h1>
         <p className="text-muted-foreground mb-8">
           Add products from the browse or detail pages to begin comparing.
         </p>
@@ -84,7 +84,7 @@ export default function ComparisonPage() {
   const title = buildComparisonTitle(comparisonItems);
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
+    <div className="page-container py-6">
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
@@ -94,7 +94,7 @@ export default function ComparisonPage() {
       </button>
 
       {/* Title */}
-      <h1 className="text-lg font-bold mb-2 line-clamp-1">{title}</h1>
+      <h1 className="page-title mb-2 line-clamp-1">{title}</h1>
 
       {/* Controls row */}
       <div className="flex items-center justify-end mb-4">
@@ -116,13 +116,13 @@ export default function ComparisonPage() {
           <>
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-[140px] z-10 p-2 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50"
+              className="absolute left-0 top-[140px] z-10 p-2 rounded-full bg-white border border-border hover:bg-surface-alt"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-[140px] z-10 p-2 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50"
+              className="absolute right-0 top-[140px] z-10 p-2 rounded-full bg-white border border-border hover:bg-surface-alt"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -135,13 +135,13 @@ export default function ComparisonPage() {
             {comparisonItems.map((item) => (
               <div
                 key={item.product_id}
-                className="flex-shrink-0 border-r border-gray-100 last:border-r-0 relative group"
+                className="flex-shrink-0 border-r border-border last:border-r-0 relative group"
                 style={{ width: COL_W }}
               >
                 {/* Remove button */}
                 <button
                   onClick={() => removeFromComparison(item.product_id)}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-white shadow-sm border border-gray-200 z-10 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100"
+                  className="absolute top-2 right-2 p-1 rounded-full bg-white border border-border z-10 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
                   aria-label={`Remove ${item.name}`}
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
@@ -150,7 +150,7 @@ export default function ComparisonPage() {
                 <div className="p-3 text-center">
                   {/* Image */}
                   <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>
-                    <div className="aspect-square bg-gray-50 rounded-lg flex items-center justify-center mb-2 border border-gray-100">
+                    <div className="aspect-square bg-surface-alt rounded-lg flex items-center justify-center mb-2 border border-border">
                       {item.image ? (
                         <img
                           src={item.image}
@@ -159,7 +159,7 @@ export default function ComparisonPage() {
                           loading="lazy"
                         />
                       ) : (
-                        <Package className="h-8 w-8 text-gray-300" />
+                        <Package className="h-8 w-8 text-muted-foreground/40" />
                       )}
                     </div>
                   </Link>
@@ -179,7 +179,7 @@ export default function ComparisonPage() {
                           <Star
                             key={si}
                             className={`h-3.5 w-3.5 ${
-                              si < Math.round(item.rating!) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'
+                              si < Math.round(item.rating!) ? 'fill-warning text-warning' : 'text-muted-foreground/40'
                             }`}
                           />
                         ))}
@@ -198,15 +198,15 @@ export default function ComparisonPage() {
 
             {/* Empty placeholder slot */}
             <div
-              className="flex-shrink-0 border-r border-gray-100"
+              className="flex-shrink-0 border-r border-border"
               style={{ width: COL_W }}
             >
               <div className="p-3 h-full flex items-center justify-center">
                 <button
                   onClick={() => setPanelOpen(true)}
-                  className="w-full aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 hover:border-gray-400 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="w-full aspect-square bg-surface-alt rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-muted-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
-                  <Plus className="h-6 w-6 text-gray-400" />
+                  <Plus className="h-6 w-6 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Add product</span>
                 </button>
               </div>

@@ -10,8 +10,12 @@ interface LogoProps {
 }
 
 /**
- * Brand mark: an indigo squircle containing a descending "price drop" line
- * with a coral end-dot — a falling-price chart, on-theme for price comparison.
+ * SokoPulse mark: a rounded tile holding a falling price line that ends in a
+ * dot — the pulse of the market, read as a price coming down.
+ *
+ * Ink tile on light backgrounds; a white tile on dark ones so the mark stays
+ * visible on the footer. The wordmark is one colour: teal is reserved for
+ * actions (DESIGN_RULES.md §2), not brand decoration.
  */
 export default function Logo({
   variant = 'dark',
@@ -20,7 +24,7 @@ export default function Logo({
   className = '',
 }: LogoProps) {
   return (
-    <Link to="/" className={`inline-flex items-center gap-2 flex-shrink-0 ${className}`}>
+    <Link to="/" aria-label="SokoPulse home" className={`inline-flex items-center gap-2 flex-shrink-0 ${className}`}>
       <svg
         width={size}
         height={size}
@@ -29,15 +33,15 @@ export default function Logo({
         aria-hidden="true"
         className="flex-shrink-0"
       >
-        <rect width="32" height="32" rx="9" fill="#0C1416" />
+        <rect width="32" height="32" rx="7" fill={variant === 'light' ? '#FFFFFF' : '#0C1416'} />
         <polyline
           points="7,10 13,16 18,13 24,22"
-          stroke="#FFFFFF"
+          stroke={variant === 'light' ? '#0C1416' : '#FFFFFF'}
           strokeWidth="2.6"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <circle cx="24" cy="22" r="3" fill="#2BC2D4" />
+        <circle cx="24" cy="22" r="3" fill={variant === 'light' ? '#0E7C8B' : '#2BC2D4'} />
       </svg>
       {showWordmark && (
         <span
@@ -46,10 +50,7 @@ export default function Logo({
           }`}
           style={{ fontSize: size * 0.5 }}
         >
-          Deals
-          <span className={variant === 'light' ? 'text-teal-bright' : 'text-teal-deep'}>
-            Online
-          </span>
+          Soko<span className="font-medium">Pulse</span>
         </span>
       )}
     </Link>

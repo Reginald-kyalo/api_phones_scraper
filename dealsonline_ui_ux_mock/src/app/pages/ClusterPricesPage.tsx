@@ -60,13 +60,13 @@ function VariantBlock({ config }: { config: Config }) {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className="w-full text-left p-4 flex items-baseline justify-between gap-2 flex-wrap
-                   hover:bg-gray-50 transition-colors"
+                   hover:bg-surface-alt transition-colors"
       >
         <span className="flex items-center gap-2">
           <span className="font-semibold text-sm text-foreground">{label}</span>
           {spread != null && spread > 0 && (
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-deep
-                             bg-teal/10 rounded px-1.5 py-0.5">
+                             bg-teal/10 rounded-md px-1.5 py-0.5">
               <TrendingDown className="h-3 w-3" aria-hidden="true" />
               {Math.round(spread)}%
             </span>
@@ -94,7 +94,7 @@ function VariantBlock({ config }: { config: Config }) {
                 {offers.map(([rawStore, offer], idx) => (
                   <li
                     key={rawStore}
-                    className={`flex items-center gap-4 rounded-xl p-3 transition-colors ultra-border hover:bg-gray-50 ${
+                    className={`flex items-center gap-4 rounded-xl p-3 transition-colors ultra-border hover:bg-surface-alt ${
                       idx === 0 ? 'border-primary/20' : 'border-border'
                     }`}
                   >
@@ -179,7 +179,7 @@ export default function ClusterPricesPage() {
 
   if (loading) {
     return (
-      <div className="max-w-[900px] mx-auto px-4 py-16 flex justify-center">
+      <div className="page-container py-16 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-label="Loading price comparison" />
       </div>
     );
@@ -187,7 +187,7 @@ export default function ClusterPricesPage() {
 
   if (error || !cluster) {
     return (
-      <div className="max-w-[900px] mx-auto px-4 py-16 text-center">
+      <div className="page-container py-16 text-center">
         <p className="text-sm text-muted-foreground mb-4">We couldn't load this price comparison.</p>
         <div className="flex justify-center gap-3">
           <Button variant="outline" onClick={load} className="gap-2">
@@ -216,7 +216,7 @@ export default function ClusterPricesPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[900px] mx-auto px-4 lg:px-6 py-8">
+      <div className="page-container py-8">
         <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 gap-1">
           <Link to="/deals">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -227,7 +227,7 @@ export default function ClusterPricesPage() {
         <p className="microcopy-label">
           {[cluster.brand, cluster.category].filter(Boolean).join(' · ') || 'Price comparison'}
         </p>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight mt-1 mb-3">{name}</h1>
+        <h1 className="page-title mt-1 mb-3">{name}</h1>
 
         {facetChips.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
@@ -286,7 +286,7 @@ export default function ClusterPricesPage() {
         )}
 
         {/* Honest two-tier price block */}
-        <div className="bg-gray-50 rounded-xl p-4 mb-6 inline-flex flex-col ultra-border">
+        <div className="bg-surface-alt rounded-xl p-4 mb-6 inline-flex flex-col ultra-border">
           <p className="microcopy-label mb-0.5">
             {likelyUsed ? 'Lowest asking price (used/refurb)' : 'Best price (new)'}
           </p>
@@ -345,7 +345,7 @@ export default function ClusterPricesPage() {
           {rows.map(([rawStore, offer], idx) => (
             <div
               key={rawStore}
-              className={`flex items-center gap-4 rounded-xl p-4 transition-colors ultra-border hover:bg-gray-50 ${
+              className={`flex items-center gap-4 rounded-xl p-4 transition-colors ultra-border hover:bg-surface-alt ${
                 idx === 0 ? 'border-primary/20' : 'border-border'
               }`}
             >

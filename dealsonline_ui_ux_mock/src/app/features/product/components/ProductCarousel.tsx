@@ -56,8 +56,8 @@ export default function ProductCarousel({
         <CarouselContent className="-ml-3">
           {children}
         </CarouselContent>
-        <CarouselPrevious className="hidden sm:flex -left-3 h-8 w-8 border-border shadow-sm" />
-        <CarouselNext className="hidden sm:flex -right-3 h-8 w-8 border-border shadow-sm" />
+        <CarouselPrevious className="hidden sm:flex -left-3 h-8 w-8 border-border" />
+        <CarouselNext className="hidden sm:flex -right-3 h-8 w-8 border-border" />
       </Carousel>
     </section>
   );

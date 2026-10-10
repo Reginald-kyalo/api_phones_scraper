@@ -60,3 +60,90 @@ export function savingPct(spreadPct: number | null | undefined): number | null {
   if (spreadPct == null || Number.isNaN(spreadPct) || spreadPct <= 0) return null;
   return (spreadPct / (100 + spreadPct)) * 100;
 }
+
+/**
+ * Savings above this are almost always a mismatched pair (a 1-pack against a
+ * 2-pack, a used phone against a new one), not a deal. See DESIGN_RULES.md §5.
+ */
+export const MAX_DISPLAY_SAVING_PCT = 60;
+/** A saving smaller than this in cash is noise, whatever its percentage. */
+export const MIN_DISPLAY_SAVING_KES = 50;
+
+export interface DisplaySaving {
+  /** Rounded percentage the shopper keeps, always 1 to MAX_DISPLAY_SAVING_PCT. */
+  pct: number;
+  /** Cash saved buying at the cheapest shop instead of the dearest. */
+  kes: number;
+}
+
+/**
+ * The ONE saving a shopper may see. Every badge, filter and sentence that
+ * mentions a saving goes through here, so a product carries one number on
+ * every page.
+ *
+ * Takes the engine's spread (a markup over the cheapest price) and the cheapest
+ * price, converts to a real saving, and returns null — render nothing — when
+ * the number is implausible (over 60%) or trivial (under KES 50).
+ */
+export function displaySaving(
+  spreadPct: number | null | undefined,
+  lowestPrice: number | null | undefined,
+): DisplaySaving | null {
+  const pct = savingPct(spreadPct);
+  if (pct == null || lowestPrice == null || lowestPrice < 1) return null;
+  const kes = Math.round((lowestPrice * (spreadPct as number)) / 100);
+  if (pct > MAX_DISPLAY_SAVING_PCT || kes < MIN_DISPLAY_SAVING_KES) return null;
+  const rounded = Math.round(pct);
+  return rounded >= 1 ? { pct: rounded, kes } : null;
+}
+
+/** Convenience for anything shaped like a cluster row. */
+export function clusterSaving(cluster: {
+  like_for_like_spread_pct: number | null;
+  best_price: number | null;
+  n_stores_priced?: number | null;
+  n_stores: number | null;
+}): DisplaySaving | null {
+  // A saving between shops needs two shops with a price. Some rows carry a
+  // spread from shops that no longer quote one, which read "Save 35%" above
+  // "lowest of 1 shop".
+  if (pricedShopCount(cluster) < 2) return null;
+  return displaySaving(cluster.like_for_like_spread_pct, cluster.best_price);
+}
+
+/**
+ * The one shop count. `n_stores` counts shops that CARRY a product; a page can
+ * only show the ones that quote a price, so that is the number every surface
+ * renders. Falls back for fixtures captured before `n_stores_priced` existed.
+ */
+export function pricedShopCount(cluster: {
+  n_stores_priced?: number | null;
+  n_stores: number | null;
+}): number {
+  return cluster.n_stores_priced ?? cluster.n_stores ?? 0;
+}
+
+/** True when a price is real enough to put in a price slot. */
+export function hasPrice(value: number | null | undefined): value is number {
+  return value != null && !Number.isNaN(value) && value >= 1;
+}
+
+/** Short form for chart axes: 52000 → "52k", 1250000 → "1.3m". */
+export function shortKes(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(Math.round(value));
+}
+
+/** "2 h ago", "3 days ago", "12 Sep 2026". For "checked …" lines. */
+export function checkedAgo(iso: string | null | undefined, now = Date.now()): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const hours = Math.max(0, Math.round((now - then) / 3_600_000));
+  if (hours < 1) return 'under an hour ago';
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.round(hours / 24);
+  if (days <= 14) return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}

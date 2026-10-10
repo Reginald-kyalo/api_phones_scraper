@@ -108,7 +108,7 @@ export function DynamicFilters({
         {treeLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-7 rounded" />
+              <Skeleton key={i} className="h-7 rounded-md" />
             ))}
           </div>
         ) : (

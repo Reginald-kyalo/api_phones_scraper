@@ -54,6 +54,8 @@ export const router = createBrowserRouter([
       { path: "terms", Component: LegalPage },
       { path: "cookie-policy", Component: LegalPage },
       { path: "contact", Component: LegalPage },
+      { path: "about", Component: LegalPage },
+      { path: "how-we-make-money", Component: LegalPage },
       { path: "compare", Component: ComparisonPage },
       { path: "style-guide", Component: StyleGuidePage },
       { path: "*", Component: NotFound },

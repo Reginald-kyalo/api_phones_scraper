@@ -48,7 +48,7 @@ export function PriceAlertRow({
   onOpenChange,
 }: PriceAlertRowProps) {
   return (
-    <div className="border border-border rounded-lg p-6 hover:shadow-md transition-shadow bg-white">
+    <div className="border border-border rounded-lg p-6 transition-colors hover:border-muted-foreground bg-white">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <Link
@@ -61,7 +61,7 @@ export function PriceAlertRow({
             Created on {new Date(alert.createdAt).toLocaleDateString()}
           </p>
         </div>
-        <Badge className={alert.triggered ? 'bg-green-600' : ''}>
+        <Badge className={alert.triggered ? 'bg-success' : ''}>
           {alert.triggered ? 'Triggered' : 'Active'}
         </Badge>
       </div>
@@ -88,8 +88,8 @@ export function PriceAlertRow({
       )}
 
       {alert.triggered && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-          <p className="text-green-800 text-sm font-medium">
+        <div className="bg-success/10 border border-success/30 rounded-lg p-3 mb-4">
+          <p className="text-success text-sm font-medium">
             Price dropped to {formatPrice(alert.currentPrice)}!
           </p>
         </div>
@@ -119,7 +119,7 @@ export function PriceAlertRow({
                     onChange={(e) => onEditPriceChange(e.target.value)}
                     className="mt-2"
                   />
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Current price: {formatPrice(alert.currentPrice)}
                   </p>
                 </div>
@@ -139,7 +139,7 @@ export function PriceAlertRow({
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive/80">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
             </Button>
@@ -155,7 +155,7 @@ export function PriceAlertRow({
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => onDelete(alert.alert_id)}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-destructive hover:bg-destructive/90"
               >
                 Delete
               </AlertDialogAction>

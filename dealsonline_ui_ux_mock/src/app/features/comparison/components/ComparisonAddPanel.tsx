@@ -98,19 +98,19 @@ export function ComparisonAddPanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed top-0 right-0 bottom-0 w-[340px] z-50 bg-white border-l border-gray-200 shadow-2xl flex flex-col">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200">
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100">
+      <div className="fixed top-0 right-0 bottom-0 w-[340px] z-50 bg-white border-l border-border shadow-overlay flex flex-col">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+          <button onClick={onClose} className="p-1 rounded-md hover:bg-muted">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <span className="font-semibold text-sm flex-1">Add product</span>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100">
+          <button onClick={onClose} className="p-1 rounded-md hover:bg-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {firstItem && (
-          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+          <div className="px-4 py-2 bg-surface-alt border-b border-border">
             <p className="text-xs text-muted-foreground">
               Showing products in <span className="font-medium text-foreground">{firstItem.categoryName}</span>
             </p>
@@ -149,15 +149,15 @@ export function ComparisonAddPanel({
                 key={p.cluster_id}
                 onClick={() => { if (!alreadyAdded) onAdd(p); }}
                 disabled={alreadyAdded}
-                className={`w-full flex items-center gap-3 py-2.5 px-1 border-b border-gray-50 text-left transition-colors ${
-                  alreadyAdded ? 'opacity-40 cursor-default' : 'hover:bg-gray-50 cursor-pointer'
+                className={`w-full flex items-center gap-3 py-2.5 px-1 border-b border-border text-left transition-colors ${
+                  alreadyAdded ? 'opacity-40 cursor-default' : 'hover:bg-surface-alt cursor-pointer'
                 }`}
               >
-                <div className="w-12 h-12 bg-gray-50 rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <div className="w-12 h-12 bg-surface-alt rounded-md flex-shrink-0 flex items-center justify-center overflow-hidden">
                   {p.image ? (
                     <img src={p.image} alt="" className="w-full h-full object-contain p-0.5" loading="lazy" />
                   ) : (
-                    <Package className="h-5 w-5 text-gray-300" />
+                    <Package className="h-5 w-5 text-muted-foreground/40" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -177,7 +177,7 @@ export function ComparisonAddPanel({
 
           {!loading && query.length >= 2 && searchResults.length === 0 && (
             <div className="py-8 text-center">
-              <Package className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+              <Package className="h-10 w-10 mx-auto mb-2 text-muted-foreground/40" />
               <p className="text-sm font-semibold mb-1">No products match your filters</p>
               {firstItem && (
                 <p className="text-xs text-muted-foreground">

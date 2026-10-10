@@ -5,7 +5,7 @@ import SearchBar from '../features/search/components/SearchBar';
 
 export default function NotFound() {
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-16 text-center">
+    <div className="page-container py-16 text-center">
       <div className="mb-8">
         <h1 className="text-9xl font-bold text-primary/20">404</h1>
         <h2 className="text-2xl font-bold text-foreground mb-2">This page doesn't exist</h2>

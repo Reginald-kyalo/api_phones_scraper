@@ -1,9 +1,11 @@
 import { Link } from 'react-router';
-import { TrendingDown, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
-import { formatPrice, savingPct, shopLabel } from '../../../lib/format';
+import { clusterSaving, pricedShopCount, shopLabel } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
+import { SavingBadge } from '../../../components/common/SavingBadge';
+import { PriceOrDash } from '../../../components/common/PriceOrDash';
 
 /**
  * The one product grid.
@@ -26,19 +28,17 @@ export const PRODUCT_GRID =
  */
 export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   const name = cluster.display_name ?? cluster.title;
-  const saving = savingPct(cluster.like_for_like_spread_pct);
-  // ⛔ THE PRICED COUNT, NOT `n_stores`. `n_stores` counts stores that CARRY the
-  // product; this card links to a comparison page that can only render stores with a
-  // PRICE. `Xiaomi Redmi 9` is in 3 stores and priced by 1 — a "3 shops" card opening
-  // on one price is the shop-count defect `verify_prices.py` exists to prevent.
-  // ⚠️ Falls back to `n_stores` so a fixture captured before this field still renders.
-  const stores = cluster.n_stores_priced ?? cluster.n_stores ?? 0;
+  // Capped and floored in one place, so this card, the deals filter and the
+  // product page always agree. See displaySaving.
+  const saving = clusterSaving(cluster);
+  // The priced count, not `n_stores` — see pricedShopCount.
+  const stores = pricedShopCount(cluster);
   const likelyUsed = cluster.condition_basis === 'likely_used';
 
   return (
     <Link
       to={`/prices/${encodeURIComponent(cluster.cluster_id)}`}
-      className="group flex h-full flex-col overflow-hidden rounded-xl ultra-border transition-colors hover:border-primary/40"
+      className="group flex h-full flex-col overflow-hidden rounded-md card-interactive bg-card"
     >
       {/*
         The image is positioned ABSOLUTELY, not laid out in flow.
@@ -58,19 +58,9 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
             src={cluster.image}
             alt=""
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-contain p-4"
+            className="absolute inset-0 h-full w-full object-contain p-3"
             fallback={<span className="sr-only">Image unavailable</span>}
           />
-        )}
-        {/* "Save 40%", not the raw 67% spread. The badge is styled as a saving
-            and was read as one, but the API's spread divides by the CHEAPEST
-            price — see savingPct. It is also labelled now: a bare number under a
-            down-arrow announced as just "67%" to a screen reader. */}
-        {saving != null && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-teal/10 px-1.5 py-0.5 text-xs font-semibold text-teal-deep">
-            <TrendingDown className="h-3 w-3" aria-hidden="true" />
-            Save {Math.round(saving)}%
-          </span>
         )}
       </div>
 
@@ -81,9 +71,10 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
             measured 40px, drifting card heights by 5px between rails. */}
         <p className="mt-0.5 line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
         <div className="mt-auto pt-2">
-          <span className="price-num text-base font-bold text-foreground">
-            {formatPrice(cluster.best_price)}
-          </span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <PriceOrDash value={cluster.best_price} className="text-base font-bold text-foreground" />
+            <SavingBadge saving={saving} />
+          </div>
           {/* Both meta lines are single-line and always occupy their row, even
               when there is nothing to say. A long store name used to wrap and a
               single-store product dropped the shop count entirely, so card

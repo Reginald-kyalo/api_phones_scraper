@@ -2,6 +2,19 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowUp, ShieldCheck, Send } from 'lucide-react';
 import Logo from './Logo';
+import { BRAND, MONEY_LINE } from '../../lib/brand';
+
+/**
+ * Footer category links. Every target must be a route that renders: the old
+ * `/browse/computing`, `/browse/sound_vision` and `/browse/health_beauty`
+ * slugs are not captured categories and landed on an error state.
+ */
+const FOOTER_CATEGORIES = [
+  { to: '/aisle/phones-wearables', label: 'Phones & wearables' },
+  { to: '/browse/laptops', label: 'Laptops' },
+  { to: '/browse/tvs', label: 'TVs' },
+  { to: '/browse/groceries', label: 'Groceries' },
+];
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -14,28 +27,24 @@ export default function Footer() {
 
   return (
     <footer className="bg-canvas-ink text-white/70 mt-auto">
-      {/* Teal accent line */}
-      <div className="h-1 bg-teal" />
-
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6">
+      <div className="page-container">
         {/* ── Top: brand statement + newsletter ── */}
         <div className="grid lg:grid-cols-2 gap-10 py-12 border-b border-white/10">
           <div>
-            <h2 className="text-white text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-              Compare. <span className="text-badge-discount">Save.</span> Repeat.
+            <h2 className="section-title !text-white md:text-2xl">
+              Every shop’s price, sorted by price.
             </h2>
             <p className="text-white/60 text-sm mt-3 max-w-md leading-relaxed">
-              DealsOnline is Kenya’s independent price comparison platform. We don’t sell
-              products — we help you find the best price across every retailer, for free.
+              <span className="text-white/80 font-medium">How SokoPulse makes money.</span> {MONEY_LINE}
             </p>
           </div>
 
           <div className="lg:pl-8">
-            <p className="microcopy-label !text-white/50 mb-2">Get the best deals in your inbox</p>
+            <p className="microcopy-label !text-white/50 mb-2">Weekly price drops by email</p>
             {subscribed ? (
               <div className="flex items-center gap-2 h-12 text-sm text-white">
                 <ShieldCheck className="w-5 h-5 text-success" />
-                Thanks — you’re on the list. Watch for our next price drops.
+                You’re on the list. The first email arrives next week.
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="flex items-center gap-2 max-w-md">
@@ -48,18 +57,18 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="flex-1 h-12 px-4 rounded-lg bg-white/10 text-white placeholder:text-white/40 text-sm outline-none ring-1 ring-white/15 focus:ring-white/40 transition"
+                  className="flex-1 h-11 px-4 rounded-md bg-white/10 text-white placeholder:text-white/40 text-sm outline-none ring-1 ring-white/15 focus:ring-white/40 transition"
                 />
                 <button
                   type="submit"
-                  className="h-12 px-5 rounded-lg bg-badge-discount text-white text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition"
+                  className="h-11 px-5 rounded-md bg-teal text-white text-sm font-semibold inline-flex items-center gap-2 hover:bg-teal-deep active:translate-y-px transition-colors"
                 >
                   <Send className="w-4 h-4" /> Subscribe
                 </button>
               </form>
             )}
             <p className="text-[11px] text-white/40 mt-2">
-              No spam. Unsubscribe anytime. We respect your privacy.
+              One email a week. Unsubscribe from any email.
             </p>
           </div>
         </div>
@@ -69,8 +78,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-2">
             <Logo variant="light" size={28} />
             <p className="text-xs leading-relaxed mt-3 max-w-xs">
-              Compare prices on phones, laptops, TVs, beauty and more from across Kenya’s top
-              retailers.
+              Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops.
             </p>
             <div className="flex items-center gap-3 mt-4">
               <Social href="https://facebook.com" label="Facebook">
@@ -87,20 +95,21 @@ export default function Footer() {
 
           <FooterCol title="Discover">
             <FooterLink to="/browse">All categories</FooterLink>
-            <FooterLink to="/deals">Today’s deals</FooterLink>
+            <FooterLink to="/deals">Deals</FooterLink>
             <FooterLink to="/favorites">My favourites</FooterLink>
             <FooterLink to="/alerts">Price alerts</FooterLink>
           </FooterCol>
 
           <FooterCol title="Categories">
-            <FooterLink to="/aisle/phones-wearables">Phones &amp; Wearables</FooterLink>
-            <FooterLink to="/browse/computing">Computing</FooterLink>
-            <FooterLink to="/browse/sound_vision">Sound &amp; Vision</FooterLink>
-            <FooterLink to="/browse/health_beauty">Health &amp; Beauty</FooterLink>
+            {FOOTER_CATEGORIES.map((c) => (
+              <FooterLink key={c.to} to={c.to}>{c.label}</FooterLink>
+            ))}
           </FooterCol>
 
           <FooterCol title="Company">
-            <FooterLink to="/contact">About us</FooterLink>
+            <FooterLink to="/about">About us</FooterLink>
+            <FooterLink to="/how-we-make-money">How we make money</FooterLink>
+            <FooterLink to="/contact">Contact</FooterLink>
             <FooterLink to="/privacy">Privacy policy</FooterLink>
             <FooterLink to="/terms">Terms of service</FooterLink>
             <FooterLink to="/cookie-policy">Cookie policy</FooterLink>
@@ -109,7 +118,7 @@ export default function Footer() {
 
         {/* ── Bottom bar ── */}
         <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-white/40">
-          <p>&copy; {new Date().getFullYear()} DealsOnline. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
@@ -125,7 +134,7 @@ export default function Footer() {
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-wider">{title}</h3>
+      <h3 className="microcopy-label !text-white mb-3">{title}</h3>
       <ul className="space-y-2.5 text-sm">{children}</ul>
     </div>
   );

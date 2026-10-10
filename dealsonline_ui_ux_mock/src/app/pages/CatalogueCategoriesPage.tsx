@@ -44,7 +44,7 @@ export default function CatalogueCategoriesPage() {
 
   if (!manifest) {
     return (
-      <div className="max-w-[1400px] mx-auto px-4 py-16 flex justify-center">
+      <div className="page-container py-16 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-label="Loading categories" />
       </div>
     );
@@ -55,8 +55,8 @@ export default function CatalogueCategoriesPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">All categories</h1>
+      <div className="page-container py-8">
+        <h1 className="page-title">All categories</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {manifest.total_clusters.toLocaleString()} products from{' '}
           {manifest.total_stores} Kenyan stores ·{' '}

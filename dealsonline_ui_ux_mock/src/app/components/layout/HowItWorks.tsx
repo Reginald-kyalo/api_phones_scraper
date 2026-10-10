@@ -1,51 +1,49 @@
-import { Search, GitCompareArrows, PiggyBank } from 'lucide-react';
-import { Reveal, RevealGroup, RevealItem } from '../common/Reveal';
+import { Search, ListOrdered, Bell } from 'lucide-react';
+import { Link } from 'react-router';
+import { MONEY_LINE } from '../../lib/brand';
 
 const STEPS = [
   {
     icon: Search,
     title: 'Search any product',
-    body: 'Find phones, laptops, TVs and more from across Kenya’s top retailers in one place.',
+    body: 'Phones, laptops, TVs, groceries and more, from shops across Kenya in one place.',
   },
   {
-    icon: GitCompareArrows,
-    title: 'Compare every price',
-    body: 'See live prices from every shop side by side, with stock and delivery — no bias, no ads.',
+    icon: ListOrdered,
+    title: 'See every shop’s price',
+    body: 'One list per product, sorted by price, with the exact listing and when we last checked it.',
   },
   {
-    icon: PiggyBank,
-    title: 'Buy at the best price',
-    body: 'Go straight to the cheapest shop, or set a free price alert and we’ll tell you when it drops.',
+    icon: Bell,
+    title: 'Buy, or wait for a drop',
+    body: 'Go straight to the cheapest shop, or set a free price alert and we’ll tell you when it falls.',
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="bg-surface-alt rounded-2xl px-6 py-10 md:px-12 md:py-12 mb-12">
-      <Reveal className="text-center mb-8">
-        <h2 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
-          How DealsOnline works
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Independent price comparison — we never sell products
-        </p>
-      </Reveal>
-      <RevealGroup className="grid md:grid-cols-3 gap-6 md:gap-8">
+    <section className="bg-surface-alt rounded-lg px-6 py-10 md:px-12 md:py-12 mb-12">
+      <div className="text-center mb-8">
+        <h2 className="section-title">How SokoPulse works</h2>
+      </div>
+      <ol className="grid md:grid-cols-3 gap-6 md:gap-8 list-none p-0">
         {STEPS.map((step, i) => (
-          <RevealItem key={step.title} className="flex flex-col items-center text-center">
-            <div className="relative mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <step.icon aria-hidden="true" className="w-5 h-5 text-primary" />
-              </div>
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
-                {i + 1}
-              </span>
+          <li key={step.title} className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-white ultra-border flex items-center justify-center mb-4">
+              <step.icon aria-hidden="true" className="w-5 h-5 text-foreground" strokeWidth={1.75} />
             </div>
+            <p className="microcopy-label mb-1">Step {i + 1}</p>
             <h3 className="text-base font-semibold text-foreground mb-1">{step.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">{step.body}</p>
-          </RevealItem>
+          </li>
         ))}
-      </RevealGroup>
+      </ol>
+      <p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto mt-8 leading-relaxed">
+        <span className="font-semibold text-foreground">How SokoPulse makes money.</span> {MONEY_LINE}{' '}
+        <Link to="/how-we-make-money" className="text-link hover:underline underline-offset-4">
+          Read more
+        </Link>
+      </p>
     </section>
   );
 }

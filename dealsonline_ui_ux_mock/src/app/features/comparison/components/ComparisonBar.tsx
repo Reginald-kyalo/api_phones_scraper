@@ -9,23 +9,23 @@ export default function ComparisonBar() {
   if (comparisonItems.length === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-3">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border shadow-raised">
+      <div className="page-container py-3">
         <div className="flex items-center gap-4">
           {/* Product thumbnails */}
           <div className="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
             {comparisonItems.map((item) => (
               <div key={item.product_id} className="relative flex-shrink-0 group">
-                <div className="w-14 h-14 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                <div className="w-14 h-14 bg-surface-alt rounded-lg border border-border flex items-center justify-center overflow-hidden">
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
                   ) : (
-                    <Package className="h-5 w-5 text-gray-300" />
+                    <Package className="h-5 w-5 text-muted-foreground/40" />
                   )}
                 </div>
                 <button
                   onClick={() => removeFromComparison(item.product_id)}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-canvas-ink text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -35,7 +35,7 @@ export default function ComparisonBar() {
             {Array.from({ length: 4 - comparisonItems.length }).map((_, i) => (
               <div
                 key={`empty-${i}`}
-                className="w-14 h-14 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex-shrink-0"
+                className="w-14 h-14 bg-surface-alt rounded-lg border-2 border-dashed border-border flex-shrink-0"
               />
             ))}
           </div>

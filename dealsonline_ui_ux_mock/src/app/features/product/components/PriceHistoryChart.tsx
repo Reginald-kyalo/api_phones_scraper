@@ -74,7 +74,7 @@ export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChart
             className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
               historyPeriod === key
                 ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-white text-muted-foreground border-gray-200 hover:border-gray-300'
+                : 'bg-white text-muted-foreground border-border hover:border-border'
             }`}
           >
             {label}

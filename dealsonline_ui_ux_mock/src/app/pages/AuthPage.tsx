@@ -14,15 +14,15 @@ export default function AuthPage() {
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <Logo showWordmark={false} size={56} className="mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to DealsOnline</h1>
+          <h1 className="page-title mb-2">Welcome to SokoPulse</h1>
           <p className="text-sm text-muted-foreground">Sign in to sync your data across devices</p>
         </div>
 
         {/* Auth Tabs */}
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsTrigger value="login">Sign in</TabsTrigger>
+            <TabsTrigger value="register">Create account</TabsTrigger>
           </TabsList>
 
           {/* Login Form */}

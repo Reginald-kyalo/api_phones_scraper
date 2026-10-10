@@ -176,7 +176,7 @@ export function ReportDialog({
                     className={`flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 text-sm transition-colors ${
                       reason === r.value
                         ? 'border-primary/40 bg-teal/5'
-                        : 'border-border hover:bg-gray-50'
+                        : 'border-border hover:bg-surface-alt'
                     }`}
                   >
                     <input
@@ -207,7 +207,7 @@ export function ReportDialog({
                   {members.map((m) => (
                     <label
                       key={m.cluster_id}
-                      className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-2.5 text-sm hover:bg-gray-50"
+                      className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-2.5 text-sm hover:bg-surface-alt"
                     >
                       <input
                         type="checkbox"

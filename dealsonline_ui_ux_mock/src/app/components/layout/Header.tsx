@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { Heart, Bell, LogOut, LogIn, Menu, Settings, Search, X, Tag } from 'lucide-react';
+import { Heart, Bell, LogOut, LogIn, Menu, Settings, Search, X, Tag, Clock, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import SearchBar from '../../features/search/components/SearchBar';
 import Logo from './Logo';
 import MegaMenu from './MegaMenu';
 import MobileCategoryNav from '../../features/categories/MobileCategoryNav';
+import { MyProductsContent } from '../../features/user/components/MyProducts';
 
 export default function Header() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function Header() {
   return (
     <>
       <header className="bg-white border-b border-border sticky top-0 z-50 w-full">
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-6">
+        <div className="page-container">
           <div className="flex items-center justify-between h-14">
             {/* ── Left: Logo + Nav links ── */}
             <div className="flex items-center gap-6">
@@ -70,7 +71,7 @@ export default function Header() {
                   className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     menuOpen || onBrowse
                       ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-gray-50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-surface-alt'
                   }`}
                 >
                   {menuOpen
@@ -80,13 +81,17 @@ export default function Header() {
                 </button>
                 <Link
                   to="/deals"
-                  className="px-3 py-2 text-sm font-medium text-teal hover:text-teal-deep rounded-md hover:bg-teal/5 transition-colors"
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    pathname === '/deals'
+                      ? 'text-foreground bg-surface-alt'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-surface-alt'
+                  }`}
                 >
                   Deals
                 </Link>
                 <Link
-                  to="/contact"
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-gray-50 transition-colors"
+                  to="/about"
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-surface-alt transition-colors"
                 >
                   About
                 </Link>
@@ -100,20 +105,35 @@ export default function Header() {
                 <SearchBar
                   className="hidden md:block w-[300px] lg:w-[350px]"
                   variant="compact"
-                  placeholder="Search products..."
+                  placeholder="Search products…"
                 />
               )}
 
               {/* Mobile search toggle */}
               {!isHome && (
                 <button
-                  className="md:hidden p-2 rounded-md hover:bg-gray-50 transition-colors"
+                  className="md:hidden p-2 rounded-md hover:bg-surface-alt transition-colors"
                   onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
                   aria-label="Search"
                 >
                   <Search className="w-5 h-5 text-muted-foreground" />
                 </button>
               )}
+
+              {/* My products: recently viewed, favourites, alerts. Was a fixed
+                  dock that covered prices; now a menu like any other. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+                    <Clock aria-hidden="true" className="w-4 h-4" />
+                    <span className="text-sm font-medium hidden lg:inline">My products</span>
+                    <span className="sr-only lg:hidden">My products</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="p-0">
+                  <MyProductsContent />
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Desktop auth area */}
               <div className="hidden md:flex items-center gap-2">
@@ -136,12 +156,12 @@ export default function Header() {
                       </div>
                       <DropdownMenuItem asChild>
                         <Link to="/favorites" className="flex items-center gap-2.5 cursor-pointer">
-                          <Heart className="w-4 h-4" /> Favorites
+                          <Heart className="w-4 h-4" /> Favourites
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/alerts" className="flex items-center gap-2.5 cursor-pointer">
-                          <Bell className="w-4 h-4" /> Price Alerts
+                          <Bell className="w-4 h-4" /> Price alerts
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -156,7 +176,7 @@ export default function Header() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button asChild variant="outline" size="sm" className="gap-1.5 rounded-lg text-sm">
+                  <Button asChild variant="outline" size="sm" className="gap-1.5 text-sm">
                     <Link to="/auth">Sign in</Link>
                   </Button>
                 )}
@@ -191,12 +211,12 @@ export default function Header() {
               <SearchBar
                 className="flex-1"
                 variant="compact"
-                placeholder="Search products..."
+                placeholder="Search products…"
                 onSearch={() => setMobileSearchOpen(false)}
               />
               <button
                 onClick={() => setMobileSearchOpen(false)}
-                className="p-2 rounded-md hover:bg-gray-50"
+                className="p-2 rounded-md hover:bg-surface-alt"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -226,34 +246,35 @@ function MobileMenu({
     <div className="flex flex-col h-full">
       {/* User section */}
       {currentUser ? (
-        <div className="px-5 py-4 border-b border-border bg-gray-50">
+        <div className="px-5 py-4 border-b border-border bg-surface-alt">
           <p className="text-sm font-semibold text-foreground">{currentUser.name}</p>
           <p className="text-xs text-muted-foreground">{currentUser.email}</p>
         </div>
       ) : (
         <div className="px-5 py-4 border-b border-border">
           <Link to="/auth" className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-            <LogIn className="w-4 h-4" /> Sign in / Register
+            <LogIn className="w-4 h-4" /> Sign in or create an account
           </Link>
         </div>
       )}
 
       {/* Nav links */}
       <nav className="flex-1 py-2">
-        <MobileNavLink to="/" icon={<Search className="w-4 h-4" />} label="Home" onNavigate={onNavigate} />
-        <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Sale" onNavigate={onNavigate} />
+        <MobileNavLink to="/" icon={<Home className="w-4 h-4" />} label="Home" onNavigate={onNavigate} />
+        <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Deals" onNavigate={onNavigate} />
 
         <div className="mx-5 my-2 border-t border-border" />
         <MobileCategoryNav enabled={sheetOpen} onNavigate={onNavigate} />
 
         <div className="mx-5 my-2 border-t border-border" />
-        <MobileNavLink to="/contact" label="About" onNavigate={onNavigate} />
+        <MobileNavLink to="/about" label="About" onNavigate={onNavigate} />
+        <MobileNavLink to="/how-we-make-money" label="How we make money" onNavigate={onNavigate} />
 
         {currentUser && (
           <>
             <div className="mx-5 my-2 border-t border-border" />
-            <MobileNavLink to="/favorites" icon={<Heart className="w-4 h-4" />} label="Favorites" onNavigate={onNavigate} />
-            <MobileNavLink to="/alerts" icon={<Bell className="w-4 h-4" />} label="Price Alerts" onNavigate={onNavigate} />
+            <MobileNavLink to="/favorites" icon={<Heart className="w-4 h-4" />} label="Favourites" onNavigate={onNavigate} />
+            <MobileNavLink to="/alerts" icon={<Bell className="w-4 h-4" />} label="Price alerts" onNavigate={onNavigate} />
             <MobileNavLink to="/account" icon={<Settings className="w-4 h-4" />} label="Account" onNavigate={onNavigate} />
           </>
         )}
@@ -281,7 +302,7 @@ function MobileNavLink({ to, icon, label, onNavigate }: {
     <Link
       to={to}
       onClick={onNavigate}
-      className="flex items-center gap-3 px-5 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-3 px-5 py-2.5 text-sm text-foreground hover:bg-surface-alt transition-colors"
     >
       {icon && <span className="text-muted-foreground">{icon}</span>}
       {!icon && <span className="w-4" />}

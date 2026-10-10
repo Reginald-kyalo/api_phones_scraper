@@ -46,7 +46,7 @@ export default function CatalogueBrowsePage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
+      <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground">Home</Link>
           <ChevronRight className="h-3 w-3" aria-hidden="true" />
@@ -55,7 +55,7 @@ export default function CatalogueBrowsePage() {
           <span className="text-foreground">{categoryLabel(productType)}</span>
         </nav>
 
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+        <h1 className="page-title">
           {categoryLabel(productType)}
         </h1>
         {!loading && !error && (

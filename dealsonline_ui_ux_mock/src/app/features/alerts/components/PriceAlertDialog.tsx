@@ -55,12 +55,12 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
         </DialogHeader>
 
         {/* Product info */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-          <div className="w-14 h-14 bg-gray-50 rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
+          <div className="w-14 h-14 bg-surface-alt rounded-md flex-shrink-0 flex items-center justify-center overflow-hidden">
             {product.image ? (
               <img src={product.image} alt="" className="w-full h-full object-contain p-1" />
             ) : (
-              <Package className="h-5 w-5 text-gray-300" />
+              <Package className="h-5 w-5 text-muted-foreground/40" />
             )}
           </div>
           <div className="min-w-0">
@@ -75,11 +75,11 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
             type="button"
             onClick={() => setMode('drop')}
             className={`w-full flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors text-left ${
-              mode === 'drop' ? 'border-foreground' : 'border-gray-200 hover:bg-gray-50'
+              mode === 'drop' ? 'border-foreground' : 'border-border hover:bg-surface-alt'
             }`}
           >
             <span className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-              mode === 'drop' ? 'border-foreground' : 'border-gray-300'
+              mode === 'drop' ? 'border-foreground' : 'border-border'
             }`}>
               {mode === 'drop' && <span className="w-2.5 h-2.5 rounded-full bg-foreground" />}
             </span>
@@ -89,7 +89,7 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
           {/* Mode: Target price */}
           <div
             className={`w-full rounded-lg border transition-colors ${
-              mode === 'target' ? 'border-foreground' : 'border-gray-200'
+              mode === 'target' ? 'border-foreground' : 'border-border'
             }`}
           >
             <button
@@ -98,7 +98,7 @@ export default function PriceAlertDialog({ open, onOpenChange, product }: PriceA
               className="w-full flex items-center gap-3 p-4 cursor-pointer text-left"
             >
               <span className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                mode === 'target' ? 'border-foreground' : 'border-gray-300'
+                mode === 'target' ? 'border-foreground' : 'border-border'
               }`}>
                 {mode === 'target' && <span className="w-2.5 h-2.5 rounded-full bg-foreground" />}
               </span>

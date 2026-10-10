@@ -22,7 +22,7 @@ export default function FavoritesPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6">
+    <div className="page-container py-6">
       {/* Breadcrumb */}
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
@@ -38,7 +38,7 @@ export default function FavoritesPage() {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">My Favorites</h1>
+        <h1 className="page-title">My Favorites</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {favorites.length} {favorites.length === 1 ? 'item' : 'items'} saved
         </p>
@@ -47,7 +47,7 @@ export default function FavoritesPage() {
       {favorites.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {favorites.map((fav) => (
-            <div key={fav.product_id} className="group border border-border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+            <div key={fav.product_id} className="group border border-border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground">
               <Link to={`/product/${fav.product_id}`} className="block">
                 <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                   <ImageWithFallback src={fav.image} alt={fav.name} className="w-full h-full object-contain p-3 group-hover:scale-[1.02] transition-transform" />

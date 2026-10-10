@@ -26,11 +26,11 @@ export default function RetailerRow({ priceData, isLowest, product }: RetailerRo
   return (
     <div className="border-b border-border last:border-b-0">
       {/* Main row */}
-      <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+      <div className="flex items-center gap-3 px-4 py-3 hover:bg-surface-alt transition-colors">
         {/* Expand toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 flex-shrink-0"
+          className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-muted flex-shrink-0"
         >
           <ChevronDown
             className={`w-4 h-4 text-muted-foreground transition-transform ${expanded ? '' : '-rotate-90'}`}
@@ -40,7 +40,7 @@ export default function RetailerRow({ priceData, isLowest, product }: RetailerRo
         {/* Retailer logo/initials */}
         <button
           onClick={() => setStoreModalOpen(true)}
-          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-xs font-bold hover:opacity-90 transition-opacity"
           style={{ backgroundColor: retailer.color }}
           title={`View ${retailer.name} details`}
         >
@@ -83,7 +83,7 @@ export default function RetailerRow({ priceData, isLowest, product }: RetailerRo
               KES {priceData.price.toLocaleString()}
             </span>
             {isLowest && (
-              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-success/10 text-success">
                 Lowest
               </span>
             )}
@@ -109,7 +109,7 @@ export default function RetailerRow({ priceData, isLowest, product }: RetailerRo
 
       {/* Expanded details */}
       {expanded && (
-        <div className="px-4 pb-4 pl-16 bg-gray-50/50">
+        <div className="px-4 pb-4 pl-16 bg-surface-alt">
           <div className="grid sm:grid-cols-2 gap-4 py-3">
             {/* Store info */}
             <div>
@@ -140,7 +140,7 @@ export default function RetailerRow({ priceData, isLowest, product }: RetailerRo
                   {retailer.paymentMethods.map((method: string) => (
                     <span
                       key={method}
-                      className="text-[10px] px-2 py-1 bg-white border border-border rounded text-muted-foreground"
+                      className="text-[10px] px-2 py-1 bg-white border border-border rounded-md text-muted-foreground"
                     >
                       {method}
                     </span>

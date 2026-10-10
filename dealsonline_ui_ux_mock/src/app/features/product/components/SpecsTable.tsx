@@ -51,7 +51,7 @@ export default function SpecsTable({ specifications }: SpecsTableProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-10 bg-gray-50 rounded-lg border border-border">
+      <div className="text-center py-10 bg-surface-alt rounded-lg border border-border">
         <p className="text-sm text-muted-foreground">Specifications not yet available.</p>
       </div>
     );

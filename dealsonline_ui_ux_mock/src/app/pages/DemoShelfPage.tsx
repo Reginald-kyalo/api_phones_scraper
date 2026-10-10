@@ -175,7 +175,7 @@ export default function DemoShelfPage() {
   if (!slug) {
     return (
       <div className="bg-white min-h-screen">
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-16 text-center">
+        <div className="page-container py-16 text-center">
           <p className="text-base font-medium text-foreground mb-1">No such category</p>
           <Link to="/browse" className="text-sm text-link hover:text-link-hover underline">
             Browse all categories
@@ -190,7 +190,7 @@ export default function DemoShelfPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
+      <div className="page-container py-8">
         {error !== 'missing' && <Crumbs node={node} />}
 
         {error === 'missing' ? (
@@ -214,7 +214,7 @@ export default function DemoShelfPage() {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
                 <FolderTree className="w-5 h-5 text-teal-deep" aria-hidden="true" />
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">{heading}</h1>
+                <h1 className="page-title">{heading}</h1>
               </div>
               <p className="text-sm text-muted-foreground">
                 {isLegacyPhoneCollection(slug, node?.ancestors)

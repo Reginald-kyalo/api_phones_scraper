@@ -39,7 +39,7 @@ export default function DemoAislePage() {
   if (!department) {
     return (
       <div className="bg-white min-h-screen">
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-16 text-center">
+        <div className="page-container py-16 text-center">
           <p className="text-base font-medium text-foreground mb-1">No such department</p>
           <p className="text-sm text-muted-foreground mb-4">
             <span className="font-mono">{id}</span> is not one of this demo’s design departments.
@@ -55,7 +55,7 @@ export default function DemoAislePage() {
   const { Icon } = department;
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
+      <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground">Home</Link>
           <ChevronRight className="h-3 w-3" aria-hidden="true" />
@@ -69,7 +69,7 @@ export default function DemoAislePage() {
             <Icon className="w-6 h-6 text-teal-deep" strokeWidth={1.75} aria-hidden="true" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{department.label}</h1>
+            <h1 className="page-title">{department.label}</h1>
             <p className="text-sm text-muted-foreground">
               {department.n_shelves.toLocaleString()} captured shelves, organised for easier browsing
             </p>

@@ -79,7 +79,7 @@ export default function DealsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-[1400px] mx-auto px-4 py-16 flex justify-center">
+      <div className="page-container py-16 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" aria-label="Loading deals" />
       </div>
     );
@@ -87,12 +87,12 @@ export default function DealsPage() {
 
   return (
     <div className="bg-white">
-      <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
+      <div className="page-container py-8">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <Tag className="w-5 h-5 text-teal-deep" aria-hidden="true" />
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">Today's best deals</h1>
+            <h1 className="page-title">Today's best deals</h1>
           </div>
           <p className="text-sm text-muted-foreground">
             Same product, different stores — ranked by how much you save buying at the cheapest, for the same configuration.

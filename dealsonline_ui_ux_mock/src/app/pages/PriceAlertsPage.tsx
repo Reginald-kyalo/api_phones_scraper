@@ -40,10 +40,10 @@ export default function PriceAlertsPage() {
   const triggeredAlerts = alerts.filter((a) => a.triggered);
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6">
+    <div className="page-container py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Price Alerts</h1>
+        <h1 className="page-title">Price Alerts</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your price drop notifications</p>
       </div>
 

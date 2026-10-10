@@ -27,7 +27,7 @@ export default function StoreDetailModal({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+              className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-sm font-bold"
               style={{ backgroundColor: retailer.color }}
             >
               {getRetailerInitials(retailer.name)}
@@ -35,7 +35,7 @@ export default function StoreDetailModal({
             <div>
               <DialogTitle className="text-base">{retailer.name}</DialogTitle>
               <div className="flex items-center gap-1 mt-0.5">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <Star className="w-3.5 h-3.5 fill-warning text-warning" />
                 <span className="text-xs text-muted-foreground">Verified retailer</span>
               </div>
             </div>
@@ -62,7 +62,7 @@ export default function StoreDetailModal({
                 {retailer.paymentMethods.map((method: string) => (
                   <span
                     key={method}
-                    className="text-xs px-3 py-1.5 bg-gray-50 border border-border rounded-md text-foreground"
+                    className="text-xs px-3 py-1.5 bg-surface-alt border border-border rounded-md text-foreground"
                   >
                     {method}
                   </span>

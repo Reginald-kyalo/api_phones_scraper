@@ -23,7 +23,7 @@ export default function StyleGuidePage() {
     <div className="bg-background min-h-screen pb-20">
       <div className="max-w-[1200px] mx-auto px-4 py-12">
         <header className="mb-12 border-b pb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Design System & Style Guide</h1>
+          <h1 className="page-title mb-2">Design System & Style Guide</h1>
           <p className="text-muted-foreground text-lg italic font-serif">
             The "Ultra PriceRunner" visual language. Use this page to verify design evolution.
           </p>
@@ -33,7 +33,7 @@ export default function StyleGuidePage() {
           {/* 1. Typography */}
           <section>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary text-sm">1</span>
+              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">1</span>
               Typography
             </h2>
             <div className="grid gap-6 bg-surface-alt p-8 rounded-xl ultra-border">
@@ -67,7 +67,7 @@ export default function StyleGuidePage() {
           {/* 2. Colors */}
           <section>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary text-sm">2</span>
+              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">2</span>
               Color Palette
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -96,10 +96,10 @@ export default function StyleGuidePage() {
           {/* 3. Interactive Elements */}
           <section>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary text-sm">3</span>
+              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">3</span>
               Buttons & Inputs
             </h2>
-            <div className="space-y-8 bg-white p-8 rounded-xl ultra-border shadow-sm">
+            <div className="space-y-8 bg-white p-8 rounded-xl ultra-border">
               <div className="flex flex-wrap gap-4">
                 <Button>Default Primary</Button>
                 <Button variant="secondary">Secondary</Button>
@@ -133,7 +133,7 @@ export default function StyleGuidePage() {
           {/* 4. Atomic Components */}
           <section>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary text-sm">4</span>
+              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">4</span>
               Badges & Indicators
             </h2>
             <div className="flex flex-wrap gap-4 items-center bg-surface-alt p-8 rounded-xl ultra-border">
@@ -147,7 +147,7 @@ export default function StyleGuidePage() {
           {/* 5. Feature Components */}
           <section>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary text-sm">5</span>
+              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">5</span>
               Card Variants
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -157,7 +157,7 @@ export default function StyleGuidePage() {
               <Card className="ultra-border overflow-hidden">
                 <CardHeader className="bg-surface-alt border-b p-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-emerald-600" />
+                    <TrendingDown className="h-4 w-4 text-success" />
                     Custom Widget
                   </CardTitle>
                 </CardHeader>
@@ -174,13 +174,13 @@ export default function StyleGuidePage() {
           {/* 6. Feedback & Toasts */}
           <section>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary text-sm">6</span>
+              <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">6</span>
               Semantic Feedback
             </h2>
             <div className="grid gap-4 max-w-2xl">
-              <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <Package className="w-5 h-5 text-emerald-600" />
-                <p className="text-sm text-emerald-800 font-medium">Operation completed successfully.</p>
+              <div className="flex items-center gap-3 p-4 bg-success/10 border border-success/30 rounded-lg">
+                <Package className="w-5 h-5 text-success" />
+                <p className="text-sm text-success font-medium">Operation completed successfully.</p>
               </div>
               <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <Bell className="w-5 h-5 text-destructive" />
