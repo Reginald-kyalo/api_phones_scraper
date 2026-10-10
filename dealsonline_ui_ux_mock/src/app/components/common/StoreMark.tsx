@@ -45,7 +45,7 @@ export function StoreMark({
 
   return (
     <span
-      className="flex flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-white"
+      className="flex flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-photo"
       style={{ width: size, height: size }}
       aria-hidden="true"
     >

@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { ArrowUp, ShieldCheck, Send } from 'lucide-react';
 import Logo from './Logo';
 import { BRAND, MONEY_LINE } from '../../lib/brand';
+import { useTheme, type ThemeChoice } from '../../lib/theme';
 
 /**
  * Footer category links. Every target must be a route that renders: the old
@@ -119,6 +120,7 @@ export default function Footer() {
         {/* ── Bottom bar ── */}
         <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-white/40">
           <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
+          <ThemeSwitch />
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
@@ -171,5 +173,33 @@ function Social({
         {children}
       </svg>
     </a>
+  );
+}
+
+/** Light / dark / system, as a three-way segmented control in the footer. */
+function ThemeSwitch() {
+  const { choice, setChoice } = useTheme();
+  const options: { value: ThemeChoice; label: string }[] = [
+    { value: 'system', label: 'System' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ];
+  return (
+    <div role="radiogroup" aria-label="Theme" className="inline-flex rounded-md border border-white/15 p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={choice === o.value}
+          onClick={() => setChoice(o.value)}
+          className={`rounded-sm px-2.5 py-1 text-[12px] transition-colors ${
+            choice === o.value ? 'bg-white/15 text-white' : 'text-white/50 hover:text-white'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }

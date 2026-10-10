@@ -15,6 +15,7 @@ const ROOT = new URL('../src/app/', import.meta.url).pathname;
 const RULES = [
   { name: 'raw palette colour', re: /\b(?:bg|text|border|ring|fill|stroke|from|to|via|divide|outline|placeholder)-(?:gray|slate|zinc|neutral|stone|red|green|emerald|amber|yellow|orange|blue|indigo|rose|pink|purple|violet)-\d{2,3}\b/g, ui: true },
   { name: 'shadow outside the two levels', re: /(?<![\w-])shadow-(?:xs|sm|md|lg|xl|2xl|inner)\b/g, ui: false },
+  { name: 'bg-white (use bg-background, bg-card, bg-popover or bg-photo)', re: /\bbg-white(?![\/\w-])/g, ui: false },
   { name: 'radius above 8px', re: /\brounded-(?:\[(?!inherit)[^\]]+\])/g, ui: false },
 ];
 

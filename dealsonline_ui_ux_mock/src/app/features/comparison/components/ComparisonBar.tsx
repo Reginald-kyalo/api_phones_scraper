@@ -31,7 +31,7 @@ export default function ComparisonBar() {
           <div className="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
             {comparisonItems.map((item) => (
               <div key={item.product_id} className="relative flex-shrink-0 group">
-                <div className="w-14 h-14 bg-white rounded-md border border-border flex items-center justify-center overflow-hidden">
+                <div className="w-14 h-14 bg-photo rounded-md border border-border flex items-center justify-center overflow-hidden">
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
                   ) : (

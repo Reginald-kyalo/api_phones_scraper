@@ -2,3 +2,6 @@
 @source '../**/*.{js,ts,jsx,tsx}';
 
 @import 'tw-animate-css';
+
+/* Dark mode follows a class on <html>, set before first paint in index.html. */
+@custom-variant dark (&:where(.dark, .dark *));

@@ -18,7 +18,7 @@ export function PRProductCard({ product }: { product: PRProduct }) {
         <Card className="transition-all hover:bg-surface-alt ultra-border">
           <CardContent className="p-0 flex flex-col sm:flex-row">
             {/* Image */}
-            <div className="relative w-full sm:w-44 flex-shrink-0 bg-white rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none overflow-hidden border-b sm:border-b-0 sm:border-r border-border">
+            <div className="relative w-full sm:w-44 flex-shrink-0 bg-card rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none overflow-hidden border-b sm:border-b-0 sm:border-r border-border">
               <div className="aspect-square sm:aspect-auto sm:h-44 flex items-center justify-center p-4">
                 {product.image ? (
                   <img
@@ -51,7 +51,7 @@ export function PRProductCard({ product }: { product: PRProduct }) {
                   } as any);
                 }}
                 className={`absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ultra-border z-10 ${
-                  isFav ? 'bg-white text-foreground border-foreground/30 [&_svg]:fill-current' : 'bg-white/90 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
+                  isFav ? 'bg-card text-foreground border-foreground/30 [&_svg]:fill-current' : 'bg-white/90 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
@@ -125,7 +125,7 @@ export function PRProductCardGrid({ product }: { product: PRProduct }) {
       <Link to={`/product/${product.id}`} className="block h-full">
         <Card className="h-full transition-all hover:bg-surface-alt ultra-border">
           <CardContent className="p-0">
-            <div className="relative aspect-square bg-white border-b border-border rounded-t-xl overflow-hidden">
+            <div className="relative aspect-square bg-card border-b border-border rounded-t-xl overflow-hidden">
               {product.image ? (
                 <img
                   src={product.image}
@@ -158,7 +158,7 @@ export function PRProductCardGrid({ product }: { product: PRProduct }) {
                   } as any);
                 }}
                 className={`absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ultra-border z-10 ${
-                  isFav ? 'bg-white text-foreground border-foreground/30 [&_svg]:fill-current' : 'bg-white/90 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
+                  isFav ? 'bg-card text-foreground border-foreground/30 [&_svg]:fill-current' : 'bg-white/90 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />

@@ -20,7 +20,7 @@ const BADGE =
 
 export default function CategoryStrip() {
   return (
-    <nav className="bg-white border-b border-border" aria-label="Departments">
+    <nav className="bg-background border-b border-border" aria-label="Departments">
       <div className="page-container">
         <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide scroll-hint-x">
           {TAXONOMY_DEPARTMENTS.map((department) => {

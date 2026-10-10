@@ -25,7 +25,7 @@ export function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: 
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as SortKey)}
-        className="h-9 rounded-md border border-border bg-white px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-ring"
+        className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-ring"
       >
         {SORT_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>

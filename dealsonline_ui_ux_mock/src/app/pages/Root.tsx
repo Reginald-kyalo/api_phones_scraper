@@ -41,7 +41,7 @@ export default function Root() {
       {/* LazyMotion + `m` components keep only the dom-animation feature set in
           the bundle (vs the full `motion` import). All app motion uses `m`. */}
       <LazyMotion features={domAnimation}>
-        <div className="min-h-screen flex flex-col bg-white">
+        <div className="min-h-screen flex flex-col bg-background">
           <ScrollToTop />
           <Header />
           <main className="flex-1">

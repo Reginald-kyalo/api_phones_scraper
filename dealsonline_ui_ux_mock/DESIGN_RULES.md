@@ -40,6 +40,10 @@ Use tokens, never raw palette classes (`gray-*`, `slate-*`, `emerald-*`, `red-*`
 
 Teal never means "good", "cheapest" or "discount". Green never means "action".
 
+### Dark mode
+
+Every colour above has a dark value under `.dark` in `theme.css`; components never pick a theme themselves. Use `bg-background` for page canvases, `bg-card` for cards and panels, `bg-popover` for floating menus and `bg-photo` (white in both themes) for product-photo frames. Never `bg-white`. The `.dark` class is set before first paint by the script in `index.html` (system setting, or the visitor's choice from the footer switch).
+
 ### Type
 
 - **Space Grotesk** (`font-display`): headings.

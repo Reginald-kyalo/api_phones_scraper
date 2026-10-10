@@ -33,10 +33,12 @@ export default function Logo({
         aria-hidden="true"
         className="flex-shrink-0"
       >
-        <rect width="32" height="32" rx="7" fill={variant === 'light' ? '#FFFFFF' : '#0C1416'} />
+        {/* On page surfaces the tile follows the ink token, so it inverts with
+            the theme; on the always-dark footer it is fixed white. */}
+        <rect width="32" height="32" rx="7" fill={variant === 'light' ? '#FFFFFF' : 'var(--ink)'} />
         <polyline
           points="7,10 13,16 18,13 24,22"
-          stroke={variant === 'light' ? '#0C1416' : '#FFFFFF'}
+          stroke={variant === 'light' ? '#0C1416' : 'var(--background)'}
           strokeWidth="2.6"
           strokeLinecap="round"
           strokeLinejoin="round"

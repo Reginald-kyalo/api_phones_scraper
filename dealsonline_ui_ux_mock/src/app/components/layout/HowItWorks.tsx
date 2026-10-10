@@ -29,7 +29,7 @@ export default function HowItWorks() {
       <ol className="grid md:grid-cols-3 gap-6 md:gap-8 list-none p-0">
         {STEPS.map((step, i) => (
           <li key={step.title} className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-white ultra-border flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-full bg-card ultra-border flex items-center justify-center mb-4">
               <step.icon aria-hidden="true" className="w-5 h-5 text-foreground" strokeWidth={1.75} />
             </div>
             <p className="microcopy-label mb-1">Step {i + 1}</p>

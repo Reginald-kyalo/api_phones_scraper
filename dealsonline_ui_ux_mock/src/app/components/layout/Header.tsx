@@ -54,7 +54,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-border sticky top-0 z-50 w-full">
+      <header className="bg-background border-b border-border sticky top-0 z-50 w-full">
         <div className="page-container">
           <div className="flex items-center justify-between h-14">
             {/* ── Left: Logo + Nav links ── */}
@@ -206,7 +206,7 @@ export default function Header() {
 
         {/* Mobile search bar (expandable) */}
         {mobileSearchOpen && (
-          <div className="md:hidden border-t border-border px-4 py-3 bg-white">
+          <div className="md:hidden border-t border-border px-4 py-3 bg-card">
             <div className="flex items-center gap-2">
               <SearchBar
                 className="flex-1"

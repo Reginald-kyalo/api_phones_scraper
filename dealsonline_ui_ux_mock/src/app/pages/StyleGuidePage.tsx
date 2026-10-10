@@ -99,7 +99,7 @@ export default function StyleGuidePage() {
               <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">3</span>
               Buttons & Inputs
             </h2>
-            <div className="space-y-8 bg-white p-8 rounded-xl ultra-border">
+            <div className="space-y-8 bg-card p-8 rounded-xl ultra-border">
               <div className="flex flex-wrap gap-4">
                 <Button>Default Primary</Button>
                 <Button variant="secondary">Secondary</Button>

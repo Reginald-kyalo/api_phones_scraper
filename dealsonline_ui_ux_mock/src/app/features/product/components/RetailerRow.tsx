@@ -140,7 +140,7 @@ export default function RetailerRow({ priceData, isLowest, product }: RetailerRo
                   {retailer.paymentMethods.map((method: string) => (
                     <span
                       key={method}
-                      className="text-[10px] px-2 py-1 bg-white border border-border rounded-md text-muted-foreground"
+                      className="text-[10px] px-2 py-1 bg-card border border-border rounded-md text-muted-foreground"
                     >
                       {method}
                     </span>

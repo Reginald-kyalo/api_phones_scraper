@@ -93,7 +93,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="page-container py-8">
         <h1 className="page-title">{query ? <>Results for “{query}”</> : 'Search'}</h1>
 
@@ -192,7 +192,7 @@ function CategoryChip({
       className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors active:translate-y-px ${
         active
           ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border bg-white text-foreground hover:border-muted-foreground'
+          : 'border-border bg-card text-foreground hover:border-muted-foreground'
       }`}
     >
       {children}

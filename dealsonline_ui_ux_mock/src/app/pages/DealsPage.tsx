@@ -87,7 +87,7 @@ export default function DealsPage() {
   );
 
   return (
-    <div className="bg-white">
+    <div className="bg-background">
       <div className="page-container py-8">
         {/* Header */}
         <div className="mb-6">

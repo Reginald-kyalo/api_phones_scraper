@@ -72,7 +72,7 @@ export default function SearchBar({
   const renderDropdown = () => {
     if (!showDropdown) return null;
     return (
-      <div className="absolute top-full mt-2 w-full bg-white rounded-md shadow-raised ultra-border overflow-hidden z-50">
+      <div className="absolute top-full mt-2 w-full bg-popover rounded-md shadow-raised ultra-border overflow-hidden z-50">
         {filteredSuggestions.length > 0 ? (
           <div className="py-2">
             <div className="px-4 py-2 microcopy-label">Categories</div>
@@ -87,7 +87,7 @@ export default function SearchBar({
                 }}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-surface-alt transition-colors group"
               >
-                <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-white ultra-border">
+                <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-card ultra-border">
                   <LayoutGrid className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export default function SearchBar({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setIsFocused(true)}
-              className="w-full h-12 pl-12 pr-14 rounded-full bg-white text-foreground text-sm placeholder:text-muted-foreground outline-none ultra-border"
+              className="w-full h-12 pl-12 pr-14 rounded-full bg-card text-foreground text-sm placeholder:text-muted-foreground outline-none ultra-border"
             />
             <button
               type="submit"

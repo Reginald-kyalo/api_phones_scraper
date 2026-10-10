@@ -52,7 +52,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
                   {department.id === 'phones-wearables' ? (
                     <div className="px-5 py-2 space-y-2">
                       {phoneChildren('phones-wearables').map((family) => (
-                        <details key={family.id} className="rounded-md border border-border/70 bg-white">
+                        <details key={family.id} className="rounded-md border border-border/70 bg-card">
                           <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">{familyDisplayLabel(family)}</summary>
                           <div className="border-t border-border/70 pb-1">
                             <Link to={phoneCategoryHref(family.id)} onClick={onNavigate} className="block px-3 py-2 text-sm text-link">Browse {familyDisplayLabel(family)}</Link>
@@ -67,7 +67,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
                   ) : department.families.length > 0 ? (
                     <div className="px-5 py-2 space-y-2">
                       {department.families.map((family) => (
-                        <details key={family.id} className="group rounded-md border border-border/70 bg-white" open={family.shelves.length <= 6}>
+                        <details key={family.id} className="group rounded-md border border-border/70 bg-card" open={family.shelves.length <= 6}>
                           <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
                             {familyDisplayLabel(family)} <span className="ml-1 text-muted-foreground">({family.shelves.length})</span>
                           </summary>

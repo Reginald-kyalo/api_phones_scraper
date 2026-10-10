@@ -243,7 +243,7 @@ export default function HomePage() {
   const featuredDeal = showableDeals[0] ?? null;
 
   return (
-    <div className="bg-white">
+    <div className="bg-background">
       <HeroSection productCount={manifest?.total_clusters} showcase={showcase} />
       <div className="mt-5">
         <CategoryStrip />

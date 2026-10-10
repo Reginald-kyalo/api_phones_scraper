@@ -71,7 +71,7 @@ export default function HeroSection({ productCount, showcase }: HeroSectionProps
             {HERO_CAMPAIGNS.length > 0 ? (
               <HeroCampaign campaigns={HERO_CAMPAIGNS} />
             ) : (
-            <div className="h-[326px] rounded-md border border-border bg-white p-4">
+            <div className="h-[326px] rounded-md border border-border bg-card p-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-14 h-14 rounded-md bg-surface-alt overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {showcase?.image ? (

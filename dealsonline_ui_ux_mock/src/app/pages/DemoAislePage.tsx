@@ -39,7 +39,7 @@ export default function DemoAislePage() {
 
   if (!department) {
     return (
-      <div className="bg-white min-h-screen">
+      <div className="bg-background min-h-screen">
         <div className="page-container py-16 text-center">
           <p className="text-base font-medium text-foreground mb-1">No such department</p>
           <p className="text-sm text-muted-foreground mb-4">
@@ -55,7 +55,7 @@ export default function DemoAislePage() {
 
   const { Icon } = department;
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground">Home</Link>
@@ -94,7 +94,7 @@ export default function DemoAislePage() {
               {department.families
                 .filter((family) => family.id !== 'needs-review')
                 .map((family) => (
-                  <a key={family.id} href={`#${family.id}`} className="rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary">
+                  <a key={family.id} href={`#${family.id}`} className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary">
                     {familyDisplayLabel(family)}
                   </a>
                 ))}

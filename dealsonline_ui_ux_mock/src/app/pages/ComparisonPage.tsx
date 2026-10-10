@@ -111,14 +111,14 @@ export default function ComparisonPage() {
             <button
               onClick={() => scroll('left')}
               aria-label="Scroll left"
-              className="absolute left-0 top-[140px] z-10 p-2 rounded-full bg-white border border-border hover:bg-surface-alt"
+              className="absolute left-0 top-[140px] z-10 p-2 rounded-full bg-card border border-border hover:bg-surface-alt"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => scroll('right')}
               aria-label="Scroll right"
-              className="absolute right-0 top-[140px] z-10 p-2 rounded-full bg-white border border-border hover:bg-surface-alt"
+              className="absolute right-0 top-[140px] z-10 p-2 rounded-full bg-card border border-border hover:bg-surface-alt"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -137,7 +137,7 @@ export default function ComparisonPage() {
                 {/* Remove button */}
                 <button
                   onClick={() => removeFromComparison(item.product_id)}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-white border border-border z-10 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-muted"
+                  className="absolute top-2 right-2 p-1 rounded-full bg-card border border-border z-10 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-muted"
                   aria-label={`Remove ${item.name}`}
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
@@ -146,7 +146,7 @@ export default function ComparisonPage() {
                 <div className="p-3 text-center">
                   {/* Image */}
                   <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>
-                    <div className="aspect-square bg-white rounded-md flex items-center justify-center mb-2 border border-border">
+                    <div className="aspect-square bg-photo rounded-md flex items-center justify-center mb-2 border border-border">
                       {item.image ? (
                         <img
                           src={item.image}

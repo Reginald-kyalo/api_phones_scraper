@@ -174,7 +174,7 @@ export default function DemoShelfPage() {
 
   if (!slug) {
     return (
-      <div className="bg-white min-h-screen">
+      <div className="bg-background min-h-screen">
         <div className="page-container py-16 text-center">
           <p className="text-base font-medium text-foreground mb-1">No such category</p>
           <Link to="/browse" className="text-sm text-link hover:text-link-hover underline">
@@ -189,7 +189,7 @@ export default function DemoShelfPage() {
   const shownChildren = foldChildren(children, node?.label ?? null);
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="page-container py-8">
         {error !== 'missing' && <Crumbs node={node} />}
 

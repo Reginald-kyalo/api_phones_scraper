@@ -49,7 +49,7 @@ export default function FavoritesPage() {
           {favorites.map((fav) => (
             <div key={fav.product_id} className="flex flex-col rounded-md card-interactive overflow-hidden bg-card">
               <Link to={`/prices/${encodeURIComponent(fav.product_id)}`} className="block">
-                <div className="aspect-square bg-white relative overflow-hidden">
+                <div className="aspect-square bg-photo relative overflow-hidden">
                   <ImageWithFallback src={fav.image} alt="" className="w-full h-full object-contain p-3" />
                 </div>
               </Link>

@@ -29,7 +29,7 @@ export function HeroCampaign({ campaigns }: { campaigns: Campaign[] }) {
 
   return (
     <div
-      className="flex h-[326px] flex-col rounded-md border border-border bg-white p-4"
+      className="flex h-[326px] flex-col rounded-md border border-border bg-card p-4"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}

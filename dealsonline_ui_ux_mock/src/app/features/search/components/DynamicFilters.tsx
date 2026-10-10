@@ -135,7 +135,7 @@ export function DynamicFilters({
             placeholder="Min"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            className="w-20 h-8 text-sm ultra-border bg-white"
+            className="w-20 h-8 text-sm ultra-border bg-card"
             min={0}
           />
           <span className="text-muted-foreground text-xs">–</span>
@@ -144,7 +144,7 @@ export function DynamicFilters({
             placeholder="Max"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            className="w-20 h-8 text-sm ultra-border bg-white"
+            className="w-20 h-8 text-sm ultra-border bg-card"
             min={0}
           />
           <Button size="sm" variant="secondary" className="h-8 px-3 text-xs ultra-border" onClick={onApplyPrice}>

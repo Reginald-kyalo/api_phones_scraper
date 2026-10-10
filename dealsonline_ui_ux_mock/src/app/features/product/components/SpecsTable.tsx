@@ -72,7 +72,7 @@ export default function SpecsTable({ specifications }: SpecsTableProps) {
               {Object.entries(specs).map(([key, value], i) => (
                 <tr
                   key={key}
-                  className={i % 2 === 0 ? 'bg-white' : 'bg-[var(--surface-alt)]'}
+                  className={i % 2 === 0 ? 'bg-card' : 'bg-[var(--surface-alt)]'}
                 >
                   <td className="px-4 py-2.5 text-muted-foreground font-medium w-[45%] align-top">
                     {key}

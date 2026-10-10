@@ -48,7 +48,7 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
         measured 213-274px tall on the same 215px column while browse was uniform.
         Out of flow, the height is the ratio and nothing else.
       */}
-      <div className="relative aspect-square overflow-hidden bg-white">
+      <div className="relative aspect-square overflow-hidden bg-photo">
         {/* Mark underneath, image on top: no blank frame while a slow retailer
             CDN decodes, and a dead URL simply leaves the mark. */}
         <div className="absolute inset-0 flex items-center justify-center">

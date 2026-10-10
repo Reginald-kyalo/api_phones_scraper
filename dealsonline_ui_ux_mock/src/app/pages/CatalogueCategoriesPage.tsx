@@ -39,7 +39,7 @@ export default function CatalogueCategoriesPage() {
   const rest = manifest.categories.filter((c) => !c.comparison_grade);
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="page-container py-8">
         <h1 className="page-title">All categories</h1>
         <p className="mt-1 text-sm text-muted-foreground">

@@ -76,7 +76,7 @@ export default function CatalogueBrowsePage() {
   const to = Math.min(filtered.length, (safePage + 1) * PAGE_SIZE);
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground hover:underline underline-offset-4">Home</Link>

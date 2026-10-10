@@ -201,7 +201,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   );
 
   return (
-    <div className="bg-white">
+    <div className="bg-background">
       <div className="page-container py-6 lg:py-8">
         <Breadcrumbs cluster={cluster} />
 
@@ -345,7 +345,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
       {/* Mobile sticky bar: the ORGANIC best price, never a sponsored one. */}
       {lowest && (
         <div
-          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-4 py-3 shadow-raised transition-transform duration-150 ease-out lg:hidden ${
+          className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card px-4 py-3 shadow-raised transition-transform duration-150 ease-out lg:hidden ${
             showBar ? 'translate-y-0' : 'translate-y-full'
           }`}
           aria-hidden={!showBar}
@@ -412,7 +412,7 @@ function VariantChip({
       className={`h-9 rounded-full border px-4 text-sm font-medium transition-colors active:translate-y-px ${
         active
           ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border bg-white text-foreground hover:border-muted-foreground'
+          : 'border-border bg-card text-foreground hover:border-muted-foreground'
       }`}
     >
       {children}
@@ -526,7 +526,7 @@ function BestPriceCard({
 
 function ProductPhoto({ image }: { image: string | null }) {
   return (
-    <div className="relative flex aspect-[4/3] items-center justify-center rounded-md border border-border bg-white p-3 lg:aspect-square">
+    <div className="relative flex aspect-[4/3] items-center justify-center rounded-md border border-border bg-photo p-3 lg:aspect-square">
       <Package className="absolute h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
       {image && (
         <ImageWithFallback
