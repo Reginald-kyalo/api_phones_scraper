@@ -5,6 +5,7 @@ import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/component
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Pagination } from '../components/common/Pagination';
+import { withSponsoredTiles } from '../components/ads/AdSlot';
 import {
   FilterControls,
   MobileFilters,
@@ -128,9 +129,7 @@ export default function CatalogueBrowsePage() {
               ) : visible.length > 0 ? (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {visible.map((c) => (
-                      <ClusterCard key={c.cluster_id} cluster={c} />
-                    ))}
+                    {withSponsoredTiles(visible.map((c) => <ClusterCard key={c.cluster_id} cluster={c} />))}
                   </div>
                   <Pagination page={safePage} pages={pages} onChange={(p) => update(filters, p)} />
                 </>

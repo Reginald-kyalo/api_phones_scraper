@@ -116,7 +116,11 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 
 - `StoreMark` renders a shop's favicon from its domain, falling back to a neutral initial tile. One component on every offer row.
 
-### Sponsored slots: `AdSlot` / `SponsoredOffer`
+### Sponsored slots: `AdSlot`, `SponsoredLabel`, `withSponsoredTiles` (`src/app/components/ads/AdSlot.tsx`)
+
+Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above the product price list, 300×250 product right rail (desktop), sponsored tiles at grid positions 3 and 15, one result above search results, one featured-shop band after the second homepage rail. The homepage hero's right card is the future campaign slot.
+
+`VITE_AD_SLOTS=off` (the production default) renders nothing; `VITE_AD_SLOTS=preview` (the dev default) renders dashed, labelled placeholders at the reserved size.
 
 1. Native in form (site card, radius, type), labelled "Sponsored" in `.microcopy-label`, with a "Why is this here?" link to `/how-we-make-money`.
 2. Never inside the price-sorted list. A sponsored shop sits in its own card above the list.

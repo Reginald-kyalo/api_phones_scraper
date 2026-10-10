@@ -24,6 +24,7 @@ import { SpreadEvidence } from '../features/clusters/components/SpreadEvidence';
 import { ReportDialog } from '../features/clusters/components/ReportDialog';
 import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
 import PriceAlertDialog from '../features/alerts/components/PriceAlertDialog';
+import { AdSlot } from '../components/ads/AdSlot';
 
 type Config = ClusterDetail['configs'][number];
 type Offer = [store: string, offer: ClusterStore];
@@ -238,6 +239,9 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                 <p className="microcopy-label">Sorted by price</p>
               </div>
 
+              {/* Sponsored shop: its own card ABOVE the list, never a row in it. */}
+              <AdSlot placement="product-sponsored-shop" className="mb-3" />
+
               {offers.length > 0 ? (
                 <ul aria-label={`${name} prices`} className="divide-y divide-border rounded-md border border-border list-none p-0">
                   {offers.map(([store, offer], idx) => (
@@ -303,6 +307,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
             <div className="sticky top-20 space-y-4">
               <ProductPhoto image={image} />
               {bestCard}
+              <AdSlot placement="product-rail" />
             </div>
           </aside>
         </div>

@@ -14,6 +14,7 @@ import AlertsBanner from '../components/layout/AlertsBanner';
 import { SavingBadge } from '../components/common/SavingBadge';
 import { PriceOrDash } from '../components/common/PriceOrDash';
 import { Button } from '../components/ui/button';
+import { AdSlot } from '../components/ads/AdSlot';
 import { Package, ArrowRight, ListOrdered, Receipt, Tag } from 'lucide-react';
 
 
@@ -270,7 +271,13 @@ export default function HomePage() {
               linkLabel={`All ${categoryLabel(slug).toLowerCase()}`}
               products={rows.filter(homepageWorthy).slice(0, 6)}
             />
-            {i === 1 && <AlertsBanner example={showcase} />}
+            {i === 1 && (
+              <>
+                {/* One featured-shop band per homepage, after the second rail. */}
+                <AdSlot placement="home-featured-shop" className="mb-12" />
+                <AlertsBanner example={showcase} />
+              </>
+            )}
           </div>
         ))}
 

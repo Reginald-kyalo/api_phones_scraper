@@ -5,6 +5,7 @@ import type { SearchRow } from '../lib/demoSource';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Pagination } from '../components/common/Pagination';
+import { AdSlot } from '../components/ads/AdSlot';
 import { PriceOrDash } from '../components/common/PriceOrDash';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
 import { SortSelect } from '../features/search/components/ListingFiltersPanel';
@@ -132,6 +133,8 @@ export default function SearchPage() {
               </div>
               <SortSelect value={filters.sort} onChange={(sort) => setParams({ sort })} />
             </div>
+
+            <AdSlot placement="search-top" className="mt-6" />
 
             {visible.length > 0 && (
               <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">

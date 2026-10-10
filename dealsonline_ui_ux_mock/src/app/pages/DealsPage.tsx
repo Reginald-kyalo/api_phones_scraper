@@ -5,6 +5,7 @@ import { ClusterCard, ClusterGridSkeleton, PRODUCT_GRID } from '../features/clus
 import { Loader2, RefreshCw } from 'lucide-react';
 import { clusterSaving, MAX_DISPLAY_SAVING_PCT, MIN_DISPLAY_SAVING_KES } from '../lib/format';
 import { imageUsable } from '../lib/images';
+import { withSponsoredTiles } from '../components/ads/AdSlot';
 
 /**
  * Thresholds on the SAVING, matching the badge on every card.
@@ -134,9 +135,7 @@ export default function DealsPage() {
             {filtered.length > 0 ? (
               <>
                 <div className={PRODUCT_GRID}>
-                  {filtered.map((c) => (
-                    <ClusterCard key={c.cluster_id} cluster={c} />
-                  ))}
+                  {withSponsoredTiles(filtered.map((c) => <ClusterCard key={c.cluster_id} cluster={c} />))}
                 </div>
                 {page < pages - 1 && (
                   <div className="flex flex-col items-center gap-2 mt-8">
