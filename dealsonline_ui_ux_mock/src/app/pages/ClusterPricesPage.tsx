@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
 import {
   checkedAgo,
+  checkedAt,
   clusterSaving,
   displaySaving,
   formatPrice,
@@ -268,7 +269,14 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               ) : (
                 'No shop has a current price for this.'
               )}
-              {checked && <> · checked {checked}</>}
+              {checked && cluster.last_seen && (
+                <>
+                  {' · checked '}
+                  <time dateTime={cluster.last_seen} title={`${checkedAt(cluster.last_seen)} (Kenya time)`}>
+                    {checked}
+                  </time>
+                </>
+              )}
             </p>
 
             {/* Mobile: photo and best price come before the list. */}

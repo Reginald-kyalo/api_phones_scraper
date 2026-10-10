@@ -145,7 +145,15 @@ export function checkedAgo(iso: string | null | undefined, now = Date.now()): st
   if (hours < 24) return `${hours} h ago`;
   const days = Math.round(hours / 24);
   if (days <= 14) return `${days} ${days === 1 ? 'day' : 'days'} ago`;
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return checkedAt(iso);
+}
+
+/** "10 Jul 2026, 15:36" in Kenyan time: the exact moment a price was checked. */
+export function checkedAt(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: 'Africa/Nairobi',
+  });
 }
 
 /**
