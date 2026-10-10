@@ -18,7 +18,7 @@ export default function FavoritesPage() {
 
   const handleRemove = (productId: string) => {
     removeFavorite(productId);
-    toast.success('Removed from favorites');
+    toast.success('Removed from favourites');
   };
 
   return (
@@ -27,46 +27,46 @@ export default function FavoritesPage() {
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild><Link to="/">Start</Link></BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/">Home</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Favorites</BreadcrumbPage>
+            <BreadcrumbPage>Favourites</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="page-title">My Favorites</h1>
+        <h1 className="page-title">Favourites</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {favorites.length} {favorites.length === 1 ? 'item' : 'items'} saved
+          {favorites.length} {favorites.length === 1 ? 'product' : 'products'} saved on this device
         </p>
       </div>
 
       {favorites.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
           {favorites.map((fav) => (
-            <div key={fav.product_id} className="group border border-border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground">
-              <Link to={`/product/${fav.product_id}`} className="block">
-                <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-                  <ImageWithFallback src={fav.image} alt={fav.name} className="w-full h-full object-contain p-3 group-hover:scale-[1.02] transition-transform" />
+            <div key={fav.product_id} className="flex flex-col rounded-md card-interactive overflow-hidden bg-card">
+              <Link to={`/prices/${encodeURIComponent(fav.product_id)}`} className="block">
+                <div className="aspect-square bg-white relative overflow-hidden">
+                  <ImageWithFallback src={fav.image} alt="" className="w-full h-full object-contain p-3" />
                 </div>
               </Link>
-              <div className="p-3">
-                <Link to={`/product/${fav.product_id}`} className="font-medium text-sm text-foreground hover:text-primary line-clamp-2">
+              <div className="flex flex-1 flex-col p-3">
+                <Link to={`/prices/${encodeURIComponent(fav.product_id)}`} className="font-semibold text-sm text-foreground hover:underline underline-offset-4 line-clamp-2">
                   {fav.name}
                 </Link>
                 {fav.category && (
-                  <p className="text-xs text-muted-foreground capitalize mt-1">{fav.category}</p>
+                  <p className="microcopy-label mt-1">{fav.category}</p>
                 )}
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="w-full mt-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="mt-auto -ml-2 self-start text-xs text-muted-foreground"
                   onClick={() => handleRemove(fav.product_id)}
                 >
-                  <Trash2 className="w-3 h-3 mr-1.5" />
+                  <Trash2 className="w-3 h-3" aria-hidden="true" />
                   Remove
                 </Button>
               </div>
@@ -75,15 +75,13 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="text-center py-16">
-          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-            <Heart className="w-10 h-10 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">No favorites yet</h2>
-          <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto">
-            Start adding products to your favorites to keep track of items you love
+          <Heart className="w-8 h-8 text-muted-foreground/40 mx-auto mb-4" aria-hidden="true" />
+          <h2 className="section-title mb-2">No favourites yet</h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            Use “Save” on any product page to keep it here.
           </p>
-          <Button asChild>
-            <Link to="/">Browse Products</Link>
+          <Button asChild variant="outline">
+            <Link to="/browse">Browse categories</Link>
           </Button>
         </div>
       )}

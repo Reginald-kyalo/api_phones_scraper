@@ -13,10 +13,10 @@ import { bestImage } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
-import { BarChart3, Bell, Check, ChevronRight, ExternalLink, Info, Package, RefreshCw } from 'lucide-react';
+import { BarChart3, Bell, Check, ChevronRight, ExternalLink, Heart, Info, Package, RefreshCw } from 'lucide-react';
 import { storeName } from '../lib/storeIdentity';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
-import { useLocalComparison } from '../hooks/useLocalStorage';
+import { useLocalComparison, useLocalFavorites } from '../hooks/useLocalStorage';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { SavingBadge } from '../components/common/SavingBadge';
 import { StoreMark } from '../components/common/StoreMark';
@@ -176,6 +176,17 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
       productType: cluster.category ?? '',
     });
 
+  const { isFavorite, toggleFavorite } = useLocalFavorites();
+  const saved = isFavorite(cluster.cluster_id);
+  const onSave = () =>
+    toggleFavorite({
+      id: cluster.cluster_id,
+      name,
+      brand: cluster.brand ?? '',
+      category: categoryLabel(cluster.category ?? ''),
+      image: image ?? '',
+    });
+
   const bestCard = (
     <BestPriceCard
       offer={lowest}
@@ -184,6 +195,8 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
       onAlert={() => setAlertOpen(true)}
       comparing={comparing}
       onCompare={onCompare}
+      saved={saved}
+      onSave={onSave}
     />
   );
 
@@ -442,6 +455,8 @@ function BestPriceCard({
   onAlert,
   comparing,
   onCompare,
+  saved,
+  onSave,
 }: {
   offer: Offer | null;
   likelyUsed: boolean;
@@ -449,6 +464,8 @@ function BestPriceCard({
   onAlert: () => void;
   comparing: boolean;
   onCompare: () => void;
+  saved: boolean;
+  onSave: () => void;
 }) {
   return (
     <div className="rounded-md border border-border p-5">
@@ -488,12 +505,21 @@ function BestPriceCard({
           )}
           {comparing ? 'Added to compare' : 'Compare with others'}
         </button>
-        {comparing && (
-          <Link to="/compare" className="text-link hover:underline underline-offset-4">
-            View
-          </Link>
-        )}
+        <button
+          type="button"
+          onClick={onSave}
+          aria-pressed={saved}
+          className="inline-flex items-center gap-1.5 text-foreground hover:underline underline-offset-4"
+        >
+          <Heart className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} aria-hidden="true" />
+          {saved ? 'Saved' : 'Save'}
+        </button>
       </div>
+      {comparing && (
+        <Link to="/compare" className="mt-2 block text-sm text-link hover:underline underline-offset-4">
+          View comparison
+        </Link>
+      )}
     </div>
   );
 }

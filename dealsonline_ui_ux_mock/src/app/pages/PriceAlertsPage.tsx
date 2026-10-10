@@ -15,7 +15,7 @@ export default function PriceAlertsPage() {
 
   const handleDelete = (id: string) => {
     removeAlert(id);
-    toast.success('Alert deleted');
+    toast.success('Alert removed');
   };
 
   const handleEditOpen = (alert: LocalPriceAlert) => {
@@ -28,7 +28,7 @@ export default function PriceAlertsPage() {
     if (!editingId) return;
     const price = parseFloat(editPrice);
     if (isNaN(price) || price <= 0) {
-      toast.error('Please enter a valid price');
+      toast.error('Enter a price above zero');
       return;
     }
     updateAlert(editingId, price);
@@ -43,15 +43,15 @@ export default function PriceAlertsPage() {
     <div className="page-container py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="page-title">Price Alerts</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your price drop notifications</p>
+        <h1 className="page-title">Price alerts</h1>
+        <p className="text-sm text-muted-foreground mt-1">We’ll tell you when a product drops below your target price.</p>
       </div>
 
       {alerts.length > 0 ? (
         <Tabs defaultValue="active" className="w-full">
           <TabsList>
             <TabsTrigger value="active">Active ({activeAlerts.length})</TabsTrigger>
-            <TabsTrigger value="triggered">Triggered ({triggeredAlerts.length})</TabsTrigger>
+            <TabsTrigger value="triggered">Reached ({triggeredAlerts.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="mt-6">
@@ -72,8 +72,8 @@ export default function PriceAlertsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 border border-border rounded-lg bg-surface-alt">
-                <p className="text-muted-foreground">No active alerts</p>
+              <div className="text-center py-12 border border-border rounded-md bg-surface-alt">
+                <p className="text-muted-foreground">No active alerts.</p>
               </div>
             )}
           </TabsContent>
@@ -96,23 +96,21 @@ export default function PriceAlertsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 border border-border rounded-lg bg-surface-alt">
-                <p className="text-muted-foreground">No triggered alerts</p>
+              <div className="text-center py-12 border border-border rounded-md bg-surface-alt">
+                <p className="text-muted-foreground">No alert has reached its target yet.</p>
               </div>
             )}
           </TabsContent>
         </Tabs>
       ) : (
         <div className="text-center py-16">
-          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-            <Bell className="w-10 h-10 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">No price alerts set</h2>
-          <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto">
-            Create price alerts on product pages to get notified when prices drop
+          <Bell className="w-8 h-8 text-muted-foreground/40 mx-auto mb-4" aria-hidden="true" />
+          <h2 className="section-title mb-2">No price alerts yet</h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            Use “Set a price alert” on any product page.
           </p>
-          <Button asChild>
-            <Link to="/">Browse Products</Link>
+          <Button asChild variant="outline">
+            <Link to="/browse">Browse categories</Link>
           </Button>
         </div>
       )}

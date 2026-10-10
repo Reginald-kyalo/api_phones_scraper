@@ -32,7 +32,7 @@ export default function AccountPage() {
   };
 
   const handleSaveNotifications = () => {
-    toast.success('Notification preferences saved');
+    toast.success('Email settings saved');
   };
 
   if (authLoading) {
@@ -48,13 +48,13 @@ export default function AccountPage() {
   const displayName = user.username || user.email.split('@')[0];
 
   return (
-    <div className="page-container py-8">
+    <div className="prose-container py-8">
       {/* Header */}
-      <div className="bg-card border border-border rounded-lg p-8 mb-8">
+      <div className="mb-8">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-3xl">
+            <div className="w-14 h-14 bg-canvas-ink rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-xl">
                 {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -62,7 +62,7 @@ export default function AccountPage() {
               <h1 className="page-title mb-1">{displayName}</h1>
               <p className="text-muted-foreground">{user.email}</p>
               <div className="flex items-center gap-2 mt-2">
-                <Badge>Free Plan</Badge>
+                <Badge variant="outline">Free account</Badge>
               </div>
             </div>
           </div>
@@ -74,15 +74,15 @@ export default function AccountPage() {
         <TabsList className="grid w-full grid-cols-4 h-auto">
           <TabsTrigger value="account" className="gap-1.5 text-xs sm:text-sm py-2.5">
             <UserIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Account</span>
+            <span className="hidden sm:inline">Details</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm py-2.5">
             <BellIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Notifications</span>
+            <span className="hidden sm:inline">Emails</span>
           </TabsTrigger>
           <TabsTrigger value="subscription" className="gap-1.5 text-xs sm:text-sm py-2.5">
             <CreditCard className="w-4 h-4" />
-            <span className="hidden sm:inline">Subscription</span>
+            <span className="hidden sm:inline">Plan</span>
           </TabsTrigger>
           <TabsTrigger value="privacy" className="gap-1.5 text-xs sm:text-sm py-2.5">
             <Shield className="w-4 h-4" />
@@ -92,12 +92,12 @@ export default function AccountPage() {
 
         {/* Account Tab */}
         <TabsContent value="account">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Account Information</h2>
+          <div className="bg-card border border-border rounded-md p-6">
+            <h2 className="section-title mb-6">Your details</h2>
             
             <div className="space-y-6">
               <div>
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   type="text"
@@ -108,7 +108,7 @@ export default function AccountPage() {
               </div>
 
               <div>
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -120,11 +120,11 @@ export default function AccountPage() {
 
               <div className="pt-4 border-t">
                 <Button variant="outline" className="mr-2" disabled>
-                  Change Password
+                  Change password
                   <Badge variant="outline" className="ml-2 text-[10px]">Coming soon</Badge>
                 </Button>
                 <Button variant="outline" disabled>
-                  Enable 2FA
+                  Turn on two-step sign-in
                   <Badge variant="outline" className="ml-2 text-[10px]">Coming soon</Badge>
                 </Button>
               </div>
@@ -134,17 +134,17 @@ export default function AccountPage() {
 
         {/* Notifications Tab */}
         <TabsContent value="notifications">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Notification Preferences</h2>
+          <div className="bg-card border border-border rounded-md p-6">
+            <h2 className="section-title mb-6">Emails</h2>
             
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="priceDropAlerts" className="text-base">
-                    Price Drop Alerts
+                  <Label htmlFor="priceDropAlerts">
+                    Price alerts
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Get notified when tracked product prices drop
+                    Email me when a product I’m watching drops below my target price.
                   </p>
                 </div>
                 <Switch
@@ -158,11 +158,11 @@ export default function AccountPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="dailyDealsEmail" className="text-base">
-                    Daily Deals Email
+                  <Label htmlFor="dailyDealsEmail">
+                    Daily deals
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Receive daily emails with the best deals
+                    One email a day with the biggest savings we found.
                   </p>
                 </div>
                 <Switch
@@ -176,11 +176,11 @@ export default function AccountPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="weeklyNewsletter" className="text-base">
-                    Weekly Newsletter
+                  <Label htmlFor="weeklyNewsletter">
+                    Weekly price drops
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Weekly roundup of trending products and deals
+                    One email a week with notable price changes.
                   </p>
                 </div>
                 <Switch
@@ -192,29 +192,11 @@ export default function AccountPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="newReviewNotifications" className="text-base">
-                    New Review Notifications
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified when new reviews are posted on favorited products
-                  </p>
-                </div>
-                <Switch
-                  id="newReviewNotifications"
-                  checked={notificationPrefs.newReviewNotifications}
-                  onCheckedChange={(checked) =>
-                    setNotificationPrefs({ ...notificationPrefs, newReviewNotifications: checked })
-                  }
-                />
-              </div>
-
               <div className="pt-4 border-t">
                 <Button
                   onClick={handleSaveNotifications}
                 >
-                  Save Preferences
+                  Save
                 </Button>
               </div>
             </div>
@@ -223,86 +205,54 @@ export default function AccountPage() {
 
         {/* Subscription Tab */}
         <TabsContent value="subscription">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Subscription & Billing</h2>
+          <div className="bg-card border border-border rounded-md p-6">
+            <h2 className="section-title mb-6">Plan</h2>
             
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-6">
+              <div className="border border-border rounded-md p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-bold">Free Plan</h3>
-                    <p className="text-muted-foreground">Limited features</p>
+                    <h3 className="text-base font-semibold">Free</h3>
+                    <p className="text-sm text-muted-foreground">Comparing prices and setting alerts is free.</p>
                   </div>
                 </div>
                 
-                <p className="text-sm text-muted-foreground mb-4">
-                  Upgrade to Premium for unlimited price alerts, advanced filters, and more.
-                </p>
-                <Button>
-                  Upgrade to Premium
-                  <Badge variant="outline" className="ml-2 text-[10px] border-primary-foreground/30 text-primary-foreground">Coming soon</Badge>
-                </Button>
               </div>
 
-              <div>
-                <h3 className="font-bold mb-4">Premium Features</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <span className="text-success">✓</span>
-                    <span>Unlimited price alerts</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-success">✓</span>
-                    <span>Advanced price history (90 days)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-success">✓</span>
-                    <span>Priority notifications</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-success">✓</span>
-                    <span>Export price data</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-success">✓</span>
-                    <span>No ads</span>
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </TabsContent>
 
         {/* Privacy Tab */}
         <TabsContent value="privacy">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Privacy & Security</h2>
+          <div className="bg-card border border-border rounded-md p-6">
+            <h2 className="section-title mb-6">Privacy</h2>
             
             <div className="space-y-6">
               <div>
-                <h3 className="font-bold mb-2">Data & Privacy</h3>
+                <h3 className="font-semibold mb-2">Your data</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Manage your data and privacy settings
+                  Download or delete what SokoPulse stores about you.
                 </p>
                 <div className="space-y-2">
                   <Button variant="outline" className="w-full justify-start" disabled>
-                    Download My Data
+                    Download my data
                     <Badge variant="outline" className="ml-auto text-[10px]">Coming soon</Badge>
                   </Button>
                   <Button variant="outline" className="w-full justify-start" disabled>
-                    Privacy Settings
+                    Privacy settings
                     <Badge variant="outline" className="ml-auto text-[10px]">Coming soon</Badge>
                   </Button>
                 </div>
               </div>
 
               <div className="pt-6 border-t">
-                <h3 className="font-bold mb-2 text-destructive">Danger Zone</h3>
+                <h3 className="font-semibold mb-2">Delete account</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Once you delete your account, there is no going back. Please be certain.
+                  Deleting your account removes your favourites, alerts and email settings. It can’t be undone.
                 </p>
                 <Button variant="outline" className="text-destructive hover:text-destructive/80 border-destructive/30" disabled>
-                  Delete Account
+                  Delete account
                   <Badge variant="outline" className="ml-2 text-[10px] border-destructive/30 text-destructive">Coming soon</Badge>
                 </Button>
               </div>
@@ -319,7 +269,7 @@ export default function AccountPage() {
           className="text-muted-foreground hover:text-foreground"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Logout
+          Sign out
         </Button>
       </div>
     </div>

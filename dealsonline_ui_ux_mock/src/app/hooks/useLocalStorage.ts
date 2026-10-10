@@ -64,7 +64,7 @@ export function useLocalFavorites() {
     [favorites],
   );
 
-  const toggleFavorite = useCallback((product: Product) => {
+  const toggleFavorite = useCallback((product: Pick<Product, 'id' | 'name' | 'brand' | 'category' | 'image'>) => {
     const current = favSnapshot();
     const idx = current.findIndex((f) => f.product_id === product.id);
     if (idx >= 0) {

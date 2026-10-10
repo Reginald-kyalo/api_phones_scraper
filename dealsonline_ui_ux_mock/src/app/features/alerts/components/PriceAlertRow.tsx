@@ -48,49 +48,49 @@ export function PriceAlertRow({
   onOpenChange,
 }: PriceAlertRowProps) {
   return (
-    <div className="border border-border rounded-lg p-6 transition-colors hover:border-muted-foreground bg-white">
+    <div className="border border-border rounded-md p-5 bg-card">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <Link
-            to={`/product/${alert.product_id}`}
-            className="font-medium text-base hover:text-primary transition-colors"
+            to={`/prices/${encodeURIComponent(alert.product_id)}`}
+            className="font-semibold text-base text-foreground hover:underline underline-offset-4"
           >
             {alert.name}
           </Link>
           <p className="text-sm text-muted-foreground mt-1">
-            Created on {new Date(alert.createdAt).toLocaleDateString()}
+            Set on {new Date(alert.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
-        <Badge className={alert.triggered ? 'bg-success' : ''}>
-          {alert.triggered ? 'Triggered' : 'Active'}
+        <Badge variant={alert.triggered ? 'default' : 'outline'} className={alert.triggered ? 'bg-success' : ''}>
+          {alert.triggered ? 'Reached' : 'Active'}
         </Badge>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-sm text-muted-foreground">Target Price</p>
-          <p className="text-xl font-semibold text-foreground price-num">{formatPrice(alert.targetPrice)}</p>
+          <p className="microcopy-label">Your target</p>
+          <p className="text-lg font-semibold text-foreground price-num">{formatPrice(alert.targetPrice)}</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">Current Price</p>
-          <p className="text-xl font-semibold text-foreground price-num">{formatPrice(alert.currentPrice)}</p>
+          <p className="microcopy-label">Best price now</p>
+          <p className="text-lg font-semibold text-foreground price-num">{formatPrice(alert.currentPrice)}</p>
         </div>
       </div>
 
       {!alert.triggered && (
-        <div className="bg-muted/50 rounded-lg p-3 mb-4">
+        <div className="bg-surface-alt rounded-md p-3 mb-4">
           <p className="text-sm text-muted-foreground">
             {alert.currentPrice > alert.targetPrice
-              ? `${formatPrice(alert.currentPrice - alert.targetPrice)} away from target`
-              : 'Target price reached!'}
+              ? `${formatPrice(alert.currentPrice - alert.targetPrice)} above your target`
+              : 'Your target price has been reached.'}
           </p>
         </div>
       )}
 
       {alert.triggered && (
-        <div className="bg-success/10 border border-success/30 rounded-lg p-3 mb-4">
+        <div className="bg-success/10 border border-success/30 rounded-md p-3 mb-4">
           <p className="text-success text-sm font-medium">
-            Price dropped to {formatPrice(alert.currentPrice)}!
+            The best price is now {formatPrice(alert.currentPrice)}.
           </p>
         </div>
       )}
@@ -100,14 +100,14 @@ export function PriceAlertRow({
           <Dialog open={isEditing} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" onClick={() => onEdit(alert)}>
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit
+                <Edit2 className="w-4 h-4" aria-hidden="true" />
+                Change target
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Edit Price Alert</DialogTitle>
-                <DialogDescription>Update your target price for this product</DialogDescription>
+                <DialogTitle>Change target price</DialogTitle>
+                <DialogDescription>We’ll email you when a shop goes below it.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
@@ -120,11 +120,11 @@ export function PriceAlertRow({
                     className="mt-2"
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    Current price: {formatPrice(alert.currentPrice)}
+                    Best price now: {formatPrice(alert.currentPrice)}
                   </p>
                 </div>
                 <Button onClick={onSaveEdit} className="w-full">
-                  Save Changes
+                  Save
                 </Button>
               </div>
             </DialogContent>
@@ -133,22 +133,22 @@ export function PriceAlertRow({
 
         {alert.triggered && (
           <Button size="sm" asChild>
-            <Link to={`/product/${alert.product_id}`}>View Deal</Link>
+            <Link to={`/prices/${encodeURIComponent(alert.product_id)}`}>See prices</Link>
           </Button>
         )}
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive/80">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
+              Remove
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Price Alert?</AlertDialogTitle>
+              <AlertDialogTitle>Remove this alert?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete your price alert for {alert.name}.
+                We’ll stop watching the price of {alert.name}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -157,7 +157,7 @@ export function PriceAlertRow({
                 onClick={() => onDelete(alert.alert_id)}
                 className="bg-destructive hover:bg-destructive/90"
               >
-                Delete
+                Remove
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
