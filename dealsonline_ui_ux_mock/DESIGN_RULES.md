@@ -18,7 +18,7 @@ This file replaces the old `DESIGN_HANDOFF.md`. The reasoning behind each rule i
 
 ## 2. Tokens
 
-Use tokens, never raw palette classes (`gray-*`, `slate-*`, `emerald-*`, `red-*`, `amber-*`, `green-*`) or hex in components.
+Use tokens, never raw palette classes (`gray-*`, `slate-*`, `emerald-*`, `red-*`, `amber-*`, `green-*`) or hex in components. `npm run check:design` fails on raw palette colours, stray shadows and arbitrary radii.
 
 ### Colour
 

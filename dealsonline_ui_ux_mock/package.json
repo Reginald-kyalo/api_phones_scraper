@@ -11,7 +11,8 @@
     "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
     "check:phone-navigation": "python3 scripts/export_phone_navigation.py --check && python3 -m pytest ../tests/test_mock_phone_navigation.py",
-    "type-check": "tsc --noEmit && tsc -p tsconfig.functions.json"
+    "type-check": "tsc --noEmit && tsc -p tsconfig.functions.json",
+    "check:design": "node scripts/check-design-tokens.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",
