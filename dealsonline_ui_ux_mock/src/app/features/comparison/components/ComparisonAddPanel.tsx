@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { clustersApi, type ClusterSummary } from '../../../lib/api';
 import { formatPrice } from '../../../lib/format';
+import { categoryLabel } from '../../../lib/categories';
 import { type LocalComparisonItem } from '../../../hooks/useLocalStorage';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Package, X, ArrowLeft, Search } from 'lucide-react';
+import { Package, X, Search } from 'lucide-react';
 
 interface ComparisonAddPanelProps {
   open: boolean;
@@ -57,21 +58,12 @@ export function ComparisonAddPanel({
     }
     setLoading(true);
     try {
-      const hits = await clustersApi.search(q.trim(), {
+      // Listing rows, not one detail shard per hit (each shard is ~400 KB).
+      const hits = await clustersApi.searchSummaries(q.trim(), {
         slug: scopedProductType || undefined,
-        limit: 15,
+        limit: 60,
       });
-      const rows = await Promise.all(
-        hits.results.map((h) =>
-          clustersApi
-            .getDetail(h.id)
-            // Detail carries {price,url,title} per store; the panel only reads
-            // summary fields, so narrow it rather than widen the row type.
-            .then((d): ClusterSummary => ({ ...d, best_by_store: {}, configs: [] }))
-            .catch(() => null),
-        ),
-      );
-      setSearchResults(rows.filter((r): r is ClusterSummary => r !== null));
+      setSearchResults(hits.results.flatMap((h) => (h.row ? [h.row] : [])).slice(0, 20));
     } catch {
       setSearchResults([]);
     } finally {
@@ -97,14 +89,11 @@ export function ComparisonAddPanel({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <div className="fixed top-0 right-0 bottom-0 w-[340px] z-50 bg-white border-l border-border shadow-overlay flex flex-col">
+      <div className="fixed inset-0 z-40 bg-canvas-ink/30" onClick={onClose} />
+      <div role="dialog" aria-label="Add a product to compare" className="fixed top-0 right-0 bottom-0 w-full max-w-[360px] z-50 bg-background border-l border-border shadow-overlay flex flex-col">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-          <button onClick={onClose} className="p-1 rounded-md hover:bg-muted">
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <span className="font-semibold text-sm flex-1">Add product</span>
-          <button onClick={onClose} className="p-1 rounded-md hover:bg-muted">
+          <span className="font-semibold text-sm flex-1">Add a product to compare</span>
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded-md hover:bg-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -112,7 +101,7 @@ export function ComparisonAddPanel({
         {firstItem && (
           <div className="px-4 py-2 bg-surface-alt border-b border-border">
             <p className="text-xs text-muted-foreground">
-              Showing products in <span className="font-medium text-foreground">{firstItem.categoryName}</span>
+              Showing products in <span className="font-medium text-foreground">{categoryLabel(firstItem.productType)}</span>
             </p>
           </div>
         )}
@@ -122,7 +111,8 @@ export function ComparisonAddPanel({
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={firstItem ? `Search in ${firstItem.categoryName}` : 'Search products'}
+              placeholder={firstItem ? `Search ${categoryLabel(firstItem.productType).toLowerCase()}` : 'Search products'}
+              aria-label="Search products to compare"
               className="pr-10"
               autoFocus
             />
@@ -133,13 +123,13 @@ export function ComparisonAddPanel({
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           {showSimilarLabel && (
             <div className="mb-3">
-              <p className="text-sm font-semibold">Similar products</p>
-              <p className="text-xs text-muted-foreground">Click to add to the comparison</p>
+              <p className="text-sm font-semibold">In the same category</p>
+              <p className="text-xs text-muted-foreground">Choose one to add it</p>
             </div>
           )}
 
           {(loading || loadingSimilar) && displayList.length === 0 && (
-            <p className="text-xs text-muted-foreground py-6 text-center">Loading...</p>
+            <p className="text-xs text-muted-foreground py-6 text-center">Loading…</p>
           )}
 
           {!loading && displayList.map((p) => {
@@ -164,7 +154,7 @@ export function ComparisonAddPanel({
                   <p className="text-sm font-medium line-clamp-2 leading-snug">{p.display_name ?? p.title}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-bold">
+                  <p className="price-num text-sm font-bold">
                     {formatPrice(p.best_price)}
                   </p>
                   {alreadyAdded && (
@@ -178,10 +168,10 @@ export function ComparisonAddPanel({
           {!loading && query.length >= 2 && searchResults.length === 0 && (
             <div className="py-8 text-center">
               <Package className="h-10 w-10 mx-auto mb-2 text-muted-foreground/40" />
-              <p className="text-sm font-semibold mb-1">No products match your filters</p>
+              <p className="text-sm font-semibold mb-1">Nothing matches “{query.trim()}”</p>
               {firstItem && (
                 <p className="text-xs text-muted-foreground">
-                  Search is scoped to {firstItem.categoryName}
+                  Only {categoryLabel(firstItem.productType).toLowerCase()} can be compared with what you’ve added.
                 </p>
               )}
             </div>

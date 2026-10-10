@@ -13,9 +13,10 @@ import { bestImage } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
-import { Bell, ChevronRight, ExternalLink, Info, Package, RefreshCw } from 'lucide-react';
+import { BarChart3, Bell, Check, ChevronRight, ExternalLink, Info, Package, RefreshCw } from 'lucide-react';
 import { storeName } from '../lib/storeIdentity';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { useLocalComparison } from '../hooks/useLocalStorage';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { SavingBadge } from '../components/common/SavingBadge';
 import { StoreMark } from '../components/common/StoreMark';
@@ -162,12 +163,27 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
     return () => io.disconnect();
   }, []);
 
+  const { isInComparison, toggleComparison } = useLocalComparison();
+  const comparing = isInComparison(cluster.cluster_id);
+  const onCompare = () =>
+    toggleComparison({
+      id: cluster.cluster_id,
+      name,
+      image,
+      price: lowest?.[1].price ?? cluster.best_price ?? 0,
+      numStores: offers.length,
+      categoryName: categoryLabel(cluster.category ?? ''),
+      productType: cluster.category ?? '',
+    });
+
   const bestCard = (
     <BestPriceCard
       offer={lowest}
       likelyUsed={likelyUsed}
       saving={saving}
       onAlert={() => setAlertOpen(true)}
+      comparing={comparing}
+      onCompare={onCompare}
     />
   );
 
@@ -424,11 +440,15 @@ function BestPriceCard({
   likelyUsed,
   saving,
   onAlert,
+  comparing,
+  onCompare,
 }: {
   offer: Offer | null;
   likelyUsed: boolean;
   saving: ReturnType<typeof displaySaving>;
   onAlert: () => void;
+  comparing: boolean;
+  onCompare: () => void;
 }) {
   return (
     <div className="rounded-md border border-border p-5">
@@ -454,6 +474,26 @@ function BestPriceCard({
         <Bell className="h-4 w-4" aria-hidden="true" />
         Set a price alert
       </Button>
+      <div className="mt-3 flex items-center justify-between text-sm">
+        <button
+          type="button"
+          onClick={onCompare}
+          aria-pressed={comparing}
+          className="inline-flex items-center gap-1.5 text-foreground hover:underline underline-offset-4"
+        >
+          {comparing ? (
+            <Check className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <BarChart3 className="h-4 w-4" aria-hidden="true" />
+          )}
+          {comparing ? 'Added to compare' : 'Compare with others'}
+        </button>
+        {comparing && (
+          <Link to="/compare" className="text-link hover:underline underline-offset-4">
+            View
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Toaster } from '../components/ui/sonner';
 import { AuthProvider } from '../context/AuthContext';
 import { Skeleton } from '../components/ui/skeleton';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import ComparisonBar from '../features/comparison/components/ComparisonBar';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -51,6 +52,7 @@ export default function Root() {
             </ErrorBoundary>
           </main>
           <Footer />
+          <ComparisonBar />
           <Toaster position="top-right" />
         </div>
       </LazyMotion>
