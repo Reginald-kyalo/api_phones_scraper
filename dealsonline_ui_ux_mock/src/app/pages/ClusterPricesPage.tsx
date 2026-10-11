@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Seo } from '../components/common/Seo';
 import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
@@ -17,6 +17,7 @@ import {
 import { bestImage } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Skeleton } from '../components/ui/skeleton';
 import { BarChart3, Bell, Check, ChevronRight, ExternalLink, Heart, Info, Package, RefreshCw } from 'lucide-react';
 import { storeName } from '../lib/storeIdentity';
@@ -28,9 +29,14 @@ import { StoreMark } from '../components/common/StoreMark';
 import { MatchProvenance } from '../features/clusters/components/MatchProvenance';
 import { SpreadEvidence } from '../features/clusters/components/SpreadEvidence';
 import { ReportDialog } from '../features/clusters/components/ReportDialog';
-import { PRPriceHistoryChart } from '../features/product/components/PriceHistoryChart';
 import PriceAlertDialog from '../features/alerts/components/PriceAlertDialog';
 import { AdSlot } from '../components/ads/AdSlot';
+
+// The chart library is most of this page's JavaScript; load it after the
+// prices are on screen (benchmark §2.11).
+const PRPriceHistoryChart = lazy(() =>
+  import('../features/product/components/PriceHistoryChart').then((m) => ({ default: m.PRPriceHistoryChart })),
+);
 
 type Config = ClusterDetail['configs'][number];
 type Offer = [store: string, offer: ClusterStore];
@@ -215,11 +221,23 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
       image: image ?? '',
     });
 
+  // What the saving compares, for the explainer beside the chip: the two
+  // shop prices it is the difference between.
+  const sb = cluster.spread_basis;
+  const savingPair: SavingPair | null = !saving
+    ? null
+    : config && lowest && highest
+      ? { low: [lowest[0], lowest[1].price as number], high: [highest[0], highest[1].price as number], basis: variantLabel(config) }
+      : sb?.cheapest?.store && sb.dearest?.store && hasPrice(sb.cheapest.price) && hasPrice(sb.dearest.price)
+        ? { low: [sb.cheapest.store, sb.cheapest.price], high: [sb.dearest.store, sb.dearest.price], basis: sb.facet_label ?? null }
+        : null;
+
   const bestCard = (
     <BestPriceCard
       offer={lowest}
       likelyUsed={likelyUsed}
       saving={saving}
+      savingPair={savingPair}
       onAlert={() => setAlertOpen(true)}
       comparing={comparing}
       onCompare={onCompare}
@@ -311,10 +329,31 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               </div>
             )}
 
+            {/* Section tabs (benchmark §2.6): jump links that stay under the
+                header on long pages. Desktop only; phones have the bottom bar. */}
+            <nav
+              aria-label="On this page"
+              className="sticky top-16 z-30 -mx-1 mt-8 hidden border-b border-border bg-background px-1 lg:block"
+            >
+              <ul className="flex gap-5 text-sm">
+                {[
+                  ['#prices', 'Prices'],
+                  ...(cluster.price_history && cluster.price_history.length >= 2 ? [['#price-history', 'Price history']] : []),
+                  ['#about-comparison', 'About this comparison'],
+                ].map(([href, label]) => (
+                  <li key={href}>
+                    <a href={href} className="-mb-px block border-b-2 border-transparent py-2.5 text-muted-foreground transition-colors hover:border-border hover:text-foreground">
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
             {/* ── The price list ── */}
-            <section aria-labelledby="prices" className="mt-8">
+            <section aria-labelledby="prices" className="mt-8 scroll-mt-32">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 id="prices" className="section-title">
+                <h2 id="prices" className="section-title scroll-mt-32">
                   {likelyUsed ? 'Used and refurbished prices' : 'Prices'}
                 </h2>
                 <p className="microcopy-label">Sorted by price</p>
@@ -331,6 +370,16 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                 </ul>
               ) : (
                 <p className="text-sm text-muted-foreground">No shop has a usable price for this variant right now.</p>
+              )}
+              {offers.length > 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Found at {shopLabel(offers.length)}
+                  {config ? ` for ${variantLabel(config)}` : ''}. Each row is the shop’s own listing; the
+                  price you pay is set by the shop, so check delivery and warranty there.{' '}
+                  <a href="#about-comparison" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
+                    Wrong price?
+                  </a>
+                </p>
               )}
 
               {!likelyUsed && cluster.likely_used_best_price != null && (cluster.n_likely_used ?? 0) > 0 && (
@@ -349,14 +398,16 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
 
             {/* Real history only — never synthesised to fill the slot. */}
             {cluster.price_history && cluster.price_history.length >= 2 && (
-              <section id="price-history" className="mt-10 scroll-mt-24">
-                <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
+              <section id="price-history" className="mt-10 scroll-mt-32">
+                <Suspense fallback={<Skeleton className="h-[420px] w-full" />}>
+                  <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
+                </Suspense>
               </section>
             )}
 
             {/* ── About this comparison ── */}
-            <section aria-labelledby="about-comparison" className="mt-10 space-y-3">
-              <h2 id="about-comparison" className="section-title">About this comparison</h2>
+            <section aria-labelledby="about-comparison" className="mt-10 scroll-mt-32 space-y-3">
+              <h2 id="about-comparison" className="section-title scroll-mt-32">About this comparison</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 We match the same product across shops by its listing details, then sort every price by
                 price. Each row shows the shop’s own listing title so you can check the match.
@@ -500,10 +551,49 @@ function OfferRow({ store, offer, lowest }: { store: string; offer: ClusterStore
   );
 }
 
+type SavingPair = { low: [string, number]; high: [string, number]; basis: string | null };
+
+/**
+ * The ⓘ beside the saving chip (PriceSpy's pattern): says exactly which two
+ * prices the percentage compares, so "Save 12%" is never a bare claim.
+ */
+function SavingExplainer({ pair }: { pair: SavingPair }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="What this saving compares"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Info className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 text-sm">
+        <p className="text-foreground">
+          The saving compares the cheapest and the dearest shop for the same product
+          {pair.basis ? ` (${pair.basis})` : ''}:
+        </p>
+        <dl className="mt-2 space-y-1">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">{storeName(pair.low[0])}</dt>
+            <dd className="price-num text-foreground">{formatPrice(pair.low[1])}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">{storeName(pair.high[0])}</dt>
+            <dd className="price-num text-foreground">{formatPrice(pair.high[1])}</dd>
+          </div>
+        </dl>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function BestPriceCard({
   offer,
   likelyUsed,
   saving,
+  savingPair,
   onAlert,
   comparing,
   onCompare,
@@ -513,6 +603,7 @@ function BestPriceCard({
   offer: Offer | null;
   likelyUsed: boolean;
   saving: ReturnType<typeof displaySaving>;
+  savingPair: SavingPair | null;
   onAlert: () => void;
   comparing: boolean;
   onCompare: () => void;
@@ -527,6 +618,7 @@ function BestPriceCard({
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <span className="price-num text-3xl font-bold text-foreground">{formatPrice(offer[1].price)}</span>
             <SavingBadge saving={saving} />
+            {savingPair && <SavingExplainer pair={savingPair} />}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">at {storeName(offer[0])}</p>
           <Button asChild className="mt-4 h-11 w-full">
