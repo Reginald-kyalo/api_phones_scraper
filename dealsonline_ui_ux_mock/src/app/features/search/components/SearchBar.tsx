@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { Search, X, LayoutGrid, ChevronRight } from 'lucide-react';
+import { Search, X, LayoutGrid, ChevronRight, Package } from 'lucide-react';
 import { Input } from '../../../components/ui/input';
-import { clustersApi } from '../../../lib/api';
+import { clustersApi, type ClusterSummary } from '../../../lib/api';
+import { formatPrice, hasPrice, pricedShopCount, productName, shopLabel } from '../../../lib/format';
+import { imageUsable } from '../../../lib/images';
+import { readFilters } from '../../../lib/listing';
+import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { categoryLabel } from '../../../lib/categories';
 
 interface SearchBarProps {
@@ -31,6 +35,30 @@ export default function SearchBar({
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<Suggestion[]>([]);
+  const [products, setProducts] = useState<ClusterSummary[]>([]);
+
+  // Product suggestions (benchmark §2.2): photo, name and "from KES X · N
+  // shops", as idealo and PriceRunner show. Debounced, from three letters.
+  useEffect(() => {
+    const q = query.trim();
+    if (!isFocused || q.length < 3) {
+      setProducts([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      clustersApi
+        .search(q, { filters: readFilters(new URLSearchParams()), limit: 5 })
+        .then((r) => {
+          if (!cancelled) setProducts(r.results.slice(0, 5));
+        })
+        .catch(() => {});
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, isFocused]);
 
   // The manifest is already cached by the time anyone types; fetch on focus.
   useEffect(() => {
@@ -69,22 +97,60 @@ export default function SearchBar({
     .filter((c) => c.label.toLowerCase().includes(query.trim().toLowerCase()))
     .slice(0, 4);
 
+  const close = () => {
+    setQuery('');
+    setIsFocused(false);
+    onSearch?.();
+  };
+
   const renderDropdown = () => {
     if (!showDropdown) return null;
     return (
       <div className="absolute top-full mt-2 w-full bg-popover rounded-md shadow-raised ultra-border overflow-hidden z-50">
-        {filteredSuggestions.length > 0 ? (
+        {products.length > 0 && (
           <div className="py-2">
+            <div className="px-4 py-2 microcopy-label">Products</div>
+            {products.map((p) => {
+              const shops = pricedShopCount(p);
+              return (
+                <Link
+                  key={p.cluster_id}
+                  to={`/prices/${encodeURIComponent(p.cluster_id)}`}
+                  onClick={close}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-surface-alt transition-colors"
+                >
+                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-photo ultra-border">
+                    <Package className="absolute h-4 w-4 text-muted-foreground/30" aria-hidden="true" />
+                    {imageUsable(p.image) && (
+                      <ImageWithFallback src={p.image} alt="" className="relative h-full w-full object-contain p-1" fallback={null} />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{productName(p)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {hasPrice(p.best_price) && (
+                        <>
+                          {shops >= 2 ? 'from ' : ''}
+                          <span className="price-num text-foreground">{formatPrice(p.best_price)}</span>
+                          {' · '}
+                        </>
+                      )}
+                      {shopLabel(Math.max(shops, 1))}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+        {filteredSuggestions.length > 0 && (
+          <div className={`py-2 ${products.length ? 'border-t border-border' : ''}`}>
             <div className="px-4 py-2 microcopy-label">Categories</div>
             {filteredSuggestions.map((s) => (
               <Link
                 key={s.slug}
                 to={`/browse/${s.slug}`}
-                onClick={() => {
-                  setQuery('');
-                  setIsFocused(false);
-                  onSearch?.();
-                }}
+                onClick={close}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-surface-alt transition-colors group"
               >
                 <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-card ultra-border">
@@ -98,16 +164,17 @@ export default function SearchBar({
               </Link>
             ))}
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-surface-alt"
-          >
-            <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            Search all products for “{query.trim()}”
-          </button>
         )}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-surface-alt ${
+            products.length || filteredSuggestions.length ? 'border-t border-border' : ''
+          }`}
+        >
+          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          Search all products for “{query.trim()}”
+        </button>
       </div>
     );
   };
