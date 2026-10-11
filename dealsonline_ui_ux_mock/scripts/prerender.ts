@@ -226,6 +226,94 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
   };
 }
 
+/**
+ * Crawlers that build search results and AI answers (and so send shoppers):
+ * allowed everywhere a shopper can go. GEO depends on these.
+ */
+const ANSWER_BOTS = [
+  'Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', 'OAI-SearchBot', 'ChatGPT-User',
+  'PerplexityBot', 'Perplexity-User', 'Claude-SearchBot', 'Claude-User',
+];
+/**
+ * Crawlers that only collect training data and send nobody back. Today's
+ * prices are public on purpose (benchmark, anti-scraping strategy); bulk
+ * copying for model training is not part of that bargain.
+ */
+const TRAINING_BOTS = [
+  'GPTBot', 'ClaudeBot', 'anthropic-ai', 'CCBot', 'Google-Extended', 'Applebot-Extended',
+  'Bytespider', 'meta-externalagent', 'FacebookBot', 'Amazonbot', 'cohere-ai', 'cohere-training-data-crawler',
+  'Diffbot', 'ImagesiftBot', 'Omgilibot', 'omgili', 'PetalBot', 'Timpibot', 'AI2Bot', 'img2dataset',
+];
+
+/**
+ * robots.txt. Every page we prerender stays open to search and answer
+ * crawlers; the honeypot (/data/) and the catalogue API (/api/) are closed to
+ * all of them. A crawler obeys only the most specific group naming it, so
+ * each group repeats the two Disallow lines.
+ */
+function robotsTxt(): string {
+  const closed = `Disallow: ${BASE}data/\nDisallow: ${BASE}api/\n`;
+  return [
+    '# Search and AI-answer crawlers: welcome on every public page.',
+    ...ANSWER_BOTS.map((b) => `User-agent: ${b}`),
+    `Allow: ${BASE}`,
+    closed,
+    '# Training-only crawlers: not permitted.',
+    ...TRAINING_BOTS.map((b) => `User-agent: ${b}`),
+    `Disallow: ${BASE}`,
+    '',
+    '# Everyone else.',
+    'User-agent: *',
+    `Allow: ${BASE}`,
+    closed,
+    `Sitemap: ${ORIGIN}${BASE}sitemap.xml`,
+    '',
+  ].join('\n');
+}
+
+/**
+ * llms.txt (llmstxt.org): a plain map of the site for AI answer engines,
+ * saying what each kind of page holds and linking the entry points.
+ */
+function llmsTxt(manifest: Awaited<ReturnType<typeof demo.getManifest>>): string {
+  const cats = manifest.categories
+    .map((c) => `- [${categoryLabel(c.slug)}](${abs(`/browse/${c.slug}`)}): ${c.count.toLocaleString('en-GB')} products, ${c.multi_store.toLocaleString('en-GB')} sold by 2 or more shops`)
+    .join('\n');
+  return `# ${BRAND.name}
+
+> ${BRAND.name} is a price comparison site for Kenya. For each product it lists every shop's current price, sorted by price, with the shop's own listing title and when the price was last checked. It covers ${manifest.total_clusters.toLocaleString('en-GB')} products from ${manifest.total_stores} Kenyan shops, including Jumia, Kilimall, Carrefour and Naivas. Prices are in Kenyan shillings (KES). ${BRAND.name} does not sell anything itself.
+
+${MONEY_LINE}
+
+## What the pages contain
+
+- Product pages (${abs('/prices/')}<id>): one product, every shop's price for it sorted cheapest first, the price range, the number of shops, when prices were checked, price history where recorded, and Product/AggregateOffer structured data. Savings compare two real shop prices for the same configuration; they are never computed against a list price.
+- Category pages (${abs('/browse/')}<category>): the products in a category, most compared first, with the lowest price and shop count for each.
+- Brand pages (${abs('/browse/')}<category>/<brand>): one brand within a category, e.g. ${abs('/browse/mobile-phones/samsung')}.
+- Deals (${abs('/deals')}): products that are cheaper at one shop than another, with savings between 1% and 60%.
+- Questions and answers (${abs('/faq')}): how comparisons work, what to check before paying, how ${BRAND.name} makes money.
+
+## Key pages
+
+- [Home](${abs('/')})
+- [All categories](${abs('/browse')})
+- [Deals](${abs('/deals')})
+- [Questions and answers](${abs('/faq')})
+- [How we make money](${abs('/how-we-make-money')})
+- [About](${abs('/about')})
+- [For shops and brands](${abs('/for-business')})
+
+## Categories
+
+${cats}
+
+## Notes for quoting
+
+- Quote prices with the shop and the time they were checked; shops change prices, and the final price at checkout can include delivery.
+- The full list of pages is in the sitemap: ${ORIGIN}${BASE}sitemap.xml
+`;
+}
+
 /** Add the trap products (scripts/trap-products.json) to dist's card index. */
 function plantTraps() {
   const { products } = JSON.parse(readFileSync(join(process.cwd(), 'scripts', 'trap-products.json'), 'utf8')) as {
@@ -430,7 +518,8 @@ async function main() {
       sitemap.map((u) => `  <url><loc>${esc(u)}</loc></url>`).join('\n') +
       `\n</urlset>\n`,
   );
-  writeFileSync(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: ${BASE}data/\n\nSitemap: ${ORIGIN}${BASE}sitemap.xml\n`);
+  writeFileSync(join(DIST, 'robots.txt'), robotsTxt());
+  writeFileSync(join(DIST, 'llms.txt'), llmsTxt(manifest));
 
   // Trap entries go into the card index last, after every page above was
   // built from it, so they reach the bulk data file and nothing else.

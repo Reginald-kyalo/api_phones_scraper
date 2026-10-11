@@ -122,6 +122,32 @@ the R2 path locally: `VITE_CATALOGUE=api npm run build`,
 `node scripts/upload-catalogue.mjs --local`, then
 `wrangler pages dev dist --r2 CATALOGUE=sokopulse-catalogue`.
 
+## Crawlers: open to search and AI answers, closed to training
+
+`robots.txt` and `llms.txt` are written by the prerender. Search and
+AI-answer crawlers (Googlebot, Bingbot, OAI-SearchBot, ChatGPT-User,
+PerplexityBot, Claude-SearchBot and others) may read every public page;
+training-only crawlers (GPTBot, ClaudeBot, CCBot, Google-Extended, Bytespider
+and others) are disallowed; the honeypot `/data/` and the catalogue API
+`/api/` are closed to all. robots.txt is a request, so enforce the same split
+at Cloudflare (on the sokopulse.co.ke zone, not `*.pages.dev`):
+
+1. **Security → Bots:** leave **Block AI bots** OFF (the single switch also
+   blocks the answer crawlers that get SokoPulse cited) and leave **AI
+   Labyrinth** OFF.
+2. **AI Crawl Control** (or **AI Audit**, depending on the dashboard version) →
+   crawlers list: set **Allow** for Googlebot, Bingbot, OAI-SearchBot,
+   ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot,
+   Claude-User, Applebot; set **Block** for GPTBot, ClaudeBot, CCBot,
+   Google-Extended, Applebot-Extended, Bytespider, Meta-ExternalAgent,
+   Amazonbot. Turn on **Enforce robots.txt** if offered.
+3. **Security → WAF → Custom rules**, if the crawler list is not available:
+   `(cf.verified_bot_category eq "AI Crawler")` → **Block**, placed after a
+   rule `(cf.client.bot)` → **Skip** for Search Engine Crawler and AI
+   Assistant/AI Search categories.
+4. Keep the rate-limit rule on `/api/catalogue/` (R2 section above) and a
+   **Block** rule for IPs listed by the honeypot (`honeypot_hits` in D1).
+
 ## Host notes
 
 - **Cloudflare Pages (the target)** — connect the GitHub repo; build command
