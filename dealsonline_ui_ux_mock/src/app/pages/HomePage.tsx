@@ -247,6 +247,25 @@ export default function HomePage() {
     <div className="bg-background">
       <Seo description="Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops. Every shop’s price, sorted by price." />
       <HeroSection productCount={manifest?.total_clusters} shopCount={manifest?.total_stores} showcase={showcase} />
+      {/* The pulse line (benchmark §3): the market in two numbers from the
+          dataset itself, static, under the hero rather than in the header.
+          Counts in prose, so not in the price font (DESIGN_RULES.md §2). */}
+      {manifest && (
+        <div className="page-container mt-4">
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <span className="microcopy-label">On SokoPulse now</span>
+            <span>
+              <span className="font-semibold text-foreground">{manifest.multi_store_clusters.toLocaleString('en-GB')}</span>{' '}
+              products sold by 2 or more shops
+            </span>
+            <span aria-hidden="true">·</span>
+            <Link to="/deals" className="hover:text-foreground">
+              <span className="font-semibold text-foreground">{manifest.deals.count.toLocaleString('en-GB')}</span>{' '}
+              cheaper at one shop than another
+            </Link>
+          </p>
+        </div>
+      )}
       <div className="mt-5">
         <CategoryStrip />
       </div>
