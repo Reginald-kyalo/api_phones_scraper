@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { Heart, Bell, LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -13,8 +13,10 @@ import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import SearchBar from '../../features/search/components/SearchBar';
 import Logo from './Logo';
-import MegaMenu from './MegaMenu';
-import MobileCategoryNav from '../../features/categories/MobileCategoryNav';
+// Both menus carry the whole category tree (~100 KB of data); load it when a
+// menu first opens rather than with every page.
+const MegaMenu = lazy(() => import('./MegaMenu'));
+const MobileCategoryNav = lazy(() => import('../../features/categories/MobileCategoryNav'));
 import { MyProductsContent } from '../../features/user/components/MyProducts';
 import { useLocalFavorites, useLocalPRAlerts } from '../../hooks/useLocalStorage';
 
@@ -321,7 +323,11 @@ export default function Header() {
             Deals
           </Link>
         </div>
-        <MegaMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+        {menuOpen && (
+          <Suspense fallback={null}>
+            <MegaMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+          </Suspense>
+        )}
       </nav>
     </>
   );
@@ -361,7 +367,11 @@ function MobileMenu({
         <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Deals" onNavigate={onNavigate} />
 
         <div className="mx-5 my-2 border-t border-border" />
-        <MobileCategoryNav enabled={sheetOpen} onNavigate={onNavigate} />
+        {sheetOpen && (
+          <Suspense fallback={null}>
+            <MobileCategoryNav enabled={sheetOpen} onNavigate={onNavigate} />
+          </Suspense>
+        )}
 
         <div className="mx-5 my-2 border-t border-border" />
         <MobileNavLink to="/about" label="About" onNavigate={onNavigate} />

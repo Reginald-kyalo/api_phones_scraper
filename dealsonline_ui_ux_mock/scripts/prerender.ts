@@ -80,6 +80,8 @@ interface Page {
   body: string;
   noindex?: boolean;
   jsonLd?: object;
+  /** Absolute URL of the share image; the brand card when absent. */
+  image?: string | null;
 }
 
 function render(page: Page): string {
@@ -97,6 +99,10 @@ function render(page: Page): string {
     .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${esc(full)}$2`)
     .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${esc(page.description)}$2`)
     .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${esc(abs(page.path))}$2`)
+    // Share previews (WhatsApp, X, Facebook): the product's own photo where
+    // there is one, else the brand card. Both as absolute URLs.
+    .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${esc(page.image ?? abs('/og-image.png'))}$2`)
+    .replace(/\s*<meta property="og:image:width"[^>]*>\s*<meta property="og:image:height"[^>]*>/, page.image ? '' : '$&')
     .replace('</head>', `  ${head}\n  </head>`)
     .replace('<div id="root"></div>', `<div id="root">${shell(page.body)}</div>`);
 }
@@ -183,6 +189,7 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
   return {
     path,
     title: `${name} price in Kenya: from ${formatPrice(low.price)} at ${shopLabel(offers.length)}`,
+    image: bestImage(cluster),
     description: `${name} from ${formatPrice(low.price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`,
     body:
       crumbs([['Home', '/'], ...(slug ? [[categoryLabel(slug), `/browse/${slug}`] as [string, string]] : [])]) +

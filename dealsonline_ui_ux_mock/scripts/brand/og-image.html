@@ -1,0 +1,34 @@
+<!doctype html>
+<!-- Source of public/og-image.png (1200x630), the share preview for every page
+     without a product photo. Shops are anonymous on purpose: no real shop
+     next to an illustrative price. Regenerate:
+     google-chrome --headless=new --hide-scrollbars --window-size=1200,630 \
+       --screenshot=public/og-image.png scripts/brand/og-image.html -->
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Hanken+Grotesk:wght@400;500&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;width:1200px;height:630px;background:#0A0F12;color:#fff;font-family:'Hanken Grotesk',sans-serif}
+  .wrap{box-sizing:border-box;height:100%;padding:72px 80px;display:flex;flex-direction:column;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:18px;font:700 40px 'Space Grotesk'}
+  .brand span{font-weight:500}
+  h1{font:700 76px/1.05 'Space Grotesk';margin:0;letter-spacing:-1.5px;max-width:900px}
+  p{font-size:30px;color:rgba(255,255,255,.72);margin:22px 0 0;max-width:900px}
+  .row{display:flex;gap:14px}
+  .chip{font:600 26px 'JetBrains Mono';border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:12px 18px}
+  .chip b{color:#2BC2D4;font-weight:600}
+</style>
+<div class="wrap">
+  <div class="brand">
+    <svg width="56" height="56" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#fff"/><polyline points="7,10 13,16 18,13 24,22" fill="none" stroke="#0C1416" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="22" r="3" fill="#0E7C8B"/></svg>
+    <div>Soko<span>Pulse</span></div>
+  </div>
+  <div>
+    <h1>Know the real price before you buy.</h1>
+    <p>Every Kenyan shop’s price for the same product, sorted by price.</p>
+  </div>
+  <div class="row">
+    <div class="chip">Shop A · <b>KES 18,999</b></div>
+    <div class="chip">Shop B · KES 21,500</div>
+    <div class="chip">Shop C · KES 23,499</div>
+  </div>
+</div>

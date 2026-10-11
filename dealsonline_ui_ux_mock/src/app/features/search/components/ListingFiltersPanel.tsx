@@ -25,7 +25,9 @@ export function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: 
   return (
     <label className="flex items-center gap-2 text-sm text-muted-foreground">
       <span className="hidden sm:inline">Sort</span>
+      {/* aria-label as well: the visible "Sort" is hidden on phones. */}
       <select
+        aria-label="Sort"
         value={value}
         onChange={(e) => onChange(e.target.value as SortKey)}
         className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-ring"
