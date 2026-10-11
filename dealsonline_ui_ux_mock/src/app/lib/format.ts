@@ -176,9 +176,38 @@ function tidyWords(text: string): string {
     .replace(/\b(\d+)(gb|tb|mb|k)\b/gi, (_, n: string, unit: string) => `${n}${unit.toUpperCase()}`);
 }
 
+/**
+ * Shop titles typed in capitals ("ALWAYS MAXI THICK ROXANNE LITE") read as
+ * shouting in a grid; set them in title case, then restore real capitals.
+ */
+function unshout(text: string): string {
+  const letters = text.replace(/[^A-Za-z]/g, '');
+  if (letters.length < 4 || letters !== letters.toUpperCase()) return text;
+  return text.toLowerCase().replace(/(^|[\s/(-])([a-z])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase());
+}
+
 /** The name to show for a product, with brand and unit capitals restored. */
 export function productName(row: { display_name?: string | null; title: string }): string {
-  return tidyWords(row.display_name ?? row.title);
+  return tidyWords(unshout(row.display_name ?? row.title));
+}
+
+/** Categories whose brand field is reliable: electronics, sold by maker name. */
+const BRANDED = new Set([
+  'mobile-phones', 'laptops', 'tablets', 'tvs', 'monitors', 'digital-cameras', 'audio-systems',
+  'headphones', 'speakers', 'printers', 'mobile-phone-accessories',
+]);
+
+/**
+ * The eyebrow above a product name: the brand where it can be trusted,
+ * else the category. Outside electronics the brand is extracted from the
+ * title and is often a stray first word ("mosquito", "eggplant", "de"),
+ * which shown alone looks like a bug.
+ */
+export function eyebrow(row: { brand?: string | null; category?: string | null; display_name?: string | null; title: string }, categoryName: (slug: string) => string): string {
+  const brand = row.brand?.trim();
+  const name = (row.display_name ?? row.title).toLowerCase();
+  if (brand && BRANDED.has(row.category ?? '') && name.startsWith(brand.toLowerCase())) return brandName(brand);
+  return row.category ? categoryName(row.category) : 'Product';
 }
 
 /** A brand as written by the brand: "jbl" → "JBL", "samsung" → "Samsung". */

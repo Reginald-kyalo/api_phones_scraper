@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BRAND } from '../../lib/brand';
 
-const DEFAULT_TITLE = `${BRAND.name} · Compare prices across Kenyan shops`;
+const DEFAULT_TITLE = `${BRAND.name} · Compare prices across Kenyan shops, from Jumia to Naivas`;
 
 function setMeta(attr: 'name' | 'property', key: string, content: string | null) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);

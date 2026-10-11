@@ -17,4 +17,4 @@ export const BRAND = {
  * link, so the claim can only ever be changed in one place.
  */
 export const MONEY_LINE =
-  'Shops pay us a small fee when you click through to them, and some pay for clearly labelled sponsored spots. Neither affects the order of the price list, which is always sorted by price. We never sell products ourselves.';
+  'Shops pay us a small fee when you click through to them, at no extra cost to you, and some pay for clearly labelled sponsored spots. Neither affects the order of the price list, which is always sorted by price. We never sell products ourselves.';

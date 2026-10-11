@@ -26,8 +26,9 @@ import { dirname, join } from 'node:path';
 import * as demo from '../src/app/lib/demoSource';
 import type { ClusterDetail, ClusterStore, ClusterSummary } from '../src/app/lib/api';
 import { BRAND, MONEY_LINE } from '../src/app/lib/brand';
+import { FAQ } from '../src/app/lib/faq';
 import { categoryLabel } from '../src/app/lib/categories';
-import { brandName, formatPrice, hasPrice, productName, shopLabel } from '../src/app/lib/format';
+import { brandName, eyebrow, formatPrice, hasPrice, priceVerdict, productName, shopLabel } from '../src/app/lib/format';
 import * as catalogue from '../src/app/lib/catalogueQueries';
 import { brandFacets, brandPageBrands, readFilters } from '../src/app/lib/listing';
 import { storeName } from '../src/app/lib/storeIdentity';
@@ -82,7 +83,7 @@ interface Page {
 }
 
 function render(page: Page): string {
-  const full = page.title ? `${page.title} · ${BRAND.name}` : `${BRAND.name} · Compare prices across Kenyan shops`;
+  const full = page.title ? `${page.title} · ${BRAND.name}` : `${BRAND.name} · Compare prices across Kenyan shops, from Jumia to Naivas`;
   const head = [
     `<link rel="canonical" href="${esc(abs(page.path))}" />`,
     page.noindex ? '<meta name="robots" content="noindex" />' : '',
@@ -170,6 +171,9 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
   const high = offers[offers.length - 1][1];
   const slug = cluster.category ?? '';
   const path = productPath(cluster.cluster_id);
+  const verdict = cluster.condition_basis !== 'likely_used' && (cluster.configs?.length ?? 0) < 2
+    ? priceVerdict(cluster.price_history, low.price)
+    : null;
   const rows = offers
     .map(([store, o]) =>
       `<tr><td>${esc(storeName(store))}</td><td>${esc(o.title)}</td>` +
@@ -178,13 +182,19 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
     .join('');
   return {
     path,
-    title: `${name}: ${formatPrice(low.price)} at ${storeName(lowStore)}`,
+    title: `${name} price in Kenya: from ${formatPrice(low.price)} at ${shopLabel(offers.length)}`,
     description: `${name} from ${formatPrice(low.price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`,
     body:
       crumbs([['Home', '/'], ...(slug ? [[categoryLabel(slug), `/browse/${slug}`] as [string, string]] : [])]) +
-      (cluster.brand ? `<p class="microcopy-label">${esc(cluster.brand)}</p>` : '') +
+      `<p class="microcopy-label">${esc(eyebrow(cluster, categoryLabel))}</p>` +
       `<h1 class="page-title mt-1">${esc(name)}</h1>` +
-      `<p class="mt-2 text-sm text-muted-foreground">${esc(formatPrice(low.price))} to ${esc(formatPrice(high.price))} across ${esc(shopLabel(offers.length))}, sorted by price.</p>` +
+      // A summary written from the price data, never by hand: what Google
+      // quotes, and the same numbers as the list below.
+      `<p class="mt-2 text-sm">${esc(name)} is on sale at ${esc(shopLabel(offers.length))} in Kenya, from ` +
+      `${esc(formatPrice(low.price))} at ${esc(storeName(lowStore))} to ${esc(formatPrice(high.price))}, ` +
+      `a difference of ${esc(formatPrice((high.price as number) - (low.price as number)))}.` +
+      (verdict ? ` ${esc(verdict)}` : '') +
+      `</p>` +
       `<table class="mt-6 w-full text-sm"><caption class="microcopy-label text-left">Prices · sorted by price</caption>` +
       `<thead><tr><th class="text-left">Shop</th><th class="text-left">Listing</th><th class="text-left">Price</th></tr></thead>` +
       `<tbody>${rows}</tbody></table>`,
@@ -286,6 +296,20 @@ async function main() {
     ['/terms', 'Terms of service', 'The terms for using SokoPulse.'],
     ['/cookie-policy', 'Cookie policy', 'How SokoPulse uses cookies.'],
   ];
+  write({
+    path: '/faq',
+    title: 'Questions and answers',
+    description: 'How SokoPulse compares prices across Kenyan shops, what to check before you pay, and how we make money.',
+    body:
+      crumbs([['Home', '/'], ['Questions and answers']]) +
+      `<h1 class="page-title">Questions and answers</h1>` +
+      FAQ.map(({ q, a }) => `<h2 class="mt-6 text-base font-semibold">${esc(q)}</h2><p class="mt-1 text-sm">${esc(a)}</p>`).join(''),
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ.map(({ q, a }) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+    },
+  });
   for (const [path, title, description] of prose) {
     write({ path, title, description, body: crumbs([['Home', '/'], [title]]) + `<h1 class="page-title">${esc(title)}</h1><p class="mt-2">${esc(description)}</p>` });
   }

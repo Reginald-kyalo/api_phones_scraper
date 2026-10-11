@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation, Link } from 'react-router';
 import { Seo } from '../components/common/Seo';
 import { BRAND, MONEY_LINE } from '../lib/brand';
+import { FAQ } from '../lib/faq';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -146,6 +147,26 @@ const pages: Record<string, { title: string; content: React.ReactNode }> = {
           <Link to="/how-we-make-money" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
             More on how we make money
           </Link>
+        </p>
+      </div>
+    ),
+  },
+  faq: {
+    title: 'Questions and answers',
+    content: (
+      <div className="space-y-6">
+        {FAQ.map(({ q, a }) => (
+          <section key={q}>
+            <h2 className="text-base font-semibold text-foreground">{q}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a}</p>
+          </section>
+        ))}
+        <p className="text-sm text-muted-foreground">
+          Something else?{' '}
+          <Link to="/contact" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
+            Contact us
+          </Link>
+          .
         </p>
       </div>
     ),

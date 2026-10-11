@@ -9,6 +9,8 @@ import { HeroCampaign } from '../ads/HeroCampaign';
 
 interface HeroSectionProps {
   productCount?: number;
+  /** Shops in the dataset (manifest.total_stores). */
+  shopCount?: number;
   /**
    * The hero renders a real comparison, so it needs the DETAIL view: listing
    * rows omit best_by_store to keep the feed small, and without it the offer
@@ -27,7 +29,7 @@ interface HeroSectionProps {
  * why it is a plain card of fixed size rather than a decoration. When
  * HERO_CAMPAIGNS has entries the campaign card takes that place instead.
  */
-export default function HeroSection({ productCount, showcase }: HeroSectionProps) {
+export default function HeroSection({ productCount, shopCount, showcase }: HeroSectionProps) {
   // Real per-store offers, cheapest first. Stores stay anonymous by design — a
   // redacted bar, not a brand name: no store gets free placement in the hero.
   const prices = Object.values(showcase?.best_by_store ?? {})
@@ -63,7 +65,11 @@ export default function HeroSection({ productCount, showcase }: HeroSectionProps
 
             <p className="text-xs mt-4 text-muted-foreground">
               {productCount != null
-                ? `${productCount.toLocaleString()} products compared · free price alerts`
+                ? [
+                    `${productCount.toLocaleString()} products`,
+                    shopCount ? `${shopCount} Kenyan shops` : 'Kenyan shops',
+                    'free price alerts',
+                  ].join(' · ')
                 : 'Prices from Kenyan shops · free price alerts'}
             </p>
           </div>

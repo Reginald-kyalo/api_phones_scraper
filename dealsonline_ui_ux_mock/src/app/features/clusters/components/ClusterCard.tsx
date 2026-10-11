@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
-import { clusterSaving, pricedShopCount, productName, shopLabel } from '../../../lib/format';
+import { clusterSaving, eyebrow, pricedShopCount, productName, shopLabel } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 import { categoryLabel } from '../../../lib/categories';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
@@ -68,7 +68,7 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
       </div>
 
       <div className="flex flex-1 flex-col p-3 pt-2">
-        <p className="microcopy-label">{cluster.brand ?? (cluster.category ? categoryLabel(cluster.category) : 'Product')}</p>
+        <p className="microcopy-label truncate">{eyebrow(cluster, categoryLabel)}</p>
         {/* Exactly two lines (h-10 = 2 x 20px line-height), never min-height: a
             1-line title against min-h-[2.5em] measured 35px where a 2-line one
             measured 40px, drifting card heights by 5px between rails. */}

@@ -6,7 +6,7 @@ const STEPS = [
   {
     icon: Search,
     title: 'Search any product',
-    body: 'Phones, laptops, TVs, groceries and more, from shops across Kenya in one place.',
+    body: 'Phones, laptops, TVs, groceries and more, from shops across Kenya in one place. No account needed.',
   },
   {
     icon: ListOrdered,

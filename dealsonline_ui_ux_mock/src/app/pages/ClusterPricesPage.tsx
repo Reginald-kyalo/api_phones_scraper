@@ -11,6 +11,7 @@ import {
   formatPrice,
   hasPrice,
   brandName,
+  eyebrow,
   productName,
   shopLabel,
 } from '../lib/format';
@@ -39,6 +40,20 @@ const PRPriceHistoryChart = lazy(() =>
 );
 
 type Config = ClusterDetail['configs'][number];
+
+/** Electronics, where warranty and local-vs-imported units change the deal. */
+const WARRANTY_CATEGORIES = new Set([
+  'mobile-phones', 'laptops', 'tablets', 'tvs', 'monitors', 'digital-cameras', 'audio-systems', 'headphones', 'speakers', 'printers',
+]);
+
+/** "Samsung Galaxy A17 price in Kenya: from KES 18,999 at 2 shops" (the search people type). */
+function productTitle(name: string, offers: [string, { price: number | null }][]): string {
+  if (!offers.length) return `${name} price in Kenya`;
+  const low = formatPrice(offers[0][1].price);
+  return offers.length > 1
+    ? `${name} price in Kenya: from ${low} at ${shopLabel(offers.length)}`
+    : `${name} price in Kenya: ${low} at ${storeName(offers[0][0])}`;
+}
 type Offer = [store: string, offer: ClusterStore];
 
 /** Shops that can actually PRICE something, cheapest first. */
@@ -163,6 +178,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   const config = selected >= 0 ? configs[selected] : null;
   const offers = config ? pricedOffers(config.by_store) : pricedOffers(cluster.best_by_store);
   const lowest = offers[0] ?? null;
+  const allOffers = useMemo(() => pricedOffers(cluster.best_by_store), [cluster.best_by_store]);
   const highest = offers.length > 1 ? offers[offers.length - 1] : null;
   const saving = config
     ? offers.length > 1
@@ -249,10 +265,12 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   return (
     <div className="bg-background">
       <Seo
-        title={lowest ? `${name}: ${formatPrice(lowest[1].price)} at ${storeName(lowest[0])}` : name}
+        // The whole product, every variant: the same numbers as the
+        // prerendered page and the sitemap, whichever chip is selected.
+        title={productTitle(name, allOffers)}
         description={
-          lowest
-            ? `${name} from ${formatPrice(lowest[1].price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`
+          allOffers.length
+            ? `${name} from ${formatPrice(allOffers[0][1].price)}. Compare ${shopLabel(allOffers.length)} in Kenya, sorted by price.`
             : `Compare ${name} prices across Kenyan shops.`
         }
       />
@@ -262,7 +280,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
           {/* ── Left column ── */}
           <div className="min-w-0">
-            {cluster.brand && <p className="microcopy-label">{cluster.brand}</p>}
+            <p className="microcopy-label">{eyebrow(cluster, categoryLabel)}</p>
             <h1 className="page-title mt-1">{name}</h1>
 
             {configs.length > 1 && (
@@ -372,10 +390,13 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                 <p className="text-sm text-muted-foreground">No shop has a usable price for this variant right now.</p>
               )}
               {offers.length > 0 && (
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                   Found at {shopLabel(offers.length)}
-                  {config ? ` for ${variantLabel(config)}` : ''}. Each row is the shop’s own listing; the
-                  price you pay is set by the shop, so check delivery and warranty there.{' '}
+                  {config ? ` for ${variantLabel(config)}` : ''}.{' '}
+                  <span className="font-semibold text-foreground">Before you pay:</span> check the listing is the
+                  exact model, size and colour, and confirm the total with delivery on the shop’s page.
+                  {WARRANTY_CATEGORIES.has(cluster.category ?? '') &&
+                    ' Check the warranty and whether it is a local or imported unit.'}{' '}
                   <a href="#about-comparison" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
                     Wrong price?
                   </a>
@@ -487,7 +508,7 @@ function Breadcrumbs({ cluster }: { cluster: ClusterDetail }) {
           </Link>
         </>
       )}
-      {cluster.brand && (
+      {cluster.brand && eyebrow(cluster, categoryLabel) !== categoryLabel(slug) && (
         <>
           <ChevronRight className="h-3 w-3" aria-hidden="true" />
           <span className="text-foreground">{brandName(cluster.brand)}</span>

@@ -97,7 +97,7 @@ export default function Footer() {
           <FooterCol title="Discover">
             <FooterLink to="/browse">All categories</FooterLink>
             <FooterLink to="/deals">Deals</FooterLink>
-            <FooterLink to="/favorites">My favourites</FooterLink>
+            <FooterLink to="/favorites">Favourites</FooterLink>
             <FooterLink to="/alerts">Price alerts</FooterLink>
           </FooterCol>
 
@@ -118,6 +118,7 @@ export default function Footer() {
           <FooterCol title="Company">
             <FooterLink to="/about">About us</FooterLink>
             <FooterLink to="/how-we-make-money">How we make money</FooterLink>
+            <FooterLink to="/faq">Questions and answers</FooterLink>
             <FooterLink to="/contact">Contact</FooterLink>
             <FooterLink to="/privacy">Privacy policy</FooterLink>
             <FooterLink to="/terms">Terms of service</FooterLink>

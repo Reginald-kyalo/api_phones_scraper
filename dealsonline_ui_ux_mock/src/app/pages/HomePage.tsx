@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link } from 'react-router';
-import { clusterSaving, formatPrice, hasPrice, pricedShopCount, productName, shopLabel } from '../lib/format';
+import { clusterSaving, eyebrow, formatPrice, hasPrice, pricedShopCount, productName, shopLabel } from '../lib/format';
 import { clustersApi, type ClusterDetail, type ClusterSummary } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
 import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
@@ -72,7 +72,7 @@ function FeaturedDeal({ cluster }: { cluster: ClusterSummary }) {
         </Link>
 
         <div className="p-6 md:p-10 flex flex-col justify-center">
-          <p className="microcopy-label">{cluster.brand ?? categoryLabel(cluster.category ?? '')}</p>
+          <p className="microcopy-label">{eyebrow(cluster, categoryLabel)}</p>
           <h2 className="section-title mt-1 mb-3">{name}</h2>
 
           <div className="flex flex-wrap items-center gap-3 mb-1">
@@ -246,7 +246,7 @@ export default function HomePage() {
   return (
     <div className="bg-background">
       <Seo description="Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops. Every shop’s price, sorted by price." />
-      <HeroSection productCount={manifest?.total_clusters} showcase={showcase} />
+      <HeroSection productCount={manifest?.total_clusters} shopCount={manifest?.total_stores} showcase={showcase} />
       <div className="mt-5">
         <CategoryStrip />
       </div>

@@ -142,7 +142,7 @@ Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above
 - Sentence case everywhere. Kenyan/British spelling (favourites, colour, organise).
 - No superlatives and no promises we will break. Never write "no ads", "nothing to sell", "no commission", "we never…".
 - The money line, used verbatim in How it works, the footer and behind every "Why is this sponsored?" link:
-  > Shops pay us a small fee when you click through to them, and some pay for clearly labelled sponsored spots. Neither affects the order of the price list, which is always sorted by price. We never sell products ourselves.
+  > Shops pay us a small fee when you click through to them, at no extra cost to you, and some pay for clearly labelled sponsored spots. Neither affects the order of the price list, which is always sorted by price. We never sell products ourselves.
 - Numbers with units and time: "KES 52,000 · 4 shops · checked 2 h ago".
 - Never expose the pipeline: no "pending", "Needs review", "captured", "collections may contain mixed product types", or raw slugs.
 - One name per thing:
