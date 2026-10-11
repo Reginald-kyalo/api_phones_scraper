@@ -231,6 +231,7 @@ type CardRow = [
   cheapestStore: number,
   image: string | null,
   likelyUsed: 0 | 1,
+  specLine?: string | null,
 ];
 
 /**
@@ -269,6 +270,7 @@ function fromCard(slug: string, stores: string[], r: CardRow): ClusterSummary {
     best_by_store: {},
     data_warning: null,
     image: r[8],
+    spec_line: r[10] ?? null,
   };
 }
 

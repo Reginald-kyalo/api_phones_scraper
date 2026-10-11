@@ -158,6 +158,8 @@ export interface ClusterView<Store = number> {
   // --- capture-time additions (see docs/superpowers/plans/2026-07-25-static-demo-dataset.md)
   /** One real member image, chosen stably per cluster. 46,701/61,473 covered. */
   image?: string | null;
+  /** "128GB / 256GB · 8GB RAM · 5G" for phones, laptops and tablets; card index only. */
+  spec_line?: string | null;
   /**
    * Every distinct real photo the cluster's listings carry, chosen one FIRST.
    * Lets "wrong picture" be corrected rather than only flagged. 12,705 clusters

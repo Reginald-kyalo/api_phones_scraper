@@ -73,6 +73,9 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
             1-line title against min-h-[2.5em] measured 35px where a 2-line one
             measured 40px, drifting card heights by 5px between rails. */}
         <p className="mt-0.5 line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
+        {/* Spec line (benchmark §2.5): storage, RAM, network where the name
+            alone does not say. Always a row, so cards in a grid row align. */}
+        <p className="mt-0.5 h-4 truncate text-xs text-muted-foreground">{cluster.spec_line ?? '\u00a0'}</p>
         <div className="mt-auto pt-2">
           <div className="flex items-baseline gap-1.5 whitespace-nowrap">
             {/* "from" when it is the lowest of several prices (PriceSpy's
