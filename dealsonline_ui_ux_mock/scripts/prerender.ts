@@ -28,6 +28,8 @@ import type { ClusterDetail, ClusterStore, ClusterSummary } from '../src/app/lib
 import { BRAND, MONEY_LINE } from '../src/app/lib/brand';
 import { categoryLabel } from '../src/app/lib/categories';
 import { brandName, formatPrice, hasPrice, productName, shopLabel } from '../src/app/lib/format';
+import * as catalogue from '../src/app/lib/catalogueQueries';
+import { brandFacets, brandPageBrands, readFilters } from '../src/app/lib/listing';
 import { storeName } from '../src/app/lib/storeIdentity';
 import { bestImage } from '../src/app/lib/images';
 import { browseLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
@@ -305,6 +307,12 @@ async function main() {
     const { rows } = await demo.getCategoryRows(c.slug);
     const multi = rows.filter((r) => r.is_multi_store);
     productIds.push(...multi.map((r) => r.cluster_id));
+    const brands = brandPageBrands(brandFacets(rows));
+    const popular = brands.length
+      ? `<h2 class="section-title mt-8">Popular in ${esc(label)}</h2><ul class="mt-3 space-y-1">` +
+        brands.map((b) => `<li><a href="${href(`/browse/${c.slug}/${b}`)}">${esc(brandName(b))} ${esc(label.toLowerCase())}</a></li>`).join('') +
+        `</ul>`
+      : '';
     write({
       path: `/browse/${c.slug}`,
       title: `${label} prices in Kenya`,
@@ -313,8 +321,27 @@ async function main() {
         crumbs([['Home', '/'], ['All categories', '/browse'], [label]]) +
         `<h1 class="page-title">${esc(label)}</h1>` +
         `<p class="mt-1 text-sm text-muted-foreground">${esc(c.count.toLocaleString('en-GB'))} products · ${esc(c.multi_store.toLocaleString('en-GB'))} sold by 2 or more shops</p>` +
-        productList(multi.slice(0, 48)),
+        productList(multi.slice(0, 48)) +
+        popular,
     });
+
+    // Brand pages: the category filtered to one brand, as the app renders
+    // /browse/<category>/<brand>, most compared first.
+    for (const b of brands) {
+      const heading = `${brandName(b)} ${label.toLowerCase()}`;
+      const page = await catalogue.browse(c.slug, { ...readFilters(new URLSearchParams()), brands: [b] }, 0);
+      write({
+        path: `/browse/${c.slug}/${b}`,
+        title: `${heading} prices in Kenya`,
+        description: `Compare ${heading.toLowerCase()} prices across Kenyan shops, sorted by price.`,
+        body:
+          crumbs([['Home', '/'], ['All categories', '/browse'], [label, `/browse/${c.slug}`], [brandName(b)]]) +
+          `<h1 class="page-title">${esc(heading)}</h1>` +
+          `<p class="mt-1 text-sm text-muted-foreground">${esc(page.count.toLocaleString('en-GB'))} products</p>` +
+          productList(page.results) +
+          popular,
+      });
+    }
   }
 
   // Departments and their shelves.

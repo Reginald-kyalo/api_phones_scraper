@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { clustersApi } from '../lib/api';
 import { brandName } from '../lib/format';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
@@ -14,9 +14,10 @@ import {
   SortSelect,
 } from '../features/search/components/ListingFiltersPanel';
 import {
+  brandPageBrands,
+  listingHref,
   PAGE_SIZE,
   readFilters,
-  writeFilters,
   type ListingFilters,
 } from '../lib/listing';
 import { ChevronRight, RefreshCw } from 'lucide-react';
@@ -29,9 +30,15 @@ import { ChevronRight, RefreshCw } from 'lucide-react';
  * the compact card index (see getCategoryRows).
  */
 export default function CatalogueBrowsePage() {
-  const { productType = '' } = useParams<{ productType: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
+  const { productType = '', brand: brandParam } = useParams<{ productType: string; brand?: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  // A brand page (/browse/mobile-phones/samsung) is the category with that
+  // one brand filtered, at a URL Google can index.
+  const filters = useMemo(() => {
+    const f = readFilters(searchParams);
+    return brandParam ? { ...f, brands: [brandParam] } : f;
+  }, [searchParams, brandParam]);
   const page = Math.max(0, (Number(searchParams.get('page') ?? '1') || 1) - 1);
 
   const [result, setResult] = useState<Awaited<ReturnType<typeof clustersApi.browse>> | null>(null);
@@ -64,9 +71,12 @@ export default function CatalogueBrowsePage() {
   const label = categoryLabel(productType);
 
   const update = (next: ListingFilters, nextPage = 0) => {
-    setSearchParams(writeFilters(next, nextPage));
+    navigate(listingHref(productType, next, nextPage));
     window.scrollTo({ top: 0 });
   };
+  const brandLabel = brandParam ? brandName(brandParam) : null;
+  const heading = brandLabel ? `${brandLabel} ${label.toLowerCase()}` : label;
+  const popular = brandPageBrands(brands).filter((b) => b !== brandParam);
 
   // Quick chips (benchmark §2.4, idealo and Geizhals): one tap for the
   // filters most shoppers reach for. The cheapest range comes from the price
@@ -107,17 +117,25 @@ export default function CatalogueBrowsePage() {
 
   return (
     <div className="bg-background min-h-screen">
-      <Seo title={`${label} prices in Kenya`} description={`Compare ${label.toLowerCase()} prices across Kenyan shops, sorted by price.`} />
+      <Seo title={`${heading} prices in Kenya`} description={`Compare ${heading.toLowerCase()} prices across Kenyan shops, sorted by price.`} />
       <div className="page-container py-8">
         <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-foreground hover:underline underline-offset-4">Home</Link>
           <ChevronRight className="h-3 w-3" aria-hidden="true" />
           <Link to="/browse" className="hover:text-foreground hover:underline underline-offset-4">All categories</Link>
           <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <span className="text-foreground">{label}</span>
+          {brandLabel ? (
+            <>
+              <Link to={`/browse/${productType}`} className="hover:text-foreground hover:underline underline-offset-4">{label}</Link>
+              <ChevronRight className="h-3 w-3" aria-hidden="true" />
+              <span className="text-foreground">{brandLabel}</span>
+            </>
+          ) : (
+            <span className="text-foreground">{label}</span>
+          )}
         </nav>
 
-        <h1 className="page-title">{label}</h1>
+        <h1 className="page-title">{heading}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {loading
             ? ' '
@@ -167,7 +185,7 @@ export default function CatalogueBrowsePage() {
                       : 'No products match'}
                 </p>
                 <div className="flex items-center gap-2">
-                  <MobileFilters filters={filters} brands={brands} prices={result?.prices} onChange={(f) => update(f)} />
+                  <MobileFilters filters={filters} brands={brands} prices={result?.prices} resultCount={result?.count} onChange={(f) => update(f)} />
                   <SortSelect value={filters.sort} onChange={(sort) => update({ ...filters, sort })} />
                 </div>
               </div>
@@ -180,6 +198,23 @@ export default function CatalogueBrowsePage() {
                     {withSponsoredTiles(visible.map((c) => <ClusterCard key={c.cluster_id} cluster={c} />))}
                   </div>
                   <Pagination page={safePage} pages={pages} onChange={(p) => update(filters, p)} />
+                  {popular.length > 0 && (
+                    <section className="mt-12 border-t border-border pt-6" aria-labelledby="popular-heading">
+                      <h2 id="popular-heading" className="section-title">Popular in {label}</h2>
+                      <ul className="mt-3 flex flex-wrap gap-2">
+                        {popular.map((b) => (
+                          <li key={b}>
+                            <Link
+                              to={`/browse/${productType}/${b}`}
+                              className="inline-flex h-8 items-center rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:border-muted-foreground"
+                            >
+                              {brandName(b)} {label.toLowerCase()}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
                 </>
               ) : (
                 <div className="py-16 text-center">

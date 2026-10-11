@@ -150,3 +150,27 @@ export function priceBuckets(rows: ClusterSummary[], f: ListingFilters): PriceBu
     count: prices.filter((p) => (min == null || p >= min) && (max == null || p < max)).length,
   }));
 }
+
+/**
+ * Brands that get their own page, /browse/<category>/<brand>: the biggest in
+ * the category, with enough products to be worth a search result, and a value
+ * that is safe as a URL segment. The prerender and the "Popular in" links
+ * use the same list, so every link points at a real page.
+ */
+export function brandPageBrands(brands: { value: string; count: number }[], limit = 12): string[] {
+  return brands
+    .filter((b) => b.count >= 5 && /^[a-z0-9][a-z0-9-]*$/.test(b.value))
+    .slice(0, limit)
+    .map((b) => b.value);
+}
+
+/** The listing URL for a set of filters: one brand alone gets its brand page. */
+export function listingHref(slug: string, filters: ListingFilters, page = 0): { pathname: string; search: string } {
+  const own = filters.brands.length === 1 ? filters.brands[0] : null;
+  const params = new URLSearchParams(writeFilters(own ? { ...filters, brands: [] } : filters, page));
+  const qs = params.toString();
+  return {
+    pathname: own ? `/browse/${slug}/${encodeURIComponent(own)}` : `/browse/${slug}`,
+    search: qs ? `?${qs}` : '',
+  };
+}

@@ -30,6 +30,7 @@ export const router = createBrowserRouter([
       // Catalogue — every captured cluster, served from public/demo/.
       { path: "browse", Component: CatalogueCategoriesPage },
       { path: "browse/:productType", Component: CatalogueBrowsePage },
+      { path: "browse/:productType/:brand", Component: CatalogueBrowsePage },
       // The 19 design departments, mirroring production's `/aisle/:id`.
       { path: "aisle/:id", Component: DemoAislePage },
       // Production browse-node leaves, listed by the full category menus.

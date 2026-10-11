@@ -203,22 +203,38 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
   );
 }
 
-/** Mobile: a "Filters" button opening the same controls in a sheet. */
-export function MobileFilters(props: PanelProps) {
+/**
+ * Mobile: a "Filters" button opening the same controls in a sheet. Filters
+ * apply as they are tapped; the button at the foot says how many products
+ * that leaves and closes the sheet (idealo's pattern).
+ */
+export function MobileFilters({ resultCount, ...props }: PanelProps & { resultCount?: number }) {
   const count = activeFilterCount(props.filters);
+  const [open, setOpen] = useState(false);
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="h-9 lg:hidden">
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           Filters{count > 0 ? ` (${count})` : ''}
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 overflow-y-auto p-5">
-        <SheetHeader className="p-0 mb-4">
+      <SheetContent side="left" className="flex w-80 flex-col p-0">
+        <SheetHeader className="px-5 pt-5 pb-0">
           <SheetTitle>Filters</SheetTitle>
         </SheetHeader>
-        <FilterControls {...props} />
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <FilterControls {...props} />
+        </div>
+        {resultCount != null && (
+          <div className="border-t border-border p-4">
+            <Button className="w-full" onClick={() => setOpen(false)}>
+              {resultCount === 0
+                ? 'No products match'
+                : `Show ${resultCount.toLocaleString('en-GB')} ${resultCount === 1 ? 'product' : 'products'}`}
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
