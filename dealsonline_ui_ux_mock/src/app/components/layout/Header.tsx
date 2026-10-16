@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { Heart, Bell, LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound } from 'lucide-react';
+import { LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   DropdownMenu,
@@ -118,6 +118,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const { favorites } = useLocalFavorites();
   const { alerts } = useLocalPRAlerts();
+  const saved = favorites.length + alerts.length;
 
   useEffect(() => {
     setMenuOpen(false);
@@ -166,32 +167,26 @@ export default function Header() {
             </div>
 
             <div className="ml-auto flex items-center gap-1 md:ml-0">
-              <ToolLink
-                to="/alerts"
-                label="Price alerts"
-                icon={<Bell className="h-5 w-5" />}
-                count={alerts.length}
-                active={pathname === '/alerts'}
-              />
-              <span className="hidden sm:contents">
-                <ToolLink
-                  to="/favorites"
-                  label="Favourites"
-                  icon={<Heart className="h-5 w-5" />}
-                  count={favorites.length}
-                  active={pathname === '/favorites'}
-                />
-              </span>
-
-              {/* Recently viewed, favourites and alerts in one panel. */}
+              {/* One entry point for everything a shopper keeps: recently
+                  viewed, favourites and price alerts, as tabs in one panel.
+                  Separate Alerts and Favourites buttons repeated it. The count
+                  is what they have saved, so the button is never a mystery. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    aria-label="Recently viewed"
-                    className="hidden h-10 items-center rounded-md px-2.5 text-muted-foreground transition-colors hover:bg-surface-alt hover:text-foreground sm:inline-flex"
+                    aria-label={saved ? `My products (${saved} saved)` : 'My products'}
+                    className="relative inline-flex h-10 items-center gap-2 rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-alt hover:text-foreground"
                   >
-                    <Clock aria-hidden="true" className="h-5 w-5" />
+                    <span className="relative" aria-hidden="true">
+                      <Clock className="h-5 w-5" />
+                      {saved > 0 && (
+                        <span className="price-num absolute -right-2 -top-1.5 min-w-4 rounded-full bg-foreground px-1 text-center text-[10px] leading-4 text-background">
+                          {saved > 99 ? '99+' : saved}
+                        </span>
+                      )}
+                    </span>
+                    <span className="hidden xl:inline">My products</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="p-0">
@@ -217,16 +212,6 @@ export default function Header() {
                         <p className="text-sm font-medium text-foreground truncate">{currentUser.name}</p>
                         <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
                       </div>
-                      <DropdownMenuItem asChild>
-                        <Link to="/favorites" className="flex items-center gap-2.5 cursor-pointer">
-                          <Heart className="w-4 h-4" /> Favourites
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/alerts" className="flex items-center gap-2.5 cursor-pointer">
-                          <Bell className="w-4 h-4" /> Price alerts
-                        </Link>
-                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/account" className="flex items-center gap-2.5 cursor-pointer">
                           <Settings className="w-4 h-4" /> Account
@@ -380,8 +365,6 @@ function MobileMenu({
         {currentUser && (
           <>
             <div className="mx-5 my-2 border-t border-border" />
-            <MobileNavLink to="/favorites" icon={<Heart className="w-4 h-4" />} label="Favourites" onNavigate={onNavigate} />
-            <MobileNavLink to="/alerts" icon={<Bell className="w-4 h-4" />} label="Price alerts" onNavigate={onNavigate} />
             <MobileNavLink to="/account" icon={<Settings className="w-4 h-4" />} label="Account" onNavigate={onNavigate} />
           </>
         )}

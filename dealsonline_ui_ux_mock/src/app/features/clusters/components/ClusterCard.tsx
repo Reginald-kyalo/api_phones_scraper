@@ -1,9 +1,8 @@
 import { Link } from 'react-router';
 import { Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
-import { clusterSaving, eyebrow, pricedShopCount, productName, shopLabel } from '../../../lib/format';
+import { clusterSaving, pricedShopCount, productName, shopLabel } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
-import { categoryLabel } from '../../../lib/categories';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { SavingBadge } from '../../../components/common/SavingBadge';
 import { PriceOrDash } from '../../../components/common/PriceOrDash';
@@ -68,11 +67,12 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
       </div>
 
       <div className="flex flex-1 flex-col p-3 pt-2">
-        <p className="microcopy-label truncate">{eyebrow(cluster, categoryLabel)}</p>
+        {/* No brand eyebrow: the name already starts with it ("SAMSUNG /
+            Samsung Galaxy A05s" said it twice on every card). */}
         {/* Exactly two lines (h-10 = 2 x 20px line-height), never min-height: a
             1-line title against min-h-[2.5em] measured 35px where a 2-line one
             measured 40px, drifting card heights by 5px between rails. */}
-        <p className="mt-0.5 line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
+        <p className="line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
         {/* Spec line (benchmark §2.5): storage, RAM, network where the name
             alone does not say. Always a row, so cards in a grid row align. */}
         <p className="mt-0.5 h-4 truncate text-xs text-muted-foreground">{cluster.spec_line ?? '\u00a0'}</p>
@@ -116,7 +116,6 @@ export function ClusterGridSkeleton({ count = 12 }: { count?: number }) {
         <div key={i} className="flex flex-col overflow-hidden rounded-md border border-border">
           <Skeleton className="aspect-square w-full rounded-none" />
           <div className="space-y-2 p-3 pt-2">
-            <Skeleton className="h-3 w-16" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="mt-3 h-5 w-24" />

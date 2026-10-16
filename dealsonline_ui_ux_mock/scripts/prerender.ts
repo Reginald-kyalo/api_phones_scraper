@@ -28,7 +28,7 @@ import type { ClusterDetail, ClusterStore, ClusterSummary } from '../src/app/lib
 import { BRAND, MONEY_LINE } from '../src/app/lib/brand';
 import { FAQ } from '../src/app/lib/faq';
 import { categoryLabel } from '../src/app/lib/categories';
-import { brandName, eyebrow, formatPrice, hasPrice, priceVerdict, productName, shopLabel } from '../src/app/lib/format';
+import { brandName, formatPrice, hasPrice, priceVerdict, productName, shopLabel } from '../src/app/lib/format';
 import * as catalogue from '../src/app/lib/catalogueQueries';
 import { brandFacets, brandPageBrands, readFilters } from '../src/app/lib/listing';
 import { storeName } from '../src/app/lib/storeIdentity';
@@ -193,8 +193,7 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
     description: `${name} from ${formatPrice(low.price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`,
     body:
       crumbs([['Home', '/'], ...(slug ? [[categoryLabel(slug), `/browse/${slug}`] as [string, string]] : [])]) +
-      `<p class="microcopy-label">${esc(eyebrow(cluster, categoryLabel))}</p>` +
-      `<h1 class="page-title mt-1">${esc(name)}</h1>` +
+      `<h1 class="page-title">${esc(name)}</h1>` +
       // A summary written from the price data, never by hand: what Google
       // quotes, and the same numbers as the list below.
       `<p class="mt-2 text-sm">${esc(name)} is on sale at ${esc(shopLabel(offers.length))} in Kenya, from ` +
@@ -355,9 +354,8 @@ async function main() {
     path: '/',
     description: 'Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops. Every shop’s price, sorted by price.',
     body:
-      `<p class="microcopy-label">Price comparison for Kenya</p>` +
-      `<h1 class="page-title mt-1">Know the real price before you buy.</h1>` +
-      `<p class="mt-2 text-muted-foreground">Every shop’s price for the same product, sorted by price, with the exact listing and when we last checked it. ${esc(manifest.total_clusters.toLocaleString('en-GB'))} products from ${esc(manifest.total_stores)} Kenyan shops.</p>` +
+      `<h1 class="page-title">Compare prices across ${esc(manifest.total_stores)} Kenyan shops</h1>` +
+      `<p class="mt-2 text-muted-foreground">${esc(manifest.total_clusters.toLocaleString('en-GB'))} products. Every shop’s price for the same product, sorted by price.</p>` +
       `<h2 class="section-title mt-8">Departments</h2><ul class="mt-3 space-y-1">${departmentLinks}</ul>` +
       `<h2 class="section-title mt-8">Deals</h2>${productList(deals.results)}` +
       `<p class="mt-8 text-sm text-muted-foreground">${esc(MONEY_LINE)}</p>`,

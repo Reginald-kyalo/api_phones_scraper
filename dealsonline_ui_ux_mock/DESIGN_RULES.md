@@ -50,12 +50,12 @@ Every colour above has a dark value under `.dark` in `theme.css`; components nev
 - **Hanken Grotesk**: everything else.
 - **JetBrains Mono** (`price-num`): prices and columns of numbers only. Not eyebrows, not counts in prose.
 - Eyebrows and column headers: `.microcopy-label` (uppercase sans, 0.7rem, tracked). There is no second eyebrow style.
-- Three heading sizes: hero `text-[44px]` (homepage only), page title `.page-title` (28px), section `.section-title` (20px).
+- Three heading sizes: the homepage search band's line (34px, homepage only), page title `.page-title` (28px), section `.section-title` (20px).
 
 ### Radius
 
 - **6px** (`rounded-md`, `--radius`) for every card, button, input, chip, badge and panel.
-- **8px** (`rounded-lg`) for big surfaces only: hero card, trust block, How it works band.
+- **8px** (`rounded-lg`) for big surfaces only: the homepage search band.
 - `rounded-full` only for filter chips, avatars and the hero search field.
 - Nothing larger. No `rounded-xl`, `rounded-2xl`, `rounded-[...]`.
 
@@ -86,10 +86,16 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 - **Press state exists:** `active:translate-y-px` on buttons. Phone users only ever see this one.
 - **Links inside sentences are underlined at rest** (a soft 40% underline that firms up on hover), so they are distinguishable without colour (WCAG 1.4.1). Standalone links (nav, "All deals") underline on hover only.
 
+## 3a. Space and repetition
+
+- **Every block earns its space by doing something**: searching, browsing, comparing or buying. No block exists to describe SokoPulse on pages a shopper is using; that lives in the FAQ, About and How we make money.
+- **One control per job.** If the header, a sidebar and a chip row can all do the same thing on one screen, keep one: saved things have one header entry (My products); quick chips show only where the filter sidebar does not.
+- **Say a fact once per view.** The product name already carries the brand, so cards and product titles have no brand eyebrow; the breadcrumb names the category.
+
 ## 4. Motion
 
 - Animate data that changes (`CountUp` on a live price), not layout that loads.
-- One orchestrated moment per visit, on the homepage hero. Everything below the fold renders at rest: no scroll-reveal on catalogue pages.
+- No orchestrated entrance moments. Everything renders at rest: no scroll-reveal anywhere.
 - Skeletons in the exact shape of the content, never spinners for page loads. Reserve image heights so nothing shifts.
 - Reduced motion is respected globally (`theme.css`).
 - **Department icons are the one exception to "nothing slower than 200ms"**: on the homepage department strip, each icon acts out its subject once on hover or keyboard focus (the pot's lid lifts and closes, the pen writes its line, the drum turns), about 560ms, ease-out, never looping, and not at all under reduced motion. Scenes live in `src/styles/icon-motion.css`, one per department; a new department gets a scene there. Nowhere else animates icons.
@@ -123,7 +129,7 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 
 ### Sponsored slots: `AdSlot`, `SponsoredLabel`, `withSponsoredTiles` (`src/app/components/ads/AdSlot.tsx`)
 
-Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above the product price list, 300×250 product right rail (desktop), sponsored tiles at grid positions 3 and 15, one result above search results, one featured-shop band after the second homepage rail. The homepage hero's right card is the future campaign slot.
+Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above the product price list, 300×250 product right rail (desktop), sponsored tiles at grid positions 3 and 15, one result above search results, one featured-shop band after the second homepage rail. The homepage search band shows a campaign card on its right only when one is sold (`HERO_CAMPAIGNS`).
 
 `VITE_AD_SLOTS=off` (the production default) renders nothing; `VITE_AD_SLOTS=preview` (the dev default) renders dashed, labelled placeholders at the reserved size.
 
@@ -141,7 +147,7 @@ Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above
 
 - Sentence case everywhere. Kenyan/British spelling (favourites, colour, organise).
 - No superlatives and no promises we will break. Never write "no ads", "nothing to sell", "no commission", "we never…".
-- The money line, used verbatim in How it works, the footer and behind every "Why is this sponsored?" link:
+- The money line, used verbatim in the footer, the FAQ, How we make money and behind every "Why is this sponsored?" link:
   > Shops pay us a small fee when you click through to them, at no extra cost to you, and some pay for clearly labelled sponsored spots. Neither affects the order of the price list, which is always sorted by price. We never sell products ourselves.
 - Numbers with units and time: "KES 52,000 · 4 shops · checked 2 h ago".
 - Never expose the pipeline: no "pending", "Needs review", "captured", "collections may contain mixed product types", or raw slugs.

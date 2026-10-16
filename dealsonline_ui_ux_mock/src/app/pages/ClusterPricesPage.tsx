@@ -280,8 +280,8 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
           {/* ── Left column ── */}
           <div className="min-w-0">
-            <p className="microcopy-label">{eyebrow(cluster, categoryLabel)}</p>
-            <h1 className="page-title mt-1">{name}</h1>
+            {/* The breadcrumb names the category and brand; no eyebrow repeating them. */}
+            <h1 className="page-title">{name}</h1>
 
             {configs.length > 1 && (
               <div role="radiogroup" aria-label="Variant" className="mt-4 flex flex-wrap gap-2">

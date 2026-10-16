@@ -158,7 +158,9 @@ export default function CatalogueBrowsePage() {
 
             <div className="min-w-0">
               {quickChips.length > 0 && (
-                <div className="mb-4 flex gap-2 overflow-x-auto scrollbar-hide" role="group" aria-label="Quick filters">
+                // Phones and tablets only: on desktop the sidebar shows the
+                // same filters, and two controls for one thing is repetition.
+                <div className="mb-4 flex gap-2 overflow-x-auto scrollbar-hide lg:hidden" role="group" aria-label="Quick filters">
                   {quickChips.map((chip) => (
                     <button
                       key={chip.label}
