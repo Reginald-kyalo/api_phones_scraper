@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound } from 'lucide-react';
+import { LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound, LayoutGrid } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   DropdownMenu,
@@ -19,22 +19,6 @@ const MegaMenu = lazy(() => import('./MegaMenu'));
 const MobileCategoryNav = lazy(() => import('../../features/categories/MobileCategoryNav'));
 import { MyProductsContent } from '../../features/user/components/MyProducts';
 import { useLocalFavorites, useLocalPRAlerts } from '../../hooks/useLocalStorage';
-
-/**
- * The departments named in the second header row, with short labels; the full
- * name is on the department page. The rest are one click away in "All
- * categories". Plain links, so crawlers see the store's shape too.
- */
-const HEADER_DEPARTMENTS = [
-  { id: 'phones-wearables', label: 'Phones' },
-  { id: 'computing-networking', label: 'Computing' },
-  { id: 'tv-audio-home-entertainment', label: 'TV & audio' },
-  { id: 'home-appliances', label: 'Appliances' },
-  { id: 'kitchen-dining-cookware', label: 'Kitchen' },
-  { id: 'groceries-everyday-essentials', label: 'Groceries' },
-  { id: 'health-beauty-personal-care', label: 'Beauty' },
-  { id: 'home-furniture-decor', label: 'Home' },
-];
 
 /**
  * On the homepage the hero owns the search. Report whether it is on screen, so
@@ -140,9 +124,7 @@ export default function Header() {
     return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const departmentActive = (id: string) =>
-    pathname === `/aisle/${id}` || (id === 'phones-wearables' && pathname.startsWith('/category/'));
-  const browseActive = pathname === '/browse' || pathname.startsWith('/browse/');
+  const browseActive = pathname === '/browse' || pathname.startsWith('/browse/') || pathname.startsWith('/aisle/');
 
   return (
     <>
@@ -153,6 +135,24 @@ export default function Header() {
         <div className="page-container">
           <div className="flex h-14 items-center gap-4 md:h-16 lg:gap-8">
             <Logo size={30} className="gap-2" />
+
+            {/* The one way into categories on desktop: a button after the
+                logo opening the full menu. The department row it replaces
+                repeated the same links on every page. Phones keep the sheet. */}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-haspopup="dialog"
+              className={`hidden h-10 items-center gap-2 rounded-md px-2.5 text-sm font-medium transition-colors hover:bg-surface-alt hover:text-foreground lg:inline-flex ${
+                menuOpen || browseActive ? 'text-foreground' : 'text-muted-foreground'
+              }`}
+            >
+              {menuOpen
+                ? <X aria-hidden="true" className="h-5 w-5" />
+                : <LayoutGrid aria-hidden="true" className="h-5 w-5" />}
+              Categories
+            </button>
 
             {/* Desktop search, centred. On the homepage it waits, invisible but
                 still taking its space, until the hero search scrolls away. */}
@@ -167,6 +167,13 @@ export default function Header() {
             </div>
 
             <div className="ml-auto flex items-center gap-1 md:ml-0">
+              <ToolLink
+                to="/deals"
+                label="Deals"
+                icon={<Tag className="h-5 w-5" />}
+                active={pathname === '/deals'}
+              />
+
               {/* One entry point for everything a shopper keeps: recently
                   viewed, favourites and price alerts, as tabs in one panel.
                   Separate Alerts and Favourites buttons repeated it. The count
@@ -257,63 +264,15 @@ export default function Header() {
             </div>
           )}
         </div>
-      </header>
 
-      {/* Row 2: departments in plain text. Not sticky, so it scrolls away and
-          leaves only the search row pinned. Desktop only. */}
-      <nav aria-label="Departments" className="relative z-40 hidden border-b border-border bg-background lg:block">
-        <div className="page-container flex h-10 items-stretch gap-1 text-sm">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-            aria-haspopup="dialog"
-            className={`-ml-2 flex items-center gap-2 px-2 font-medium transition-colors ${
-              menuOpen || browseActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {menuOpen
-              ? <X aria-hidden="true" className="h-4 w-4" />
-              : <Menu aria-hidden="true" className="h-4 w-4" />}
-            All categories
-          </button>
-          <span className="my-2.5 w-px bg-border" aria-hidden="true" />
-          {HEADER_DEPARTMENTS.map((d) => {
-            const on = departmentActive(d.id);
-            return (
-              <Link
-                key={d.id}
-                to={`/aisle/${d.id}`}
-                aria-current={on ? 'page' : undefined}
-                className={`flex items-center border-b-2 px-2 transition-colors ${
-                  on
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {d.label}
-              </Link>
-            );
-          })}
-          <Link
-            to="/deals"
-            aria-current={pathname === '/deals' ? 'page' : undefined}
-            className={`ml-auto flex items-center gap-1.5 border-b-2 px-2 font-medium transition-colors ${
-              pathname === '/deals'
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-foreground hover:text-primary'
-            }`}
-          >
-            <Tag aria-hidden="true" className="h-4 w-4" />
-            Deals
-          </Link>
-        </div>
+        {/* The category menu drops from the header's bottom edge. */}
         {menuOpen && (
           <Suspense fallback={null}>
             <MegaMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
           </Suspense>
         )}
-      </nav>
+      </header>
+
     </>
   );
 }
@@ -349,7 +308,6 @@ function MobileMenu({
       {/* Nav links */}
       <nav className="flex-1 py-2">
         <MobileNavLink to="/" icon={<Home className="w-4 h-4" />} label="Home" onNavigate={onNavigate} />
-        <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Deals" onNavigate={onNavigate} />
 
         <div className="mx-5 my-2 border-t border-border" />
         {sheetOpen && (
