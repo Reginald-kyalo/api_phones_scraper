@@ -2,8 +2,7 @@ import { familyDisplayLabel } from '../../lib/navLabels';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronDown } from 'lucide-react';
-import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../../data/taxonomyTree';
-import { phoneCategoryHref, phoneChildren } from '../../data/phoneCategories';
+import { TAXONOMY_DEPARTMENTS, orderedFamilies, spineShelfDisplay } from '../../data/taxonomyTree';
 
 interface Props {
   /** Kept for signature parity with production; this demo has no request to defer. */
@@ -13,7 +12,7 @@ interface Props {
 
 /**
  * Static copy of the production mobile category accordion. It expands one
- * design department at a time and links captured demo categories to `/browse`.
+ * design department at a time; families are plain groups, no boxes.
  */
 export default function MobileCategoryNav({ onNavigate }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -49,29 +48,14 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
 
               {isOpen && (
                 <div className="pb-2 bg-surface-alt">
-                  {department.id === 'phones-wearables' ? (
+                  {department.families.length > 0 ? (
                     <div className="px-5 py-2 space-y-2">
-                      {phoneChildren('phones-wearables').map((family) => (
-                        <details key={family.id} className="rounded-md border border-border/70 bg-card">
-                          <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">{familyDisplayLabel(family)}</summary>
-                          <div className="border-t border-border/70 pb-1">
-                            <Link to={phoneCategoryHref(family.id)} onClick={onNavigate} className="block px-3 py-2 text-sm text-link">Browse {familyDisplayLabel(family)}</Link>
-                            {phoneChildren(family.id).map((child) => <div key={child.id} className="flex flex-wrap items-center gap-2 px-3 py-2">
-                              <Link to={phoneCategoryHref(child.id)} onClick={onNavigate} className="text-sm text-muted-foreground hover:text-foreground">{child.label}</Link>
-                              {phoneChildren(child.id).filter((node) => node.kind === 'shortcut').map((shortcut) => <Link key={shortcut.id} to={phoneCategoryHref(shortcut.id)} onClick={onNavigate} className="text-xs text-link underline">{shortcut.label}</Link>)}
-                            </div>)}
-                          </div>
-                        </details>
-                      ))}
-                    </div>
-                  ) : department.families.length > 0 ? (
-                    <div className="px-5 py-2 space-y-2">
-                      {department.families.map((family) => (
-                        <details key={family.id} className="group rounded-md border border-border/70 bg-card" open={family.shelves.length <= 6}>
+                      {orderedFamilies(department).map((family) => (
+                        <details key={family.id} className="group" open={family.shelves.length <= 6}>
                           <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
                             {familyDisplayLabel(family)} <span className="ml-1 text-muted-foreground">({family.shelves.length})</span>
                           </summary>
-                          <ul className="border-t border-border/70 pb-1">
+                          <ul className="pb-1">
                             {family.shelves.map((shelf) => (
                               <li key={shelf.slug}>
                                 <Link to={`/shelf/${shelf.slug}`} onClick={onNavigate} className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">

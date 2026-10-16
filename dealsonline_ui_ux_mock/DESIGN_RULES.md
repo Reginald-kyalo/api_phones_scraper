@@ -90,6 +90,8 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 
 - **Every block earns its space by doing something**: searching, browsing, comparing or buying. No block exists to describe SokoPulse on pages a shopper is using; that lives in the FAQ, About and How we make money.
 - **One control per job.** If the header, a sidebar and a chip row can all do the same thing on one screen, keep one: saved things have one header entry (My products); quick chips show only where the filter sidebar does not.
+- **One breadcrumb trail**, from `Breadcrumbs` (`src/app/components/common/Breadcrumbs.tsx`): Home › department › category or shelf › brand. It is the hierarchy, built from the taxonomy, so every link resolves; never a shop's own ancestor names. "All categories" is not a step.
+- **Category names are text links, not boxes.** A box per name was most of a category page and said nothing. Lists of categories are plain links with a muted count, in columns.
 - **Say a fact once per view.** The product name already carries the brand, so cards and product titles have no brand eyebrow; the breadcrumb names the category.
 
 ## 4. Motion

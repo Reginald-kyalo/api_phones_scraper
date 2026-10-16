@@ -1,5 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Seo } from '../components/common/Seo';
+import { Breadcrumbs, type Crumb } from '../components/common/Breadcrumbs';
+import { departmentForCategory } from '../data/taxonomyTree';
 import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
 import {
@@ -11,7 +13,6 @@ import {
   formatPrice,
   hasPrice,
   brandName,
-  eyebrow,
   productName,
   shopLabel,
 } from '../lib/format';
@@ -20,7 +21,7 @@ import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Skeleton } from '../components/ui/skeleton';
-import { BarChart3, Bell, Check, ChevronRight, ExternalLink, Heart, Info, Package, RefreshCw } from 'lucide-react';
+import { BarChart3, Bell, Check, ExternalLink, Heart, Info, Package, RefreshCw } from 'lucide-react';
 import { storeName } from '../lib/storeIdentity';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { useLocalComparison, useLocalFavorites } from '../hooks/useLocalStorage';
@@ -275,7 +276,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
         }
       />
       <div className="page-container py-6 lg:py-8">
-        <Breadcrumbs cluster={cluster} />
+        <ProductCrumbs cluster={cluster} />
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
           {/* ── Left column ── */}
@@ -495,27 +496,19 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   );
 }
 
-function Breadcrumbs({ cluster }: { cluster: ClusterDetail }) {
+function ProductCrumbs({ cluster }: { cluster: ClusterDetail }) {
   const slug = cluster.category ?? '';
-  return (
-    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-      <Link to="/" className="hover:text-foreground hover:underline underline-offset-4">Home</Link>
-      {slug && (
-        <>
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <Link to={`/browse/${slug}`} className="hover:text-foreground hover:underline underline-offset-4">
-            {categoryLabel(slug)}
-          </Link>
-        </>
-      )}
-      {cluster.brand && eyebrow(cluster, categoryLabel) !== categoryLabel(slug) && (
-        <>
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <span className="text-foreground">{brandName(cluster.brand)}</span>
-        </>
-      )}
-    </nav>
-  );
+  const department = departmentForCategory(slug);
+  const brand = cluster.brand?.trim().toLowerCase() ?? '';
+  const items: Crumb[] = [];
+  if (department) items.push({ label: department.label, to: `/aisle/${department.id}` });
+  if (slug) items.push({ label: categoryLabel(slug), to: `/browse/${slug}` });
+  // The brand page (/browse/<category>/<brand>) renders any brand; link it
+  // only when the value is safe as a URL segment.
+  if (brand && /^[a-z0-9][a-z0-9-]*$/.test(brand)) {
+    items.push({ label: brandName(brand), to: `/browse/${slug}/${brand}` });
+  }
+  return <Breadcrumbs items={items} />;
 }
 
 function VariantChip({

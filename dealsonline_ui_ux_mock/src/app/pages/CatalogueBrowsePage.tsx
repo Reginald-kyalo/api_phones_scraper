@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
+import { Breadcrumbs } from '../components/common/Breadcrumbs';
+import { departmentForCategory } from '../data/taxonomyTree';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { clustersApi } from '../lib/api';
 import { brandName } from '../lib/format';
@@ -20,7 +22,7 @@ import {
   readFilters,
   type ListingFilters,
 } from '../lib/listing';
-import { ChevronRight, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 /**
  * One category of the catalogue: filters on the left, 48 cards per page.
@@ -69,6 +71,7 @@ export default function CatalogueBrowsePage() {
   const pages = result?.pages ?? 1;
   const safePage = result?.page ?? 0;
   const label = categoryLabel(productType);
+  const department = departmentForCategory(productType);
 
   const update = (next: ListingFilters, nextPage = 0) => {
     navigate(listingHref(productType, next, nextPage));
@@ -119,21 +122,12 @@ export default function CatalogueBrowsePage() {
     <div className="bg-background min-h-screen">
       <Seo title={`${heading} prices in Kenya`} description={`Compare ${heading.toLowerCase()} prices across Kenyan shops, sorted by price.`} />
       <div className="page-container py-8">
-        <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground hover:underline underline-offset-4">Home</Link>
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <Link to="/browse" className="hover:text-foreground hover:underline underline-offset-4">All categories</Link>
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          {brandLabel ? (
-            <>
-              <Link to={`/browse/${productType}`} className="hover:text-foreground hover:underline underline-offset-4">{label}</Link>
-              <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              <span className="text-foreground">{brandLabel}</span>
-            </>
-          ) : (
-            <span className="text-foreground">{label}</span>
-          )}
-        </nav>
+        <Breadcrumbs
+          items={[
+            ...(department ? [{ label: department.label, to: `/aisle/${department.id}` }] : []),
+            ...(brandLabel ? [{ label, to: `/browse/${productType}` }, { label: brandLabel }] : [{ label }]),
+          ]}
+        />
 
         <h1 className="page-title">{heading}</h1>
         <p className="mt-1 text-sm text-muted-foreground">

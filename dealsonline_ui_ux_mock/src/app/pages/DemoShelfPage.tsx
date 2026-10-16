@@ -1,72 +1,36 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { ChevronRight, PackageOpen } from 'lucide-react';
+import { PackageOpen } from 'lucide-react';
 import { browseApi, type BrowseNode, type ClusterSummary } from '../lib/api';
 import { ClusterCard, ClusterGridSkeleton, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { Pagination } from '../components/common/Pagination';
-import { Skeleton } from '../components/ui/skeleton';
 import { PAGE_SIZE } from '../lib/listing';
-import { isLegacyPhoneCollection } from '../data/taxonomyTree';
-import { browseLabel } from '../lib/navLabels';
+import { shelfPlacement } from '../data/taxonomyTree';
+import { browseLabel, familyDisplayLabel } from '../lib/navLabels';
+import { Breadcrumbs } from '../components/common/Breadcrumbs';
 
 
 
 /**
- * Drop a child that merely restates its parent (`Phones` under `Smartphones`).
- * Products are already in the parent page via descendant closure, so this only
- * removes a redundant navigation tile.
+ * The trail comes from the taxonomy (department → family → shelf), not from
+ * the shop's own ancestor slugs: 56 of those named pages that do not exist,
+ * so the old breadcrumb links went to "We couldn't find that category".
  */
-function canonicalForm(label: string | null): string {
-  return (label ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .replace(/\s+/g, '')
-    .replace(/s$/, '');
-}
-
-const MODIFIERS = new Set(['smart', 'mobile', 'cell', 'feature']);
-
-function foldsIntoParent(child: Pick<BrowseNode, 'label'>, parentLabel: string | null): boolean {
-  const c = canonicalForm(child.label);
-  const p = canonicalForm(parentLabel);
-  if (!c || !p || c === p || !p.endsWith(c) || p.length <= c.length) return false;
-  return MODIFIERS.has(p.slice(0, p.length - c.length));
-}
-
-function foldChildren<T extends Pick<BrowseNode, 'label'>>(children: T[], parentLabel: string | null): T[] {
-  return children.filter((child) => !foldsIntoParent(child, parentLabel));
-}
-
-function Crumbs({ node }: { node: BrowseNode | null }) {
+function Crumbs({ slug, heading }: { slug: string; heading: string }) {
+  const place = shelfPlacement(slug);
   return (
-    <nav aria-label="Breadcrumb" className="mb-4">
-      <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-        <li>
-          <Link to="/" className="hover:text-foreground">Home</Link>
-        </li>
-        <li className="flex items-center gap-1">
-          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-          <Link to="/browse" className="hover:text-foreground">All categories</Link>
-        </li>
-        {(node?.ancestors ?? []).map((slug, i) => (
-          <li key={slug} className="flex items-center gap-1">
-            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-            <Link to={`/shelf/${encodeURIComponent(slug)}`} className="hover:text-foreground">
-              {browseLabel({ slug, label: node?.ancestor_labels?.[i] ?? null })}
-            </Link>
-          </li>
-        ))}
-        {node && (
-          <li className="flex items-center gap-1">
-            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-            <span aria-current="page" className="text-foreground font-medium">
-              {browseLabel(node)}
-            </span>
-          </li>
-        )}
-      </ol>
-    </nav>
+    <Breadcrumbs
+      items={
+        place
+          ? [
+              { label: place.department.label, to: `/aisle/${place.department.id}` },
+              { label: familyDisplayLabel(place.family), to: `/aisle/${place.department.id}#${place.family.id}` },
+              { label: heading },
+            ]
+          : [{ label: 'All categories', to: '/browse' }, { label: heading }]
+      }
+    />
   );
 }
 
@@ -77,7 +41,6 @@ export default function DemoShelfPage() {
   const page = Math.max(0, (Number(params.get('page') ?? '1') || 1) - 1);
 
   const [node, setNode] = useState<BrowseNode | null>(null);
-  const [children, setChildren] = useState<BrowseNode[]>([]);
   const [clusters, setClusters] = useState<ClusterSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -89,20 +52,17 @@ export default function DemoShelfPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    setChildren([]);
     browseApi
       .getTree(slug)
       .then((res) => {
         if (cancelled) return;
         setNode(res.parent);
-        setChildren(res.results);
       })
       .catch(() => {
         if (cancelled) return;
         setError('failed');
         setNode(null);
-        setChildren([]);
-      })
+          })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -158,13 +118,12 @@ export default function DemoShelfPage() {
   }
 
   const heading = node ? browseLabel(node) : slug;
-  const shownChildren = foldChildren(children, node?.label ?? null);
 
   return (
     <div className="bg-background min-h-screen">
       <Seo title={heading} description={`Compare ${heading.toLowerCase()} prices across Kenyan shops.`} />
       <div className="page-container py-8">
-        {error !== 'missing' && <Crumbs node={node} />}
+        {error !== 'missing' && <Crumbs slug={slug} heading={heading} />}
 
         {error === 'missing' ? (
           <div className="py-12 text-center">
@@ -182,51 +141,16 @@ export default function DemoShelfPage() {
 
         {error === null && (
           <>
-            <div className="mb-6">
-              <h1 className="page-title mb-1">{heading}</h1>
-              <p className="text-sm text-muted-foreground">
-                {isLegacyPhoneCollection(slug, node?.ancestors)
-                  ? 'Related products from Kenyan shops.'
-                  : node?.coarse
-                  ? 'Choose a category below to narrow it down.'
-                  : node?.unsorted
-                    ? 'Every product in this category is listed below.'
-                    : 'Prices from Kenyan shops, compared.'}
-              </p>
-            </div>
-
-            {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 rounded-md" />
-                ))}
-              </div>
-            ) : shownChildren.length > 0 ? (
-              <section aria-label="Subcategories" className="mb-10">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {shownChildren.map((child) => (
-                    <Link
-                      key={child.slug}
-                      to={`/shelf/${encodeURIComponent(child.slug)}`}
-                      className="flex items-center justify-between gap-2 rounded-md card-interactive px-4 py-3"
-                    >
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {browseLabel(child)}
-                      </span>
-                      <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                        {child.n_clusters_subtree.toLocaleString()}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            <h1 className="page-title">{heading}</h1>
+            {/* Subcategory tiles are gone: 185 of the 208 the shops named had
+                no page of their own, and every product is already listed
+                here (descendant closure), so the tiles only led to dead ends. */}
 
             <section aria-label="Products">
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h2 className="section-title">
-                  {total > 0 ? `${total.toLocaleString()} products` : 'Products'}
-                </h2>
+              <div className="mt-1 mb-6 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {loading ? ' ' : total > 0 ? `${total.toLocaleString('en-GB')} products` : 'No products yet'}
+                </p>
                 <button
                   type="button"
                   onClick={toggleMultiStore}

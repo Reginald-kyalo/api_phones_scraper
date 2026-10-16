@@ -1,38 +1,11 @@
-import { Link, Navigate, useParams } from 'react-router';
-import { ChevronRight } from 'lucide-react';
-import PhoneCategoryChoices from '../components/categories/PhoneCategoryChoices';
-import { phoneCategory, phoneCategoryHref, phoneCategoryPath } from '../data/phoneCategories';
+import { Navigate } from 'react-router';
 
+/**
+ * /category/:id, the approved phone product-type tree. Its pages carried no
+ * products, only further choices, so a shopper who followed it found nothing
+ * to compare. Old links land on the department, which has every phone shelf
+ * and the comparison categories.
+ */
 export default function PhoneCategoryPage() {
-  const { categoryId } = useParams<{ categoryId: string }>();
-  const category = phoneCategory(categoryId);
-  if (!category) {
-    return <Navigate to="/browse" replace />;
-  }
-  const path = phoneCategoryPath(category.id);
-  return (
-    <div className="page-container py-8">
-      <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted-foreground">
-        <ol className="flex flex-wrap items-center gap-1">
-          <li><Link to="/" className="hover:underline underline-offset-4">Home</Link></li>
-          <li className="flex items-center gap-1"><ChevronRight className="h-3 w-3" aria-hidden="true" /><Link to="/browse" className="hover:underline underline-offset-4">All categories</Link></li>
-          {path.map((part, index) => (
-            <li key={part.id} className="flex items-center gap-1">
-              <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              {index === path.length - 1 ? <span aria-current="page" className="text-foreground">{part.label}</span> : (
-                <Link to={index === 0 ? `/aisle/${part.id}` : phoneCategoryHref(part.id)} className="hover:underline">{part.label}</Link>
-              )}
-            </li>
-          ))}
-        </ol>
-      </nav>
-      <h1 className="page-title mb-5">{category.label}</h1>
-      <PhoneCategoryChoices parentId={category.id} />
-      <div className="mt-8 rounded-md border border-border bg-surface-alt p-5">
-        <p className="font-medium text-foreground">Looking for prices?</p>
-        <p className="mt-1 text-sm text-muted-foreground">Every phone and accessory we compare is in Phones &amp; wearables.</p>
-        <Link to="/aisle/phones-wearables" className="mt-3 inline-block text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">See all phones and wearables</Link>
-      </div>
-    </div>
-  );
+  return <Navigate to="/aisle/phones-wearables" replace />;
 }

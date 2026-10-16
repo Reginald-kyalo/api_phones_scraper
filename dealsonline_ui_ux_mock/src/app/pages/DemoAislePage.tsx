@@ -1,42 +1,39 @@
-import { familyDisplayLabel } from '../lib/navLabels';
-import { Seo } from '../components/common/Seo';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { spineShelfDisplay, taxonomyDepartmentById, type TaxonomyDepartment } from '../data/taxonomyTree';
-import { ChevronRight } from 'lucide-react';
-import PhoneCategoryChoices from '../components/categories/PhoneCategoryChoices';
-
-function ShelfCollections({ department }: { department: TaxonomyDepartment }) {
-  return <div className="space-y-8">
-    {department.families.map((family) => (
-      <section key={family.id} id={family.id} aria-labelledby={`${department.id}-${family.id}`}>
-        <h2 id={`${department.id}-${family.id}`} className="mb-3 section-title">{familyDisplayLabel(family)}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {family.shelves.map((shelf) => (
-            <Link key={shelf.slug} to={`/shelf/${shelf.slug}`} className="flex items-baseline justify-between gap-2 rounded-md card-interactive px-4 py-3">
-              <span className="text-sm font-medium text-foreground">{spineShelfDisplay(shelf)}</span>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {shelf.count.toLocaleString()}<span className="sr-only"> products</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-    ))}
-  </div>;
-}
+import { Seo } from '../components/common/Seo';
+import { Breadcrumbs } from '../components/common/Breadcrumbs';
+import { familyDisplayLabel } from '../lib/navLabels';
+import { categoryLabel } from '../lib/categories';
+import { clustersApi } from '../lib/api';
+import type { DemoManifest } from '../lib/demoTypes';
+import { orderedFamilies, spineShelfDisplay, taxonomyDepartmentById } from '../data/taxonomyTree';
 
 /**
- * The static-demo equivalent of production's `/aisle/:id`.
+ * A department (/aisle/:id): the way from the homepage strip and the
+ * Categories menu to a page with products on it.
  *
- * A design department is a spine id, not a captured `/browse` category. This
- * page exists so the 19-department nav has a real destination in the demo. It
- * shows the same production leaf shelves the API publishes for the department,
- * so the category carousel opens a page with further leaves rather than the
- * old captured-category fallback.
+ * Two kinds of link, both plain text (no boxes: a box per name was most of
+ * the page and said nothing):
+ *
+ * 1. "Compare prices": the captured comparison categories in this department
+ *    (/browse/:slug), the pages with brand pages, filters and price ranges.
+ *    First, because they are where the comparisons are.
+ * 2. The shelves, grouped by family, each a page of products (/shelf/:slug).
+ *    "Other" comes last.
+ *
+ * The approved phone product-type tree is not shown: its pages carried no
+ * products, so a shopper who followed it found nothing to compare.
  */
 export default function DemoAislePage() {
   const { id } = useParams<{ id: string }>();
   const department = taxonomyDepartmentById(id);
+  const [manifest, setManifest] = useState<DemoManifest | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    clustersApi.getManifest().then((m) => { if (!cancelled) setManifest(m); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   if (!department) {
     return (
@@ -52,56 +49,66 @@ export default function DemoAislePage() {
     );
   }
 
-  const { Icon } = department;
+  const compare = (manifest?.categories ?? []).filter((c) => department.capturedSlugs.includes(c.slug));
+  const families = orderedFamilies(department);
+
   return (
     <div className="bg-background min-h-screen">
       <Seo title={department.label} description={`Compare ${department.label.toLowerCase()} prices across Kenyan shops.`} />
       <div className="page-container py-8">
-        <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">Home</Link>
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <Link to="/browse" className="hover:text-foreground">All categories</Link>
-          <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          <span aria-current="page" className="text-foreground font-medium">{department.label}</span>
-        </nav>
+        <Breadcrumbs items={[{ label: department.label }]} />
 
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-md ultra-border flex items-center justify-center">
-            <Icon className="w-6 h-6 text-foreground" strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <div>
-            <h1 className="page-title">{department.label}</h1>
-            <p className="text-sm text-muted-foreground">
-              {department.n_shelves.toLocaleString()} categories
-            </p>
-          </div>
-        </div>
+        <h1 className="page-title">{department.label}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {department.n_shelves.toLocaleString('en-GB')} categories
+          {department.n_clusters > 0 && ` · ${department.n_clusters.toLocaleString('en-GB')} products`}
+        </p>
 
-{department.id === 'phones-wearables' && (
-          <>
-            <h2 className="mb-3 section-title">Shop by product type</h2>
-            <PhoneCategoryChoices parentId="phones-wearables" />
-            <details className="mt-8 border-t border-border pt-6">
-              <summary className="cursor-pointer section-title">More collections</summary>
-              <div className="mb-5" />
-              <ShelfCollections department={department} />
-            </details>
-          </>
+        {compare.length > 0 && (
+          <section aria-labelledby="compare-heading" className="mt-8">
+            <h2 id="compare-heading" className="section-title">Compare prices</h2>
+            <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+              {compare.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    to={`/browse/${c.slug}`}
+                    className="text-sm font-medium text-link underline underline-offset-4 decoration-link/40 hover:decoration-link"
+                  >
+                    {categoryLabel(c.slug)}
+                  </Link>
+                  <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{c.count.toLocaleString('en-GB')}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
-        {department.id !== 'phones-wearables' && (
-          <>
-            <nav aria-label={`${department.label} product types`} className="mb-8 flex flex-wrap gap-2">
-              {department.families
-                .filter((family) => family.id !== 'needs-review')
-                .map((family) => (
-                  <a key={family.id} href={`#${family.id}`} className="h-9 inline-flex items-center rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:border-muted-foreground">
-                    {familyDisplayLabel(family)}
-                  </a>
-                ))}
-            </nav>
-            <ShelfCollections department={department} />
-          </>
-        )}
+
+        {families.map((family) => (
+          <section
+            key={family.id}
+            id={family.id}
+            aria-labelledby={`${department.id}-${family.id}`}
+            className="mt-8 scroll-mt-24 border-t border-border pt-6"
+          >
+            <h2 id={`${department.id}-${family.id}`} className="section-title">{familyDisplayLabel(family)}</h2>
+            <ul className="mt-2 columns-2 gap-x-8 sm:columns-3 lg:columns-4">
+              {family.shelves.map((shelf) => (
+                <li key={shelf.slug} className="break-inside-avoid py-1">
+                  <Link
+                    to={`/shelf/${shelf.slug}`}
+                    className="text-sm text-foreground hover:text-link hover:underline underline-offset-4"
+                  >
+                    {spineShelfDisplay(shelf)}
+                  </Link>
+                  <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">
+                    {shelf.count.toLocaleString('en-GB')}
+                    <span className="sr-only"> products</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </div>
   );

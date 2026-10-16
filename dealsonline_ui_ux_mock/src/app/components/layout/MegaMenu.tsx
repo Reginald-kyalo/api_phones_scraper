@@ -2,8 +2,7 @@ import { familyDisplayLabel } from '../../lib/navLabels';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, X } from 'lucide-react';
-import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../../data/taxonomyTree';
-import { phoneCategoryHref, phoneChildren } from '../../data/phoneCategories';
+import { TAXONOMY_DEPARTMENTS, orderedFamilies, spineShelfDisplay } from '../../data/taxonomyTree';
 
 interface MegaMenuProps {
   open: boolean;
@@ -97,23 +96,9 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                     {active.id !== 'phones-wearables' && <span className="text-sm text-muted-foreground">{active.n_clusters.toLocaleString()} products</span>}
                   </div>
 
-                  {active.id === 'phones-wearables' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 flex-1 overflow-y-auto pr-2">
-                      {phoneChildren('phones-wearables').map((family) => (
-                        <section key={family.id}>
-                          <Link to={phoneCategoryHref(family.id)} onClick={onClose} className="text-sm font-semibold text-foreground hover:text-link hover:underline">{familyDisplayLabel(family)}</Link>
-                          <ul className="mt-1 space-y-1">
-                            {phoneChildren(family.id).map((child) => <li key={child.id}>
-                              <Link to={phoneCategoryHref(child.id)} onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground hover:underline">{child.label}</Link>
-                              {phoneChildren(child.id).filter((node) => node.kind === 'shortcut').map((shortcut) => <Link key={shortcut.id} to={phoneCategoryHref(shortcut.id)} onClick={onClose} className="ml-2 text-xs text-link hover:underline">{shortcut.label}</Link>)}
-                            </li>)}
-                          </ul>
-                        </section>
-                      ))}
-                    </div>
-                  ) : active.families.length > 0 ? (
+                  {active.families.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 flex-1 overflow-y-auto pr-2">
-                      {active.families.map((family) => (
+                      {orderedFamilies(active).map((family) => (
                         <section key={family.id} aria-labelledby={`family-${active.id}-${family.id}`}>
                           <h4 id={`family-${active.id}-${family.id}`} className="mb-1 microcopy-label !text-foreground">
                             {familyDisplayLabel(family)}

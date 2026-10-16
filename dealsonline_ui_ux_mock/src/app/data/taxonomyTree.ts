@@ -545,3 +545,29 @@ export function assertTaxonomyIntegrity(): void {
 assertTaxonomyIntegrity();
 
 export { spineShelfDisplay };
+
+/** Where a shelf sits: its department and family, for breadcrumbs and links. */
+export interface ShelfPlacement {
+  department: TaxonomyDepartment;
+  family: TaxonomyFamily;
+  shelf: LiveSpineShelf;
+}
+
+const shelfPlacements = new Map<string, ShelfPlacement>();
+for (const department of TAXONOMY_DEPARTMENTS) {
+  for (const family of department.families) {
+    for (const shelf of family.shelves) shelfPlacements.set(shelf.slug, { department, family, shelf });
+  }
+}
+export const shelfPlacement = (slug: string | undefined) => (slug ? shelfPlacements.get(slug) : undefined);
+
+/**
+ * The department a captured comparison category (/browse/:slug) belongs to,
+ * from the spine's capturedSlugs: mobile-phones → Phones & Wearables.
+ */
+export const departmentForCategory = (slug: string | undefined) =>
+  slug ? TAXONOMY_DEPARTMENTS.find((d) => d.capturedSlugs.includes(slug)) : undefined;
+
+/** Families with the unplaced "Other" last, so a page ends with it rather than opening on it. */
+export const orderedFamilies = (department: TaxonomyDepartment) =>
+  [...department.families].sort((a, b) => Number(a.id === 'needs-review') - Number(b.id === 'needs-review'));

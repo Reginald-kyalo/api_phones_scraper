@@ -34,7 +34,7 @@ import { brandFacets, brandPageBrands, readFilters } from '../src/app/lib/listin
 import { storeName } from '../src/app/lib/storeIdentity';
 import { bestImage } from '../src/app/lib/images';
 import { browseLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
-import { TAXONOMY_DEPARTMENTS, spineShelfDisplay } from '../src/app/data/taxonomyTree';
+import { TAXONOMY_DEPARTMENTS, departmentForCategory, shelfPlacement, spineShelfDisplay } from '../src/app/data/taxonomyTree';
 
 const DIST = join(process.cwd(), 'dist');
 const BASE = process.env.BASE_PATH || '/';
@@ -119,6 +119,19 @@ function shell(body: string): string {
   );
 }
 
+// The same trail the app draws (components/common/Breadcrumbs.tsx):
+// department → category → brand, or department → family → shelf.
+const deptCrumb = (slug: string): [string, string][] => {
+  const d = departmentForCategory(slug);
+  return d ? [[d.label, `/aisle/${d.id}`]] : [];
+};
+const shelfCrumbs = (slug: string): [string, string][] => {
+  const p = shelfPlacement(slug);
+  return p
+    ? [[p.department.label, `/aisle/${p.department.id}`], [familyDisplayLabel(p.family), `/aisle/${p.department.id}#${p.family.id}`]]
+    : [];
+};
+
 const crumbs = (items: [label: string, path?: string][]) =>
   `<nav aria-label="Breadcrumb" class="mb-4 text-sm text-muted-foreground">` +
   items
@@ -192,7 +205,7 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
     image: bestImage(cluster),
     description: `${name} from ${formatPrice(low.price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`,
     body:
-      crumbs([['Home', '/'], ...(slug ? [[categoryLabel(slug), `/browse/${slug}`] as [string, string]] : [])]) +
+      crumbs([['Home', '/'], ...deptCrumb(slug), ...(slug ? [[categoryLabel(slug), `/browse/${slug}`] as [string, string]] : [])]) +
       `<h1 class="page-title">${esc(name)}</h1>` +
       // A summary written from the price data, never by hand: what Google
       // quotes, and the same numbers as the list below.
@@ -435,7 +448,7 @@ async function main() {
       title: `${label} prices in Kenya`,
       description: `Compare ${label.toLowerCase()} prices across Kenyan shops, sorted by price.`,
       body:
-        crumbs([['Home', '/'], ['All categories', '/browse'], [label]]) +
+        crumbs([['Home', '/'], ...deptCrumb(c.slug), [label]]) +
         `<h1 class="page-title">${esc(label)}</h1>` +
         `<p class="mt-1 text-sm text-muted-foreground">${esc(c.count.toLocaleString('en-GB'))} products · ${esc(c.multi_store.toLocaleString('en-GB'))} sold by 2 or more shops</p>` +
         productList(multi.slice(0, 48)) +
@@ -452,7 +465,7 @@ async function main() {
         title: `${heading} prices in Kenya`,
         description: `Compare ${heading.toLowerCase()} prices across Kenyan shops, sorted by price.`,
         body:
-          crumbs([['Home', '/'], ['All categories', '/browse'], [label, `/browse/${c.slug}`], [brandName(b)]]) +
+          crumbs([['Home', '/'], ...deptCrumb(c.slug), [label, `/browse/${c.slug}`], [brandName(b)]]) +
           `<h1 class="page-title">${esc(heading)}</h1>` +
           `<p class="mt-1 text-sm text-muted-foreground">${esc(page.count.toLocaleString('en-GB'))} products</p>` +
           productList(page.results) +
@@ -468,7 +481,7 @@ async function main() {
       title: d.label,
       description: `Compare ${d.label.toLowerCase()} prices across Kenyan shops.`,
       body:
-        crumbs([['Home', '/'], ['All categories', '/browse'], [d.label]]) +
+        crumbs([['Home', '/'], [d.label]]) +
         `<h1 class="page-title">${esc(d.label)}</h1>` +
         d.families
           .map((f) =>
@@ -494,7 +507,7 @@ async function main() {
       title: heading,
       description: `Compare ${heading.toLowerCase()} prices across Kenyan shops.`,
       body:
-        crumbs([['Home', '/'], ['All categories', '/browse'], [heading]]) +
+        crumbs([['Home', '/'], ...shelfCrumbs(slug), [heading]]) +
         `<h1 class="page-title">${esc(heading)}</h1>` +
         `<p class="mt-1 text-sm text-muted-foreground">${esc(shelf.total.toLocaleString('en-GB'))} products</p>` +
         productList(shelf.results),
