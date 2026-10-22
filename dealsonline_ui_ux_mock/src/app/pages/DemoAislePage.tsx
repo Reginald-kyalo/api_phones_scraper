@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 import { Seo } from '../components/common/Seo';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
-import { familyDisplayLabel } from '../lib/navLabels';
+import { departmentDisplayLabel, familyDisplayLabel } from '../lib/navLabels';
 import { categoryLabel } from '../lib/categories';
 import { clustersApi } from '../lib/api';
 import type { DemoManifest } from '../lib/demoTypes';
@@ -26,6 +26,7 @@ import { orderedFamilies, spineShelfDisplay, taxonomyDepartmentById } from '../d
  */
 export default function DemoAislePage() {
   const { id } = useParams<{ id: string }>();
+  const { hash } = useLocation();
   const department = taxonomyDepartmentById(id);
   const [manifest, setManifest] = useState<DemoManifest | null>(null);
 
@@ -35,30 +36,41 @@ export default function DemoAislePage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Family links from the directory and the menus land on their section
+  // (/aisle/x#family). Root scrolls to the top on every path change and the
+  // router does nothing with the hash, so this page brings the heading into
+  // view itself once it has rendered (design audit, D09).
+  useEffect(() => {
+    if (!hash || !department) return;
+    const target = decodeURIComponent(hash.slice(1));
+    const frame = requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [hash, department]);
+
   if (!department) {
     return (
       <div className="bg-background min-h-screen">
         <div className="page-container py-16 text-center">
-          <p className="section-title mb-2">We couldn’t find that department</p>
-          <p className="text-sm text-muted-foreground mb-4">It may have moved.</p>
+          <p className="section-title mb-4">Category not found.</p>
           <Link to="/browse" className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
-            Browse all categories
+            Browse categories
           </Link>
         </div>
       </div>
     );
   }
 
+  const label = departmentDisplayLabel(department);
   const compare = (manifest?.categories ?? []).filter((c) => department.capturedSlugs.includes(c.slug));
   const families = orderedFamilies(department);
 
   return (
     <div className="bg-background min-h-screen">
-      <Seo title={department.label} description={`Compare ${department.label.toLowerCase()} prices across Kenyan shops.`} />
+      <Seo title={`${label} prices in Kenya`} description={`Compare ${label.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`} />
       <div className="page-container py-8">
-        <Breadcrumbs items={[{ label: department.label }]} />
+        <Breadcrumbs items={[{ label }]} />
 
-        <h1 className="page-title">{department.label}</h1>
+        <h1 className="page-title">{label}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {department.n_shelves.toLocaleString('en-GB')} categories
           {department.n_clusters > 0 && ` · ${department.n_clusters.toLocaleString('en-GB')} products`}

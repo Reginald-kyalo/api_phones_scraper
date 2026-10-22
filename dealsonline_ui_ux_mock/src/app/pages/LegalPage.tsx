@@ -3,228 +3,244 @@ import { useLocation, Link } from 'react-router';
 import { Seo } from '../components/common/Seo';
 import { BRAND, MONEY_LINE } from '../lib/brand';
 import { FAQ } from '../lib/faq';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '../components/ui/breadcrumb';
+import { Breadcrumbs } from '../components/common/Breadcrumbs';
 
-const pages: Record<string, { title: string; content: React.ReactNode }> = {
+/**
+ * The date the policy text below was last changed. Edit it when the text
+ * changes, and only then: the old pages printed the current month on every
+ * view, which is not a revision date (design audit §20).
+ */
+export const POLICY_REVISED = '22 October 2026';
+
+const link = 'text-link underline underline-offset-4 decoration-link/40 hover:decoration-link';
+const h2 = 'text-base font-semibold text-foreground';
+
+/**
+ * Company and policy pages. Every sentence describes what the site does
+ * today: browser storage, listed shops, an enquiry address. Where a fact is
+ * not established (hosting logs, third-party processing, retention periods,
+ * the responsible entity) the page says it is to be confirmed rather than
+ * filling the gap with boilerplate. The support address is a placeholder
+ * until the mailbox exists (lib/brand.ts).
+ */
+const pages: Record<string, { title: string; description: string; content: React.ReactNode }> = {
   privacy: {
     title: 'Privacy policy',
+    description: 'What information SokoPulse collects, why it is used and how to contact us about it.',
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
-        <p>Last updated: {new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
-        <h2 className="text-base font-semibold text-foreground">1. Information we collect</h2>
+        <p>Last revised {POLICY_REVISED}.</p>
+        <p>This page explains what information SokoPulse collects, why it is used and how to contact us about it.</p>
+        <h2 className={h2}>Who is responsible for your information</h2>
         <p>
-          SokoPulse collects minimal personal information to provide our price comparison service.
-          This includes account information (email, name) when you register, browsing preferences,
-          and price alert configurations.
+          SokoPulse is operated by the SokoPulse team. The legal entity and its address will be published
+          here before public launch.
         </p>
-        <h2 className="text-base font-semibold text-foreground">2. How we use your information</h2>
+        <h2 className={h2}>Information we collect</h2>
         <p>
-          We use your information to provide price comparison results, send price alert notifications,
-          maintain your favourites, and improve our service. We do not sell your personal data
-          to third parties.
+          Favourites, price targets, comparison selections and recently viewed products are saved in
+          this browser. Your theme preference is also remembered here. None of this is sent to us.
         </p>
-        <h2 className="text-base font-semibold text-foreground">3. Data storage</h2>
         <p>
-          Your data is stored securely and retained only as long as necessary to provide our services.
-          You can request deletion of your account and associated data at any time.
+          When you report a problem with a listing, we receive the report: the product, what you said
+          is wrong, any note you add and the page you were on.
         </p>
-        <h2 className="text-base font-semibold text-foreground">4. Cookies</h2>
         <p>
-          We use essential cookies for authentication and session management. See our cookie policy for details.
+          Our hosting provider records standard server logs when pages are requested. The provider,
+          what the logs contain and how long they are kept will be listed here once confirmed.
         </p>
-        <h2 className="text-base font-semibold text-foreground">5. Contact</h2>
+        <h2 className={h2}>How we use it</h2>
         <p>
-          For privacy-related inquiries, please contact us through our contact page.
+          Reports are used to correct prices, matches and categories. Server logs are used to keep the
+          site running and to detect abuse.
         </p>
+        <h2 className={h2}>Who receives it</h2>
+        <p>
+          We do not sell your information. Shops you visit through SokoPulse receive only the visit
+          itself, as they would from any link.
+        </p>
+        <h2 className={h2}>How long we keep it</h2>
+        <p>Items saved in your browser stay until you remove them or clear this site’s data. Retention periods for reports and logs will be stated here once confirmed.</p>
+        <h2 className={h2}>Your choices</h2>
+        <p>
+          Clearing this website’s data in your browser removes locally saved items and preferences. See{' '}
+          <Link to="/cookie-policy" className={link}>Cookies and browser storage</Link>.
+        </p>
+        <h2 className={h2}>Contact</h2>
+        <p>Email {BRAND.supportEmail} with privacy questions.</p>
       </div>
     ),
   },
   terms: {
     title: 'Terms of service',
+    description: 'The terms for using SokoPulse.',
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
-        <p>Last updated: {new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
-        <h2 className="text-base font-semibold text-foreground">1. Service description</h2>
+        <p>Last revised {POLICY_REVISED}.</p>
+        <h2 className={h2}>Using SokoPulse</h2>
         <p>
-          SokoPulse is a price comparison platform that aggregates product prices from multiple
-          Kenyan retailers. We do not sell products directly — we redirect you to the retailer's website.
+          SokoPulse helps you compare listed prices from shops. Purchases take place on the shop’s website
+          and are subject to that shop’s terms.
         </p>
-        <h2 className="text-base font-semibold text-foreground">2. Price accuracy</h2>
+        <h2 className={h2}>Prices and product information</h2>
         <p>
-          While we strive to display accurate and up-to-date pricing, prices may change between
-          our last update and your visit to the retailer. The final price is always determined by
-          the retailer.
+          Prices and availability may change after our last check. Listings are matched automatically
+          and may differ in version, size or condition. Confirm the product details and final total with
+          the shop before buying.
         </p>
-        <h2 className="text-base font-semibold text-foreground">3. User accounts</h2>
+        <h2 className={h2}>Buying from shops</h2>
         <p>
-          You are responsible for maintaining the confidentiality of your account credentials.
-          Features like favourites and price alerts require a registered account.
+          The shop you buy from is responsible for the sale, payment, delivery, returns and warranty.
+          SokoPulse is not a party to that transaction.
         </p>
-        <h2 className="text-base font-semibold text-foreground">4. Acceptable use</h2>
+        <h2 className={h2}>Saved items</h2>
         <p>
-          You agree not to scrape, automate, or interfere with the normal operation of our service.
-          We reserve the right to suspend accounts that violate these terms.
+          Favourites, price targets and comparisons are saved in your browser and need no account. We
+          cannot restore them if you clear your browser’s data.
         </p>
-        <h2 className="text-base font-semibold text-foreground">5. Limitation of liability</h2>
+        <h2 className={h2}>Acceptable use</h2>
         <p>
-          SokoPulse is not responsible for transactions between you and retailers. We provide
-          information only and make no guarantees about product availability or retailer service.
+          Do not copy the catalogue in bulk, automate requests against the site or interfere with its
+          operation.
         </p>
+        <h2 className={h2}>Contact</h2>
+        <p>Email {BRAND.supportEmail} with questions about these terms.</p>
       </div>
     ),
   },
   'cookie-policy': {
-    title: 'Cookie policy',
+    title: 'Cookies and browser storage',
+    description: 'How SokoPulse uses browser storage and how to manage saved preferences.',
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
-        <p>Last updated: {new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
-        <h2 className="text-base font-semibold text-foreground">What are cookies</h2>
-        <p>
-          Cookies are small text files stored on your device when you visit a website. They help
-          us remember your preferences and provide a better experience.
-        </p>
-        <h2 className="text-base font-semibold text-foreground">Cookies we use</h2>
+        <p>Last revised {POLICY_REVISED}.</p>
+        <p>SokoPulse uses browser storage to remember your preferences and saved products.</p>
+        <h2 className={h2}>What is stored in this browser</h2>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Essential cookies:</strong> Required for authentication and session management.</li>
-          <li><strong>Preference cookies:</strong> Remember your settings like recently viewed products.</li>
+          <li><strong>Favourites</strong>, <strong>price targets</strong>, <strong>comparison selections</strong> and <strong>recently viewed products</strong>: kept in local storage until you remove them.</li>
+          <li><strong>Theme</strong>: your System, Light or Dark choice.</li>
         </ul>
-        <h2 className="text-base font-semibold text-foreground">Managing cookies</h2>
         <p>
-          You can control cookies through your browser settings. Disabling essential cookies may
-          affect the functionality of the site, particularly login and account features.
+          These are stored by the browser on your device and are not sent to us. We do not set
+          advertising or analytics cookies. Any cookies set by our hosting provider will be listed here
+          once confirmed.
         </p>
+        <h2 className={h2}>Managing storage</h2>
+        <p>Clearing this website’s data in your browser removes locally saved items and preferences.</p>
       </div>
     ),
   },
   contact: {
-    title: 'Contact us',
+    title: 'Contact',
+    description: 'How to contact SokoPulse.',
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
-        <p>
-          Questions, feedback or a wrong price? Tell us.
-        </p>
-        <h2 className="text-base font-semibold text-foreground">Get in touch</h2>
-        <ul className="list-none space-y-2 pl-0">
-          <li><strong>Email:</strong> {BRAND.supportEmail}</li>
-        </ul>
-        <h2 className="text-base font-semibold text-foreground">Report a wrong price</h2>
-        <p>
-          Every product page has a “Report a wrong price or match” link. You can also email us with the
-          product name and the shop in question.
-        </p>
-        <h2 className="text-base font-semibold text-foreground">Shops and advertisers</h2>
-        <p>
-          Shops that want to be listed, or to buy a clearly labelled sponsored spot, can email us.
-          Sponsored spots never change the order of the price list.
-        </p>
+        <p>Questions or feedback? Contact SokoPulse.</p>
+        <h2 className={h2}>A wrong price or match</h2>
+        <p>For a listing issue, use Report a problem on the product page.</p>
+        <h2 className={h2}>Other enquiries</h2>
+        <p>Email {BRAND.supportEmail}.</p>
+        <h2 className={h2}>Help with an order</h2>
+        <p>For delivery, returns or payment questions, contact the shop you bought from.</p>
+        <h2 className={h2}>Business enquiries</h2>
+        <p>For shop listings, advertising or price data, include your business name and website.</p>
       </div>
     ),
   },
   about: {
     title: 'About SokoPulse',
+    description: 'Learn what SokoPulse compares and how to use its price information.',
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
         <p>
-          SokoPulse compares prices across Kenyan shops, online and off, so you can see what the
-          same product costs at each one before you buy.
+          SokoPulse brings together listed prices from Kenyan shops so you can compare your options
+          before buying.
         </p>
-        <h2 className="text-base font-semibold text-foreground">How we compare</h2>
+        <h2 id="how-it-works" className={`scroll-mt-24 ${h2}`}>How it works</h2>
         <p>
-          We read each shop's listings, match the same product across shops, and sort every price
-          list by price. Each product page shows the exact listing title from each shop and when we
-          last checked it, so you can confirm the match yourself.
+          Search for a product, review the shop listings and visit the shop you choose. The shop handles
+          your purchase, delivery and returns.
         </p>
-        <h2 className="text-base font-semibold text-foreground">How we make money</h2>
-        <p>{MONEY_LINE}</p>
+        <h2 id="how-we-compare" className={`scroll-mt-24 ${h2}`}>About the prices</h2>
         <p>
-          <Link to="/how-we-make-money" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
-            More on how we make money
-          </Link>
+          Listings are grouped using product details. Check the version, condition and last-check date,
+          then confirm the final price with the shop.
+        </p>
+        <h2 className={h2}>Coverage</h2>
+        <p>We compare the shops included in our catalogue. We do not cover every shop or every product.</p>
+        <p>
+          <Link to="/how-we-make-money" className={link}>How we make money</Link>
+          {' · '}
+          <Link to="/faq" className={link}>Help</Link>
+          {' · '}
+          <Link to="/contact" className={link}>Contact</Link>
         </p>
       </div>
     ),
   },
   faq: {
-    title: 'Questions and answers',
+    title: 'Help',
+    description: 'Answers about prices, shops, saved products and using SokoPulse.',
     content: (
       <div className="space-y-6">
         {FAQ.map(({ q, a }) => (
           <section key={q}>
-            <h2 className="text-base font-semibold text-foreground">{q}</h2>
+            <h2 className={h2}>{q}</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a}</p>
           </section>
         ))}
         <p className="text-sm text-muted-foreground">
           Something else?{' '}
-          <Link to="/contact" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
-            Contact us
-          </Link>
-          .
+          <Link to="/contact" className={link}>Contact us</Link>.
         </p>
       </div>
     ),
   },
   'for-business': {
     title: 'For shops and brands',
+    description: 'Contact SokoPulse about shop listings, advertising and price data enquiries.',
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
-        <p className="text-foreground">
-          Shoppers use SokoPulse to compare the same product across Kenyan shops. Here is how
-          shops and brands can work with us.
-        </p>
-        <h2 id="list-your-shop" className="scroll-mt-24 text-base font-semibold text-foreground">List your shop</h2>
+        <p className="text-foreground">Help shoppers compare your products on SokoPulse.</p>
+        <h2 id="list-your-shop" className={`scroll-mt-24 ${h2}`}>List your shop</h2>
+        <p>Send us your shop name and website to ask about inclusion.</p>
+        <h2 id="advertise" className={`scroll-mt-24 ${h2}`}>Advertising</h2>
         <p>
-          Listing is free. Send us your shop's website and we will add your prices to every
-          product you sell, in the same price-sorted list as everyone else.
+          Contact us about sponsored placements. Sponsored spots are labelled Sponsored and sit outside
+          the price list; they never change its order.
         </p>
-        <h2 id="advertise" className="scroll-mt-24 text-base font-semibold text-foreground">Advertise</h2>
+        <h2 id="price-data" className={`scroll-mt-24 ${h2}`}>Price data enquiries</h2>
+        <p>Tell us which products, shops and dates you need.</p>
+        <h2 className={h2}>Contact us</h2>
         <p>
-          Sponsored spots sit in clearly labelled boxes beside products you actually sell, never
-          inside the price list. {MONEY_LINE}
-        </p>
-        <h2 id="price-data" className="scroll-mt-24 text-base font-semibold text-foreground">Price data and API</h2>
-        <p>
-          Daily prices across Kenyan shops, matched product by product, with price history: as a
-          dashboard, a regular file or an API. Useful for brands watching their prices and for
-          retailers watching the market.
-        </p>
-        <h2 className="text-base font-semibold text-foreground">Talk to us</h2>
-        <p>
-          Email <a href={`mailto:${BRAND.supportEmail}`} className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">{BRAND.supportEmail}</a> and
-          say which of these you are interested in.
+          Email <a href={`mailto:${BRAND.supportEmail}`} className={link}>{BRAND.supportEmail}</a> with
+          your business name and website.
         </p>
       </div>
     ),
   },
   'how-we-make-money': {
     title: 'How we make money',
+    description: MONEY_LINE,
     content: (
       <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
         <p className="text-foreground">{MONEY_LINE}</p>
-        <h2 className="text-base font-semibold text-foreground">Click-through fees</h2>
+        <h2 className={h2}>Visits to shops</h2>
         <p>
-          When you press “Go to shop”, the shop may pay us a small fee for sending you. You pay the
-          same price either way.
+          When you press “Go to shop”, a shop may pay us for the visit. The price you see on the shop’s
+          page is set by the shop, not by that payment.
         </p>
-        <h2 className="text-base font-semibold text-foreground">Sponsored spots</h2>
+        <h2 className={h2}>Sponsored spots</h2>
         <p>
-          Some shops pay to appear in a box marked “Sponsored”, for example above a product's price
-          list. A sponsored shop must actually sell the product it appears beside, and the box always
-          sits outside the price list. If the sponsored shop is not the cheapest, the list below it
-          will show you that.
+          A shop may pay to appear in a box marked “Sponsored”, for example above a product’s price
+          list. A sponsored shop must sell the product it appears beside, and the box always sits
+          outside the price list, so the list still shows whether it is the cheapest.
         </p>
-        <h2 className="text-base font-semibold text-foreground">What never changes</h2>
+        <h2 className={h2}>What does not change</h2>
         <ul className="list-disc pl-5 space-y-1">
-          <li>The price list is sorted by price, cheapest first.</li>
-          <li>No shop can pay to move up the price list.</li>
-          <li>We never sell products ourselves.</li>
+          <li>The price list is sorted by price, lowest first.</li>
+          <li>No payment moves a shop up the price list.</li>
+          <li>We don’t sell products ourselves; you buy from the shop you choose.</li>
         </ul>
       </div>
     ),
@@ -247,28 +263,16 @@ export default function LegalPage() {
   if (!page) {
     return (
       <div className="prose-container py-16 text-center">
-        <h1 className="text-lg font-semibold text-foreground">Page not found</h1>
+        <h1 className="page-title mb-4">Page not found</h1>
+        <Link to="/" className={link}>Home</Link>
       </div>
     );
   }
 
   return (
     <div className="prose-container py-8">
-      <Seo title={page.title} />
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/" className="text-xs">Home</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="text-xs">{page.title}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
+      <Seo title={page.title} description={page.description} />
+      <Breadcrumbs items={[{ label: page.title }]} className="mb-6" />
       <h1 className="page-title mb-6">{page.title}</h1>
       {page.content}
     </div>

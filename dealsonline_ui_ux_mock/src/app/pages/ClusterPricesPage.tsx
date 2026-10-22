@@ -7,15 +7,19 @@ import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
 import {
   checkedAgo,
   checkedAt,
+  checkedDate,
   priceVerdict,
   clusterSaving,
   displaySaving,
   formatPrice,
   hasPrice,
+  isStale,
   brandName,
   productName,
   shopLabel,
+  usablePriceHistory,
 } from '../lib/format';
+import { departmentDisplayLabel } from '../lib/navLabels';
 import { bestImage } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
@@ -47,13 +51,13 @@ const WARRANTY_CATEGORIES = new Set([
   'mobile-phones', 'laptops', 'tablets', 'tvs', 'monitors', 'digital-cameras', 'audio-systems', 'headphones', 'speakers', 'printers',
 ]);
 
-/** "Samsung Galaxy A17 price in Kenya: from KES 18,999 at 2 shops" (the search people type). */
-function productTitle(name: string, offers: [string, { price: number | null }][]): string {
-  if (!offers.length) return `${name} price in Kenya`;
-  const low = formatPrice(offers[0][1].price);
-  return offers.length > 1
-    ? `${name} price in Kenya: from ${low} at ${shopLabel(offers.length)}`
-    : `${name} price in Kenya: ${low} at ${storeName(offers[0][0])}`;
+/**
+ * "Samsung Galaxy A17 prices in Kenya" (the search people type). No price in
+ * the title: a search result or a shared link outlives the price it quoted
+ * (design audit §21), and the page itself shows the dated figure.
+ */
+function productTitle(name: string): string {
+  return `${name} prices in Kenya`;
 }
 type Offer = [store: string, offer: ClusterStore];
 
@@ -72,7 +76,7 @@ function pricedOffers(byStore: Record<string, ClusterStore> | null | undefined):
 function warningCopy(warning: string | null | undefined): string | null {
   if (!warning) return null;
   if (warning.startsWith('no confident retail price')) {
-    return 'We found no shop selling this new. These prices are for used or refurbished listings.';
+    return 'We have no new-item prices listed. These are used or refurbished listings.';
   }
   if (warning.startsWith('implausibly low best price')) {
     return 'One price here looks too low for the same item. Check the listing before you buy.';
@@ -84,17 +88,17 @@ function warningCopy(warning: string | null | undefined): string | null {
 }
 
 function variantLabel(config: Config): string {
-  return config.facet_label ?? (config.storage_gb != null ? `${config.storage_gb}GB` : 'Variant');
+  return config.facet_label ?? (config.storage_gb != null ? `${config.storage_gb} GB` : 'Version');
 }
 
 /**
  * The product page: the one page where a shopper has decided to buy.
  *
  * Layout per the design review §3.3. Left: name, variant selector, a one-line
- * summary, the price list sorted by price, history, and "about this
- * comparison". Right (sticky on desktop): photo, best-price card with "Go to
- * shop" and "Set a price alert", then the reserved sponsored slot. On mobile
- * a bottom bar carries the best price once its card scrolls away.
+ * summary, the price list sorted by price, history, and "About these
+ * prices". Right (sticky on desktop): photo, lowest-price card with "Go to
+ * shop" and "Save target price". On mobile a bottom bar carries the lowest
+ * price once its card scrolls away.
  *
  * Renders the honest-price contract: condition_basis labels the headline,
  * data_warning and comparison_grade=false become plain notes, and every row
@@ -181,12 +185,19 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   const lowest = offers[0] ?? null;
   const allOffers = useMemo(() => pricedOffers(cluster.best_by_store), [cluster.best_by_store]);
   const highest = offers.length > 1 ? offers[offers.length - 1] : null;
+  // One percentage needs one version: with "All versions" selected the list
+  // mixes configurations, and no single figure describes it (design audit §7).
   const saving = config
     ? offers.length > 1
       ? displaySaving(config.spread_pct, lowest?.[1].price)
       : null
-    : clusterSaving(cluster);
+    : configs.length > 1
+      ? null
+      : clusterSaving(cluster);
   const checked = checkedAgo(cluster.last_seen);
+  // Decided now, not at capture: a July check is historical in October.
+  const stale = isStale(cluster.last_seen);
+  const history = useMemo(() => usablePriceHistory(cluster.price_history), [cluster.price_history]);
   // History is recorded for the product, not per variant or for used stock:
   // a 128GB price judged against 256GB history would mislead. Only products
   // with a single configuration get a verdict.
@@ -252,7 +263,9 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   const bestCard = (
     <BestPriceCard
       offer={lowest}
+      offerCount={offers.length}
       likelyUsed={likelyUsed}
+      stale={stale}
       saving={saving}
       savingPair={savingPair}
       onAlert={() => setAlertOpen(true)}
@@ -266,13 +279,13 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   return (
     <div className="bg-background">
       <Seo
-        // The whole product, every variant: the same numbers as the
-        // prerendered page and the sitemap, whichever chip is selected.
-        title={productTitle(name, allOffers)}
+        // The same title and description as the prerendered page, whichever
+        // version is selected, and no price that could go stale in a result.
+        title={productTitle(name)}
         description={
           allOffers.length
-            ? `${name} from ${formatPrice(allOffers[0][1].price)}. Compare ${shopLabel(allOffers.length)} in Kenya, sorted by price.`
-            : `Compare ${name} prices across Kenyan shops.`
+            ? `View shop listings for ${name}. Compare available versions and prices from ${shopLabel(allOffers.length)}, then visit the shop you choose.`
+            : `View shop listings for ${name} from Kenyan shops.`
         }
       />
       <div className="page-container py-6 lg:py-8">
@@ -285,16 +298,11 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
             <h1 className="page-title">{name}</h1>
 
             {configs.length > 1 && (
-              <div role="radiogroup" aria-label="Variant" className="mt-4 flex flex-wrap gap-2">
-                {configs.map((c, i) => (
-                  <VariantChip key={i} active={selected === i} onClick={() => setSelected(i)}>
-                    {variantLabel(c)}
-                  </VariantChip>
-                ))}
-                <VariantChip active={selected === -1} onClick={() => setSelected(-1)}>
-                  Any variant
-                </VariantChip>
-              </div>
+              <VersionChips
+                labels={[...configs.map(variantLabel), 'All versions']}
+                selected={selected === -1 ? configs.length : selected}
+                onSelect={(i) => setSelected(i === configs.length ? -1 : i)}
+              />
             )}
 
             <p className="mt-4 text-sm text-muted-foreground">
@@ -306,10 +314,10 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                       {' '}to <span className="price-num text-foreground">{formatPrice(highest[1].price)}</span>
                     </>
                   )}{' '}
-                  across {shopLabel(offers.length)}
+                  from {shopLabel(offers.length)}
                 </>
               ) : (
-                'No shop has a current price for this.'
+                'No prices available for this product.'
               )}
               {checked && cluster.last_seen && (
                 <>
@@ -340,8 +348,8 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               <div className="mt-6 space-y-2">
                 {!cluster.comparison_grade && (
                   <Note>
-                    Accessory listings vary in exact model, so we don’t claim a saving here. Check the
-                    shop titles match before you buy.
+                    These listings may differ in exact model or specification, so no price difference is
+                    shown. Check the shop titles match before you buy.
                   </Note>
                 )}
                 {warningCopy(cluster.data_warning) && <Note>{warningCopy(cluster.data_warning)}</Note>}
@@ -357,8 +365,8 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               <ul className="flex gap-5 text-sm">
                 {[
                   ['#prices', 'Prices'],
-                  ...(cluster.price_history && cluster.price_history.length >= 2 ? [['#price-history', 'Price history']] : []),
-                  ['#about-comparison', 'About this comparison'],
+                  ...(history.length >= 2 ? [['#price-history', 'Price history']] : []),
+                  ['#about-comparison', 'About these prices'],
                 ].map(([href, label]) => (
                   <li key={href}>
                     <a href={href} className="-mb-px block border-b-2 border-transparent py-2.5 text-muted-foreground transition-colors hover:border-border hover:text-foreground">
@@ -373,9 +381,15 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
             <section aria-labelledby="prices" className="mt-8 scroll-mt-32">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
                 <h2 id="prices" className="section-title scroll-mt-32">
-                  {likelyUsed ? 'Used and refurbished prices' : 'Prices'}
+                  {likelyUsed
+                    ? 'Used and refurbished prices'
+                    : !config && configs.length > 1
+                      ? 'Prices across versions'
+                      : offers.length > 0
+                        ? `Prices from ${shopLabel(offers.length)}`
+                        : 'Prices'}
                 </h2>
-                <p className="microcopy-label">Sorted by price</p>
+                {offers.length > 1 && <p className="microcopy-label">Lowest price first</p>}
               </div>
 
               {/* Sponsored shop: its own card ABOVE the list, never a row in it. */}
@@ -384,22 +398,25 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               {offers.length > 0 ? (
                 <ul aria-label={`${name} prices`} className="divide-y divide-border rounded-md border border-border list-none p-0">
                   {offers.map(([store, offer], idx) => (
-                    <OfferRow key={store} store={store} offer={offer} lowest={idx === 0 && offers.length > 1} />
+                    <OfferRow key={store} store={store} offer={offer} product={name} lowest={idx === 0 && offers.length > 1} />
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-muted-foreground">No shop has a usable price for this variant right now.</p>
+                <p className="text-sm text-muted-foreground">
+                  {config ? 'No price listed for this version.' : 'No prices available for this product.'}
+                </p>
               )}
               {offers.length > 0 && (
+                // One note under the list, not a checklist on every row. The
+                // dataset carries no delivery data, so the honest statement
+                // is that it is not shown, not that it is free.
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  Found at {shopLabel(offers.length)}
-                  {config ? ` for ${variantLabel(config)}` : ''}.{' '}
-                  <span className="font-semibold text-foreground">Before you pay:</span> check the listing is the
-                  exact model, size and colour, and confirm the total with delivery on the shop’s page.
+                  Delivery costs are not shown. Confirm the price, availability and delivery cost with
+                  the shop before you buy.
                   {WARRANTY_CATEGORIES.has(cluster.category ?? '') &&
-                    ' Check the warranty and whether it is a local or imported unit.'}{' '}
+                    ' Check the exact specification, condition and warranty.'}{' '}
                   <a href="#about-comparison" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
-                    Wrong price?
+                    Report a problem
                   </a>
                 </p>
               )}
@@ -418,8 +435,9 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               )}
             </section>
 
-            {/* Real history only — never synthesised to fill the slot. */}
-            {cluster.price_history && cluster.price_history.length >= 2 && (
+            {/* Real history only — never synthesised to fill the slot, and
+                only where the cleaned series has two points to draw. */}
+            {history.length >= 2 && cluster.price_history && (
               <section id="price-history" className="mt-10 scroll-mt-32">
                 <Suspense fallback={<Skeleton className="h-[420px] w-full" />}>
                   <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
@@ -427,23 +445,13 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               </section>
             )}
 
-            {/* ── About this comparison ── */}
+            {/* ── About these prices ── */}
             <section aria-labelledby="about-comparison" className="mt-10 scroll-mt-32 space-y-3">
-              <h2 id="about-comparison" className="section-title scroll-mt-32">About this comparison</h2>
+              <h2 id="about-comparison" className="section-title scroll-mt-32">About these prices</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We match the same product across shops by its listing details, then sort every price by
-                price. Each row shows the shop’s own listing title so you can check the match.
-                {cluster.last_seen && (
-                  <>
-                    {' '}Last full check{' '}
-                    {new Date(cluster.last_seen).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                    .
-                  </>
-                )}{' '}
+                We group shop listings using product details. Check each listing’s specification and
+                condition before buying.
+                {cluster.last_seen && <> Prices checked {checkedDate(cluster.last_seen)}.</>}{' '}
                 <Link to="/how-we-make-money" className="text-link underline underline-offset-4 decoration-link/40 hover:decoration-link">
                   How we make money
                 </Link>
@@ -451,7 +459,12 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               <SpreadEvidence cluster={cluster} />
               <MatchProvenance cluster={cluster} />
               <div className="-ml-3">
-                <ReportDialog cluster={cluster} capturedAt={capturedAt} />
+                <ReportDialog
+                  cluster={cluster}
+                  capturedAt={capturedAt}
+                  stores={offers.map(([store]) => store)}
+                  version={config ? variantLabel(config) : null}
+                />
               </div>
             </section>
           </div>
@@ -461,7 +474,11 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
             <div className="sticky top-20 space-y-4">
               <ProductPhoto image={image} />
               {bestCard}
-              <AdSlot placement="product-rail" />
+              {/* The 300×250 rail stays reserved in lib/ads.ts but is not
+                  rendered here: with the sponsored-shop card above the list
+                  it made two paid elements in one viewport (DESIGN_RULES.md
+                  §5 rule 4; journey review). One paid position per product
+                  page until that rule changes. */}
             </div>
           </aside>
         </div>
@@ -481,7 +498,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               <p className="price-num text-base font-bold text-foreground">{formatPrice(lowest[1].price)}</p>
             </div>
             <Button asChild className="h-10 px-5" tabIndex={showBar ? 0 : -1}>
-              <a href={lowest[1].url} target="_blank" rel="noopener noreferrer">
+              <a href={lowest[1].url} target="_blank" rel="noopener noreferrer" aria-label={`Go to shop: ${storeName(lowest[0])}, opens in a new tab`}>
                 Go to shop
               </a>
             </Button>
@@ -501,7 +518,7 @@ function ProductCrumbs({ cluster }: { cluster: ClusterDetail }) {
   const department = departmentForCategory(slug);
   const brand = cluster.brand?.trim().toLowerCase() ?? '';
   const items: Crumb[] = [];
-  if (department) items.push({ label: department.label, to: `/aisle/${department.id}` });
+  if (department) items.push({ label: departmentDisplayLabel(department), to: `/aisle/${department.id}` });
   if (slug) items.push({ label: categoryLabel(slug), to: `/browse/${slug}` });
   // The brand page (/browse/<category>/<brand>) renders any brand; link it
   // only when the value is safe as a URL segment.
@@ -511,33 +528,59 @@ function ProductCrumbs({ cluster }: { cluster: ClusterDetail }) {
   return <Breadcrumbs items={items} />;
 }
 
-function VariantChip({
-  active,
-  onClick,
-  children,
+/**
+ * The version selector as a real radio group: arrow keys move and select,
+ * only the chosen chip is in the Tab order (design audit, A02). "All
+ * versions" is the last option; it is not like-for-like and the list above
+ * says so.
+ */
+function VersionChips({
+  labels,
+  selected,
+  onSelect,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  labels: string[];
+  selected: number;
+  onSelect: (index: number) => void;
 }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const move = (from: number, delta: number) => {
+    const next = (from + delta + labels.length) % labels.length;
+    onSelect(next);
+    refs.current[next]?.focus();
+  };
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      onClick={onClick}
-      className={`h-9 rounded-full border px-4 text-sm font-medium transition-colors active:translate-y-px ${
-        active
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border bg-card text-foreground hover:border-muted-foreground'
-      }`}
-    >
-      {children}
-    </button>
+    <div role="radiogroup" aria-label="Choose version" className="mt-4 flex flex-wrap gap-2">
+      {labels.map((label, i) => {
+        const active = selected === i;
+        return (
+          <button
+            key={label}
+            ref={(el) => { refs.current[i] = el; }}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            tabIndex={active ? 0 : -1}
+            onClick={() => onSelect(i)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); move(i, 1); }
+              if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); move(i, -1); }
+            }}
+            className={`h-9 rounded-full border px-4 text-sm font-medium transition-colors active:translate-y-px ${
+              active
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-card text-foreground hover:border-muted-foreground'
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
-function OfferRow({ store, offer, lowest }: { store: string; offer: ClusterStore; lowest: boolean }) {
+function OfferRow({ store, offer, product, lowest }: { store: string; offer: ClusterStore; product: string; lowest: boolean }) {
   return (
     <li className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-4">
       <StoreMark store={store} url={offer.url} size={36} />
@@ -550,12 +593,20 @@ function OfferRow({ store, offer, lowest }: { store: string; offer: ClusterStore
             </span>
           )}
         </div>
-        {offer.title && <p className="mt-0.5 truncate text-xs text-muted-foreground">{offer.title}</p>}
+        {/* The shop's own title, two lines: it is the evidence a shopper
+            checks the match against, and one truncated line hid the part
+            that differed (review §3). */}
+        {offer.title && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{offer.title}</p>}
       </div>
       <div className="flex flex-shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-4">
         <span className="price-num text-base font-bold text-foreground">{formatPrice(offer.price)}</span>
         <Button asChild size="sm" className="h-9 px-4 text-xs">
-          <a href={offer.url} target="_blank" rel="noopener noreferrer">
+          <a
+            href={offer.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Go to shop: ${storeName(store)}, ${product}, opens in a new tab`}
+          >
             Go to shop
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </a>
@@ -568,8 +619,9 @@ function OfferRow({ store, offer, lowest }: { store: string; offer: ClusterStore
 type SavingPair = { low: [string, number]; high: [string, number]; basis: string | null };
 
 /**
- * The ⓘ beside the saving chip (PriceSpy's pattern): says exactly which two
- * prices the percentage compares, so "Save 12%" is never a bare claim.
+ * The ⓘ beside the percentage chip (PriceSpy's pattern): says exactly which
+ * two prices it compares, so "12% lower" is never a bare claim. A button, so
+ * it works by keyboard and touch, not hover alone.
  */
 function SavingExplainer({ pair }: { pair: SavingPair }) {
   return (
@@ -577,7 +629,7 @@ function SavingExplainer({ pair }: { pair: SavingPair }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="What this saving compares"
+          aria-label="What this percentage compares"
           className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
         >
           <Info className="h-3.5 w-3.5" aria-hidden="true" />
@@ -585,8 +637,8 @@ function SavingExplainer({ pair }: { pair: SavingPair }) {
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 text-sm">
         <p className="text-foreground">
-          The saving compares the cheapest and the dearest shop for the same product
-          {pair.basis ? ` (${pair.basis})` : ''}:
+          Compared with the highest matching price shown
+          {pair.basis ? ` for ${pair.basis}` : ''}:
         </p>
         <dl className="mt-2 space-y-1">
           <div className="flex justify-between gap-3">
@@ -605,7 +657,9 @@ function SavingExplainer({ pair }: { pair: SavingPair }) {
 
 function BestPriceCard({
   offer,
+  offerCount,
   likelyUsed,
+  stale,
   saving,
   savingPair,
   onAlert,
@@ -615,7 +669,10 @@ function BestPriceCard({
   onSave,
 }: {
   offer: Offer | null;
+  offerCount: number;
   likelyUsed: boolean;
+  /** The last check is over STALE_AFTER_DAYS old: the price is a record, not a quote. */
+  stale: boolean;
   saving: ReturnType<typeof displaySaving>;
   savingPair: SavingPair | null;
   onAlert: () => void;
@@ -624,9 +681,18 @@ function BestPriceCard({
   saved: boolean;
   onSave: () => void;
 }) {
+  // The heading says what the number is. "Best" bundled price, quality and
+  // service into one word the data cannot support (design audit §7).
+  const heading = likelyUsed
+    ? 'Lowest asking price (used)'
+    : stale
+      ? 'Last recorded price'
+      : offerCount > 1
+        ? 'Lowest listed price'
+        : 'Listed price';
   return (
     <div className="rounded-md border border-border p-5">
-      <p className="microcopy-label">{likelyUsed ? 'Lowest asking price (used)' : 'Best price'}</p>
+      <p className="microcopy-label">{heading}</p>
       {offer ? (
         <>
           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -634,20 +700,28 @@ function BestPriceCard({
             <SavingBadge saving={saving} />
             {savingPair && <SavingExplainer pair={savingPair} />}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">at {storeName(offer[0])}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            at {storeName(offer[0])}
+            {stale && <> · may have changed since it was checked</>}
+          </p>
           <Button asChild className="mt-4 h-11 w-full">
-            <a href={offer[1].url} target="_blank" rel="noopener noreferrer">
+            <a
+              href={offer[1].url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Go to shop: ${storeName(offer[0])}, opens in a new tab`}
+            >
               Go to shop
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           </Button>
         </>
       ) : (
-        <p className="mt-1 text-sm text-muted-foreground">No current price.</p>
+        <p className="mt-1 text-sm text-muted-foreground">No prices available.</p>
       )}
       <Button variant="outline" className="mt-2 h-11 w-full" onClick={onAlert}>
         <Bell className="h-4 w-4" aria-hidden="true" />
-        Set a price alert
+        Save target price
       </Button>
       <div className="mt-3 flex items-center justify-between text-sm">
         <button
@@ -661,7 +735,7 @@ function BestPriceCard({
           ) : (
             <BarChart3 className="h-4 w-4" aria-hidden="true" />
           )}
-          {comparing ? 'Added to compare' : 'Compare with others'}
+          {comparing ? 'Added to compare' : 'Add to compare'}
         </button>
         <button
           type="button"

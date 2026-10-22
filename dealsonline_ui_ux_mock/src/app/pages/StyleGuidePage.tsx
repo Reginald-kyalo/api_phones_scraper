@@ -1,4 +1,4 @@
-import { Bell, ExternalLink } from 'lucide-react';
+import { ExternalLink, Target } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { SavingBadge } from '../components/common/SavingBadge';
 import { StoreMark } from '../components/common/StoreMark';
@@ -62,7 +62,7 @@ export default function StyleGuidePage() {
       <Section title="Buttons">
         <div className="flex flex-wrap items-center gap-3">
           <Button>Go to shop <ExternalLink className="h-4 w-4" aria-hidden="true" /></Button>
-          <Button variant="outline"><Bell className="h-4 w-4" aria-hidden="true" /> Set a price alert</Button>
+          <Button variant="outline"><Target className="h-4 w-4" aria-hidden="true" /> Save target price</Button>
           <Button variant="ghost">Clear filters</Button>
           <Button variant="link">How we make money</Button>
           <button type="button" className="h-9 rounded-full border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground">
@@ -74,7 +74,7 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
-      <Section title="Saving and price">
+      <Section title="Price difference and price">
         <div className="flex flex-wrap items-center gap-4">
           <SavingBadge saving={{ pct: 18, kes: 9400 }} />
           <span className="price-num text-lg font-bold text-foreground">KES 52,000</span>

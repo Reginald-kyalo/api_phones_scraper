@@ -14,7 +14,7 @@ const KES = new Intl.NumberFormat('en-KE', {
 export function formatPrice(value: number | null | undefined): string {
   // Guard junk/placeholder prices (the feed has items priced at 0.1 that would
   // otherwise round to "KES 0").
-  if (value == null || Number.isNaN(value) || value < 1) return 'Price N/A';
+  if (value == null || Number.isNaN(value) || value < 1) return 'Price unavailable';
   return `KES ${KES.format(Math.round(value))}`;
 }
 
@@ -24,37 +24,27 @@ export function shopLabel(n: number): string {
 }
 
 /**
- * How many shops this product can actually be COMPARED across.
+ * The difference between the dearest and cheapest shop, as a percentage of
+ * the dearest price: what a shopper keeps by choosing the cheapest.
  *
- * Below two there is no comparison, and saying so is better than a confident
- * "1 shop" above an expander with nothing worth opening.
- */
-export function comparedLabel(n: number): string {
-  if (n <= 0) return 'no price available';
-  if (n === 1) return 'only 1 shop — no comparison';
-  return `compared across ${n} shops`;
-}
-
-/**
- * What a shopper actually saves by buying at the cheapest store, as a percentage.
+ * ⛔ `like_for_like_spread_pct` IS NOT that number and must never be rendered
+ * as one. The engine computes it as `(dearest - cheapest) / cheapest` — a
+ * markup over the low price. The difference divides by the price you avoid
+ * paying:
  *
- * ⛔ `like_for_like_spread_pct` IS NOT A SAVING and must never be rendered as
- * one. The engine computes it as `(dearest - cheapest) / cheapest` — a markup
- * over the low price. The saving divides by the price you avoid paying:
- *
- *     67 -> 112     spread  = 45/67  = 67%     <- what the API publishes
- *                   saving  = 45/112 = 40%     <- what the shopper gets
+ *     67 -> 112     spread     = 45/67  = 67%     <- what the API publishes
+ *                   difference = 45/112 = 40%     <- what the shopper keeps
  *
  * Measured over the 4,595 shipped clusters with a spread: the two agree closely
  * for most (median gap 0.4pp) but diverge badly in the tail — 312 clusters (7%)
- * overstate the saving by 20 points or more, and the worst renders a "3750%"
- * badge against a real saving of 97%. A saving above 100% is impossible, which
- * is how you can tell at a glance that the raw spread is the wrong number for a
- * shopping surface.
+ * overstate it by 20 points or more, and the worst renders a "3750%" badge
+ * against a real difference of 97%. A difference above 100% is impossible,
+ * which is how you can tell at a glance that the raw spread is the wrong
+ * number for a shopping surface.
  *
- * Algebra: saving = s / (1 + s), so the conversion is exact and needs no prices.
- * Returns null where there is no spread to convert, so callers keep hiding the
- * badge rather than rendering "0%".
+ * Algebra: difference = s / (1 + s), so the conversion is exact and needs no
+ * prices. Returns null where there is no spread to convert, so callers keep
+ * hiding the badge rather than rendering "0%".
  */
 export function savingPct(spreadPct: number | null | undefined): number | null {
   if (spreadPct == null || Number.isNaN(spreadPct) || spreadPct <= 0) return null;
@@ -62,28 +52,29 @@ export function savingPct(spreadPct: number | null | undefined): number | null {
 }
 
 /**
- * Savings above this are almost always a mismatched pair (a 1-pack against a
- * 2-pack, a used phone against a new one), not a deal. See DESIGN_RULES.md §5.
+ * Differences above this are almost always a mismatched pair (a 1-pack
+ * against a 2-pack, a used phone against a new one), not two prices for one
+ * product. See DESIGN_RULES.md §5.
  */
 export const MAX_DISPLAY_SAVING_PCT = 60;
-/** A saving smaller than this in cash is noise, whatever its percentage. */
+/** A difference smaller than this in cash is noise, whatever its percentage. */
 export const MIN_DISPLAY_SAVING_KES = 50;
 
 export interface DisplaySaving {
-  /** Rounded percentage the shopper keeps, always 1 to MAX_DISPLAY_SAVING_PCT. */
+  /** Rounded percentage lower than the dearest shop, always 1 to MAX_DISPLAY_SAVING_PCT. */
   pct: number;
-  /** Cash saved buying at the cheapest shop instead of the dearest. */
+  /** Cash difference between the cheapest and the dearest shop. */
   kes: number;
 }
 
 /**
- * The ONE saving a shopper may see. Every badge, filter and sentence that
- * mentions a saving goes through here, so a product carries one number on
+ * The ONE price difference a shopper may see. Every badge, filter and sentence
+ * that mentions one goes through here, so a product carries one number on
  * every page.
  *
  * Takes the engine's spread (a markup over the cheapest price) and the cheapest
- * price, converts to a real saving, and returns null — render nothing — when
- * the number is implausible (over 60%) or trivial (under KES 50).
+ * price, converts to the shopper's percentage, and returns null — render
+ * nothing — when the number is implausible (over 60%) or trivial (under KES 50).
  */
 export function displaySaving(
   spreadPct: number | null | undefined,
@@ -103,11 +94,16 @@ export function clusterSaving(cluster: {
   best_price: number | null;
   n_stores_priced?: number | null;
   n_stores: number | null;
+  condition_basis?: string | null;
 }): DisplaySaving | null {
-  // A saving between shops needs two shops with a price. Some rows carry a
-  // spread from shops that no longer quote one, which read "Save 35%" above
+  // A difference between shops needs two shops with a price. Some rows carry a
+  // spread from shops that no longer quote one, which read "12% lower" above
   // "lowest of 1 shop".
   if (pricedShopCount(cluster) < 2) return null;
+  // Used and refurbished listings are asking prices for items of unknown
+  // grade: two of them are not the same product at two prices, so no
+  // percentage is claimed between them (design audit 2026-10-21, T02).
+  if (cluster.condition_basis === 'likely_used') return null;
   return displaySaving(cluster.like_for_like_spread_pct, cluster.best_price);
 }
 
@@ -135,7 +131,13 @@ export function shortKes(value: number): string {
   return String(Math.round(value));
 }
 
-/** "2 h ago", "3 days ago", "12 Sep 2026". For "checked …" lines. */
+const DAY_MS = 86_400_000;
+
+/**
+ * "2 h ago" within the last day, then the date: "18 Jul 2026". For "Checked …"
+ * lines. A relative time reads as fresh, so it is only used while it is; an
+ * older check is shown as the date it happened (design audit, §7).
+ */
 export function checkedAgo(iso: string | null | undefined, now = Date.now()): string | null {
   if (!iso) return null;
   const then = new Date(iso).getTime();
@@ -143,9 +145,14 @@ export function checkedAgo(iso: string | null | undefined, now = Date.now()): st
   const hours = Math.max(0, Math.round((now - then) / 3_600_000));
   if (hours < 1) return 'under an hour ago';
   if (hours < 24) return `${hours} h ago`;
-  const days = Math.round(hours / 24);
-  if (days <= 14) return `${days} ${days === 1 ? 'day' : 'days'} ago`;
-  return checkedAt(iso);
+  return checkedDate(iso);
+}
+
+/** "18 Jul 2026": the day a price was checked. */
+export function checkedDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Nairobi',
+  });
 }
 
 /** "10 Jul 2026, 15:36" in Kenyan time: the exact moment a price was checked. */
@@ -154,6 +161,20 @@ export function checkedAt(iso: string): string {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
     timeZone: 'Africa/Nairobi',
   });
+}
+
+/** A check older than this is shown as a recorded price, not a current one. */
+export const STALE_AFTER_DAYS = 30;
+
+/**
+ * Decided when the page is viewed, not when the data was captured: a price
+ * checked in July is historical in October whatever the capture said.
+ * Unknown dates are not stale; they are unknown, and say so elsewhere.
+ */
+export function isStale(iso: string | null | undefined, now = Date.now()): boolean {
+  if (!iso) return false;
+  const then = new Date(iso).getTime();
+  return !Number.isNaN(then) && now - then > STALE_AFTER_DAYS * DAY_MS;
 }
 
 /**
@@ -216,31 +237,50 @@ export function brandName(brand: string): string {
 }
 
 /**
- * One line answering "is now a good time to buy?", from the recorded history
- * (benchmark §2.6). Null unless the data can support it: three or more
- * plausible prices in the last 90 days. Never says "deal" or "cheap": it
- * states where today's price sits against what we recorded.
+ * The recorded prices a chart or a verdict may use, oldest first: dated,
+ * positive, and within 5x of the series median (the capture has a few
+ * misplaced decimal points: KES 1,159,900 for an 11,599 phone). The product
+ * page and the chart both read this, so the "Price history" link is only
+ * offered where the chart will actually draw (design audit, C05).
+ */
+export function usablePriceHistory(
+  history: { t: string; price: number }[] | null | undefined,
+): { t: string; price: number }[] {
+  if (!history?.length) return [];
+  const valid = history.filter((p) => p.price >= 1 && !Number.isNaN(Date.parse(p.t)));
+  const ordered = valid.map((p) => p.price).sort((a, b) => a - b);
+  const median = ordered[Math.floor(ordered.length / 2)] ?? 0;
+  return valid
+    .filter((p) => median === 0 || (p.price <= median * 5 && p.price >= median / 5))
+    .sort((a, b) => Date.parse(a.t) - Date.parse(b.t));
+}
+
+/**
+ * One line placing today's lowest price against what we recorded, from the
+ * price history. Null unless the data supports it: three or more recorded
+ * prices in the last 90 days, counted from today (not from the newest
+ * record, which would call a July series "the last 90 days" in October), and
+ * a record within the last 30 days so the comparison is with a live series.
+ * Never says "deal" or "cheap": it states where the price sits.
  */
 export function priceVerdict(
   history: { t: string; price: number }[] | null | undefined,
   current: number | null | undefined,
+  now = Date.now(),
 ): string | null {
-  if (!history?.length || !hasPrice(current)) return null;
-  const valid = history.filter((p) => p.price >= 1 && !Number.isNaN(Date.parse(p.t)));
-  const ordered = valid.map((p) => p.price).sort((a, b) => a - b);
-  const median = ordered[Math.floor(ordered.length / 2)] ?? 0;
-  // Same guard as the chart: a misplaced decimal point is not a price.
-  const sane = valid.filter((p) => p.price <= median * 5 && p.price >= median / 5);
+  if (!hasPrice(current)) return null;
+  const sane = usablePriceHistory(history);
   if (!sane.length) return null;
-  const newest = Math.max(...sane.map((p) => Date.parse(p.t)));
-  const recent = sane.filter((p) => Date.parse(p.t) >= newest - 90 * 86_400_000);
+  const newest = Date.parse(sane[sane.length - 1].t);
+  if (now - newest > STALE_AFTER_DAYS * DAY_MS) return null;
+  const recent = sane.filter((p) => Date.parse(p.t) >= now - 90 * DAY_MS);
   if (recent.length < 3) return null;
   const prices = recent.map((p) => p.price);
   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
   const low = Math.min(...prices);
   const threshold = Math.max(50, avg * 0.03);
-  if (current <= low && Math.max(...prices) - low >= threshold) return 'The lowest price we have recorded in 90 days.';
-  if (avg - current >= threshold) return `${formatPrice(avg - current)} below its 90-day average.`;
-  if (current - avg >= threshold) return `${formatPrice(current - avg)} above its 90-day average.`;
-  return 'About its usual price over the last 90 days.';
+  if (current <= low && Math.max(...prices) - low >= threshold) return 'The lowest price we have recorded in the last 90 days.';
+  if (avg - current >= threshold) return `${formatPrice(avg - current)} below the average we recorded over 90 days.`;
+  if (current - avg >= threshold) return `${formatPrice(current - avg)} above the average we recorded over 90 days.`;
+  return 'About the average we recorded over the last 90 days.';
 }

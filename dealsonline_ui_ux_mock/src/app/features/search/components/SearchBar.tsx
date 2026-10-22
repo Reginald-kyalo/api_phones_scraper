@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useLocation, Link } from 'react-router';
 import { Search, X, LayoutGrid, ChevronRight, Package } from 'lucide-react';
 import { Input } from '../../../components/ui/input';
 import { clustersApi, type ClusterSummary } from '../../../lib/api';
@@ -8,6 +8,9 @@ import { imageUsable } from '../../../lib/images';
 import { readFilters } from '../../../lib/listing';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { categoryLabel } from '../../../lib/categories';
+
+/** The one name of the search field, visible and accessible, on every page. */
+export const SEARCH_PLACEHOLDER = 'Search products and brands';
 
 interface SearchBarProps {
   className?: string;
@@ -24,18 +27,29 @@ interface SearchBarProps {
  */
 type Suggestion = { slug: string; label: string; count: number };
 
+/** On the results page the field shows the query it answers, so it can be refined. */
+function queryFromUrl(pathname: string, search: string): string {
+  return pathname === '/search' ? new URLSearchParams(search).get('q') ?? '' : '';
+}
+
 export default function SearchBar({
   className = '',
   variant = 'compact',
-  placeholder = 'Search products...',
+  placeholder = SEARCH_PLACEHOLDER,
   onSearch,
 }: SearchBarProps) {
-  const [query, setQuery] = useState('');
+  const location = useLocation();
+  const [query, setQuery] = useState(() => queryFromUrl(location.pathname, location.search));
   const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<Suggestion[]>([]);
   const [products, setProducts] = useState<ClusterSummary[]>([]);
+
+  // Back and forward between result pages: the field follows the URL.
+  useEffect(() => {
+    if (location.pathname === '/search') setQuery(queryFromUrl(location.pathname, location.search));
+  }, [location.pathname, location.search]);
 
   // Product suggestions (benchmark §2.2): photo, name and "from KES X · N
   // shops", as idealo and PriceRunner show. Debounced, from three letters.
@@ -85,8 +99,9 @@ export default function SearchBar({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      // The query stays in the field: the results page shows it, and a
+      // shopper refines a search by editing it, not by retyping it.
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-      setQuery('');
       setIsFocused(false);
       onSearch?.();
     }
@@ -98,7 +113,6 @@ export default function SearchBar({
     .slice(0, 4);
 
   const close = () => {
-    setQuery('');
     setIsFocused(false);
     onSearch?.();
   };
@@ -135,7 +149,7 @@ export default function SearchBar({
                           {' · '}
                         </>
                       )}
-                      {shopLabel(Math.max(shops, 1))}
+                      {shops >= 1 ? `${shops} listed ${shops === 1 ? 'shop' : 'shops'}` : shopLabel(1)}
                     </p>
                   </div>
                 </Link>
@@ -173,7 +187,7 @@ export default function SearchBar({
           }`}
         >
           <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          Search all products for “{query.trim()}”
+          View results for “{query.trim()}”
         </button>
       </div>
     );
@@ -192,7 +206,7 @@ export default function SearchBar({
               type="search"
               name="q"
               autoComplete="off"
-              aria-label="Search products"
+              aria-label={SEARCH_PLACEHOLDER}
               placeholder={placeholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -215,14 +229,14 @@ export default function SearchBar({
   if (variant === 'hero') {
     return (
       <div ref={containerRef} className={`relative ${className}`}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} role="search">
           <div className="relative">
             <Search aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="search"
               name="q"
               autoComplete="off"
-              aria-label="Search products"
+              aria-label={SEARCH_PLACEHOLDER}
               placeholder={placeholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -234,7 +248,7 @@ export default function SearchBar({
               aria-label="Search"
               className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 rounded-full bg-teal text-white flex items-center justify-center gap-1.5 hover:bg-teal-deep transition-colors text-sm font-medium"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4" aria-hidden="true" />
               <span className="hidden sm:inline">Search</span>
             </button>
           </div>
@@ -246,14 +260,14 @@ export default function SearchBar({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} role="search">
         <div className="relative">
           <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="search"
             name="q"
             autoComplete="off"
-            aria-label="Search products"
+            aria-label={SEARCH_PLACEHOLDER}
             placeholder={placeholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -270,7 +284,7 @@ export default function SearchBar({
               aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-muted-foreground" />
+              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-muted-foreground" aria-hidden="true" />
             </button>
           )}
         </div>

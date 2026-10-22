@@ -1,4 +1,4 @@
-import { familyDisplayLabel } from '../../lib/navLabels';
+import { departmentDisplayLabel, familyDisplayLabel } from '../../lib/navLabels';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronDown } from 'lucide-react';
@@ -12,7 +12,8 @@ interface Props {
 
 /**
  * Static copy of the production mobile category accordion. It expands one
- * design department at a time; families are plain groups, no boxes.
+ * design department at a time; families are plain groups, no boxes. Names
+ * and link labels match the desktop menu word for word.
  */
 export default function MobileCategoryNav({ onNavigate }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -20,13 +21,14 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
   return (
     <div>
       <p className="px-5 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Shop by category
+        Browse categories
       </p>
 
       <ul>
         {TAXONOMY_DEPARTMENTS.map((department) => {
           const { Icon } = department;
           const isOpen = openId === department.id;
+          const label = departmentDisplayLabel(department);
           return (
             <li key={department.id} className="border-b border-border/60 last:border-0">
               <button
@@ -36,7 +38,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
                 className="w-full flex items-center gap-3 px-5 py-3 text-sm text-left text-foreground hover:bg-surface-alt transition-colors"
               >
                 <Icon className="w-4 h-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />
-                <span className="flex-1 truncate">{department.label}</span>
+                <span className="flex-1 truncate">{label}</span>
                 {department.id !== 'phones-wearables' && <span className="text-xs text-muted-foreground tabular-nums shrink-0">{department.n_clusters.toLocaleString()}</span>}
                 <ChevronDown
                   aria-hidden="true"
@@ -48,7 +50,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
 
               {isOpen && (
                 <div className="pb-2 bg-surface-alt">
-                  {department.families.length > 0 ? (
+                  {department.families.length > 0 && (
                     <div className="px-5 py-2 space-y-2">
                       {orderedFamilies(department).map((family) => (
                         <details key={family.id} className="group" open={family.shelves.length <= 6}>
@@ -68,10 +70,6 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
                         </details>
                       ))}
                     </div>
-                  ) : (
-                    <p className="pl-12 pr-5 py-2 text-sm text-muted-foreground">
-                      This department is a single shelf.
-                    </p>
                   )}
 
                   <Link
@@ -79,7 +77,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
                     onClick={onNavigate}
                     className="block pl-12 pr-5 py-2 text-sm font-medium text-link hover:text-link-hover"
                   >
-                    Show all {department.label} →
+                    Browse {label.toLowerCase()}
                   </Link>
                 </div>
               )}
@@ -93,7 +91,7 @@ export default function MobileCategoryNav({ onNavigate }: Props) {
         onClick={onNavigate}
         className="block px-5 py-3 text-sm font-medium text-link hover:text-link-hover"
       >
-        All categories →
+        All categories
       </Link>
     </div>
   );

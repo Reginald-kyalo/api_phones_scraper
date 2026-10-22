@@ -35,15 +35,15 @@ export default function ComparisonBar() {
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
                   ) : (
-                    <Package className="h-5 w-5 text-muted-foreground/40" />
+                    <Package className="h-5 w-5 text-muted-foreground/40" aria-hidden="true" />
                   )}
                 </div>
                 <button
                   onClick={() => removeFromComparison(item.product_id)}
-                  aria-label={`Remove ${item.name}`}
+                  aria-label={`Remove ${item.name} from comparison`}
                   className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-canvas-ink text-white rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3 w-3" aria-hidden="true" />
                 </button>
               </div>
             ))}
@@ -54,11 +54,11 @@ export default function ComparisonBar() {
             <Button asChild size="sm" className="gap-2">
               <Link to="/compare">
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                Compare {comparisonItems.length}
+                Compare ({comparisonItems.length})
               </Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={clearComparison} className="text-muted-foreground">
-              Clear
+              Clear comparison
             </Button>
           </div>
         </div>

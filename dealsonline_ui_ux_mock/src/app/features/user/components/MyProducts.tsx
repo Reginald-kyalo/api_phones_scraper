@@ -3,17 +3,21 @@ import { Link } from 'react-router';
 import { useLocalFavorites, useLocalPRAlerts } from '../../../hooks/useLocalStorage';
 import { useRecentlyViewed } from '../../../hooks/useRecentlyViewed';
 import { formatPrice } from '../../../lib/format';
-import { Heart, Bell, Clock, Package, Star } from 'lucide-react';
+import { Heart, Target, Clock, Package } from 'lucide-react';
 
-type PanelTab = 'lists' | 'alerts' | 'recent';
+type PanelTab = 'lists' | 'targets' | 'recent';
 
 /**
- * "My products": recently viewed, favourites and price alerts.
+ * "My products": recently viewed, favourites and price targets.
  *
  * This used to be a fixed dock at the bottom right of every page, where it
  * covered the price row on product pages. It now lives behind a header menu
  * (DESIGN_RULES.md: nothing sits on top of a price). Rendered inside a
  * DropdownMenuContent by the header.
+ *
+ * Everything here is read from this browser's storage. A target is a number
+ * the shopper saved, shown as saved; nothing watches prices or marks a
+ * target "reached" (design audit §12).
  */
 export function MyProductsContent() {
   const [activeTab, setActiveTab] = useState<PanelTab>('recent');
@@ -28,7 +32,7 @@ export function MyProductsContent() {
         {([
           { id: 'recent' as PanelTab, icon: Clock, label: 'Recently viewed' },
           { id: 'lists' as PanelTab, icon: Heart, label: 'Favourites' },
-          { id: 'alerts' as PanelTab, icon: Bell, label: 'Price alerts' },
+          { id: 'targets' as PanelTab, icon: Target, label: 'Price targets' },
         ]).map((tab) => (
           <button
             key={tab.id}
@@ -50,10 +54,10 @@ export function MyProductsContent() {
       <div className="flex-1 overflow-y-auto p-2">
         {activeTab === 'recent' &&
           (recentItems.length === 0 ? (
-            <EmptyState icon={Clock} text="Products you open will appear here." />
+            <EmptyState icon={Clock} text="No recently viewed products" />
           ) : (
             <div className="space-y-1">
-              {recentItems.slice(0, 10).map((item: any) => (
+              {recentItems.slice(0, 10).map((item) => (
                 <ProductRow key={item.id} id={item.id} name={item.name} image={item.image} subtitle={item.category} />
               ))}
             </div>
@@ -61,39 +65,34 @@ export function MyProductsContent() {
 
         {activeTab === 'lists' &&
           (favorites.length === 0 ? (
-            <EmptyState icon={Heart} text="No favourites yet." />
+            <EmptyState icon={Heart} text="No favourites yet" />
           ) : (
             <div className="space-y-1">
-              {favorites.slice(0, 10).map((fav: any) => (
+              {favorites.slice(0, 10).map((fav) => (
                 <ProductRow key={fav.product_id} id={fav.product_id} name={fav.name} image={fav.image} subtitle={fav.category} />
               ))}
               <Link to="/favorites" className="block text-xs text-link hover:underline text-center py-1">
-                All favourites
+                View all favourites
               </Link>
             </div>
           ))}
 
-        {activeTab === 'alerts' &&
+        {activeTab === 'targets' &&
           (alerts.length === 0 ? (
-            <EmptyState icon={Bell} text="No price alerts yet. Set one from any product page." />
+            <EmptyState icon={Target} text="No price targets yet" />
           ) : (
             <div className="space-y-1">
-              {alerts.slice(0, 10).map((alert: any) => (
+              {alerts.slice(0, 10).map((alert) => (
                 <ProductRow
                   key={alert.alert_id}
                   id={alert.product_id}
                   name={alert.name}
                   image={alert.image}
-                  subtitle={
-                    alert.triggered
-                      ? `Target ${formatPrice(alert.targetPrice)} reached`
-                      : `Target ${formatPrice(alert.targetPrice)}`
-                  }
-                  highlight={alert.triggered}
+                  subtitle={`Target ${formatPrice(alert.targetPrice)}`}
                 />
               ))}
               <Link to="/alerts" className="block text-xs text-link hover:underline text-center py-1">
-                All price alerts
+                View all price targets
               </Link>
             </div>
           ))}
@@ -105,7 +104,7 @@ export function MyProductsContent() {
 function EmptyState({ icon: Icon, text }: { icon: React.ComponentType<{ className?: string }>; text: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center text-muted-foreground">
-      <Icon className="h-6 w-6 mb-2 text-muted-foreground/40" />
+      <Icon className="h-6 w-6 mb-2 text-muted-foreground/40" aria-hidden="true" />
       <p className="text-sm">{text}</p>
     </div>
   );
@@ -116,17 +115,11 @@ function ProductRow({
   name,
   image,
   subtitle,
-  highlight,
-  rating,
-  productType,
 }: {
   id: string;
   name: string;
   image: string;
   subtitle?: string;
-  highlight?: boolean;
-  rating?: number | null;
-  productType?: string;
 }) {
   return (
     <Link
@@ -137,26 +130,18 @@ function ProductRow({
         {image ? (
           <img src={image} alt="" className="w-full h-full object-contain p-0.5" loading="lazy" />
         ) : (
-          <Package className="h-4 w-4 text-muted-foreground/40" />
+          <Package className="h-4 w-4 text-muted-foreground/40" aria-hidden="true" />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors">
+        {/* Hover uses the link token, not primary: dark primary on a card
+            measured 3.62:1 (review, gate 5). */}
+        <p className="text-xs font-medium text-foreground truncate group-hover:text-link transition-colors">
           {name}
         </p>
-        <div className="flex items-center gap-1.5">
-          {rating != null && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-              <Star className="h-2.5 w-2.5 fill-warning text-warning" />
-              {rating.toFixed(1)}
-            </span>
-          )}
-          {subtitle && (
-            <span className={`text-[11px] truncate ${highlight ? 'text-success font-medium' : 'text-muted-foreground'}`}>
-              {subtitle}
-            </span>
-          )}
-        </div>
+        {subtitle && (
+          <span className="block text-[11px] truncate text-muted-foreground">{subtitle}</span>
+        )}
       </div>
     </Link>
   );

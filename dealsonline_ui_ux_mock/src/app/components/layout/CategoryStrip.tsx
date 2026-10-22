@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { LayoutGrid } from 'lucide-react';
 import { TAXONOMY_DEPARTMENTS } from '../../data/taxonomyTree';
+import { departmentDisplayLabel } from '../../lib/navLabels';
 
 /**
  * The homepage department strip — the same 19 canonical design departments the
@@ -10,32 +11,11 @@ import { TAXONOMY_DEPARTMENTS } from '../../data/taxonomyTree';
  * that live list, counts measured 2026-09-12. Links go to `/aisle/:id`, never
  * to `/browse/:id`, because a spine department id is not a captured category
  * slug — the same separation production keeps with `aisleHref`.
+ *
+ * Names come from departmentDisplayLabel, the same names the menus, the
+ * department page and the breadcrumbs use, so a tile never says "Computing"
+ * for a page headed "Computers & networking".
  */
-// Short, sentence-case names for the tiles; the department page carries the
-// full name. "Health, Beauty &…" told the shopper nothing.
-const SHORT_LABEL: Record<string, string> = {
-  'phones-wearables': 'Phones & wearables',
-  'groceries-everyday-essentials': 'Groceries',
-  'tv-audio-home-entertainment': 'TV & audio',
-  'computing-networking': 'Computing',
-  'health-beauty-personal-care': 'Health & beauty',
-  'home-appliances': 'Appliances',
-  'home-furniture-decor': 'Home & furniture',
-  'kitchen-dining-cookware': 'Kitchen & dining',
-  'office-school-stationery': 'Office & school',
-  'building-electrical-hardware': 'Building & hardware',
-  'fashion-accessories': 'Fashion',
-  'power-solar-energy': 'Power & solar',
-  'baby-kids-toys': 'Baby & kids',
-  'classifieds': 'Classifieds',
-  'cameras-security-surveillance': 'Cameras & security',
-  'automotive-motorcycle': 'Car & motorcycle',
-  'sports-outdoors-leisure': 'Sports & outdoors',
-  'agriculture-agrovet': 'Garden & farm',
-  'gaming-books-media': 'Gaming & books',
-  'household-cleaning': 'Cleaning',
-  'pet-supplies': 'Pets',
-};
 
 // Labels wrap to two lines instead of truncating: "Phones & Wearables" cut to
 // "Phones…" at every width told the shopper nothing.
@@ -47,17 +27,17 @@ const BADGE =
 
 export default function CategoryStrip() {
   return (
-    <nav className="bg-background border-b border-border" aria-label="Shop by department">
+    <nav className="bg-background border-b border-border" aria-label="Browse categories">
       <div className="page-container">
         <div className="flex items-start gap-1 overflow-x-auto py-3 scrollbar-hide scroll-hint-x">
           {TAXONOMY_DEPARTMENTS.map((department) => {
             const { Icon } = department;
+            const label = departmentDisplayLabel(department);
             return (
               <Link
                 key={department.id}
                 to={`/aisle/${department.id}`}
                 className={TILE}
-                title={department.label}
               >
                 <div className={BADGE}>
                   <Icon
@@ -68,17 +48,13 @@ export default function CategoryStrip() {
                   />
                 </div>
                 <span className="text-xs font-medium leading-tight line-clamp-2 w-full text-center">
-                  {SHORT_LABEL[department.id] ?? department.label}
+                  {label}
                 </span>
               </Link>
             );
           })}
 
-          <Link
-            to="/browse"
-            className={TILE}
-            title="All categories"
-          >
+          <Link to="/browse" className={TILE}>
             <div className={BADGE}>
               <LayoutGrid
                 data-anim="all"

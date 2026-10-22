@@ -27,12 +27,12 @@ import { storeName } from '../../../lib/storeIdentity';
  * Values must stay in step with REASONS in functions/api/reports.ts.
  */
 const REPORT_REASONS = [
-  { value: 'grouping', label: 'These are different products' },
-  { value: 'price', label: 'A price is wrong' },
-  { value: 'spread', label: "The saving isn't real" },
-  { value: 'dead_link', label: 'A link is broken or the product is gone' },
-  { value: 'category', label: "It's in the wrong category" },
-  { value: 'image', label: 'The picture is wrong' },
+  { value: 'grouping', label: 'Different products grouped together' },
+  { value: 'price', label: 'Incorrect price' },
+  { value: 'spread', label: 'Incorrect price difference' },
+  { value: 'dead_link', label: 'Broken or unavailable listing' },
+  { value: 'category', label: 'Wrong category' },
+  { value: 'image', label: 'Wrong image' },
   { value: 'other', label: 'Something else' },
 ] as const;
 
@@ -61,9 +61,19 @@ type State = 'idle' | 'sending' | 'sent' | 'error';
 export function ReportDialog({
   cluster,
   capturedAt,
+  stores: displayedStores,
+  version,
 }: {
   cluster: ClusterDetail;
   capturedAt?: string;
+  /**
+   * The shops whose offers are on screen, so "Which shop?" lists what the
+   * reader is looking at. The dialog used to list `best_by_store`, which for
+   * a 128GB page named two shops the page did not show (journey review §1).
+   */
+  stores?: string[];
+  /** The selected version, recorded with the report and shown in its heading. */
+  version?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<string>('');
@@ -72,7 +82,7 @@ export function ReportDialog({
   const [rejected, setRejected] = useState<string[]>([]);
   const [state, setState] = useState<State>('idle');
 
-  const stores = Object.keys(cluster.best_by_store ?? {});
+  const stores = displayedStores ?? Object.keys(cluster.best_by_store ?? {});
   const reasons = reasonsFor(cluster);
   const members = cluster.mvp_merged_members ?? [];
   const askWhichShop = STORE_SCOPED.has(reason) && stores.length > 1;
@@ -110,9 +120,13 @@ export function ReportDialog({
           scope: 'cluster',
           cluster_id: cluster.cluster_id,
           note,
-          title: productName(cluster),
+          // The reports table has no version column yet; the selected version
+          // rides in the title so a report about 256GB cannot be read as one
+          // about 128GB once stored.
+          title: version ? `${productName(cluster)} · ${version}` : productName(cluster),
           category: cluster.category,
           captured_at: capturedAt ?? null,
+          version: version ?? null,
           page_url: location.href,
           facets: facets(),
         }),
@@ -143,7 +157,7 @@ export function ReportDialog({
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground">
           <Flag className="h-3.5 w-3.5" aria-hidden="true" />
-          Report a wrong price or match
+          Report a problem
         </Button>
       </DialogTrigger>
 
@@ -151,17 +165,14 @@ export function ReportDialog({
         <DialogHeader>
           <DialogTitle>Report a problem</DialogTitle>
           <DialogDescription>
-            {productName(cluster)}
+            {productName(cluster)}{version ? ` · ${version}` : ''}
           </DialogDescription>
         </DialogHeader>
 
         {state === 'sent' ? (
           <div className="py-6 text-center">
             <Check className="mx-auto mb-3 h-8 w-8 text-teal-deep" aria-hidden="true" />
-            <p className="text-sm font-medium text-foreground">Thanks — that helps.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              We review reports and correct the matching behind this page.
-            </p>
+            <p className="text-sm font-medium text-foreground">Report received. Thank you.</p>
             <Button className="mt-5" onClick={() => reset(false)}>Close</Button>
           </div>
         ) : (
@@ -202,7 +213,7 @@ export function ReportDialog({
             {reason === 'grouping' && members.length > 1 && (
               <fieldset>
                 <legend className="mb-2 text-sm font-medium text-foreground">
-                  Which of these doesn&rsquo;t belong? (optional)
+                  Which listing doesn&rsquo;t belong? (optional)
                 </legend>
                 <div className="space-y-1.5">
                   {members.map((m) => (
@@ -238,7 +249,7 @@ export function ReportDialog({
                   onChange={(e) => setStore(e.target.value)}
                   className="mt-1.5 h-9 w-full rounded-md border border-border bg-transparent px-3 text-sm"
                 >
-                  <option value="">All of them</option>
+                  <option value="">All listed shops</option>
                   {stores.map((s) => (
                     <option key={s} value={s}>{storeName(s)}</option>
                   ))}
@@ -247,13 +258,13 @@ export function ReportDialog({
             )}
 
             <div>
-              <Label htmlFor="report-note">Anything to add? (optional)</Label>
+              <Label htmlFor="report-note">Details (optional)</Label>
               <Textarea
                 id="report-note"
                 value={note}
                 maxLength={1000}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="e.g. the 500g and 1kg packs are listed as one product"
+                placeholder="For example, a 500 g pack is compared with a 1 kg pack."
                 className="mt-1.5"
                 rows={3}
               />
@@ -262,7 +273,7 @@ export function ReportDialog({
             {state === 'error' && (
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                We couldn&rsquo;t save that report. Try again in a moment.
+                We couldn&rsquo;t send your report. Try again.
               </p>
             )}
 

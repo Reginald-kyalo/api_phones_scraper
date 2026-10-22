@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { type PricePoint } from '../../../lib/api';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../../../components/ui/chart';
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { formatPrice } from '../../../lib/format';
+import { formatPrice, usablePriceHistory } from '../../../lib/format';
+import { Button } from '../../../components/ui/button';
 
 interface PRPriceHistoryChartProps {
   title: string;
@@ -27,7 +28,9 @@ const shortDate = (iso: string) => {
     : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
 
-const WINDOW_DAYS = { '3m': 90, '6m': 182, '1y': 365, all: Infinity } as const;
+type Period = '3m' | '6m' | '1y' | 'all';
+const WINDOW_DAYS: Record<Period, number> = { '3m': 90, '6m': 182, '1y': 365, all: Infinity };
+const PERIODS: [Period, string][] = [['3m', '3 months'], ['6m', '6 months'], ['1y', '1 year'], ['all', 'All history']];
 
 /**
  * Y-axis ticks at round, distinct values. Recharts' own ticks on a narrow
@@ -55,72 +58,72 @@ function priceTicks(min: number, max: number): { ticks: number[]; label: (v: num
   return { ticks, label };
 }
 
+/**
+ * Recorded prices, plotted on a real time axis.
+ *
+ * What it says, and what it does not (design audit §8): the dates are the
+ * dates prices were recorded, the summary figures are of recorded prices,
+ * and nothing claims to know what happened between two checks. Periods count
+ * back from today; a period with fewer than two records says so and offers
+ * all history, rather than silently widening to a span the label does not
+ * describe. "All history" is the default, because most series are sparse.
+ */
 export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChartProps) {
-  const [historyPeriod, setHistoryPeriod] = useState<'3m' | '6m' | '1y' | 'all'>('1y');
+  const [period, setPeriod] = useState<Period>('all');
 
-  // Real series are irregular dated observations, not 12 monthly points, so the
-  // window is filtered by date. Slicing a fixed count silently showed a different
-  // span per product.
-  const filteredHistory = useMemo(() => {
-    // Guard rail: drop points more than 5x away from the series median. The
-    // capture has a few misplaced decimal points (KES 1,159,900 for an
-    // 11,599 phone), and one of those flattens the whole chart into a cliff.
-    const valid = priceHistory.filter((p) => !Number.isNaN(new Date(p.t).getTime()) && p.price >= 1);
-    const ordered = valid.map((p) => p.price).sort((x, y) => x - y);
-    const median = ordered.length ? ordered[Math.floor(ordered.length / 2)] : 0;
-    const sorted = valid
-      .filter((p) => median === 0 || (p.price <= median * 5 && p.price >= median / 5))
-      .sort((a, b) => +new Date(a.t) - +new Date(b.t));
-    const days = WINDOW_DAYS[historyPeriod];
-    if (!Number.isFinite(days) || sorted.length === 0) return sorted;
-    const newest = +new Date(sorted[sorted.length - 1].t);
-    const cutoff = newest - days * 86_400_000;
-    const within = sorted.filter((p) => +new Date(p.t) >= cutoff);
-    // Never render an empty chart just because the window is narrower than the
-    // data is old — fall back to the whole series.
-    return within.length >= 2 ? within : sorted;
-  }, [priceHistory, historyPeriod]);
+  // Same cleaning as the product page's "Price history" link, so the link is
+  // only offered where there is a chart to see.
+  const series = useMemo(() => usablePriceHistory(priceHistory), [priceHistory]);
 
-  const historyStats = useMemo(() => {
-    if (filteredHistory.length === 0) return null;
-    const prices = filteredHistory.map(p => p.price);
+  const windowed = useMemo(() => {
+    const days = WINDOW_DAYS[period];
+    if (!Number.isFinite(days)) return series;
+    const cutoff = Date.now() - days * 86_400_000;
+    return series.filter((p) => Date.parse(p.t) >= cutoff);
+  }, [series, period]);
+
+  const stats = useMemo(() => {
+    if (windowed.length === 0) return null;
+    const prices = windowed.map((p) => p.price);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const minMonth = shortDate(filteredHistory.find(p => p.price === min)?.t ?? '');
-    const maxMonth = shortDate(filteredHistory.find(p => p.price === max)?.t ?? '');
-    return { min, max, avg: Math.round(avg * 100) / 100, minMonth, maxMonth };
-  }, [filteredHistory]);
+    const minDate = shortDate(windowed.find((p) => p.price === min)?.t ?? '');
+    const maxDate = shortDate(windowed.find((p) => p.price === max)?.t ?? '');
+    return { min, max, avg: Math.round(avg), minDate, maxDate };
+  }, [windowed]);
 
   // Plot on a real time axis: the gap between two checks is part of the story.
   const points = useMemo(
-    () => filteredHistory.map((p) => ({ ...p, time: +new Date(p.t) })),
-    [filteredHistory],
+    () => windowed.map((p) => ({ ...p, time: Date.parse(p.t) })),
+    [windowed],
   );
 
   // Fewer than two plausible points is not a history.
-  if (filteredHistory.length < 2 || !historyStats) return null;
+  if (series.length < 2) return null;
 
-  const axis = priceTicks(historyStats.min, historyStats.max);
+  const enough = windowed.length >= 2 && stats != null;
+  const first = series[0].t;
+  const last = series[series.length - 1].t;
 
   return (
     <div>
       <h2 className="section-title mb-1">Price history</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        {filteredHistory.length} prices recorded for {title} since {fullDate(filteredHistory[0].t)}.
-        The line holds each price until the next check.
+        {series.length} prices recorded for {title} between {fullDate(first)} and {fullDate(last)}.
+        Prices may have changed between checks.
       </p>
 
       {/* Period selector: text tabs, not pills (DESIGN_RULES.md) */}
       <div role="tablist" aria-label="Period" className="flex gap-4 mb-5 border-b border-border">
-        {(Object.entries({ '3m': '3 months', '6m': '6 months', '1y': '1 year', 'all': 'All' }) as [typeof historyPeriod, string][]).map(([key, label]) => (
+        {PERIODS.map(([key, label]) => (
           <button
             key={key}
             role="tab"
-            aria-selected={historyPeriod === key}
-            onClick={() => setHistoryPeriod(key)}
+            aria-selected={period === key}
+            onClick={() => setPeriod(key)}
             className={`-mb-px pb-2 text-sm font-medium border-b-2 transition-colors ${
-              historyPeriod === key
+              period === key
                 ? 'text-foreground border-primary'
                 : 'text-muted-foreground border-transparent hover:text-foreground'
             }`}
@@ -130,86 +133,96 @@ export function PRPriceHistoryChart({ title, priceHistory }: PRPriceHistoryChart
         ))}
       </div>
 
-      {/* Chart */}
-      <ChartContainer config={chartConfig} className="h-[280px] w-full">
-        <AreaChart data={points} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-          <defs>
-            <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-price)" stopOpacity={0.12} />
-              <stop offset="95%" stopColor="var(--color-price)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis
-            dataKey="time"
-            type="number"
-            scale="time"
-            domain={['dataMin', 'dataMax']}
-            tickFormatter={(v: number) => shortDate(new Date(v).toISOString())}
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            fontSize={12}
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            fontSize={12}
-            ticks={axis.ticks}
-            tickFormatter={axis.label}
-            width={52}
-            domain={[axis.ticks[0], axis.ticks[axis.ticks.length - 1]]}
-          />
-          <ChartTooltip
-            content={<ChartTooltipContent indicator="line" labelFormatter={(_, payload) => fullDate(String(payload?.[0]?.payload?.t ?? ''))} />}
-            formatter={(value: number) => [formatPrice(value), 'Price']}
-          />
-          {/* A step, not a curve: the price was X until a check found Y. A
-              smoothed line drew humps between four points that never happened. */}
-          <Area
-            type="stepAfter"
-            dataKey="price"
-            stroke="var(--color-price)"
-            strokeWidth={1.75}
-            fill="url(#priceGradient)"
-            dot={{ r: 2.5, fill: 'var(--color-price)', strokeWidth: 0 }}
-            activeDot={{ r: 4 }}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ChartContainer>
-
-      {/* Summary cards */}
-      {historyStats && (
-        <div className="grid grid-cols-3 gap-3 mt-6">
-          <div className="rounded-md p-4 ultra-border">
-            <div className="flex items-center gap-2 mb-1">
-                            <span className="microcopy-label">Lowest price</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base md:text-lg font-bold text-foreground price-num">{formatPrice(historyStats.min)}</span>
-              <span className="text-xs text-muted-foreground">{historyStats.minMonth}</span>
-            </div>
-          </div>
-          <div className="rounded-md p-4 ultra-border">
-            <div className="flex items-center gap-2 mb-1">
-                            <span className="microcopy-label">Highest price</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base md:text-lg font-bold text-foreground price-num">{formatPrice(historyStats.max)}</span>
-              <span className="text-xs text-muted-foreground">{historyStats.maxMonth}</span>
-            </div>
-          </div>
-          <div className="rounded-md p-4 ultra-border">
-            <div className="flex items-center gap-2 mb-1">
-                            <span className="microcopy-label">Average price</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base md:text-lg font-bold text-foreground price-num">{formatPrice(historyStats.avg)}</span>
-            </div>
-          </div>
+      {!enough ? (
+        <div className="rounded-md border border-border py-10 text-center">
+          <p className="text-sm text-muted-foreground mb-3">
+            {windowed.length === 1
+              ? `One price recorded in this period, on ${fullDate(windowed[0].t)}.`
+              : 'Not enough recorded prices for this period.'}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => setPeriod('all')}>
+            View all history
+          </Button>
         </div>
+      ) : (
+        <>
+          <ChartContainer config={chartConfig} className="h-[280px] w-full">
+            <AreaChart data={points} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-price)" stopOpacity={0.12} />
+                  <stop offset="95%" stopColor="var(--color-price)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="time"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={(v: number) => shortDate(new Date(v).toISOString())}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                fontSize={12}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                fontSize={12}
+                ticks={priceTicks(stats.min, stats.max).ticks}
+                tickFormatter={priceTicks(stats.min, stats.max).label}
+                width={52}
+                domain={[
+                  priceTicks(stats.min, stats.max).ticks[0],
+                  priceTicks(stats.min, stats.max).ticks[priceTicks(stats.min, stats.max).ticks.length - 1],
+                ]}
+              />
+              <ChartTooltip
+                content={<ChartTooltipContent indicator="line" labelFormatter={(_, payload) => fullDate(String(payload?.[0]?.payload?.t ?? ''))} />}
+                formatter={(value: number) => [formatPrice(value), 'Recorded price']}
+              />
+              {/* A step, not a curve: each recorded price is drawn until the
+                  next record. A smoothed line drew humps between four points
+                  that never happened. */}
+              <Area
+                type="stepAfter"
+                dataKey="price"
+                stroke="var(--color-price)"
+                strokeWidth={1.75}
+                fill="url(#priceGradient)"
+                dot={{ r: 2.5, fill: 'var(--color-price)', strokeWidth: 0 }}
+                activeDot={{ r: 4 }}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ChartContainer>
+
+          <div className="grid grid-cols-3 gap-3 mt-6">
+            <div className="rounded-md p-4 ultra-border">
+              <span className="microcopy-label">Lowest recorded</span>
+              <div className="flex flex-col mt-1">
+                <span className="text-base md:text-lg font-bold text-foreground price-num">{formatPrice(stats.min)}</span>
+                <span className="text-xs text-muted-foreground">{stats.minDate}</span>
+              </div>
+            </div>
+            <div className="rounded-md p-4 ultra-border">
+              <span className="microcopy-label">Highest recorded</span>
+              <div className="flex flex-col mt-1">
+                <span className="text-base md:text-lg font-bold text-foreground price-num">{formatPrice(stats.max)}</span>
+                <span className="text-xs text-muted-foreground">{stats.maxDate}</span>
+              </div>
+            </div>
+            <div className="rounded-md p-4 ultra-border">
+              <span className="microcopy-label">Average recorded</span>
+              <div className="flex flex-col mt-1">
+                <span className="text-base md:text-lg font-bold text-foreground price-num">{formatPrice(stats.avg)}</span>
+                <span className="text-xs text-muted-foreground">of {windowed.length} recorded prices</span>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

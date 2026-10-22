@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Checkbox } from '../../../components/ui/checkbox';
@@ -20,14 +20,17 @@ interface PanelProps {
   onChange: (next: ListingFilters) => void;
 }
 
+/** The one label for the multi-shop filter, on every listing surface. */
+export const MULTI_SHOP_LABEL = 'Prices from 2+ shops';
+
 /** Sort control, shared by browse and search. A native select: it is the most usable control on a phone. */
 export function SortSelect({ value, onChange }: { value: SortKey; onChange: (v: SortKey) => void }) {
   return (
     <label className="flex items-center gap-2 text-sm text-muted-foreground">
-      <span className="hidden sm:inline">Sort</span>
-      {/* aria-label as well: the visible "Sort" is hidden on phones. */}
+      <span className="hidden sm:inline">Sort by</span>
+      {/* aria-label as well: the visible "Sort by" is hidden on phones. */}
       <select
-        aria-label="Sort"
+        aria-label="Sort by"
         value={value}
         onChange={(e) => onChange(e.target.value as SortKey)}
         className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-ring"
@@ -59,9 +62,12 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
   const shownBrands = [...pinned, ...top];
   const [min, setMin] = useState(filters.min?.toString() ?? '');
   const [max, setMax] = useState(filters.max?.toString() ?? '');
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const errorId = useId();
   useEffect(() => {
     setMin(filters.min?.toString() ?? '');
     setMax(filters.max?.toString() ?? '');
+    setPriceError(null);
   }, [filters.min, filters.max]);
 
   const applyPrice = () => {
@@ -69,7 +75,16 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
       const n = Number(v.replace(/[^\d]/g, ''));
       return v && n > 0 ? n : null;
     };
-    onChange({ ...filters, min: parse(min), max: parse(max) });
+    const lo = parse(min);
+    const hi = parse(max);
+    // A maximum below the minimum is a typing slip, not a filter: say so
+    // inline and keep both numbers, rather than answering "No products match".
+    if (lo != null && hi != null && hi < lo) {
+      setPriceError('Enter a maximum price that is at least the minimum.');
+      return;
+    }
+    setPriceError(null);
+    onChange({ ...filters, min: lo, max: hi });
   };
 
   const toggleBrand = (brand: string) =>
@@ -83,13 +98,13 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
   return (
     <div className="space-y-6">
       <fieldset>
-        <legend className="microcopy-label mb-2">Comparison</legend>
+        <legend className="microcopy-label mb-2">Shops</legend>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <Checkbox
             checked={filters.multiShop}
             onCheckedChange={(v) => onChange({ ...filters, multiShop: v === true })}
           />
-          Sold by 2 or more shops
+          {MULTI_SHOP_LABEL}
         </label>
       </fieldset>
 
@@ -122,34 +137,45 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
           </ul>
         )}
         <form
-          className="flex items-center gap-2"
+          className="space-y-2"
           onSubmit={(e) => {
             e.preventDefault();
             applyPrice();
           }}
         >
-          <Input
-            inputMode="numeric"
-            aria-label="Minimum price"
-            placeholder="Min"
-            value={min}
-            onChange={(e) => setMin(e.target.value)}
-            className="h-9"
-          />
-          <span className="text-muted-foreground" aria-hidden="true">
-            to
-          </span>
-          <Input
-            inputMode="numeric"
-            aria-label="Maximum price"
-            placeholder="Max"
-            value={max}
-            onChange={(e) => setMax(e.target.value)}
-            className="h-9"
-          />
-          <Button type="submit" variant="outline" size="sm" className="h-9">
-            Go
-          </Button>
+          <div className="flex items-center gap-2">
+            <Input
+              inputMode="numeric"
+              aria-label="Minimum price"
+              aria-invalid={priceError ? true : undefined}
+              aria-describedby={priceError ? errorId : undefined}
+              placeholder="Minimum"
+              value={min}
+              onChange={(e) => setMin(e.target.value)}
+              className="h-9"
+            />
+            <span className="text-muted-foreground" aria-hidden="true">
+              to
+            </span>
+            <Input
+              inputMode="numeric"
+              aria-label="Maximum price"
+              aria-invalid={priceError ? true : undefined}
+              aria-describedby={priceError ? errorId : undefined}
+              placeholder="Maximum"
+              value={max}
+              onChange={(e) => setMax(e.target.value)}
+              className="h-9"
+            />
+            <Button type="submit" variant="outline" size="sm" className="h-9">
+              Apply
+            </Button>
+          </div>
+          {priceError && (
+            <p id={errorId} role="alert" className="text-xs text-destructive">
+              {priceError}
+            </p>
+          )}
         </form>
       </fieldset>
 
@@ -158,8 +184,8 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
           <legend className="microcopy-label mb-2">Brand</legend>
           {brands.length > BRANDS_COLLAPSED && (
             <Input
-              aria-label="Find a brand"
-              placeholder="Find a brand"
+              aria-label="Search brands"
+              placeholder="Search brands"
               value={brandQuery}
               onChange={(e) => setBrandQuery(e.target.value)}
               className="h-9 mb-3"
@@ -178,7 +204,7 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
                 </label>
               </li>
             ))}
-            {shownBrands.length === 0 && <li className="text-sm text-muted-foreground">No brand matches.</li>}
+            {shownBrands.length === 0 && <li className="text-sm text-muted-foreground">No matching brands.</li>}
           </ul>
           {!q && brands.length > BRANDS_COLLAPSED && (
             <Button
@@ -186,7 +212,7 @@ export function FilterControls({ filters, brands, prices = [], onChange }: Panel
               className="h-auto p-0 mt-2 text-sm"
               onClick={() => setShowAllBrands((v) => !v)}
             >
-              {showAllBrands ? 'Show fewer brands' : `Show all ${brands.length} brands`}
+              {showAllBrands ? 'Show fewer' : `Show all ${brands.length} brands`}
             </Button>
           )}
         </fieldset>
@@ -232,7 +258,7 @@ export function MobileFilters({ resultCount, ...props }: PanelProps & { resultCo
           <div className="border-t border-border p-4">
             <Button className="w-full" onClick={() => setOpen(false)}>
               {resultCount === 0
-                ? 'No products match'
+                ? 'No products match these filters'
                 : `Show ${resultCount.toLocaleString('en-GB')} ${resultCount === 1 ? 'product' : 'products'}`}
             </Button>
           </div>

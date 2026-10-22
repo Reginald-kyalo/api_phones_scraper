@@ -12,7 +12,7 @@ This file replaces the old `DESIGN_HANDOFF.md`. The reasoning behind each rule i
 
 - **Neutral.** No shop or product is visually favoured. Every offer row has the same height, type and button. The price list is sorted by price and says so.
 - **Quietly confident.** No exclamation marks, superlatives, red, countdowns or impossible percentages. Sentence case. Numbers do the talking: "KES 52,000 · 4 shops · checked 2 h ago".
-- **Trustworthy.** Show the work: when a price was checked, which exact listing it is, what a saving compares, how we rank, how we make money, and a way to report a wrong price.
+- **Trustworthy.** Show the work: when a price was checked, which exact listing it is, what a percentage compares, how we rank, how we make money, and a way to report a problem. Say what the data holds and nothing it does not: a price is "listed", a difference is "lower", a saved number is "saved in this browser". (The 2026-10-21 design audit and copy deck in `docs/design-audit-2026-10-21/` are the reasoning behind this rule.)
 
 ---
 
@@ -33,7 +33,7 @@ Use tokens, never raw palette classes (`gray-*`, `slate-*`, `emerald-*`, `red-*`
 | `--primary` / `--teal` | `#0E7C8B` | **Action only:** primary buttons, links, focus ring, the selected filter. |
 | `--teal-deep` | `#0A5C68` | Hover and pressed state of teal. |
 | `--teal-bright` | `#2BC2D4` | Small accents on dark surfaces only. |
-| `--saving` / `text-saving` | `#1F6B4A` | Money saved. The saving chip and nothing else. |
+| `--saving` / `text-saving` | `#1F6B4A` | A price difference between shops. The `SavingBadge` chip and nothing else. |
 | `--success` | `#16A34A` | In stock, confirmations. |
 | `--warning` | `#B45309` | "Price changed since last check", caveats. |
 | `--destructive` | `#DC2626` | Errors and destructive actions only. Never sale, urgency or favourites. |
@@ -106,24 +106,31 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 
 ## 5. Components with a contract
 
-### Saving chip: `SavingBadge` (`src/app/components/common/SavingBadge.tsx`)
+### Price-difference chip: `SavingBadge` (`src/app/components/common/SavingBadge.tsx`)
 
-- The **only** way a saving is shown. One icon (`ArrowDown`), one wording ("Save 18%"), one colour (`text-saving` on `bg-saving/10`), one radius (6px).
-- Its number comes from `displaySaving()` in `src/app/lib/format.ts`, which returns `null` (render nothing) when:
-  - there is no like-for-like spread;
-  - the saving is over **60%** (almost always a mismatched pair, not a deal);
-  - the absolute saving is under **KES 50**.
+- The **only** way a price difference is shown. One icon (`ArrowDown`), one wording ("18% lower", with "than the highest matching price shown" for screen readers and in the tooltip), one colour (`text-saving` on `bg-saving/10`), one radius (6px). Never "Save 18%": it is a gap between two shops, not a discount from an earlier price.
+- Its number comes from `displaySaving()` / `clusterSaving()` in `src/app/lib/format.ts`, which return `null` (render nothing) when:
+  - there is no like-for-like spread, or fewer than two shops quote a price;
+  - the difference is over **60%** (almost always a mismatched pair, not a deal);
+  - the cash difference is under **KES 50**;
+  - the listings are used or refurbished (`condition_basis === 'likely_used'`): asking prices of unknown grade are not two prices for one item.
+- Cards show the chip only where the difference is the point (`showSaving`: the Deals rail and page). A neutral card shows product, version, condition, price and shop count. Condition always has its own row; it is never displaced by the chip.
+- "All versions" on a product page mixes configurations, so it carries no chip.
 - Never compute a percentage inline. Never render `like_for_like_spread_pct` or a config `spread_pct` to a shopper.
 
 ### Prices
 
-- `formatPrice()` returns `null`-safe text; anything that would read "Price N/A" in a price slot renders `PriceOrDash` instead ("No current price" in muted text, not mono).
+- `formatPrice()` returns `null`-safe text; anything without a usable price renders `PriceOrDash` ("Price unavailable" in muted text, not mono). Never "No current price": the dataset lacking a price says nothing about the market.
 - Shop counts come from one function: `pricedShopCount()` (`n_stores_priced`, falling back to `n_stores`). A product shows the same number everywhere.
+- The headline on a product page names what the number is: "Lowest listed price" (several shops), "Listed price" (one), "Lowest asking price (used)", or "Last recorded price" when the last check is over `STALE_AFTER_DAYS` (30) old, decided at view time by `isStale()`. Never "Best price".
+- Freshness: `checkedAgo()` is relative within 24 hours ("2 h ago") and a date after that ("18 Jul 2026"). A relative time reads as fresh, so it is only used while it is.
+- One shop is one shop: "{shop}" or "1 listed shop", never "Only at {shop}".
+- Price history draws only `usablePriceHistory()` (dated, positive, within 5x of the median), labels its figures "recorded", and a period with fewer than two records says so rather than widening silently. `priceVerdict()` counts 90 days back from today and returns null when the newest record is stale.
 
 ### Images
 
 - Product photos are `object-contain` inside a fixed-ratio frame with 12px padding, so nothing overlaps the saving chip.
-- Cards without a photo never appear on the homepage or deals page, and sort below cards with photos elsewhere (`withPhotosFirst()`).
+- Cards without a photo never appear on the homepage or deals page. In listings the default order ("Most shops") is the number of shops with a price, most first; a photo only breaks ties between equal counts. A six-shop product never sits behind a zero-shop one for want of a picture.
 
 ### Retailer identity
 
@@ -131,14 +138,14 @@ Everything resting on the page: a 1px border or nothing. No `shadow-sm` to `shad
 
 ### Sponsored slots: `AdSlot`, `SponsoredLabel`, `withSponsoredTiles` (`src/app/components/ads/AdSlot.tsx`)
 
-Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above the product price list, 300×250 product right rail (desktop), sponsored tiles at grid positions 3 and 15, one result above search results, one featured-shop band after the second homepage rail. The homepage search band shows a campaign card on its right only when one is sold (`HERO_CAMPAIGNS`).
+Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above the product price list, 300×250 product right rail (reserved, not rendered: see rule 4), sponsored tiles at grid positions 3 and 15, one result above search results, one featured-shop band after the second homepage rail. The homepage search band shows a campaign card on its right only when one is sold (`HERO_CAMPAIGNS`).
 
 `VITE_AD_SLOTS=off` (the production default) renders nothing; `VITE_AD_SLOTS=preview` (the dev default) renders dashed, labelled placeholders at the reserved size.
 
-1. Native in form (site card, radius, type), labelled "Sponsored" in `.microcopy-label`, with a "Why is this here?" link to `/how-we-make-money`.
+1. Native in form (site card, radius, type), labelled "Sponsored" (or "Sponsored by {shop}" for a named campaign) in `.microcopy-label`, with an "About this ad" link to `/how-we-make-money`. Never a developer label ("Sponsored slot", dimensions) outside `VITE_AD_SLOTS=preview`.
 2. Never inside the price-sorted list. A sponsored shop sits in its own card above the list.
 3. Relevant or absent. A sponsored shop must sell the product it sits beside.
-4. At most one paid element per viewport (roughly one per 8 to 12 organic cards).
+4. At most one paid element per viewport (roughly one per 8 to 12 organic cards). On the product page that is the sponsored-shop card; the right rail stays reserved in `ads.ts` but is not rendered, because the two sat in one 1440×1000 viewport together.
 5. Fixed height reserved in the layout; an unsold slot renders nothing at build time, never collapses at runtime.
 6. No pop-ups, interstitials, sticky overlay ads, autoplay, or anything between a product and its price.
 7. Native slots take the site's tokens. Programmatic banners live only in fixed rectangles (300×600, 300×250, 320×100).
@@ -148,20 +155,33 @@ Placements and reserved sizes live in `src/app/lib/ads.ts`: sponsored shop above
 ## 6. Copy
 
 - Sentence case everywhere. Kenyan/British spelling (favourites, colour, organise).
-- No superlatives and no promises we will break. Never write "no ads", "nothing to sell", "no commission", "we never…".
-- The money line, used verbatim in the footer, the FAQ, How we make money and behind every "Why is this sponsored?" link:
-  > Shops pay us a small fee when you click through to them, at no extra cost to you, and some pay for clearly labelled sponsored spots. Neither affects the order of the price list, which is always sorted by price. We never sell products ourselves.
+- No superlatives and no promises we will break. Never write "no ads", "nothing to sell", "no commission", "we never…". Never "best", "every shop", "verified", "trusted", "real-time", "checked daily" or "we'll tell you" without the service or evidence behind it.
+- Capability claims match the build. Favourites, price targets and comparisons are "saved in this browser"; no sync, email or monitoring is promised; the sign-in entry appears only while `ACCOUNT_AVAILABLE` is true; a success message follows a real successful action and nothing else.
+- The money line (`MONEY_LINE` in `src/app/lib/brand.ts`), used verbatim on How we make money, in the FAQ and behind every "About this ad" link, and linked from the footer rather than repeated there:
+  > Comparing prices on SokoPulse is free, and you buy directly from the shop you choose. Shops may pay us when you visit them through SokoPulse, and some may pay for spots labelled Sponsored. Neither changes the order of the price list, which is sorted by price. We don’t sell products ourselves.
+
+  It states the model as built, not as contracts signed. When a shop actually pays, "may pay" becomes "pay" in that one file.
 - Numbers with units and time: "KES 52,000 · 4 shops · checked 2 h ago".
-- Never expose the pipeline: no "pending", "Needs review", "captured", "collections may contain mixed product types", or raw slugs.
+- Never expose the pipeline: no "pending", "Needs review", "captured", "title similarity", "collections may contain mixed product types", or raw slugs. "How listings are matched" is the shopper's name for the merge explanation.
+- A failed request, a successful empty result and a filter that excludes everything are three different messages: "We couldn't load … Try again.", "No … yet", "No products match these filters."
 - One name per thing:
 
 | Thing | Name |
 |---|---|
 | The site | SokoPulse (one word, capital S and P) |
-| Deals page | Deals |
+| Search field | Search products and brands |
+| Deals page | Deals ("Lower prices across shops") |
 | Saved products | Favourites |
-| Price alerts | Price alerts |
+| A saved price, while nothing monitors it | Price targets ("Save target price"). Becomes "Price alerts" / "Set price alert" only when notifications are delivered. |
+| Put products side by side | Compare products / Add to compare |
+| Open a product's offers | View prices |
 | Product page CTA | Go to shop |
 | Breadcrumb root | Home |
+| FAQ page | Help |
+| Cookie page | Cookies and browser storage |
+| Default listing order | Most shops |
+| Across-shop gap | Price difference / "{n}% lower" |
+| Report link | Report a problem |
+| Departments | `departmentDisplayLabel()` in `src/app/lib/navLabels.ts`, the same name in the strip, both menus, the page title, breadcrumbs and the prerender |
 
 - Error and empty states say what to do next, in one line, with one button.

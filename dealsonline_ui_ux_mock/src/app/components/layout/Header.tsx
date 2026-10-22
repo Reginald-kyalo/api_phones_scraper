@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { LogOut, LogIn, Menu, Settings, X, Tag, Clock, Home, UserRound, LayoutGrid } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { ACCOUNT_AVAILABLE, useAuth } from '../../context/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import SearchBar from '../../features/search/components/SearchBar';
+import { ThemeSwitch } from './ThemeSwitch';
 import Logo from './Logo';
 // Both menus carry the whole category tree (~100 KB of data); load it when a
 // menu first opens rather than with every page.
@@ -162,7 +163,6 @@ export default function Header() {
                   heroSearchVisible ? 'invisible opacity-0' : 'opacity-100'
                 }`}
                 variant="header"
-                placeholder="Search products, brands and shops"
               />
             </div>
 
@@ -175,7 +175,7 @@ export default function Header() {
               />
 
               {/* One entry point for everything a shopper keeps: recently
-                  viewed, favourites and price alerts, as tabs in one panel.
+                  viewed, favourites and price targets, as tabs in one panel.
                   Separate Alerts and Favourites buttons repeated it. The count
                   is what they have saved, so the button is never a mystery. */}
               <DropdownMenu>
@@ -201,8 +201,11 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Account entry only while an account can actually be created
+                  or used (ACCOUNT_AVAILABLE); a static build shows nothing
+                  here rather than a door to a form that cannot complete. */}
               <div className="hidden md:flex">
-                {currentUser ? (
+                {!ACCOUNT_AVAILABLE ? null : currentUser ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-10 gap-2 text-muted-foreground hover:text-foreground">
@@ -221,12 +224,12 @@ export default function Header() {
                       </div>
                       <DropdownMenuItem asChild>
                         <Link to="/account" className="flex items-center gap-2.5 cursor-pointer">
-                          <Settings className="w-4 h-4" /> Account
+                          <Settings className="w-4 h-4" aria-hidden="true" /> Your account
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
-                        <LogOut className="w-4 h-4 mr-2" /> Sign out
+                        <LogOut className="w-4 h-4 mr-2" aria-hidden="true" /> Sign out
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -260,7 +263,7 @@ export default function Header() {
               already puts one at the top of the page. */}
           {!isHome && (
             <div className="pb-3 md:hidden">
-              <SearchBar variant="header" placeholder="Search products and brands" />
+              <SearchBar variant="header" />
             </div>
           )}
         </div>
@@ -291,16 +294,16 @@ function MobileMenu({
 }) {
   return (
     <div className="flex flex-col h-full">
-      {/* User section */}
-      {currentUser ? (
+      {/* User section, only while accounts work (see ACCOUNT_AVAILABLE). */}
+      {!ACCOUNT_AVAILABLE ? null : currentUser ? (
         <div className="px-5 py-4 border-b border-border bg-surface-alt">
           <p className="text-sm font-semibold text-foreground">{currentUser.name}</p>
           <p className="text-xs text-muted-foreground">{currentUser.email}</p>
         </div>
       ) : (
         <div className="px-5 py-4 border-b border-border">
-          <Link to="/auth" className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-            <LogIn className="w-4 h-4" /> Sign in or create an account
+          <Link to="/auth" onClick={onNavigate} className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+            <LogIn className="w-4 h-4" aria-hidden="true" /> Sign in
           </Link>
         </div>
       )}
@@ -317,16 +320,23 @@ function MobileMenu({
         )}
 
         <div className="mx-5 my-2 border-t border-border" />
-        <MobileNavLink to="/about" label="About" onNavigate={onNavigate} />
+        <MobileNavLink to="/deals" icon={<Tag className="w-4 h-4" />} label="Deals" onNavigate={onNavigate} />
+        <MobileNavLink to="/about" label="About SokoPulse" onNavigate={onNavigate} />
         <MobileNavLink to="/how-we-make-money" label="How we make money" onNavigate={onNavigate} />
+        <MobileNavLink to="/faq" label="Help" onNavigate={onNavigate} />
 
         {currentUser && (
           <>
             <div className="mx-5 my-2 border-t border-border" />
-            <MobileNavLink to="/account" icon={<Settings className="w-4 h-4" />} label="Account" onNavigate={onNavigate} />
+            <MobileNavLink to="/account" icon={<Settings className="w-4 h-4" />} label="Your account" onNavigate={onNavigate} />
           </>
         )}
       </nav>
+
+      {/* Appearance, reachable without scrolling to the footer (design audit, A06). */}
+      <div className="border-t border-border px-5 py-3">
+        <ThemeSwitch />
+      </div>
 
       {/* Logout */}
       {currentUser && (
@@ -335,7 +345,7 @@ function MobileMenu({
             onClick={onLogout}
             className="flex items-center gap-2.5 text-sm text-destructive hover:text-destructive/80 transition-colors"
           >
-            <LogOut className="w-4 h-4" /> Sign out
+            <LogOut className="w-4 h-4" aria-hidden="true" /> Sign out
           </button>
         </div>
       )}

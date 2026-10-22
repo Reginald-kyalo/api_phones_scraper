@@ -21,6 +21,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
  */
 const STATIC_DEMO = true;
 
+/**
+ * Whether signing in can succeed. The header, the mobile menu and /auth read
+ * this: while it is false they show no sign-in entry and the auth route says
+ * accounts are not available yet, rather than inviting a flow that cannot
+ * complete (design audit, T07). Flip STATIC_DEMO when the API is wired.
+ */
+export const ACCOUNT_AVAILABLE = !STATIC_DEMO;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, loading: true });
 

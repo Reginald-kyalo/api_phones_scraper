@@ -1,17 +1,22 @@
 import type { ClusterSummary } from './clusterTypes';
 import { clusterSaving, hasPrice, pricedShopCount } from './format';
-import { withPhotosFirst } from './images';
+import { imageUsable } from './images';
 
 /** Cards per page on every listing (design review §1, item 7). */
 export const PAGE_SIZE = 48;
 
 export type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'saving';
 
+/**
+ * Labels name what the sort actually does. The URL key `relevance` is kept
+ * for links already shared; its order is the count of shops with a price,
+ * most first (see applyFilters), so that is what it is called.
+ */
 export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'relevance', label: 'Most compared' },
+  { value: 'relevance', label: 'Most shops' },
   { value: 'price-asc', label: 'Price: low to high' },
   { value: 'price-desc', label: 'Price: high to low' },
-  { value: 'saving', label: 'Biggest saving' },
+  { value: 'saving', label: 'Largest price difference' },
 ];
 
 export interface ListingFilters {
@@ -100,13 +105,15 @@ export function applyFilters(rows: ClusterSummary[], f: ListingFilters): Cluster
       break;
     }
     default: {
-      // "Most compared" means what it says: the most shops priced first. The
-      // capture's own rank put single-shop listings with a nonsense spread
-      // (22,977%) at the top of Phones. Cards with photos stay ahead of
-      // those without (DESIGN_RULES.md §5); sort is stable, so capture order
-      // breaks the remaining ties.
-      out = withPhotosFirst(
-        [...out].sort((a, b) => pricedShopCount(b) - pricedShopCount(a)),
+      // "Most shops" means what it says: the most shops with a price first.
+      // The capture's own rank put single-shop listings with a nonsense
+      // spread (22,977%) at the top of Phones. A photo only breaks ties
+      // between equal shop counts (DESIGN_RULES.md §5): the audit found a
+      // six-shop product behind 2,222 zero-shop ones because the old order
+      // put every photo ahead of every missing one. Sort is stable, so
+      // capture order breaks the remaining ties.
+      out = [...out].sort(
+        (a, b) => pricedShopCount(b) - pricedShopCount(a) || Number(imageUsable(b.image)) - Number(imageUsable(a.image)),
       );
     }
   }
@@ -154,8 +161,8 @@ export function priceBuckets(rows: ClusterSummary[], f: ListingFilters): PriceBu
 /**
  * Brands that get their own page, /browse/<category>/<brand>: the biggest in
  * the category, with enough products to be worth a search result, and a value
- * that is safe as a URL segment. The prerender and the "Popular in" links
- * use the same list, so every link points at a real page.
+ * that is safe as a URL segment. The prerender and the "Browse by brand"
+ * links use the same list, so every link points at a real page.
  */
 export function brandPageBrands(brands: { value: string; count: number }[], limit = 12): string[] {
   return brands

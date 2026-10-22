@@ -13,6 +13,16 @@ import {
 import { ComparisonAddPanel } from '../features/comparison/components/ComparisonAddPanel';
 import { buildComparisonTitle, COMPARISON_COL_WIDTH as COL_W } from '../features/comparison/utils/comparisonUtils';
 
+/**
+ * Side-by-side comparison of saved products.
+ *
+ * What the table holds is what was saved when each product was added: its
+ * name, the lowest price and shop count at that moment, and its category.
+ * The labels say so ("Price when added"), because the values are not
+ * refreshed and are not a specification comparison (design audit §10).
+ * Refreshing them, and preserving the selected version, is functional work
+ * noted in the audit's completion checklist (C01, C02).
+ */
 export default function ComparisonPage() {
   const {
     comparisonItems,
@@ -53,12 +63,11 @@ export default function ComparisonPage() {
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
         </button>
-        <h1 className="page-title mb-2">Compare products</h1>
+        <h1 className="page-title mb-2">No products to compare yet</h1>
         <p className="text-muted-foreground mb-8">
-          Add products side by side to compare their best prices. Use “Compare” on any product page,
-          or search here.
+          Add products from the same category.
         </p>
         <div className="flex gap-3">
           <Button onClick={() => setPanelOpen(true)}>
@@ -89,16 +98,19 @@ export default function ComparisonPage() {
         onClick={() => navigate(-1)}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> Back
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back
       </button>
 
       {/* Title */}
       <h1 className="page-title mb-2 line-clamp-1">{title}</h1>
+      <p className="text-sm text-muted-foreground mb-4">
+        Prices shown were saved when you added each product.
+      </p>
 
       {/* Controls row */}
       <div className="flex items-center justify-end gap-2 mb-4">
         <Button variant="ghost" size="sm" onClick={clearComparison} className="text-muted-foreground">
-          Clear all
+          Clear comparison
         </Button>
         <Button variant="outline" size="sm" onClick={() => setPanelOpen(true)} className="gap-1.5">
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -116,14 +128,14 @@ export default function ComparisonPage() {
               aria-label="Scroll left"
               className="absolute left-0 top-[140px] z-10 p-2 rounded-full bg-card border border-border hover:bg-surface-alt"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
             <button
               onClick={() => scroll('right')}
               aria-label="Scroll right"
               className="absolute right-0 top-[140px] z-10 p-2 rounded-full bg-card border border-border hover:bg-surface-alt"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
         )}
@@ -141,45 +153,41 @@ export default function ComparisonPage() {
                 <button
                   onClick={() => removeFromComparison(item.product_id)}
                   className="absolute top-2 right-2 p-1 rounded-full bg-card border border-border z-10 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-muted"
-                  aria-label={`Remove ${item.name}`}
+                  aria-label={`Remove ${item.name} from comparison`}
                 >
-                  <X className="h-4 w-4 text-muted-foreground" />
+                  <X className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 </button>
 
                 <div className="p-3 text-center">
-                  {/* Image */}
-                  <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>
+                  {/* One link for image and name, so the image is never an unnamed link. */}
+                  <Link to={`/prices/${encodeURIComponent(item.product_id)}`} className="block text-left">
                     <div className="aspect-square bg-photo rounded-md flex items-center justify-center mb-2 border border-border">
                       {item.image ? (
                         <img
                           src={item.image}
-                          alt={item.name}
+                          alt=""
                           className="max-h-full max-w-full object-contain p-2"
                           loading="lazy"
                         />
                       ) : (
-                        <Package className="h-8 w-8 text-muted-foreground/40" />
+                        <Package className="h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
                       )}
                     </div>
-                  </Link>
-
-                  {/* Name */}
-                  <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>
-                    <h3 className="text-sm font-medium line-clamp-3 leading-snug mb-2 hover:underline underline-offset-4 text-left min-h-[3.75rem]">
+                    <h3 className="text-sm font-medium line-clamp-3 leading-snug mb-2 hover:underline underline-offset-4 min-h-[3.75rem]">
                       {item.name}
                     </h3>
                   </Link>
 
-                  {/* Best price and how many shops it was compared across */}
+                  {/* Saved values, labelled as such */}
                   <dl className="text-left space-y-2 border-t border-border pt-2">
                     <div>
-                      <dt className="microcopy-label">Best price</dt>
+                      <dt className="microcopy-label">Price when added</dt>
                       <dd>
                         <PriceOrDash value={item.price} className="text-base font-bold text-foreground" />
                       </dd>
                     </div>
                     <div>
-                      <dt className="microcopy-label">Shops</dt>
+                      <dt className="microcopy-label">Shops when added</dt>
                       <dd className="text-sm text-foreground">{item.numStores > 0 ? shopLabel(item.numStores) : '—'}</dd>
                     </div>
                     <div>
@@ -188,7 +196,7 @@ export default function ComparisonPage() {
                     </div>
                   </dl>
                   <Button asChild variant="outline" size="sm" className="mt-3 w-full">
-                    <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>See all prices</Link>
+                    <Link to={`/prices/${encodeURIComponent(item.product_id)}`}>View prices</Link>
                   </Button>
                 </div>
               </div>
@@ -204,8 +212,8 @@ export default function ComparisonPage() {
                   onClick={() => setPanelOpen(true)}
                   className="w-full aspect-square bg-surface-alt rounded-md border border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-muted-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
-                  <Plus className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Add product</span>
+                  <Plus className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                  <span className="text-xs text-muted-foreground">Add a product</span>
                 </button>
               </div>
             </div>

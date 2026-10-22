@@ -5,7 +5,7 @@
  * ads never have to be retrofitted into a page. Rules the components enforce:
  *
  * - Native slots use the site's own card, type and tokens, labelled
- *   "Sponsored" with a "Why is this here?" link.
+ *   "Sponsored" with an "About this ad" link.
  * - Nothing paid ever sits inside the price-sorted list.
  * - Each slot reserves a fixed height, so a late fill never shifts the page.
  * - An unsold slot is decided at BUILD time (this mode), never collapsed at

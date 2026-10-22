@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
+import { departmentDisplayLabel } from '../lib/navLabels';
 import { departmentForCategory } from '../data/taxonomyTree';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { clustersApi } from '../lib/api';
@@ -13,6 +14,7 @@ import { withSponsoredTiles } from '../components/ads/AdSlot';
 import {
   FilterControls,
   MobileFilters,
+  MULTI_SHOP_LABEL,
   SortSelect,
 } from '../features/search/components/ListingFiltersPanel';
 import {
@@ -79,7 +81,7 @@ export default function CatalogueBrowsePage() {
   };
   const brandLabel = brandParam ? brandName(brandParam) : null;
   const heading = brandLabel ? `${brandLabel} ${label.toLowerCase()}` : label;
-  const popular = brandPageBrands(brands).filter((b) => b !== brandParam);
+  const brandPages = brandPageBrands(brands).filter((b) => b !== brandParam);
 
   // Quick chips (benchmark §2.4, idealo and Geizhals): one tap for the
   // filters most shoppers reach for. The cheapest range comes from the price
@@ -87,7 +89,7 @@ export default function CatalogueBrowsePage() {
   const cheapest = result?.prices?.[0];
   const quickChips = [
     {
-      label: 'Sold by 2+ shops',
+      label: MULTI_SHOP_LABEL,
       on: filters.multiShop,
       toggle: () => ({ ...filters, multiShop: !filters.multiShop }),
     },
@@ -120,11 +122,18 @@ export default function CatalogueBrowsePage() {
 
   return (
     <div className="bg-background min-h-screen">
-      <Seo title={`${heading} prices in Kenya`} description={`Compare ${heading.toLowerCase()} prices across Kenyan shops, sorted by price.`} />
+      <Seo
+        title={`${heading} prices in Kenya`}
+        description={
+          brandLabel
+            ? `Compare listed prices for ${heading} from Kenyan shops.`
+            : `Compare ${heading.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`
+        }
+      />
       <div className="page-container py-8">
         <Breadcrumbs
           items={[
-            ...(department ? [{ label: department.label, to: `/aisle/${department.id}` }] : []),
+            ...(department ? [{ label: departmentDisplayLabel(department), to: `/aisle/${department.id}` }] : []),
             ...(brandLabel ? [{ label, to: `/browse/${productType}` }, { label: brandLabel }] : [{ label }]),
           ]}
         />
@@ -138,7 +147,7 @@ export default function CatalogueBrowsePage() {
 
         {error ? (
           <div className="py-20 text-center">
-            <p className="mb-4 text-sm text-muted-foreground">We couldn’t load {label}. Try again.</p>
+            <p className="mb-4 text-sm text-muted-foreground">We couldn’t load this category. Try again.</p>
             <Button variant="outline" onClick={load} className="gap-2">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Try again
@@ -177,8 +186,8 @@ export default function CatalogueBrowsePage() {
                   {loading
                     ? ' '
                     : matching
-                      ? `${from.toLocaleString()}–${to.toLocaleString()} of ${total.toLocaleString()}`
-                      : 'No products match'}
+                      ? `${from.toLocaleString()}–${to.toLocaleString()} of ${total.toLocaleString()} ${total === 1 ? 'product' : 'products'}`
+                      : 'No products match these filters'}
                 </p>
                 <div className="flex items-center gap-2">
                   <MobileFilters filters={filters} brands={brands} prices={result?.prices} resultCount={result?.count} onChange={(f) => update(f)} />
@@ -194,11 +203,13 @@ export default function CatalogueBrowsePage() {
                     {withSponsoredTiles(visible.map((c) => <ClusterCard key={c.cluster_id} cluster={c} />))}
                   </div>
                   <Pagination page={safePage} pages={pages} onChange={(p) => update(filters, p)} />
-                  {popular.length > 0 && (
-                    <section className="mt-12 border-t border-border pt-6" aria-labelledby="popular-heading">
-                      <h2 id="popular-heading" className="section-title">Popular in {label}</h2>
+                  {brandPages.length > 0 && (
+                    // The biggest brands in the category, by product count.
+                    // Not "Popular": nothing here measures what shoppers do.
+                    <section className="mt-12 border-t border-border pt-6" aria-labelledby="brands-heading">
+                      <h2 id="brands-heading" className="section-title">Browse by brand</h2>
                       <ul className="mt-3 flex flex-wrap gap-2">
-                        {popular.map((b) => (
+                        {brandPages.map((b) => (
                           <li key={b}>
                             <Link
                               to={`/browse/${productType}/${b}`}

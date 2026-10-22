@@ -1,9 +1,8 @@
 import { Link } from 'react-router';
 import { Edit2, Trash2 } from 'lucide-react';
 import { type LocalPriceAlert } from '../../../hooks/useLocalStorage';
-import { formatPrice } from '../../../lib/format';
+import { checkedDate, formatPrice } from '../../../lib/format';
 import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +36,11 @@ interface PriceAlertRowProps {
   onOpenChange: (open: boolean) => void;
 }
 
+/**
+ * One saved target: the product, the target, and the lowest listed price at
+ * the moment it was saved. No status badge and no "watching": the row shows
+ * two saved numbers and a date, which is all this feature holds.
+ */
 export function PriceAlertRow({
   alert,
   onEdit,
@@ -49,21 +53,14 @@ export function PriceAlertRow({
 }: PriceAlertRowProps) {
   return (
     <div className="border border-border rounded-md p-5 bg-card">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <Link
-            to={`/prices/${encodeURIComponent(alert.product_id)}`}
-            className="font-semibold text-base text-foreground hover:underline underline-offset-4"
-          >
-            {alert.name}
-          </Link>
-          <p className="text-sm text-muted-foreground mt-1">
-            Set on {new Date(alert.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </p>
-        </div>
-        <Badge variant={alert.triggered ? 'default' : 'outline'} className={alert.triggered ? 'bg-success' : ''}>
-          {alert.triggered ? 'Reached' : 'Active'}
-        </Badge>
+      <div className="mb-4">
+        <Link
+          to={`/prices/${encodeURIComponent(alert.product_id)}`}
+          className="font-semibold text-base text-foreground hover:underline underline-offset-4"
+        >
+          {alert.name}
+        </Link>
+        <p className="text-sm text-muted-foreground mt-1">Saved {checkedDate(alert.createdAt)}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -72,70 +69,56 @@ export function PriceAlertRow({
           <p className="text-lg font-semibold text-foreground price-num">{formatPrice(alert.targetPrice)}</p>
         </div>
         <div>
-          <p className="microcopy-label">Best price now</p>
+          <p className="microcopy-label">Price when saved</p>
           <p className="text-lg font-semibold text-foreground price-num">{formatPrice(alert.currentPrice)}</p>
         </div>
       </div>
 
-      {!alert.triggered && (
-        <div className="bg-surface-alt rounded-md p-3 mb-4">
-          <p className="text-sm text-muted-foreground">
-            {alert.currentPrice > alert.targetPrice
-              ? `${formatPrice(alert.currentPrice - alert.targetPrice)} above your target`
-              : 'Your target price has been reached.'}
-          </p>
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" asChild>
+          <Link to={`/prices/${encodeURIComponent(alert.product_id)}`}>View prices</Link>
+        </Button>
 
-      {alert.triggered && (
-        <div className="bg-success/10 border border-success/30 rounded-md p-3 mb-4">
-          <p className="text-success text-sm font-medium">
-            The best price is now {formatPrice(alert.currentPrice)}.
-          </p>
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        {!alert.triggered && (
-          <Dialog open={isEditing} onOpenChange={onOpenChange}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" onClick={() => onEdit(alert)}>
-                <Edit2 className="w-4 h-4" aria-hidden="true" />
-                Change target
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Change target price</DialogTitle>
-                <DialogDescription>We’ll email you when a shop goes below it.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div>
-                  <Label htmlFor="editPrice">Target price (KES)</Label>
-                  <Input
-                    id="editPrice"
-                    type="number"
-                    value={editPrice}
-                    onChange={(e) => onEditPriceChange(e.target.value)}
-                    className="mt-2"
-                  />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Best price now: {formatPrice(alert.currentPrice)}
-                  </p>
-                </div>
-                <Button onClick={onSaveEdit} className="w-full">
-                  Save
-                </Button>
+        <Dialog open={isEditing} onOpenChange={onOpenChange}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" onClick={() => onEdit(alert)}>
+              <Edit2 className="w-4 h-4" aria-hidden="true" />
+              Change target
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change target price</DialogTitle>
+              <DialogDescription>Saved in this browser. No notifications are sent.</DialogDescription>
+            </DialogHeader>
+            <form
+              className="space-y-4 py-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                onSaveEdit();
+              }}
+            >
+              <div>
+                <Label htmlFor="editPrice">Target price (KES)</Label>
+                <Input
+                  id="editPrice"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={editPrice}
+                  onChange={(e) => onEditPriceChange(e.target.value)}
+                  className="mt-2"
+                />
+                <p className="text-sm text-muted-foreground mt-2">
+                  Price when saved: {formatPrice(alert.currentPrice)}
+                </p>
               </div>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {alert.triggered && (
-          <Button size="sm" asChild>
-            <Link to={`/prices/${encodeURIComponent(alert.product_id)}`}>See prices</Link>
-          </Button>
-        )}
+              <Button type="submit" className="w-full">
+                Save changes
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -146,18 +129,18 @@ export function PriceAlertRow({
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove this alert?</AlertDialogTitle>
+              <AlertDialogTitle>Remove this target?</AlertDialogTitle>
               <AlertDialogDescription>
-                We’ll stop watching the price of {alert.name}.
+                The target for {alert.name} will be removed from this browser.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Keep target</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => onDelete(alert.alert_id)}
                 className="bg-destructive hover:bg-destructive/90"
               >
-                Remove
+                Remove target
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

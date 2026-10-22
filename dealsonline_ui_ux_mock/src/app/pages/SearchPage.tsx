@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link, useSearchParams } from 'react-router';
 import { clustersApi } from '../lib/api';
-import type { SearchResult } from '../lib/catalogueQueries';
+import { SEARCH_CAP, type SearchResult } from '../lib/catalogueQueries';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Pagination } from '../components/common/Pagination';
@@ -10,11 +10,8 @@ import { AdSlot } from '../components/ads/AdSlot';
 import { PriceOrDash } from '../components/common/PriceOrDash';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
 import { SortSelect } from '../features/search/components/ListingFiltersPanel';
-import { readFilters, writeFilters } from '../lib/listing';
-import { Package, Search as SearchIcon } from 'lucide-react';
-
-/** Hits considered per query (catalogueQueries.search). */
-const SEARCH_LIMIT = 480;
+import { activeFilterCount, readFilters, writeFilters } from '../lib/listing';
+import { Package, RefreshCw, Search as SearchIcon } from 'lucide-react';
 
 /**
  * Search across the whole catalogue, rendered as the same cards as every
@@ -23,6 +20,10 @@ const SEARCH_LIMIT = 480;
  * Results can be narrowed to one category and sorted; 48 per page. A hit deep
  * in the two largest categories has no listing row loaded, so it renders as a
  * compact row after the cards rather than as a card without a photo.
+ *
+ * Three states that used to share one message are kept apart: a request
+ * that failed (Try again), a query with no matches, and a scope or filter
+ * that excludes everything (Clear filters).
  */
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,22 +34,30 @@ export default function SearchPage() {
 
   const [res, setRes] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   // One page per request, scoped and filtered where the data is.
   useEffect(() => {
     let cancelled = false;
     if (!query.trim()) {
       setRes(null);
+      setFailed(false);
       return;
     }
     setLoading(true);
+    setFailed(false);
     clustersApi
       .search(query, { slug, filters, page })
       .then((r) => {
         if (!cancelled) setRes(r);
       })
       .catch(() => {
-        if (!cancelled) setRes(null);
+        if (!cancelled) {
+          setRes(null);
+          setFailed(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -56,22 +65,26 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [query, slug, filters, page]);
+  }, [query, slug, filters, page, attempt]);
 
   const count = res?.count ?? 0;
+  const cardCount = res?.cardCount ?? 0;
   const categories = res?.categories ?? [];
   const visible = res?.results ?? [];
   const plain = res?.plain ?? [];
   const pages = res?.pages ?? 1;
   const safePage = res?.page ?? 0;
   const lastPage = safePage === pages - 1;
+  const narrowed = !!slug || activeFilterCount(filters) > 0;
+  const shown = narrowed ? cardCount : count;
 
-  const setParams = (next: { slug?: string | null; page?: number; sort?: typeof filters.sort }) => {
+  const setParams = (next: { slug?: string | null; page?: number; sort?: typeof filters.sort; clear?: boolean }) => {
+    const base = next.clear ? readFilters(new URLSearchParams()) : filters;
     const out: Record<string, string> = {
       q: query,
-      ...writeFilters({ ...filters, sort: next.sort ?? filters.sort }, next.page ?? 0),
+      ...writeFilters({ ...base, sort: next.sort ?? base.sort }, next.page ?? 0),
     };
-    const s = next.slug === undefined ? slug : next.slug;
+    const s = next.slug === undefined ? (next.clear ? undefined : slug) : next.slug;
     if (s) out.slug = s;
     setSearchParams(out);
     window.scrollTo({ top: 0 });
@@ -84,27 +97,44 @@ export default function SearchPage() {
         <h1 className="page-title">{query ? <>Results for “{query}”</> : 'Search'}</h1>
 
         {!query.trim() ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Search any product to compare prices across Kenyan shops.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Search for a product or brand.</p>
         ) : loading ? (
-          <div className="mt-6">
+          <div className="mt-6" aria-busy="true" aria-label="Searching">
+            <p className="mb-4 text-sm text-muted-foreground">Searching…</p>
             <ClusterGridSkeleton />
+          </div>
+        ) : failed ? (
+          <div className="py-16 text-center">
+            <p className="text-sm text-muted-foreground mb-4">We couldn’t load results. Try again.</p>
+            <Button variant="outline" onClick={retry} className="gap-2">
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Try again
+            </Button>
           </div>
         ) : count === 0 ? (
           <div className="py-16 text-center">
             <SearchIcon className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
-            <p className="text-sm text-muted-foreground mb-3">Nothing matches “{query}”. Try fewer words.</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              No results for “{query}”. Try a shorter name or model number.
+            </p>
             <Button asChild variant="outline">
-              <Link to="/browse">Browse all categories</Link>
+              <Link to="/browse">Browse categories</Link>
             </Button>
           </div>
         ) : (
           <>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {count.toLocaleString()} {count === 1 ? 'product' : 'products'}
-              {count > SEARCH_LIMIT && ` · showing the ${SEARCH_LIMIT.toLocaleString()} closest matches`}
+            <p className="mt-1 text-sm text-muted-foreground" aria-live="polite">
+              {shown.toLocaleString()} {shown === 1 ? 'product' : 'products'}
+              {narrowed && shown !== count && ` of ${count.toLocaleString()} results`}
             </p>
+            {res?.capped && (
+              // The cap is real and so is the way round it: every category
+              // chip searches its whole category.
+              <p className="mt-1 text-xs text-muted-foreground">
+                Filters and sorting apply to up to {SEARCH_CAP.toLocaleString()} initial matches. Add more
+                detail, or choose a category, to narrow your search.
+              </p>
+            )}
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2" role="group" aria-label="Category">
@@ -113,7 +143,7 @@ export default function SearchPage() {
                 </CategoryChip>
                 {categories.map(([c, n]) => (
                   <CategoryChip key={c} active={slug === c} onClick={() => setParams({ slug: c })}>
-                    {categoryLabel(c)} <span className="opacity-60">{n}</span>
+                    {categoryLabel(c)} <span className="opacity-60">{n.toLocaleString()}</span>
                   </CategoryChip>
                 ))}
               </div>
@@ -130,9 +160,18 @@ export default function SearchPage() {
               </div>
             )}
 
+            {visible.length === 0 && plain.length === 0 && (
+              <div className="py-16 text-center">
+                <p className="text-sm text-muted-foreground mb-3">No products match these filters.</p>
+                <Button variant="outline" onClick={() => setParams({ clear: true })}>
+                  Clear filters
+                </Button>
+              </div>
+            )}
+
             {lastPage && plain.length > 0 && (
               <section className="mt-10">
-                <h2 className="microcopy-label mb-2">More matches</h2>
+                <h2 className="microcopy-label mb-2">More results</h2>
                 <ul className="divide-y divide-border rounded-md border border-border">
                   {plain.slice(0, 60).map((row) => (
                     <li key={row.id}>

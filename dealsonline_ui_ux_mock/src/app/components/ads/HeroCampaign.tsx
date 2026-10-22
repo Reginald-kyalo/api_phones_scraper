@@ -37,14 +37,13 @@ export function HeroCampaign({ campaigns }: { campaigns: Campaign[] }) {
       aria-roledescription="carousel"
       aria-label={`Sponsored by ${c.shop}`}
     >
-      <SponsoredLabel />
+      <SponsoredLabel shop={c.shop} />
       <div className="mt-3 flex flex-1 flex-col">
         {c.image && (
           <div className="mb-3 flex h-28 items-center justify-center rounded-md bg-surface-alt">
             <img src={c.image} alt="" className="max-h-full object-contain p-2" />
           </div>
         )}
-        <p className="microcopy-label">{c.shop}</p>
         <p className="mt-1 text-base font-semibold leading-snug text-foreground">{c.headline}</p>
         {c.detail && <p className="mt-1 text-sm text-muted-foreground">{c.detail}</p>}
         <Button asChild variant="outline" className="mt-auto">

@@ -1,4 +1,4 @@
-import { familyDisplayLabel } from '../../lib/navLabels';
+import { departmentDisplayLabel, familyDisplayLabel } from '../../lib/navLabels';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, X } from 'lucide-react';
@@ -9,13 +9,20 @@ interface MegaMenuProps {
   onClose: () => void;
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
  * Static category panel driven by the derived hierarchy. Every captured shelf
  * is available beneath a family heading; the menu never truncates a department.
+ *
+ * It declares itself a modal dialog, so it behaves like one (design audit,
+ * A03): focus moves in when it opens, Tab stays inside, Escape closes it,
+ * and focus returns to the Categories button on close.
  */
 export default function MegaMenu({ open, onClose }: MegaMenuProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (TAXONOMY_DEPARTMENTS.length > 0) setActiveId((cur) => cur ?? TAXONOMY_DEPARTMENTS[0].id);
@@ -23,16 +30,37 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
 
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !panelRef.current) return;
+      const items = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      opener?.focus();
+    };
   }, [open, onClose]);
 
   if (!open) return null;
 
   const active = TAXONOMY_DEPARTMENTS.find((d) => d.id === activeId) ?? TAXONOMY_DEPARTMENTS[0];
+  const activeLabel = active ? departmentDisplayLabel(active) : '';
 
   return (
     <>
@@ -47,11 +75,12 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
       >
         <div className="page-container py-6">
           <button
+            ref={closeRef}
             onClick={onClose}
             className="absolute top-4 right-6 w-8 h-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
-            aria-label="Close categories menu"
+            aria-label="Close categories"
           >
-            <X className="w-5 h-5 text-muted-foreground" />
+            <X className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
           </button>
 
           <div className="flex gap-8 min-h-[320px] max-h-[min(75vh,680px)]">
@@ -77,8 +106,8 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                             : 'text-muted-foreground hover:bg-surface-alt hover:text-foreground'
                         }`}
                       >
-                        <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.75} />
-                        <span className="flex-1 truncate">{department.label}</span>
+                        <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                        <span className="flex-1 truncate">{departmentDisplayLabel(department)}</span>
                         {department.id !== 'phones-wearables' && <span className="text-xs text-muted-foreground tabular-nums">{department.n_clusters.toLocaleString()}</span>}
                         <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
                       </Link>
@@ -92,11 +121,11 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
               {active && (
                 <>
                   <div className="flex items-baseline gap-2 mb-4">
-                    <h3 className="section-title">{active.label}</h3>
+                    <h3 className="section-title">{activeLabel}</h3>
                     {active.id !== 'phones-wearables' && <span className="text-sm text-muted-foreground">{active.n_clusters.toLocaleString()} products</span>}
                   </div>
 
-                  {active.families.length > 0 ? (
+                  {active.families.length > 0 && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4 flex-1 overflow-y-auto pr-2">
                       {orderedFamilies(active).map((family) => (
                         <section key={family.id} aria-labelledby={`family-${active.id}-${family.id}`}>
@@ -121,21 +150,15 @@ export default function MegaMenu({ open, onClose }: MegaMenuProps) {
                         </section>
                       ))}
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-40 bg-surface-alt rounded-md border border-border">
-                      <p className="text-sm text-muted-foreground">
-                        Open {active.label} to see every product.
-                      </p>
-                    </div>
                   )}
 
-                  <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-4 flex-shrink-0">
+                  <div className={`${active.families.length > 0 ? 'mt-5 pt-4 border-t border-border' : 'mt-auto'} flex items-center justify-between gap-4 flex-shrink-0`}>
                     <Link
                       to={`/aisle/${active.id}`}
                       onClick={onClose}
                       className="inline-flex items-center gap-1 text-sm font-medium text-link underline underline-offset-4 decoration-link/40 hover:decoration-link"
                     >
-                      All of {active.label}{active.id === 'phones-wearables' ? '' : ` (${active.n_clusters.toLocaleString()})`}
+                      Browse {activeLabel.toLowerCase()}
                       <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </Link>
                     <Link

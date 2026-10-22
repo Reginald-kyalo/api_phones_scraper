@@ -20,10 +20,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="page-container py-16 text-center">
-          <h1 className="page-title mb-3">Something went wrong</h1>
-          <p className="text-muted-foreground mb-6">
-            This page didn’t load properly. Try again, or start from the homepage.
-          </p>
+          <h1 className="page-title mb-6">This page couldn’t load.</h1>
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => this.setState({ hasError: false })}
@@ -35,7 +32,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               to="/"
               className="inline-flex h-10 items-center rounded-md border border-border px-5 text-sm font-medium text-foreground hover:bg-surface-alt active:translate-y-px transition-colors"
             >
-              Go to the homepage
+              Home
             </Link>
           </div>
         </div>

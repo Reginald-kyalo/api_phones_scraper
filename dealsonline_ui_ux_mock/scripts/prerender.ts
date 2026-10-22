@@ -28,12 +28,12 @@ import type { ClusterDetail, ClusterStore, ClusterSummary } from '../src/app/lib
 import { BRAND, MONEY_LINE } from '../src/app/lib/brand';
 import { FAQ } from '../src/app/lib/faq';
 import { categoryLabel } from '../src/app/lib/categories';
-import { brandName, formatPrice, hasPrice, priceVerdict, productName, shopLabel } from '../src/app/lib/format';
+import { brandName, checkedDate, formatPrice, hasPrice, productName, shopLabel } from '../src/app/lib/format';
 import * as catalogue from '../src/app/lib/catalogueQueries';
 import { brandFacets, brandPageBrands, readFilters } from '../src/app/lib/listing';
 import { storeName } from '../src/app/lib/storeIdentity';
 import { bestImage } from '../src/app/lib/images';
-import { browseLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
+import { browseLabel, departmentDisplayLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
 import { TAXONOMY_DEPARTMENTS, departmentForCategory, shelfPlacement, spineShelfDisplay } from '../src/app/data/taxonomyTree';
 
 const DIST = join(process.cwd(), 'dist');
@@ -85,7 +85,7 @@ interface Page {
 }
 
 function render(page: Page): string {
-  const full = page.title ? `${page.title} · ${BRAND.name}` : `${BRAND.name} · Compare prices across Kenyan shops, from Jumia to Naivas`;
+  const full = page.title ? `${page.title} · ${BRAND.name}` : `${BRAND.name} · Compare prices in Kenya`;
   const head = [
     `<link rel="canonical" href="${esc(abs(page.path))}" />`,
     page.noindex ? '<meta name="robots" content="noindex" />' : '',
@@ -123,12 +123,12 @@ function shell(body: string): string {
 // department → category → brand, or department → family → shelf.
 const deptCrumb = (slug: string): [string, string][] => {
   const d = departmentForCategory(slug);
-  return d ? [[d.label, `/aisle/${d.id}`]] : [];
+  return d ? [[departmentDisplayLabel(d), `/aisle/${d.id}`]] : [];
 };
 const shelfCrumbs = (slug: string): [string, string][] => {
   const p = shelfPlacement(slug);
   return p
-    ? [[p.department.label, `/aisle/${p.department.id}`], [familyDisplayLabel(p.family), `/aisle/${p.department.id}#${p.family.id}`]]
+    ? [[departmentDisplayLabel(p.department), `/aisle/${p.department.id}`], [familyDisplayLabel(p.family), `/aisle/${p.department.id}#${p.family.id}`]]
     : [];
 };
 
@@ -190,9 +190,7 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
   const high = offers[offers.length - 1][1];
   const slug = cluster.category ?? '';
   const path = productPath(cluster.cluster_id);
-  const verdict = cluster.condition_basis !== 'likely_used' && (cluster.configs?.length ?? 0) < 2
-    ? priceVerdict(cluster.price_history, low.price)
-    : null;
+  const checked = cluster.last_seen ? ` Prices checked ${checkedDate(cluster.last_seen)}.` : '';
   const rows = offers
     .map(([store, o]) =>
       `<tr><td>${esc(storeName(store))}</td><td>${esc(o.title)}</td>` +
@@ -201,20 +199,22 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
     .join('');
   return {
     path,
-    title: `${name} price in Kenya: from ${formatPrice(low.price)} at ${shopLabel(offers.length)}`,
+    // No price in the title or description: a search result outlives the
+    // price it quoted (copy deck §21). The dated figures are in the body.
+    title: `${name} prices in Kenya`,
     image: bestImage(cluster),
-    description: `${name} from ${formatPrice(low.price)}. Compare ${shopLabel(offers.length)} in Kenya, sorted by price.`,
+    description: `View shop listings for ${name}. Compare available versions and prices from ${shopLabel(offers.length)}, then visit the shop you choose.`,
     body:
       crumbs([['Home', '/'], ...deptCrumb(slug), ...(slug ? [[categoryLabel(slug), `/browse/${slug}`] as [string, string]] : [])]) +
       `<h1 class="page-title">${esc(name)}</h1>` +
       // A summary written from the price data, never by hand: what Google
-      // quotes, and the same numbers as the list below.
-      `<p class="mt-2 text-sm">${esc(name)} is on sale at ${esc(shopLabel(offers.length))} in Kenya, from ` +
-      `${esc(formatPrice(low.price))} at ${esc(storeName(lowStore))} to ${esc(formatPrice(high.price))}, ` +
-      `a difference of ${esc(formatPrice((high.price as number) - (low.price as number)))}.` +
-      (verdict ? ` ${esc(verdict)}` : '') +
-      `</p>` +
-      `<table class="mt-6 w-full text-sm"><caption class="microcopy-label text-left">Prices · sorted by price</caption>` +
+      // quotes, and the same numbers as the list below. "Shop listings",
+      // not "on sale": nothing here is a discount, and the gap between the
+      // highest and lowest listing is shown in the table, not asserted as a
+      // saving (copy deck §21).
+      `<p class="mt-2 text-sm">Shop listings for ${esc(name)} in Kenya: ${esc(shopLabel(offers.length))}, from ` +
+      `${esc(formatPrice(low.price))} at ${esc(storeName(lowStore))} to ${esc(formatPrice(high.price))}.${esc(checked)}</p>` +
+      `<table class="mt-6 w-full text-sm"><caption class="microcopy-label text-left">Prices · lowest first</caption>` +
       `<thead><tr><th class="text-left">Shop</th><th class="text-left">Listing</th><th class="text-left">Price</th></tr></thead>` +
       `<tbody>${rows}</tbody></table>`,
     jsonLd: {
@@ -296,28 +296,28 @@ function robotsTxt(): string {
  */
 function llmsTxt(manifest: Awaited<ReturnType<typeof demo.getManifest>>): string {
   const cats = manifest.categories
-    .map((c) => `- [${categoryLabel(c.slug)}](${abs(`/browse/${c.slug}`)}): ${c.count.toLocaleString('en-GB')} products, ${c.multi_store.toLocaleString('en-GB')} sold by 2 or more shops`)
+    .map((c) => `- [${categoryLabel(c.slug)}](${abs(`/browse/${c.slug}`)}): ${c.count.toLocaleString('en-GB')} products, ${c.multi_store.toLocaleString('en-GB')} with prices from 2 or more shops`)
     .join('\n');
   return `# ${BRAND.name}
 
-> ${BRAND.name} is a price comparison site for Kenya. For each product it lists every shop's current price, sorted by price, with the shop's own listing title and when the price was last checked. It covers ${manifest.total_clusters.toLocaleString('en-GB')} products from ${manifest.total_stores} Kenyan shops, including Jumia, Kilimall, Carrefour and Naivas. Prices are in Kenyan shillings (KES). ${BRAND.name} does not sell anything itself.
+> ${BRAND.name} compares listed prices from Kenyan shops. Product pages show available shop listings sorted by price, each with the shop's own listing title and the date the price was checked, and recorded price information where it exists. The catalogue holds ${manifest.total_clusters.toLocaleString('en-GB')} products from ${manifest.total_stores} listed shops; it does not cover every shop or every product. Prices are in Kenyan shillings (KES). Purchases take place on the shop's website.
 
 ${MONEY_LINE}
 
 ## What the pages contain
 
-- Product pages (${abs('/prices/')}<id>): one product, every shop's price for it sorted cheapest first, the price range, the number of shops, when prices were checked, price history where recorded, and Product/AggregateOffer structured data. Savings compare two real shop prices for the same configuration; they are never computed against a list price.
-- Category pages (${abs('/browse/')}<category>): the products in a category, most compared first, with the lowest price and shop count for each.
+- Product pages (${abs('/prices/')}<id>): one product, each listed shop's price sorted lowest first, the price range, the number of shops, when prices were checked, recorded price history where it exists, and Product/AggregateOffer structured data. A percentage difference compares the lowest and highest listed prices for the same version; it is never computed against a list price and is not a discount.
+- Category pages (${abs('/browse/')}<category>): the products in a category, most shops first, with the lowest listed price and shop count for each.
 - Brand pages (${abs('/browse/')}<category>/<brand>): one brand within a category, e.g. ${abs('/browse/mobile-phones/samsung')}.
-- Deals (${abs('/deals')}): products that are cheaper at one shop than another, with savings between 1% and 60%.
-- Questions and answers (${abs('/faq')}): how comparisons work, what to check before paying, how ${BRAND.name} makes money.
+- Deals (${abs('/deals')}): products listed at a lower price by one shop than another.
+- Help (${abs('/faq')}): how comparisons work, what to check before paying, how ${BRAND.name} makes money.
 
 ## Key pages
 
 - [Home](${abs('/')})
 - [All categories](${abs('/browse')})
 - [Deals](${abs('/deals')})
-- [Questions and answers](${abs('/faq')})
+- [Help](${abs('/faq')})
 - [How we make money](${abs('/how-we-make-money')})
 - [About](${abs('/about')})
 - [For shops and brands](${abs('/for-business')})
@@ -328,7 +328,7 @@ ${cats}
 
 ## Notes for quoting
 
-- Quote prices with the shop and the time they were checked; shops change prices, and the final price at checkout can include delivery.
+- Quote prices with the shop and the date they were checked; shops change prices, and the final price at checkout can include delivery. Listings are matched automatically and may differ in version or size.
 - The full list of pages is in the sitemap: ${ORIGIN}${BASE}sitemap.xml
 `;
 }
@@ -359,30 +359,33 @@ async function main() {
 
   // Static pages
   const departmentLinks = TAXONOMY_DEPARTMENTS.map(
-    (d) => `<li><a href="${href(`/aisle/${d.id}`)}">${esc(d.label)}</a></li>`,
+    (d) => `<li><a href="${href(`/aisle/${d.id}`)}">${esc(departmentDisplayLabel(d))}</a></li>`,
   ).join('');
   const deals = await demo.getDeals({ page: 0, limit: 24 });
 
   write({
     path: '/',
-    description: 'Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops. Every shop’s price, sorted by price.',
+    description: 'Compare listed prices for phones, laptops, groceries and more from Kenyan shops. Review your options before visiting a shop.',
     body:
-      `<h1 class="page-title">Compare prices across ${esc(manifest.total_stores)} Kenyan shops</h1>` +
-      `<p class="mt-2 text-muted-foreground">${esc(manifest.total_clusters.toLocaleString('en-GB'))} products. Every shop’s price for the same product, sorted by price.</p>` +
-      `<h2 class="section-title mt-8">Departments</h2><ul class="mt-3 space-y-1">${departmentLinks}</ul>` +
-      `<h2 class="section-title mt-8">Deals</h2>${productList(deals.results)}` +
-      `<p class="mt-8 text-sm text-muted-foreground">${esc(MONEY_LINE)}</p>`,
+      `<h1 class="page-title">Compare prices across Kenyan shops</h1>` +
+      `<p class="mt-2 text-muted-foreground">${esc(manifest.total_clusters.toLocaleString('en-GB'))} products · ${esc(manifest.total_stores)} listed shops</p>` +
+      `<h2 class="section-title mt-8">Categories</h2><ul class="mt-3 space-y-1">${departmentLinks}</ul>` +
+      `<h2 class="section-title mt-8">Deals</h2><p class="text-sm text-muted-foreground">Lower prices across shops.</p>${productList(deals.results)}` +
+      `<p class="mt-8 text-sm text-muted-foreground"><a href="${href('/how-we-make-money')}">How we make money</a></p>`,
   });
   write({
     path: '/deals',
     title: 'Deals',
-    description: 'The same product, cheaper at one Kenyan shop than another. Real savings between shops, checked daily.',
-    body: crumbs([['Home', '/'], ['Deals']]) + `<h1 class="page-title">Deals</h1>${productList(deals.results)}`,
+    description: 'Lower listed prices for matching products across shops in Kenya.',
+    body:
+      crumbs([['Home', '/'], ['Deals']]) +
+      `<h1 class="page-title">Deals</h1><p class="mt-1 text-sm text-muted-foreground">Lower prices for matching products across shops.</p>` +
+      productList(deals.results),
   });
   write({
     path: '/browse',
     title: 'All categories',
-    description: 'Browse every category SokoPulse compares, from phones and laptops to groceries.',
+    description: 'Every category SokoPulse compares, from phones and laptops to groceries.',
     body:
       crumbs([['Home', '/'], ['All categories']]) +
       `<h1 class="page-title">All categories</h1><ul class="mt-6 space-y-1">${departmentLinks}` +
@@ -393,22 +396,23 @@ async function main() {
   });
 
   // Prose pages render from LegalPage; the snapshot carries the title only.
+  // Titles and descriptions match the rendered pages (LegalPage.tsx).
   const prose: [path: string, title: string, description: string][] = [
-    ['/about', 'About us', 'SokoPulse compares prices across Kenyan shops so you can find the real lowest price for the exact product you want.'],
+    ['/about', 'About SokoPulse', 'Learn what SokoPulse compares and how to use its price information.'],
     ['/how-we-make-money', 'How we make money', MONEY_LINE],
-    ['/for-business', 'For shops and brands', 'List your shop, advertise, or buy Kenyan price data and an API from SokoPulse.'],
-    ['/contact', 'Contact', 'How to reach SokoPulse.'],
-    ['/privacy', 'Privacy policy', 'How SokoPulse handles your data.'],
+    ['/for-business', 'For shops and brands', 'Contact SokoPulse about shop listings, advertising and price data enquiries.'],
+    ['/contact', 'Contact', 'How to contact SokoPulse.'],
+    ['/privacy', 'Privacy policy', 'What information SokoPulse collects, why it is used and how to contact us about it.'],
     ['/terms', 'Terms of service', 'The terms for using SokoPulse.'],
-    ['/cookie-policy', 'Cookie policy', 'How SokoPulse uses cookies.'],
+    ['/cookie-policy', 'Cookies and browser storage', 'How SokoPulse uses browser storage and how to manage saved preferences.'],
   ];
   write({
     path: '/faq',
-    title: 'Questions and answers',
-    description: 'How SokoPulse compares prices across Kenyan shops, what to check before you pay, and how we make money.',
+    title: 'Help',
+    description: 'Answers about prices, shops, saved products and using SokoPulse.',
     body:
-      crumbs([['Home', '/'], ['Questions and answers']]) +
-      `<h1 class="page-title">Questions and answers</h1>` +
+      crumbs([['Home', '/'], ['Help']]) +
+      `<h1 class="page-title">Help</h1>` +
       FAQ.map(({ q, a }) => `<h2 class="mt-6 text-base font-semibold">${esc(q)}</h2><p class="mt-1 text-sm">${esc(a)}</p>`).join(''),
     jsonLd: {
       '@context': 'https://schema.org',
@@ -422,7 +426,7 @@ async function main() {
 
   // Pages with nothing for a search result: correct title, noindex, no snapshot.
   const privatePages: [string, string][] = [
-    ['/search', 'Search'], ['/favorites', 'Favourites'], ['/alerts', 'Price alerts'],
+    ['/search', 'Search'], ['/favorites', 'Favourites'], ['/alerts', 'Price targets'],
     ['/account', 'Your account'], ['/auth', 'Sign in'], ['/compare', 'Compare products'],
     ['/style-guide', 'Style guide'],
   ];
@@ -439,31 +443,31 @@ async function main() {
     productIds.push(...multi.map((r) => r.cluster_id));
     const brands = brandPageBrands(brandFacets(rows));
     const popular = brands.length
-      ? `<h2 class="section-title mt-8">Popular in ${esc(label)}</h2><ul class="mt-3 space-y-1">` +
+      ? `<h2 class="section-title mt-8">Browse by brand</h2><ul class="mt-3 space-y-1">` +
         brands.map((b) => `<li><a href="${href(`/browse/${c.slug}/${b}`)}">${esc(brandName(b))} ${esc(label.toLowerCase())}</a></li>`).join('') +
         `</ul>`
       : '';
     write({
       path: `/browse/${c.slug}`,
       title: `${label} prices in Kenya`,
-      description: `Compare ${label.toLowerCase()} prices across Kenyan shops, sorted by price.`,
+      description: `Compare ${label.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`,
       body:
         crumbs([['Home', '/'], ...deptCrumb(c.slug), [label]]) +
         `<h1 class="page-title">${esc(label)}</h1>` +
-        `<p class="mt-1 text-sm text-muted-foreground">${esc(c.count.toLocaleString('en-GB'))} products · ${esc(c.multi_store.toLocaleString('en-GB'))} sold by 2 or more shops</p>` +
+        `<p class="mt-1 text-sm text-muted-foreground">${esc(c.count.toLocaleString('en-GB'))} products · ${esc(c.multi_store.toLocaleString('en-GB'))} with prices from 2 or more shops</p>` +
         productList(multi.slice(0, 48)) +
         popular,
     });
 
     // Brand pages: the category filtered to one brand, as the app renders
-    // /browse/<category>/<brand>, most compared first.
+    // /browse/<category>/<brand>, most shops first.
     for (const b of brands) {
       const heading = `${brandName(b)} ${label.toLowerCase()}`;
       const page = await catalogue.browse(c.slug, { ...readFilters(new URLSearchParams()), brands: [b] }, 0);
       write({
         path: `/browse/${c.slug}/${b}`,
         title: `${heading} prices in Kenya`,
-        description: `Compare ${heading.toLowerCase()} prices across Kenyan shops, sorted by price.`,
+        description: `Compare listed prices for ${heading} from Kenyan shops.`,
         body:
           crumbs([['Home', '/'], ...deptCrumb(c.slug), [label, `/browse/${c.slug}`], [brandName(b)]]) +
           `<h1 class="page-title">${esc(heading)}</h1>` +
@@ -476,13 +480,14 @@ async function main() {
 
   // Departments and their shelves.
   for (const d of TAXONOMY_DEPARTMENTS) {
+    const label = departmentDisplayLabel(d);
     write({
       path: `/aisle/${d.id}`,
-      title: d.label,
-      description: `Compare ${d.label.toLowerCase()} prices across Kenyan shops.`,
+      title: `${label} prices in Kenya`,
+      description: `Compare ${label.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`,
       body:
-        crumbs([['Home', '/'], [d.label]]) +
-        `<h1 class="page-title">${esc(d.label)}</h1>` +
+        crumbs([['Home', '/'], [label]]) +
+        `<h1 class="page-title">${esc(label)}</h1>` +
         d.families
           .map((f) =>
             `<h2 class="section-title mt-6">${esc(familyDisplayLabel(f))}</h2><ul class="mt-2 space-y-1">` +
@@ -504,8 +509,8 @@ async function main() {
     const heading = browseLabel(shelf.node);
     write({
       path: `/shelf/${slug}`,
-      title: heading,
-      description: `Compare ${heading.toLowerCase()} prices across Kenyan shops.`,
+      title: `${heading} prices in Kenya`,
+      description: `Compare ${heading.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`,
       body:
         crumbs([['Home', '/'], ...shelfCrumbs(slug), [heading]]) +
         `<h1 class="page-title">${esc(heading)}</h1>` +

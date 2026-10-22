@@ -93,7 +93,14 @@ export function useLocalFavorites() {
 }
 
 // ---------------------------------------------------------------------------
-// Price Alerts
+// Price targets (stored under the historical "alert" key)
+//
+// A target is a number the shopper saved, with the lowest listed price at
+// that moment. Nothing here, or anywhere in this build, watches prices or
+// sends a notification: `triggered` is derived from the saved snapshot and
+// must not be shown as a status (design audit 2026-10-21, §12). The field and
+// the storage key stay so saved targets survive the rename and a later
+// notification service can read them.
 // ---------------------------------------------------------------------------
 
 export interface LocalPriceAlert {

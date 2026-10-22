@@ -19,7 +19,7 @@ function ScrollToTop() {
 
 function PageFallback() {
   return (
-    <div className="page-container py-8">
+    <div className="page-container py-8" aria-busy="true" aria-label="Loading page">
       <Skeleton className="h-8 w-48 mb-4" />
       <Skeleton className="h-4 w-96 mb-8" />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">

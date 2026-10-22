@@ -11,8 +11,9 @@ import type { ClusterDetail } from '../../../lib/api';
  * engine-clean data.
  *
  * The dataset's own stated limit is that roughly 1 in 6 merges joins two things a
- * human would call variants (organic vs conventional, 500g vs 1kg), so this says
- * plainly that the grouping is automatic and points at the store titles.
+ * human would call variants (organic vs conventional, 500g vs 1kg). The shopper
+ * needs that limitation and the evidence (the shop titles), not the matching
+ * algorithm's vocabulary: "title similarity" went (design audit §8).
  */
 export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
   const [open, setOpen] = useState(false);
@@ -29,9 +30,7 @@ export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
         className="flex w-full items-center gap-2 p-3 text-left text-sm text-muted-foreground"
       >
         <GitMerge className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-        <span className="flex-1">
-          Grouped from {merged} product listings by title similarity
-        </span>
+        <span className="flex-1">How listings are matched</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
           aria-hidden="true"
@@ -40,15 +39,16 @@ export function MatchProvenance({ cluster }: { cluster: ClusterDetail }) {
       {open && (
         <div className="border-t border-border px-3 py-3 text-xs leading-relaxed text-muted-foreground">
           <p>
-            These listings were matched automatically, not checked by hand. Similar
-            sizes or variants are occasionally grouped together, so read the names
-            below before you buy.
+            Listings are matched automatically. Similar names can refer to different sizes,
+            versions or pack quantities.
+            {members.length > 1 ? ' The original shop titles are shown below.' : ''}
           </p>
-          {/* The names the engine unified. Telling a reader "grouped from 3" and
-              then showing only the winning title asks them to audit a merge with
-              the evidence withheld — the differing names ARE the thing to check
-              ("Green Label" against "Blue Label"). `mvp_merged_from` cannot be
-              used here: it is identity keys, unreadable to a person. */}
+          {/* The names the engine unified. Telling a reader the listings were
+              grouped and then showing only the winning title asks them to audit
+              a merge with the evidence withheld — the differing names ARE the
+              thing to check ("Green Label" against "Blue Label").
+              `mvp_merged_from` cannot be used here: it is identity keys,
+              unreadable to a person. */}
           {members.length > 1 && (
             <ul className="mt-2 space-y-1">
               {members.map((m) => (

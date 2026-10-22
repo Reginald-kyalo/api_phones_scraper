@@ -74,32 +74,52 @@ export interface SearchResult {
   results: ClusterSummary[];
   /** Hits without a listing row, rendered as plain links (first page only). */
   plain: SearchRow[];
-  /** Every hit, before category scope and filters. */
+  /** Every hit across the catalogue, before category scope and filters. */
   count: number;
-  /** Product cards after scope and filters. */
+  /** Product cards after scope and filters: the number the page shows. */
   cardCount: number;
+  /**
+   * True when the unscoped result set was cut to SEARCH_CAP before filtering
+   * and sorting, so the page can say so. Never true for a scoped search.
+   */
+  capped: boolean;
   categories: [slug: string, count: number][];
   page: number;
   pages: number;
 }
+
+/**
+ * Hits an unscoped search filters and sorts. Across the whole catalogue a
+ * common word matches thousands of titles in a dozen card indexes; the page
+ * discloses the cap and offers the category chips, each of which searches
+ * its category completely.
+ */
+export const SEARCH_CAP = 480;
 
 /** Search, scoped to a category and filtered like a listing, one page at a time. */
 export async function search(
   q: string,
   options: { slug?: string; filters: ListingFilters; page?: number; limit?: number },
 ): Promise<SearchResult> {
-  const res = await demo.searchSummaries(q, { limit: 480 });
+  // Every hit, for the category counts and the total: a chip's number must
+  // be the number of products it leads to, not its share of a capped sample.
+  const all = await demo.search(q, { limit: Infinity });
   const catOf = (h: SearchRow) => h.c ?? h.id.split('::')[0];
   const counts = new Map<string, number>();
-  for (const r of res.results) counts.set(catOf(r.hit), (counts.get(catOf(r.hit)) ?? 0) + 1);
-  const scoped = options.slug ? res.results.filter((r) => catOf(r.hit) === options.slug) : res.results;
-  const cards = applyFilters(scoped.flatMap((r) => (r.row ? [r.row] : [])), options.filters);
+  for (const h of all.results) counts.set(catOf(h), (counts.get(catOf(h)) ?? 0) + 1);
+
+  // Scoped to one category, the whole eligible set is filtered and sorted
+  // (one search shard, one card index). Unscoped, the closest SEARCH_CAP.
+  const capped = !options.slug && all.count > SEARCH_CAP;
+  const res = await demo.searchSummaries(q, { slug: options.slug, limit: options.slug ? Infinity : SEARCH_CAP });
+  const cards = applyFilters(res.results.flatMap((r) => (r.row ? [r.row] : [])), options.filters);
   const paged = pageOf(cards, options.page ?? 0, clamp(options.limit, PAGE_SIZE));
   return {
     ...paged,
-    plain: scoped.filter((r) => !r.row).map((r) => r.hit).slice(0, PAGE_SIZE),
-    count: res.count,
+    plain: res.results.filter((r) => !r.row).map((r) => r.hit).slice(0, PAGE_SIZE),
+    count: all.count,
     cardCount: cards.length,
+    capped,
     categories: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8),
   };
 }

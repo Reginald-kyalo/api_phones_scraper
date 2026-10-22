@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link } from 'react-router';
 import { clusterSaving, hasPrice } from '../lib/format';
@@ -10,13 +10,14 @@ import { imageUsable } from '../lib/images';
 import HeroSection from '../components/layout/HeroSection';
 import CategoryStrip from '../components/layout/CategoryStrip';
 import { AdSlot } from '../components/ads/AdSlot';
-import { ArrowRight } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { ArrowRight, RefreshCw } from 'lucide-react';
 
 
 /**
- * Homepage cards must have a photo and, for deal rails, a saving we are
- * willing to show (DESIGN_RULES.md §5). A grey box or a "Save 97%" on a KES 5
- * packet is the first thing a shopper would see, so it never gets the slot.
+ * Homepage cards must have a photo and, for deal rails, a price difference we
+ * are willing to show (DESIGN_RULES.md §5). A grey box or a "97% lower" on a
+ * KES 5 packet is the first thing a shopper would see, so it never gets the slot.
  */
 function homepageWorthy(cluster: ClusterSummary): boolean {
   return imageUsable(cluster.image) && hasPrice(cluster.best_price);
@@ -42,12 +43,15 @@ function Rail({
   href,
   linkLabel,
   products,
+  showSaving = false,
 }: {
   title: string;
   subtitle?: string;
   href: string;
   linkLabel: string;
   products: ClusterSummary[];
+  /** Deals only: the one rail where the difference between shops is the point. */
+  showSaving?: boolean;
 }) {
   if (products.length === 0) return null;
   return (
@@ -68,7 +72,7 @@ function Rail({
           rather than leave an orphan row. */}
       <div className={`${PRODUCT_GRID} md:[&>*:nth-child(n+5)]:hidden xl:[&>*:nth-child(n+5)]:flex`}>
         {products.map((product) => (
-          <ClusterCard key={`${title}-${product.cluster_id}`} cluster={product} />
+          <ClusterCard key={`${title}-${product.cluster_id}`} cluster={product} showSaving={showSaving} />
         ))}
       </div>
     </section>
@@ -83,9 +87,13 @@ export default function HomePage() {
   const [manifest, setManifest] = useState<DemoManifest | null>(null);
   const [deals, setDeals] = useState<ClusterSummary[]>([]);
   const [rails, setRails] = useState<{ slug: string; rows: ClusterSummary[] }[]>([]);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   useEffect(() => {
     let cancelled = false;
+    setFailed(false);
     (async () => {
       try {
         const [m, d] = await Promise.all([
@@ -103,54 +111,67 @@ export default function HomePage() {
         if (cancelled) return;
         setRails(featured.map((c, i) => ({ slug: c.slug, rows: pages[i].results.slice(0, 24) })));
       } catch {
-        // Static build: a missing fixture leaves the rails empty rather than
-        // breaking the page. Rail already returns null for an empty list.
+        // A failed load used to leave an empty page with no explanation
+        // (design audit, R01). Search and the category strip still work; the
+        // rails say what happened and offer a retry.
+        if (!cancelled) setFailed(true);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [attempt]);
 
-  const categoryCount = (slug: string) =>
-    manifest?.categories.find((c) => c.slug === slug)?.count ?? 0;
-  // Deal rails: photo, a real price and a saving we are willing to show. The
-  // feed is ranked by percentage, so its head is a run of near-identical
-  // "Save 44%" grocery rows; the homepage instead shows one deal per category,
-  // biggest cash saving first, so the rail reads as a cross-section.
+  // Deal rails: photo, a real price and a difference we are willing to show.
+  // The feed is ranked by percentage, so its head is a run of near-identical
+  // "44% lower" grocery rows; the homepage instead shows one deal per
+  // category, biggest cash difference first, so the rail reads as a
+  // cross-section.
   const showableDeals = diverseDeals(deals.filter((c) => homepageWorthy(c) && clusterSaving(c) != null));
 
   return (
     <div className="bg-background">
-      <Seo description="Compare prices on phones, laptops, TVs, groceries and more across Kenyan shops. Every shop’s price, sorted by price." />
+      <Seo description="Compare listed prices for phones, laptops, groceries and more from Kenyan shops. Review your options before visiting a shop." />
       <HeroSection
         productCount={manifest?.total_clusters}
         shopCount={manifest?.total_stores}
-        dealCount={manifest?.deals.count}
       />
       <div className="mt-5">
         <CategoryStrip />
       </div>
 
       <div className="page-container py-8">
-        <Rail
-          title="Deals"
-          subtitle="The same product, cheaper at one shop than another"
-          href="/deals"
-          linkLabel="All deals"
-          products={showableDeals.slice(0, 6)}
-        />
-
-        {rails.map(({ slug, rows }, i) => (
-          <div key={slug}>
-            <Rail
-              title={categoryLabel(slug)}
-              href={`/browse/${slug}`}
-              linkLabel={`All ${categoryCount(slug).toLocaleString('en-GB')}`}
-              products={rows.filter(homepageWorthy).slice(0, 6)}
-            />
-            {/* One featured-shop band per homepage, after the second rail. */}
-            {i === 1 && <AdSlot placement="home-featured-shop" className="mb-12" />}
+        {failed && !manifest ? (
+          <div className="py-16 text-center">
+            <p className="mb-4 text-sm text-muted-foreground">We couldn’t load products. Try again.</p>
+            <Button variant="outline" onClick={retry} className="gap-2">
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Try again
+            </Button>
           </div>
-        ))}
+        ) : (
+          <>
+            <Rail
+              title="Deals"
+              subtitle="Lower prices across shops"
+              href="/deals"
+              linkLabel="View all deals"
+              products={showableDeals.slice(0, 6)}
+              showSaving
+            />
+
+            {rails.map(({ slug, rows }, i) => (
+              <div key={slug}>
+                <Rail
+                  title={categoryLabel(slug)}
+                  href={`/browse/${slug}`}
+                  linkLabel={`View all ${categoryLabel(slug).toLowerCase()}`}
+                  products={rows.filter(homepageWorthy).slice(0, 6)}
+                />
+                {/* One featured-shop band per homepage, after the second rail. */}
+                {i === 1 && <AdSlot placement="home-featured-shop" className="mb-12" />}
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

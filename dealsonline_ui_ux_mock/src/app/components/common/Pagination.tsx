@@ -38,6 +38,7 @@ export function Pagination({
             key={item}
             type="button"
             onClick={() => onChange(item)}
+            aria-label={`Page ${item + 1}`}
             aria-current={item === page ? 'page' : undefined}
             className={`${base} hidden sm:inline-flex ${
               item === page

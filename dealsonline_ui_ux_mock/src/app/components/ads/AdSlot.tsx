@@ -2,16 +2,20 @@ import { Link } from 'react-router';
 import { Info } from 'lucide-react';
 import { AD_MODE, LISTING_TILE_POSITIONS, PLACEMENTS, type Placement } from '../../lib/ads';
 
-/** The label every paid element carries, with the honest explanation one click away. */
-export function SponsoredLabel() {
+/**
+ * The label every paid element carries, with the explanation one click away.
+ * Named campaigns say who paid ("Sponsored by Jumia"); the link is "About this
+ * ad", the words a shopper expects on a paid placement.
+ */
+export function SponsoredLabel({ shop }: { shop?: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="microcopy-label">Sponsored</span>
+      <span className="microcopy-label">{shop ? `Sponsored by ${shop}` : 'Sponsored'}</span>
       <Link
         to="/how-we-make-money"
         className="inline-flex items-center text-muted-foreground hover:text-foreground"
-        aria-label="Why is this sponsored?"
-        title="Why is this here?"
+        aria-label="About this ad"
+        title="About this ad"
       >
         <Info className="h-3.5 w-3.5" aria-hidden="true" />
       </Link>

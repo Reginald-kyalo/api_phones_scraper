@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Package } from 'lucide-react';
 import type { ClusterSummary } from '../../../lib/api';
-import { clusterSaving, pricedShopCount, productName, shopLabel } from '../../../lib/format';
+import { clusterSaving, pricedShopCount, productName } from '../../../lib/format';
 import { storeName } from '../../../lib/storeIdentity';
 import { ImageWithFallback } from '../../../components/common/ImageWithFallback';
 import { SavingBadge } from '../../../components/common/SavingBadge';
@@ -24,14 +24,22 @@ export const PRODUCT_GRID =
  *
  * Works for both halves of the corpus: 76% of clusters carry a real product
  * image, and the rest fall back to a neutral mark rather than a broken one.
- * A cluster with a single store is still a real product page — it just shows a
- * price instead of a saving, so the spread badge and shop count are conditional.
+ *
+ * What the card claims, and what it does not (design audit 2026-10-21):
+ *  - The price is the lowest listed price; "from" when there are several.
+ *  - The shop line names the shop that lists that price, and how many more
+ *    list the product. One shop is one shop: not "Only at", which claims an
+ *    exclusivity the catalogue cannot know.
+ *  - Condition has its own row and is never displaced by a percentage.
+ *  - The percentage chip appears only where `showSaving` is set (the Deals
+ *    rail and page), where the difference between shops is the point. On a
+ *    neutral card the product, price and shop count are the facts.
  */
-export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
+export function ClusterCard({ cluster, showSaving = false }: { cluster: ClusterSummary; showSaving?: boolean }) {
   const name = productName(cluster);
   // Capped and floored in one place, so this card, the deals filter and the
   // product page always agree. See displaySaving.
-  const saving = clusterSaving(cluster);
+  const saving = showSaving ? clusterSaving(cluster) : null;
   // The priced count, not `n_stores` — see pricedShopCount.
   const stores = pricedShopCount(cluster);
   const likelyUsed = cluster.condition_basis === 'likely_used';
@@ -75,16 +83,21 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
         <p className="line-clamp-2 h-10 text-sm font-semibold text-foreground">{name}</p>
         {/* Spec line (benchmark §2.5): storage, RAM, network where the name
             alone does not say. Always a row, so cards in a grid row align. */}
-        <p className="mt-0.5 h-4 truncate text-xs text-muted-foreground">{cluster.spec_line ?? '\u00a0'}</p>
+        <p className="mt-0.5 h-4 truncate text-xs text-muted-foreground">{cluster.spec_line ?? ' '}</p>
         <div className="mt-auto pt-2">
-          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+          {/* The price wraps rather than clipping: a six-digit KES amount in a
+              two-column grid at 320px was cut off by overflow-hidden (deep
+              review §4). "from" sits on its own line when it must. */}
+          <div className="flex flex-wrap items-baseline gap-x-1.5">
             {/* "from" when it is the lowest of several prices (PriceSpy's
                 wording): the card is a starting point, not the only price. */}
             {stores >= 2 && <span className="text-xs text-muted-foreground">from</span>}
             <PriceOrDash value={cluster.best_price} className="text-base font-bold text-foreground" />
           </div>
           {/* Every line below keeps its row, filled or not, so prices and
-              shop lines sit at the same height across a grid row. */}
+              shop lines sit at the same height across a grid row. Condition
+              and the percentage never share a row: used listings carry no
+              percentage (see clusterSaving). */}
           <div className="mt-1 flex h-5 items-center">
             {saving ? (
               <SavingBadge saving={saving} />
@@ -95,9 +108,9 @@ export function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {shop
               ? stores >= 2
-                ? <><span className="text-foreground">{shop}</span> +{shopLabel(stores - 1)}</>
-                : <>Only at <span className="text-foreground">{shop}</span></>
-              : stores >= 2 ? shopLabel(stores) : '\u00a0'}
+                ? <><span className="text-foreground">{shop}</span> + {stores - 1} more</>
+                : <span className="text-foreground">{shop}</span>
+              : stores >= 2 ? `${stores} listed shops` : stores === 1 ? '1 listed shop' : ' '}
           </p>
         </div>
       </div>
