@@ -20,6 +20,7 @@ import {
   usablePriceHistory,
 } from '../lib/format';
 import { departmentDisplayLabel } from '../lib/navLabels';
+import { describeLoadError, type LoadError } from '../lib/loadError';
 import { bestImage } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
@@ -109,18 +110,18 @@ export default function ClusterPricesPage() {
   const [cluster, setCluster] = useState<ClusterDetail | null>(null);
   const [capturedAt, setCapturedAt] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<LoadError | null>(null);
   const { addItem } = useRecentlyViewed();
 
   const load = useCallback(async () => {
     if (!clusterId) return;
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       setCluster(await clustersApi.getDetail(clusterId));
       clustersApi.getManifest().then((m) => setCapturedAt(m.captured_at)).catch(() => {});
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(describeLoadError(err, 'this product'));
     } finally {
       setLoading(false);
     }
@@ -143,13 +144,25 @@ export default function ClusterPricesPage() {
   if (loading) return <ProductPageSkeleton />;
 
   if (error || !cluster) {
+    // A product the catalogue does not have is not a loading failure, and
+    // "Try again" would be a false promise for it (scraping review §3).
+    const notFound = error?.kind === 'not-found';
     return (
       <div className="page-container py-16 text-center">
-        <p className="text-sm text-muted-foreground mb-4">We couldn’t load this product. Try again.</p>
-        <Button variant="outline" onClick={load} className="gap-2">
-          <RefreshCw className="h-4 w-4" aria-hidden="true" />
-          Try again
-        </Button>
+        <Seo title={notFound ? 'Product not found' : 'Product'} noindex />
+        <p className="text-sm text-muted-foreground mb-4">
+          {notFound ? 'Product not found.' : error?.message ?? 'We couldn’t load this product. Try again.'}
+        </p>
+        {notFound ? (
+          <Button asChild variant="outline">
+            <Link to="/browse">Browse categories</Link>
+          </Button>
+        ) : (
+          <Button variant="outline" onClick={load} className="gap-2">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            Try again
+          </Button>
+        )}
       </div>
     );
   }

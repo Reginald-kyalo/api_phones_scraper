@@ -5,7 +5,7 @@ import { Breadcrumbs } from '../components/common/Breadcrumbs';
 import { departmentDisplayLabel, familyDisplayLabel } from '../lib/navLabels';
 import { categoryLabel } from '../lib/categories';
 import { clustersApi } from '../lib/api';
-import type { DemoManifest } from '../lib/demoTypes';
+import type { PublicManifest } from '../lib/cataloguePublic';
 import { orderedFamilies, spineShelfDisplay, taxonomyDepartmentById } from '../data/taxonomyTree';
 
 /**
@@ -28,7 +28,7 @@ export default function DemoAislePage() {
   const { id } = useParams<{ id: string }>();
   const { hash } = useLocation();
   const department = taxonomyDepartmentById(id);
-  const [manifest, setManifest] = useState<DemoManifest | null>(null);
+  const [manifest, setManifest] = useState<PublicManifest | null>(null);
 
   useEffect(() => {
     let cancelled = false;

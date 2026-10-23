@@ -14,7 +14,8 @@
     "type-check": "tsc --noEmit && tsc -p tsconfig.functions.json",
     "check:design": "node scripts/check-design-tokens.mjs",
     "demo:cards": "node scripts/build-card-index.mjs",
-    "catalogue:upload": "node scripts/upload-catalogue.mjs"
+    "catalogue:upload": "node scripts/upload-catalogue.mjs",
+    "test:catalogue": "node --test scripts/tests/catalogue-request.test.mjs scripts/tests/catalogue-bootstrap.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",

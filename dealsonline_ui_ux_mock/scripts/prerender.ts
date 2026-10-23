@@ -30,7 +30,10 @@ import { FAQ } from '../src/app/lib/faq';
 import { categoryLabel } from '../src/app/lib/categories';
 import { brandName, checkedDate, formatPrice, hasPrice, productName, shopLabel } from '../src/app/lib/format';
 import * as catalogue from '../src/app/lib/catalogueQueries';
-import { brandFacets, brandPageBrands, readFilters } from '../src/app/lib/listing';
+import { publicDetail, publicManifest } from '../src/app/lib/cataloguePublic';
+import { homepageDeals, homepageRail, RAIL_SIZE } from '../src/app/lib/homepage';
+import { initialDataScript, queryKey, INITIAL_SCHEMA_VERSION, type InitialQuery } from '../src/app/lib/initialCatalogueData';
+import { brandFacets, brandPageBrands, readFilters, PAGE_SIZE } from '../src/app/lib/listing';
 import { storeName } from '../src/app/lib/storeIdentity';
 import { bestImage } from '../src/app/lib/images';
 import { browseLabel, departmentDisplayLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
@@ -41,6 +44,8 @@ const BASE = process.env.BASE_PATH || '/';
 /** Absolute origin for canonical URLs and the sitemap. */
 const ORIGIN = (process.env.SITE_URL || BRAND.url).replace(/\/$/, '');
 const MAX_PRODUCTS = Number(process.env.PRERENDER_MAX_PRODUCTS || 12000);
+/** Whether the built site still ships the raw dataset under /demo/. */
+const PUBLIC_DATA = process.env.VITE_CATALOGUE !== 'api';
 
 // ── The dataset, read from disk through the app's own loader ──────────────
 // demoSource fetches `${BASE}demo/<file>`; answer those from dist/demo.
@@ -82,7 +87,21 @@ interface Page {
   jsonLd?: object;
   /** Absolute URL of the share image; the brand card when absent. */
   image?: string | null;
+  /**
+   * The catalogue responses this page will ask for on load, keyed as
+   * lib/api.ts asks for them (lib/initialCatalogueData.ts). The client reads
+   * them from the HTML instead of the network, so the page keeps its prices
+   * when the catalogue request would fail (scraping review 2026-10-23, §2).
+   * Only this page's products: never a whole category.
+   */
+  initial?: InitialQuery[];
 }
+
+let catalogueVersion = '';
+const q = (op: string, params: Record<string, string | number | undefined>, response: unknown): InitialQuery => ({
+  key: queryKey(op, params),
+  response,
+});
 
 function render(page: Page): string {
   const full = page.title ? `${page.title} · ${BRAND.name}` : `${BRAND.name} · Compare prices in Kenya`;
@@ -104,7 +123,18 @@ function render(page: Page): string {
     .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${esc(page.image ?? abs('/og-image.png'))}$2`)
     .replace(/\s*<meta property="og:image:width"[^>]*>\s*<meta property="og:image:height"[^>]*>/, page.image ? '' : '$&')
     .replace('</head>', `  ${head}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${shell(page.body)}</div>`);
+    .replace(
+      '<div id="root"></div>',
+      `<div id="root">${shell(page.body)}</div>` +
+        (page.initial?.length
+          ? initialDataScript({
+              schemaVersion: INITIAL_SCHEMA_VERSION,
+              catalogueVersion,
+              pathname: decodeURIComponent(href(page.path)),
+              queries: page.initial,
+            })
+          : ''),
+    );
 }
 
 /** The snapshot's frame: a plain header and the page container the app uses. */
@@ -182,6 +212,8 @@ function offersOf(cluster: ClusterDetail): Offer[] {
     .sort(([, a], [, b]) => (a.price as number) - (b.price as number));
 }
 
+let pubManifest: ReturnType<typeof publicManifest>;
+
 function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
   const name = productName(cluster);
   const offers = offersOf(cluster);
@@ -199,6 +231,7 @@ function productPage(cluster: ClusterDetail, capturedAt: string): Page | null {
     .join('');
   return {
     path,
+    initial: [q('manifest', {}, pubManifest), q('detail', { id: cluster.cluster_id }, publicDetail(cluster))],
     // No price in the title or description: a search result outlives the
     // price it quoted (copy deck §21). The dated figures are in the body.
     title: `${name} prices in Kenya`,
@@ -271,13 +304,18 @@ const TRAINING_BOTS = [
  * each group repeats the two Disallow lines.
  */
 function robotsTxt(): string {
-  const closed = `Disallow: ${BASE}data/\nDisallow: ${BASE}api/\n`;
+  // The catalogue API is allowed: the app fetches it to render, and a
+  // crawler that cannot fetch a resource cannot render the page (its
+  // responses carry X-Robots-Tag: noindex, so they are never results). The
+  // honeypot and every other API path stay closed. Google and Bing apply the
+  // most specific rule, so Allow /api/catalogue/ wins over Disallow /api/.
+  const closed = `Allow: ${BASE}api/catalogue/\nDisallow: ${BASE}data/\nDisallow: ${BASE}api/\n`;
   return [
     '# Search and AI-answer crawlers: welcome on every public page.',
     ...ANSWER_BOTS.map((b) => `User-agent: ${b}`),
     `Allow: ${BASE}`,
     closed,
-    '# Training-only crawlers: not permitted.',
+    '# Crawlers that collect training data (Google-Extended is a robots token, not a separate crawler): not permitted.',
     ...TRAINING_BOTS.map((b) => `User-agent: ${b}`),
     `Disallow: ${BASE}`,
     '',
@@ -356,6 +394,8 @@ function plantTraps() {
 async function main() {
   const manifest = await demo.getManifest();
   const capturedAt = manifest.captured_at;
+  catalogueVersion = capturedAt;
+  pubManifest = publicManifest(manifest);
 
   // Static pages
   const departmentLinks = TAXONOMY_DEPARTMENTS.map(
@@ -363,8 +403,25 @@ async function main() {
   ).join('');
   const deals = await demo.getDeals({ page: 0, limit: 24 });
 
+  // The homepage asks for 96 deals and 24 rows per rail, then shows six of
+  // each (lib/homepage.ts). Embed the six it will show, under the keys it
+  // will ask with, so the HTML carries its own rails and nothing more.
+  const homeDeals = await catalogue.deals({ limit: 96 });
+  const featured = pubManifest.categories.filter((c) => c.comparison_grade).slice(0, 4);
+  const homeRails = await Promise.all(
+    featured.map(async (c) => {
+      const page = await catalogue.categoryPage(c.slug, 24);
+      return q('category', { slug: c.slug, limit: 24 }, { ...page, results: homepageRail(page.results, RAIL_SIZE) });
+    }),
+  );
+
   write({
     path: '/',
+    initial: [
+      q('manifest', {}, pubManifest),
+      q('deals', { limit: 96 }, { ...homeDeals, results: homepageDeals(homeDeals.results) }),
+      ...homeRails,
+    ],
     description: 'Compare listed prices for phones, laptops, groceries and more from Kenyan shops. Review your options before visiting a shop.',
     body:
       `<h1 class="page-title">Compare prices across Kenyan shops</h1>` +
@@ -376,6 +433,7 @@ async function main() {
   write({
     path: '/deals',
     title: 'Deals',
+    initial: [q('deals', { minSaving: 0 }, await catalogue.deals({ minSaving: 0 }))],
     description: 'Lower listed prices for matching products across shops in Kenya.',
     body:
       crumbs([['Home', '/'], ['Deals']]) +
@@ -449,6 +507,10 @@ async function main() {
       : '';
     write({
       path: `/browse/${c.slug}`,
+      initial: [
+        q('manifest', {}, pubManifest),
+        q('browse', { slug: c.slug, page: 0 }, await catalogue.browse(c.slug, readFilters(new URLSearchParams()), 0)),
+      ],
       title: `${label} prices in Kenya`,
       description: `Compare ${label.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`,
       body:
@@ -466,6 +528,7 @@ async function main() {
       const page = await catalogue.browse(c.slug, { ...readFilters(new URLSearchParams()), brands: [b] }, 0);
       write({
         path: `/browse/${c.slug}/${b}`,
+        initial: [q('browse', { slug: c.slug, brand: b, page: 0 }, page)],
         title: `${heading} prices in Kenya`,
         description: `Compare listed prices for ${heading} from Kenyan shops.`,
         body:
@@ -501,14 +564,20 @@ async function main() {
   const shelfSlugs = new Set(TAXONOMY_DEPARTMENTS.flatMap((d) => d.families.flatMap((f) => f.shelves.map((s) => s.slug))));
   for (const slug of shelfSlugs) {
     let shelf;
+    let tree;
     try {
-      shelf = await demo.getShelfClusters(slug, { limit: 48 });
+      shelf = await catalogue.shelfClusters(slug, { limit: PAGE_SIZE, offset: 0 });
+      tree = await catalogue.shelfTree(slug);
     } catch {
       continue; // no capture for this shelf: the app shows its empty state
     }
     const heading = browseLabel(shelf.node);
     write({
       path: `/shelf/${slug}`,
+      initial: [
+        q('shelf-tree', { slug }, tree),
+        q('shelf', { slug, limit: PAGE_SIZE, offset: 0 }, shelf),
+      ],
       title: `${heading} prices in Kenya`,
       description: `Compare ${heading.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`,
       body:
@@ -545,8 +614,11 @@ async function main() {
   writeFileSync(join(DIST, 'llms.txt'), llmsTxt(manifest));
 
   // Trap entries go into the card index last, after every page above was
-  // built from it, so they reach the bulk data file and nothing else.
-  plantTraps();
+  // built from it, so they reach the bulk data file and nothing else. Only
+  // while that file is public: in API mode no bulk file leaves the server,
+  // so there is nothing to mark and no invented row belongs in the private
+  // dataset (scraping review 2026-10-23, §5).
+  if (PUBLIC_DATA) plantTraps();
 
   // Anything not prerendered boots the app at its own URL (with a 404 status
   // from the host). No snapshot, and noindex, so it never competes with a

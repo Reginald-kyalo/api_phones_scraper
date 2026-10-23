@@ -15,7 +15,8 @@
 import type { ClusterDetail, ClusterSummary } from './clusterTypes';
 import * as demo from './demoSource';
 import type { SearchRow } from './demoSource';
-import type { DemoManifest, DemoShelfTreeResponse, DemoBrowseNode } from './demoTypes';
+import type { DemoShelfTreeResponse, DemoBrowseNode } from './demoTypes';
+import { publicDetail, publicManifest, type PublicManifest } from './cataloguePublic';
 import { clusterSaving } from './format';
 import { imageUsable } from './images';
 import { applyFilters, brandFacets, PAGE_SIZE, priceBuckets, type ListingFilters } from './listing';
@@ -32,9 +33,11 @@ function pageOf<T>(rows: T[], page: number, size = PAGE_SIZE) {
   return { results: rows.slice(safe * size, (safe + 1) * size), page: safe, pages };
 }
 
-export const manifest = (): Promise<DemoManifest> => demo.getManifest();
+/** The manifest in its public shape: counts and categories, no storage layout. */
+export const manifest = (): Promise<PublicManifest> => demo.getManifest().then(publicManifest);
 
-export const detail = (id: string): Promise<ClusterDetail> => demo.getDetail(id);
+/** One product, without the pipeline's internal identifiers. */
+export const detail = (id: string): Promise<ClusterDetail> => demo.getDetail(id).then(publicDetail);
 
 /** One page (48) of a category, filtered and sorted, with its brand facets. */
 export async function browse(slug: string, filters: ListingFilters, page = 0) {

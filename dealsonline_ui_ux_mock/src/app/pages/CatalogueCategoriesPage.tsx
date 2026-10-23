@@ -3,9 +3,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { RefreshCw } from 'lucide-react';
 import { clustersApi } from '../lib/api';
-import type { DemoManifest } from '../lib/demoTypes';
+import type { PublicManifest } from '../lib/cataloguePublic';
 import { Skeleton } from '../components/ui/skeleton';
 import { Button } from '../components/ui/button';
+import { describeLoadError } from '../lib/loadError';
 import { departmentDisplayLabel, familyDisplayLabel } from '../lib/navLabels';
 import { TAXONOMY_DEPARTMENTS, orderedFamilies } from '../data/taxonomyTree';
 
@@ -20,20 +21,20 @@ import { categoryLabel } from '../lib/categories';
  * listed every shelf in a box and ran to several screens.
  */
 export default function CatalogueCategoriesPage() {
-  const [manifest, setManifest] = useState<DemoManifest | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [manifest, setManifest] = useState<PublicManifest | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   useEffect(() => {
     let cancelled = false;
-    setFailed(false);
+    setFailed(null);
     clustersApi
       .getManifest()
       .then((m) => { if (!cancelled) setManifest(m); })
       // The placeholders used to stay up forever on a failed request, with
       // aria-busy and no way out (design audit, R02).
-      .catch(() => { if (!cancelled) setFailed(true); });
+      .catch((err) => { if (!cancelled) setFailed(describeLoadError(err, 'categories').message); });
     return () => { cancelled = true; };
   }, [attempt]);
 
@@ -43,7 +44,7 @@ export default function CatalogueCategoriesPage() {
         <Seo title="All categories" />
         <h1 className="page-title">All categories</h1>
         <div className="py-16 text-center">
-          <p className="mb-4 text-sm text-muted-foreground">We couldn’t load categories. Try again.</p>
+          <p className="mb-4 text-sm text-muted-foreground">{failed}</p>
           <Button variant="outline" onClick={retry} className="gap-2">
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Try again

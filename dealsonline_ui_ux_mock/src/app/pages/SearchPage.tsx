@@ -11,6 +11,7 @@ import { PriceOrDash } from '../components/common/PriceOrDash';
 import { ClusterCard, ClusterGridSkeleton } from '../features/clusters/components/ClusterCard';
 import { SortSelect } from '../features/search/components/ListingFiltersPanel';
 import { activeFilterCount, readFilters, writeFilters } from '../lib/listing';
+import { describeLoadError } from '../lib/loadError';
 import { Package, RefreshCw, Search as SearchIcon } from 'lucide-react';
 
 /**
@@ -34,7 +35,7 @@ export default function SearchPage() {
 
   const [res, setRes] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
@@ -43,20 +44,20 @@ export default function SearchPage() {
     let cancelled = false;
     if (!query.trim()) {
       setRes(null);
-      setFailed(false);
+      setFailed(null);
       return;
     }
     setLoading(true);
-    setFailed(false);
+    setFailed(null);
     clustersApi
       .search(query, { slug, filters, page })
       .then((r) => {
         if (!cancelled) setRes(r);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setRes(null);
-          setFailed(true);
+          setFailed(describeLoadError(err, 'results').message);
         }
       })
       .finally(() => {
@@ -105,7 +106,7 @@ export default function SearchPage() {
           </div>
         ) : failed ? (
           <div className="py-16 text-center">
-            <p className="text-sm text-muted-foreground mb-4">We couldn’t load results. Try again.</p>
+            <p className="text-sm text-muted-foreground mb-4">{failed}</p>
             <Button variant="outline" onClick={retry} className="gap-2">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Try again

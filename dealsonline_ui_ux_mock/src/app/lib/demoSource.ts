@@ -32,14 +32,33 @@ const SHELF_DETAIL_BUCKETS = 256;
 const cache = new Map<string, Promise<unknown>>();
 const CACHE_LIMIT = 48;
 
+/**
+ * The two ways a read can fail, kept apart so the catalogue function can
+ * answer 404 for one and 503 for the other (scraping review 2026-10-23, §3):
+ * a file the dataset does not have is "not found"; a store that cannot be
+ * reached is an outage, and must never be reported as a missing product.
+ */
+export class CatalogueMissingError extends Error {
+  readonly name = 'CatalogueMissingError';
+}
+export class CatalogueStorageError extends Error {
+  readonly name = 'CatalogueStorageError';
+}
+
 /** Reads one dataset file (a path under demo/) and parses its JSON. */
 export type Loader = (path: string) => Promise<unknown>;
 
-let fetchFile: Loader = (path) =>
-  fetch(`${BASE}/${path}`).then((res) => {
-    if (!res.ok) throw new Error(`demo fixture missing: ${path} (${res.status})`);
-    return res.json();
-  });
+let fetchFile: Loader = async (path) => {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/${path}`);
+  } catch (err) {
+    throw new CatalogueStorageError(`demo fixture unreachable: ${path} (${(err as Error).message})`);
+  }
+  if (res.status === 404) throw new CatalogueMissingError(`demo fixture missing: ${path}`);
+  if (!res.ok) throw new CatalogueStorageError(`demo fixture failed: ${path} (${res.status})`);
+  return res.json();
+};
 
 /**
  * Where files come from. The browser fetches /demo/ (local mode); the
@@ -94,7 +113,7 @@ export const getManifest = () => load<DemoManifest>('manifest.json');
 export async function getCategoryMeta(slug: string) {
   const manifest = await getManifest();
   const meta = manifest.categories.find((c) => c.slug === slug);
-  if (!meta) throw new Error(`unknown category: ${slug}`);
+  if (!meta) throw new CatalogueMissingError(`unknown category: ${slug}`);
   return meta;
 }
 
@@ -155,7 +174,7 @@ export async function getDetail(clusterId: string): Promise<ClusterDetail> {
   const shard = `${pad(fnv1a(clusterId) % SHELF_DETAIL_BUCKETS)}`;
   const rows = await load<Record<string, ClusterDetail>>(`shelf-details/${shard}.json`);
   const hit = rows[clusterId];
-  if (!hit) throw new Error(`unknown cluster: ${clusterId}`);
+  if (!hit) throw new CatalogueMissingError(`unknown cluster: ${clusterId}`);
   return hit;
 }
 
@@ -187,7 +206,7 @@ export async function getShelfClusters(
   results: ClusterSummary[];
 }> {
   const tree = await getShelfTree(slug);
-  if (!tree.parent) throw new Error(`unknown shelf: ${slug}`);
+  if (!tree.parent) throw new CatalogueMissingError(`unknown shelf: ${slug}`);
   const meta = await getShelfMeta(slug);
   const prefix = options.multiStoreOnly ? 'products-multi' : 'products';
   const total = options.multiStoreOnly ? meta.multi_total : meta.total;

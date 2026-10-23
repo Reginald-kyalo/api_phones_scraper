@@ -25,6 +25,7 @@ import {
   type ListingFilters,
 } from '../lib/listing';
 import { RefreshCw } from 'lucide-react';
+import { describeLoadError } from '../lib/loadError';
 
 /**
  * One category of the catalogue: filters on the left, 48 cards per page.
@@ -47,18 +48,18 @@ export default function CatalogueBrowsePage() {
 
   const [result, setResult] = useState<Awaited<ReturnType<typeof clustersApi.browse>> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // One page at a time: filters, sort and paging run where the data is (the
   // catalogue function in production), so the browser never holds the
   // whole category.
   const load = useCallback(async () => {
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       setResult(await clustersApi.browse(productType, filters, page));
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(describeLoadError(err, 'this category').message);
     } finally {
       setLoading(false);
     }
@@ -147,7 +148,7 @@ export default function CatalogueBrowsePage() {
 
         {error ? (
           <div className="py-20 text-center">
-            <p className="mb-4 text-sm text-muted-foreground">We couldn’t load this category. Try again.</p>
+            <p className="mb-4 text-sm text-muted-foreground">{error}</p>
             <Button variant="outline" onClick={load} className="gap-2">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Try again

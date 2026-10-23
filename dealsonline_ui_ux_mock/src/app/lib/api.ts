@@ -8,16 +8,19 @@
  */
 import * as catalogue from './catalogueQueries';
 import { writeFilters, type ListingFilters } from './listing';
-import type { DemoBrowseNode, DemoManifest, DemoShelfTreeResponse } from './demoTypes';
+import type { DemoBrowseNode, DemoShelfTreeResponse } from './demoTypes';
 
 const BASE = '/api';
 
 class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /** From a 429's Retry-After header, in milliseconds, when one was sent. */
+  retryAfterMs?: number;
+  constructor(message: string, status: number, retryAfterMs?: number) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
@@ -376,6 +379,8 @@ export type {
   ClusterStore, ClusterConfig, ClusterView, SpreadOffer, PricePoint, ClusterSummary, ClusterDetail,
 } from './clusterTypes';
 import type { ClusterDetail } from './clusterTypes';
+import type { PublicManifest } from './cataloguePublic';
+import { takeInitialResponse, type QueryParams } from './initialCatalogueData';
 
 /**
  * Cluster data source.
@@ -393,40 +398,64 @@ import type { ClusterDetail } from './clusterTypes';
 const CATALOGUE_API = import.meta.env.VITE_CATALOGUE === 'api';
 const API_BASE = `${import.meta.env.BASE_URL}api/catalogue`;
 
-async function getJson<T>(op: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
+/** Retry-After as milliseconds: seconds or an HTTP date; undefined if absent or unreadable. */
+function retryAfterMs(header: string | null): number | undefined {
+  if (!header) return undefined;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const at = Date.parse(header);
+  return Number.isNaN(at) ? undefined : Math.max(0, at - Date.now());
+}
+
+async function getJson<T>(op: string, params: QueryParams = {}): Promise<T> {
   const qs = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v));
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
   const res = await fetch(`${API_BASE}/${op}${qs.size ? `?${qs}` : ''}`);
-  if (!res.ok) throw new ApiError(`catalogue ${op} failed`, res.status);
+  if (!res.ok) throw new ApiError(`catalogue ${op} failed`, res.status, retryAfterMs(res.headers.get('retry-after')));
   return res.json() as Promise<T>;
+}
+
+/**
+ * Every read first asks the page for the data the prerender embedded for it
+ * (lib/initialCatalogueData.ts), then goes to the catalogue. A product page
+ * therefore shows its prices even when the catalogue request would fail, and
+ * a prerendered page costs no catalogue read at all on first view. The
+ * parameter objects here are the keys the prerender writes: change one side,
+ * change the other.
+ */
+function read<T>(op: string, params: QueryParams, live: () => Promise<T>): Promise<T> {
+  const embedded = takeInitialResponse<T>(op, params);
+  return embedded !== undefined ? Promise.resolve(embedded) : live();
 }
 
 const filterParams = (filters: ListingFilters) => writeFilters(filters);
 
 export const clustersApi = {
-  /** Dataset totals and the category table. Small, so it ships whole. */
-  getManifest: (): Promise<DemoManifest> =>
-    CATALOGUE_API ? getJson('manifest') : catalogue.manifest(),
+  /** Dataset totals and the category table, in their public shape. */
+  getManifest: (): Promise<PublicManifest> =>
+    read('manifest', {}, () => (CATALOGUE_API ? getJson('manifest') : catalogue.manifest())),
 
   /** Full comparison for one product, including per-store click-through URLs. */
   getDetail: (clusterId: string): Promise<ClusterDetail> =>
-    CATALOGUE_API ? getJson('detail', { id: clusterId }) : catalogue.detail(clusterId),
+    read('detail', { id: clusterId }, () =>
+      CATALOGUE_API ? getJson('detail', { id: clusterId }) : catalogue.detail(clusterId)),
 
   /** One page (48) of a category, filtered and sorted, with brand facets. */
-  browse: (slug: string, filters: ListingFilters, page = 0): ReturnType<typeof catalogue.browse> =>
-    CATALOGUE_API
-      ? getJson('browse', { slug, ...filterParams(filters), page })
-      : catalogue.browse(slug, filters, page),
+  browse: (slug: string, filters: ListingFilters, page = 0): ReturnType<typeof catalogue.browse> => {
+    const params = { slug, ...filterParams(filters), page };
+    return read('browse', params, () => (CATALOGUE_API ? getJson('browse', params) : catalogue.browse(slug, filters, page)));
+  },
 
-  /** Deals with a photo and a showable saving of at least `minSaving` %. */
+  /** Deals with a photo and a showable difference of at least `minSaving` %. */
   getDeals: (options: { page?: number; minSaving?: number; limit?: number } = {}): ReturnType<typeof catalogue.deals> =>
-    CATALOGUE_API ? getJson('deals', options) : catalogue.deals(options),
+    read('deals', options, () => (CATALOGUE_API ? getJson('deals', options) : catalogue.deals(options))),
 
   /** The first products of a category in capture order (rails, compare panel). */
   getCategoryPage: (slug: string, limit?: number): ReturnType<typeof catalogue.categoryPage> =>
-    CATALOGUE_API ? getJson('category', { slug, limit }) : catalogue.categoryPage(slug, limit),
+    read('category', { slug, limit }, () =>
+      CATALOGUE_API ? getJson('category', { slug, limit }) : catalogue.categoryPage(slug, limit)),
 
-  /** Search, scoped and filtered like a listing, one page at a time. */
+  /** Search, scoped and filtered like a listing, one page at a time. Never embedded. */
   search: (
     q: string,
     options: { slug?: string; filters: ListingFilters; page?: number; limit?: number },
@@ -448,22 +477,18 @@ export const browseApi = {
     if (!parent) {
       return Promise.resolve({ parent: null, count: 0, results: [] });
     }
-    return CATALOGUE_API ? getJson('shelf-tree', { slug: parent }) : catalogue.shelfTree(parent);
+    return read('shelf-tree', { slug: parent }, () =>
+      CATALOGUE_API ? getJson('shelf-tree', { slug: parent }) : catalogue.shelfTree(parent));
   },
 
   /** The products on one shelf AND everything below it. */
   getClusters: (
     slug: string,
     options: { multiStoreOnly?: boolean; limit?: number; offset?: number } = {},
-  ): ReturnType<typeof catalogue.shelfClusters> =>
-    CATALOGUE_API
-      ? getJson('shelf', {
-          slug,
-          multi: options.multiStoreOnly ? 1 : undefined,
-          limit: options.limit,
-          offset: options.offset,
-        })
-      : catalogue.shelfClusters(slug, options),
+  ): ReturnType<typeof catalogue.shelfClusters> => {
+    const params = { slug, multi: options.multiStoreOnly ? 1 : undefined, limit: options.limit, offset: options.offset };
+    return read('shelf', params, () => (CATALOGUE_API ? getJson('shelf', params) : catalogue.shelfClusters(slug, options)));
+  },
 };
 
 export { ApiError };

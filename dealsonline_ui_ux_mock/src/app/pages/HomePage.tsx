@@ -1,41 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Link } from 'react-router';
-import { clusterSaving, hasPrice } from '../lib/format';
 import { clustersApi, type ClusterSummary } from '../lib/api';
-import type { DemoManifest } from '../lib/demoTypes';
+import type { PublicManifest } from '../lib/cataloguePublic';
+import { homepageDeals, homepageRail, RAIL_SIZE } from '../lib/homepage';
+import { describeLoadError } from '../lib/loadError';
 import { ClusterCard, PRODUCT_GRID } from '../features/clusters/components/ClusterCard';
 import { categoryLabel } from './CatalogueCategoriesPage';
-import { imageUsable } from '../lib/images';
 import HeroSection from '../components/layout/HeroSection';
 import CategoryStrip from '../components/layout/CategoryStrip';
 import { AdSlot } from '../components/ads/AdSlot';
 import { Button } from '../components/ui/button';
 import { ArrowRight, RefreshCw } from 'lucide-react';
-
-
-/**
- * Homepage cards must have a photo and, for deal rails, a price difference we
- * are willing to show (DESIGN_RULES.md §5). A grey box or a "97% lower" on a
- * KES 5 packet is the first thing a shopper would see, so it never gets the slot.
- */
-function homepageWorthy(cluster: ClusterSummary): boolean {
-  return imageUsable(cluster.image) && hasPrice(cluster.best_price);
-}
-
-function diverseDeals(rows: ClusterSummary[]): ClusterSummary[] {
-  const best = new Map<string, ClusterSummary>();
-  for (const row of rows) {
-    const key = row.category ?? 'other';
-    const current = best.get(key);
-    if (!current || (clusterSaving(row)?.kes ?? 0) > (clusterSaving(current)?.kes ?? 0)) best.set(key, row);
-  }
-  const firsts = [...best.values()].sort(
-    (a, b) => (clusterSaving(b)?.kes ?? 0) - (clusterSaving(a)?.kes ?? 0),
-  );
-  const rest = rows.filter((row) => !firsts.includes(row));
-  return [...firsts, ...rest];
-}
 
 function Rail({
   title,
@@ -84,16 +60,16 @@ export default function HomePage() {
   // Every figure and every card on this page comes from the captured catalogue
   // in public/demo/ — there is no mock data left. Rails are the comparison-grade
   // categories, in real size order.
-  const [manifest, setManifest] = useState<DemoManifest | null>(null);
+  const [manifest, setManifest] = useState<PublicManifest | null>(null);
   const [deals, setDeals] = useState<ClusterSummary[]>([]);
   const [rails, setRails] = useState<{ slug: string; rows: ClusterSummary[] }[]>([]);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   useEffect(() => {
     let cancelled = false;
-    setFailed(false);
+    setFailed(null);
     (async () => {
       try {
         const [m, d] = await Promise.all([
@@ -110,22 +86,18 @@ export default function HomePage() {
         );
         if (cancelled) return;
         setRails(featured.map((c, i) => ({ slug: c.slug, rows: pages[i].results.slice(0, 24) })));
-      } catch {
+      } catch (err) {
         // A failed load used to leave an empty page with no explanation
         // (design audit, R01). Search and the category strip still work; the
         // rails say what happened and offer a retry.
-        if (!cancelled) setFailed(true);
+        if (!cancelled) setFailed(describeLoadError(err, 'products').message);
       }
     })();
     return () => { cancelled = true; };
   }, [attempt]);
 
-  // Deal rails: photo, a real price and a difference we are willing to show.
-  // The feed is ranked by percentage, so its head is a run of near-identical
-  // "44% lower" grocery rows; the homepage instead shows one deal per
-  // category, biggest cash difference first, so the rail reads as a
-  // cross-section.
-  const showableDeals = diverseDeals(deals.filter((c) => homepageWorthy(c) && clusterSaving(c) != null));
+  // Selection rules live in lib/homepage.ts, shared with the prerender.
+  const showableDeals = homepageDeals(deals);
 
   return (
     <div className="bg-background">
@@ -141,7 +113,7 @@ export default function HomePage() {
       <div className="page-container py-8">
         {failed && !manifest ? (
           <div className="py-16 text-center">
-            <p className="mb-4 text-sm text-muted-foreground">We couldn’t load products. Try again.</p>
+            <p className="mb-4 text-sm text-muted-foreground">{failed}</p>
             <Button variant="outline" onClick={retry} className="gap-2">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Try again
@@ -154,7 +126,7 @@ export default function HomePage() {
               subtitle="Lower prices across shops"
               href="/deals"
               linkLabel="View all deals"
-              products={showableDeals.slice(0, 6)}
+              products={showableDeals}
               showSaving
             />
 
@@ -164,7 +136,7 @@ export default function HomePage() {
                   title={categoryLabel(slug)}
                   href={`/browse/${slug}`}
                   linkLabel={`View all ${categoryLabel(slug).toLowerCase()}`}
-                  products={rows.filter(homepageWorthy).slice(0, 6)}
+                  products={homepageRail(rows, RAIL_SIZE)}
                 />
                 {/* One featured-shop band per homepage, after the second rail. */}
                 {i === 1 && <AdSlot placement="home-featured-shop" className="mb-12" />}

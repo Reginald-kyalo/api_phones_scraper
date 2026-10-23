@@ -7,6 +7,7 @@ import { ChevronDown, Loader2, RefreshCw } from 'lucide-react';
 import { clusterSaving } from '../lib/format';
 import { imageUsable } from '../lib/images';
 import { withSponsoredTiles } from '../components/ads/AdSlot';
+import { describeLoadError } from '../lib/loadError';
 
 /**
  * Thresholds on the DIFFERENCE, matching the chip on every card.
@@ -41,14 +42,14 @@ export default function DealsPage() {
   const [clusters, setClusters] = useState<ClusterSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [minSaving, setMinSaving] = useState(0);
   const [page, setPage] = useState(0);
   const [pages, setPages] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       // One page of deals that pass the guard rails below, filtered where the
       // data is; changing the minimum difference starts again from page one.
@@ -56,8 +57,8 @@ export default function DealsPage() {
       setClusters(res.results);
       setPages(res.pages);
       setPage(res.page);
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(describeLoadError(err, 'deals').message);
     } finally {
       setLoading(false);
     }
@@ -69,8 +70,8 @@ export default function DealsPage() {
       const res = await clustersApi.getDeals({ page: page + 1, minSaving });
       setClusters((prev) => [...prev, ...res.results]);
       setPage(res.page);
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(describeLoadError(err, 'more deals').message);
     } finally {
       setLoadingMore(false);
     }
@@ -121,7 +122,7 @@ export default function DealsPage() {
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <p className="text-sm text-muted-foreground mb-4">We couldn’t load deals. Try again.</p>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
             <Button variant="outline" onClick={load} className="gap-2">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Try again

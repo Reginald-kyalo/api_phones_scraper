@@ -1,9 +1,32 @@
-# Deploying the DealsOnline demo
+# Deploying SokoPulse
 
-The build is **fully static**. There is no API, no database and no runtime
-configuration: the whole catalogue ships as committed JSON under `public/demo/`
-and is read by `src/app/lib/demoSource.ts`. Verified with the backend stopped —
-0 `/api/` requests on any route.
+Static HTML for every page worth a search result, plus two Pages Functions:
+`/api/catalogue/*`, which serves the catalogue one page at a time from a
+private R2 bucket, and `/api/reports`. **Production builds must not ship the
+dataset itself.** A Cloudflare Pages build without `VITE_CATALOGUE=api` fails
+on purpose (`scripts/postbuild.mjs`): the alternative is every catalogue file
+public under `/demo/`, which the 23 October 2026 scraping review found live
+(one GET returned 3,496 phone records). `ALLOW_PUBLIC_CATALOGUE=1` overrides
+the check for a preview that is meant to be public.
+
+## Release gate
+
+Before a production deploy is called done:
+
+1. `VITE_CATALOGUE=api` is set for Production and Preview, the `CATALOGUE`
+   bucket is bound, and `npm run catalogue:upload` has activated a version.
+2. From the production host, the `pages.dev` host and every preview alias:
+   `/demo/manifest.json` is 404; `/api/catalogue/manifest` is 200 and carries
+   `x-robots-tag: noindex`; `/api/catalogue/category?slug=mobile-phones&limit=-2`
+   is 400.
+3. A product page keeps its heading and prices with JavaScript disabled, with
+   JavaScript enabled, and with `/api/` requests blocked (the HTML embeds the
+   page's own data; `npm run test:catalogue` covers the contract).
+4. `robots.txt` allows `/api/catalogue/` and disallows `/api/` and `/data/`.
+5. Canonical URLs, the sitemap and `SITE_URL` name the same host, and that
+   host is the one in Search Console.
+6. No raw catalogue file is reachable through an old deployment or a direct
+   bucket URL (R2 public access stays off).
 
 ## Build
 
@@ -72,7 +95,8 @@ renders NotFound on every page — it reads as a data failure, not a routing one
 |---|---|---|
 | Real HTML per page | crawlers and link previews do not run JavaScript | `scripts/prerender.ts`, run by `scripts/postbuild.mjs`: one HTML file per product sold by 2+ shops, category, department, shelf and static page, plus `sitemap.xml` and `robots.txt` |
 | Fallback for everything else | single-shop products and typos are not files | `dist/404.html`, written by the prerender as the app shell: the app boots at the requested URL (status 404) |
-| Long cache on `/demo/*` | ~143 MB of content-stable JSON | `dist/_headers`, written by `scripts/postbuild.mjs` |
+| Long cache on `/assets/*` | hashed bundles | `dist/_headers`, written by `scripts/postbuild.mjs` (a `/demo/*` rule is written only when the dataset is deliberately public) |
+| Page data without a request | a product page must not lose its prices when `/api/catalogue/` fails or is limited | the prerender embeds the page's own catalogue responses in a `<script type="application/json" id="catalogue-initial">`; `src/app/lib/api.ts` answers the first requests from it |
 
 ⛔ **No rewrite rules in `_redirects`.** Cloudflare Pages applies them before
 static files, so `/prices/*  /  200` would serve the homepage in place of every
@@ -87,11 +111,20 @@ under Cloudflare Pages' 20,000-file limit.
 
 ## Private catalogue (R2), so the dataset is not downloadable
 
-By default the build ships the dataset in `dist/demo/` and the browser reads it
-directly: anyone can copy every file. With **`VITE_CATALOGUE=api`** the browser
-instead asks `/api/catalogue/*` (a Pages Function) for one page at a time, at
-most 96 products, and the dataset lives in a private R2 bucket. Same queries
-both ways (`src/app/lib/catalogueQueries.ts`), so results do not change.
+Without `VITE_CATALOGUE=api` the build ships the dataset in `dist/demo/` and the
+browser reads it directly: anyone can copy every file. That is a local-only
+mode now. With **`VITE_CATALOGUE=api`** the browser asks `/api/catalogue/*` (a
+Pages Function) for one page at a time, at most 96 products, and the dataset
+lives in a private R2 bucket. Same queries both ways
+(`src/app/lib/catalogueQueries.ts`), so results do not change.
+
+The function's contract (`functions/lib/catalogueRequest.ts`, tested by
+`npm run test:catalogue`): malformed input is 400 before any read; an unknown
+operation, product or category is 404; an unreachable bucket is 503 with
+`Retry-After`; errors are `Cache-Control: no-store`; responses are the public
+projection only (no shard layout, no pipeline identifiers). A missing
+`CATALOGUE` binding falls back to `/demo/` **only on localhost**; anywhere
+else it is 503, never a public fallback.
 
 One-time setup, in this order (the site breaks if the variable is set before
 the bucket is filled):
@@ -106,13 +139,26 @@ the bucket is filled):
    VITE_CATALOGUE=api npm run build
    CLOUDFLARE_ACCOUNT_ID=<id> CLOUDFLARE_API_TOKEN=<token> npm run catalogue:upload
    ```
-   About 4,100 files; roughly 15 minutes. Safe to re-run.
+   About 4,100 files; roughly 15 minutes. Every file goes under
+   `versions/<capture date>-<manifest hash>/`, and `current.json` at the bucket
+   root switches to that version only when every file is there, so an
+   interrupted upload can never mix two datasets. The function re-reads
+   `current.json` within five minutes. Roll back with
+   `node scripts/upload-catalogue.mjs --activate <previous version>`.
 4. **Bind it:** Pages → the project → Settings → Functions → R2 bucket bindings
    → variable `CATALOGUE`, bucket `sokopulse-catalogue` (Production and Preview).
 5. **Switch the site over:** Pages → Settings → Environment variables → add
    `VITE_CATALOGUE` = `api`, then redeploy.
-6. **Rate-limit it:** Security → WAF → Rate limiting rules → URI path starts with
-   `/api/catalogue/`, e.g. more than 60 requests per minute per IP → challenge.
+6. **Observe before limiting.** Watch `/api/catalogue/` request volume,
+   status codes, pagination depth and sequential traversal for at least a
+   week of real traffic first. Do not start with a blanket per-IP cap: twenty
+   shoppers behind one Kenyan mobile-carrier address making twenty reads each
+   would lose most of them under a 60-per-minute rule. When a limit is
+   justified, make it JSON 429 with `Retry-After` (the app shows "Please wait
+   a moment before trying again." and keeps the prices already on screen),
+   never an HTML challenge substituted into a JSON fetch. Exempt verified
+   search crawlers (`cf.verified_bot_category` is "Search Engine Crawler",
+   not a User-Agent string) from that limiter, and nothing else.
 
 After every dataset re-capture, repeat step 3 before deploying.
 
@@ -126,11 +172,15 @@ the R2 path locally: `VITE_CATALOGUE=api npm run build`,
 
 `robots.txt` and `llms.txt` are written by the prerender. Search and
 AI-answer crawlers (Googlebot, Bingbot, OAI-SearchBot, ChatGPT-User,
-PerplexityBot, Claude-SearchBot and others) may read every public page;
-training-only crawlers (GPTBot, ClaudeBot, CCBot, Google-Extended, Bytespider
-and others) are disallowed; the honeypot `/data/` and the catalogue API
-`/api/` are closed to all. robots.txt is a request, so enforce the same split
-at Cloudflare (on the sokopulse.co.ke zone, not `*.pages.dev`):
+PerplexityBot, Claude-SearchBot and others) may read every public page **and
+`/api/catalogue/`**: the app fetches it to render, and a crawler that cannot
+fetch a resource cannot render the page. Those responses carry
+`X-Robots-Tag: noindex`, so they never become results. Crawlers that collect
+training data (GPTBot, ClaudeBot, CCBot, Bytespider and others; Google-Extended
+is a robots token rather than a separate crawler) are disallowed; the honeypot
+`/data/` and every other `/api/` path are closed to all. robots.txt is a
+request, so enforce the same split at Cloudflare (on the sokopulse.co.ke zone,
+not `*.pages.dev`):
 
 1. **Security → Bots:** leave **Block AI bots** OFF (the single switch also
    blocks the answer crawlers that get SokoPulse cited) and leave **AI
@@ -145,8 +195,23 @@ at Cloudflare (on the sokopulse.co.ke zone, not `*.pages.dev`):
    `(cf.verified_bot_category eq "AI Crawler")` → **Block**, placed after a
    rule `(cf.client.bot)` → **Skip** for Search Engine Crawler and AI
    Assistant/AI Search categories.
-4. Keep the rate-limit rule on `/api/catalogue/` (R2 section above) and a
-   **Block** rule for IPs listed by the honeypot (`honeypot_hits` in D1).
+4. Treat `honeypot_hits` (D1) as low-confidence telemetry, not a block list:
+   a scanner, a link-preview service or an accidental traversal can request
+   `/data/catalogue-export` once. Review repeat offenders by hand; do not
+   automate a permanent ban from one hit. Keep the catalogue limiter, when
+   there is one, to the rule in the R2 section above.
+
+## Alternate hosts
+
+Protection on the `sokopulse.co.ke` zone does nothing for `*.pages.dev` or
+preview aliases, and static `_redirects` rules do not apply to requests that
+Pages Functions handle. Once the custom domain is live: redirect the
+production `pages.dev` host to it preserving path and query (Pages → Custom
+domains), restrict preview deployments (Pages → Settings → Access policy),
+and test `/api/catalogue/manifest` through each host directly, not just the
+homepage. Until the domain decision is made, canonicals already name
+`sokopulse.co.ke` while the site is reviewed on `pages.dev`: pick the host,
+set `SITE_URL` to it, and register the same host in Search Console.
 
 ## Host notes
 
@@ -213,6 +278,8 @@ running in the wrong directory. Build command and output directory are both
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 | Node version | 20 |
+| Environment variables | `VITE_CATALOGUE` = `api` (Production and Preview), `SITE_URL` = the canonical origin |
+| Functions bindings | R2 `CATALOGUE` → `sokopulse-catalogue`; D1 `DB` → `dealsonline-reports` |
 
 ⚠️ **Do not commit a `wrangler.toml` with a placeholder `database_id`.** The build
 log shows Pages checking for one before it runs anything ("Checking for

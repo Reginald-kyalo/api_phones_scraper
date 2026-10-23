@@ -11,6 +11,7 @@ import { MULTI_SHOP_LABEL } from '../features/search/components/ListingFiltersPa
 import { shelfPlacement } from '../data/taxonomyTree';
 import { browseLabel, departmentDisplayLabel, familyDisplayLabel } from '../lib/navLabels';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
+import { describeLoadError } from '../lib/loadError';
 
 
 
@@ -57,7 +58,7 @@ export default function DemoShelfPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
-  const [productsFailed, setProductsFailed] = useState(false);
+  const [productsFailed, setProductsFailed] = useState<string | null>(null);
   const [error, setError] = useState<'missing' | 'failed' | null>(null);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
@@ -73,11 +74,13 @@ export default function DemoShelfPage() {
         if (cancelled) return;
         setNode(res.parent);
       })
-      .catch(() => {
+      .catch((err) => {
         if (cancelled) return;
-        setError('failed');
+        // A shelf the catalogue has never heard of is "not found"; a shelf it
+        // could not read is a failure with a retry.
+        setError(describeLoadError(err).kind === 'not-found' ? 'missing' : 'failed');
         setNode(null);
-          })
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -90,7 +93,7 @@ export default function DemoShelfPage() {
     if (!slug) return;
     let cancelled = false;
     setProductsLoading(true);
-    setProductsFailed(false);
+    setProductsFailed(null);
     setClusters([]);
     browseApi
       .getClusters(slug, { limit: PAGE_SIZE, offset: page * PAGE_SIZE, multiStoreOnly })
@@ -99,10 +102,10 @@ export default function DemoShelfPage() {
         setClusters(res.results);
         setTotal(res.total);
       })
-      .catch(() => {
+      .catch((err) => {
         // Products must not blank the tree; navigation still works. The grid
         // says the prices did not load, not that there is no stock.
-        if (!cancelled) setProductsFailed(true);
+        if (!cancelled) setProductsFailed(describeLoadError(err, 'these products').message);
       })
       .finally(() => {
         if (!cancelled) setProductsLoading(false);
@@ -207,7 +210,7 @@ export default function DemoShelfPage() {
                 <ClusterGridSkeleton />
               ) : productsFailed ? (
                 <div className="py-12 text-center">
-                  <p className="text-sm text-muted-foreground mb-4">We couldn’t load these products. Try again.</p>
+                  <p className="text-sm text-muted-foreground mb-4">{productsFailed}</p>
                   <Button variant="outline" onClick={retry} className="gap-2">
                     <RefreshCw className="h-4 w-4" aria-hidden="true" />
                     Try again
