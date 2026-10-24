@@ -30,6 +30,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from scripts.category_purity import is_off_category
 
@@ -196,9 +197,16 @@ SUMMARY_FIELDS = [
 ]
 
 
+# Hosts that hotlink-block browsers. ⛔ KEEP IN STEP with BLOCKED_IMAGE_HOSTS in
+# dealsonline_ui_ux_mock/src/app/lib/images.ts: the page treats these as "no photo", so picking one
+# here leaves a version showing the family's photo instead of its own.
+BLOCKED_IMAGE_HOSTS = {"pictures-kenya.jijistatic.com"}
+
+
 def _usable(url) -> bool:
     return (isinstance(url, str) and url.strip().startswith("http")
-            and not is_placeholder_image(url))
+            and not is_placeholder_image(url)
+            and urlsplit(url.strip()).hostname not in BLOCKED_IMAGE_HOSTS)
 
 
 def pick_image(cluster: dict, device_images: dict) -> str | None:

@@ -607,3 +607,13 @@ def test_an_unusable_inline_series_falls_back_to_the_lookup():
     cluster = {"members": [{"product_id": "lid1", "price_history": [{"amount": 90, "timestamp": "2026-10-24T10:00:00+0300"}]}]}
     hist = {"lid1": [{"at": "2026-04-01", "price": 500}, {"at": "2026-05-01", "price": 510}]}
     assert [p["price"] for p in build_history(cluster, hist)] == [500, 510]
+
+
+def test_a_host_the_page_refuses_is_never_picked():
+    """dealsonline_ui_ux_mock/src/app/lib/images.ts BLOCKED_IMAGE_HOSTS: jiji's CDN hotlink-blocks browsers, so the
+    page shows no photo for it — a version must take another listing's photo instead (5 of 40 sampled pages, 2026-10-24)."""
+    cluster = {"cluster_id": "audio-systems::x", "members": [
+        {"product_id": "p1", "site": "jiji.co.ke", "image": "https://pictures-kenya.jijistatic.com/1.jpg"},
+        {"product_id": "p2", "site": "koposoko.com", "image": "https://koposoko.com/x.jpg"}]}
+    assert pick_image(cluster, {}) == "https://koposoko.com/x.jpg"
+    assert pick_image({"cluster_id": "y", "members": cluster["members"][:1]}, {}) is None
