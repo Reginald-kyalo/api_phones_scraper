@@ -548,3 +548,42 @@ def test_spa_redirects_never_target_index_html():
             assert "index.html" not in line, (
                 f"rule targets index.html and will 308 away the path: {line!r}"
             )
+
+
+# ------------------------------------------- per-variant image and history
+# ⛔ The Fanta Orange page plotted "price history for Fanta Orange Pet 2L" (KES 159-184) under the 330ml chip and
+# showed one can for every size: image and history were chosen over the WHOLE cluster. A catalogue family's configs
+# carry `member_ids`, so each variant gets its own.
+
+def _family():
+    return {"cluster_id": "groceries::fanta+orange", "members": [
+        {"product_id": "can1", "site": "carrefour", "image": "https://cdn/can.jpg"},
+        {"product_id": "can2", "site": "naivas", "image": "https://cdn/can2.jpg"},
+        {"product_id": "pet1", "site": "carrefour", "image": "https://cdn/pet.jpg"},
+    ], "configs": [
+        {"facet_value": "p330", "member_ids": ["can1", "can2"], "catalogue_product_id": "f:1#p330"},
+        {"facet_value": "p2l", "member_ids": ["pet1"], "catalogue_product_id": "f:1#p2l"},
+    ]}
+
+
+def test_each_variant_gets_an_image_from_its_own_listings():
+    from scripts.capture_demo_dataset import config_extras
+    extras = config_extras(_family(), {}, {})
+    assert extras[1]["image"] == "https://cdn/pet.jpg"
+    assert extras[0]["image"] in {"https://cdn/can.jpg", "https://cdn/can2.jpg"}
+
+
+def test_each_variant_gets_its_own_history():
+    from scripts.capture_demo_dataset import config_extras
+    hist = {"pet1": [{"at": "2026-09-01", "price": 159}, {"at": "2026-10-01", "price": 184}],
+            "can1": [{"at": "2026-09-01", "price": 98}, {"at": "2026-10-01", "price": 120}]}
+    small, big = config_extras(_family(), {}, hist)
+    assert [p["price"] for p in small["price_history"]] == [98, 120]
+    assert [p["price"] for p in big["price_history"]] == [159, 184]
+
+
+def test_engine_configs_without_member_ids_get_nothing_extra():
+    """product_clusters_mvp configs carry no member ids: the old behaviour stands, nothing is invented."""
+    from scripts.capture_demo_dataset import config_extras
+    doc = {"cluster_id": "x", "members": [], "configs": [{"facet_value": 128}]}
+    assert config_extras(doc, {}, {}) == [{}]

@@ -34,6 +34,14 @@ from pathlib import Path
 from scripts.category_purity import is_off_category
 
 SOURCE_COLLECTION = "product_clusters_mvp"
+
+# `<db>.<collection>` to capture. The default is the engine's MVP clusters; the AI catalogue's families are captured
+# by pointing this at the export phones_scraper writes (`product_catalogue.storefront_export`, a doc of the same
+# shape): DEMO_SOURCE=catalogue_snapshot.storefront_clusters. ⚠️ Catalogue docs with no shelf
+# (`canonical_category_slug` None — a new store's product the site has no category for yet) are skipped, not filed
+# under "other": where they go is an owner scope call (HANDOFF_storefront_catalogue_wiring.md §5).
+SOURCE = os.getenv("DEMO_SOURCE", f"product_matching_db.{SOURCE_COLLECTION}")
+_SHELVED = {"$or": [{"source": {"$ne": "catalogue"}}, {"canonical_category_slug": {"$ne": None}}]}
 OUT = Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock" / "public" / "demo"
 
 # What actually ships in git. `public/demo/` itself is ignored — see pack_dataset.
@@ -263,6 +271,25 @@ def raw_collection_for(site: str | None, existing: set) -> str | None:
     return name if stem and name in existing else None
 
 
+def config_extras(doc: dict, device_images: dict, histories: dict) -> list[dict]:
+    """Per-variant `image` and `price_history`, one dict per entry of `doc["configs"]` (same order).
+
+    Only a config that names its listings (`member_ids`, the catalogue export) gets them; an engine config does not,
+    and nothing is invented for it. Seeded per variant (`<cluster_id>#<facet_value>`) so a rebuild never reshuffles.
+    """
+    out = []
+    for cfg in doc.get("configs") or []:
+        ids = set(cfg.get("member_ids") or ())
+        if not ids:
+            out.append({})
+            continue
+        sub = {"cluster_id": f"{doc.get('cluster_id')}#{cfg.get('facet_value')}",
+               "members": [m for m in doc.get("members") or [] if m.get("product_id") in ids]}
+        out.append({"image": pick_image(sub, device_images), "price_history": build_history(sub, histories),
+                    "catalogue_product_id": cfg.get("catalogue_product_id")})
+    return out
+
+
 # The chosen image plus the other real photos the cluster's listings carry, so
 # "wrong picture" can be CORRECTED and not merely flagged. Measured 2026-07-26:
 # 12,705 clusters (20.7% of the 61,473 shipped) have >=2 distinct non-placeholder
@@ -330,10 +357,13 @@ def main() -> None:
     )
 
     db = MongoClient("mongodb://localhost:27017", serverSelectionTimeoutMS=8000)["product_matching_db"]
-    source = db[SOURCE_COLLECTION]
-    docs = list(source.find({"n_stores": {"$gte": MIN_STORES}}))
-    unpriced = source.count_documents({"n_stores": {"$not": {"$gte": MIN_STORES}}})
-    print(f"clusters: {len(docs)} (min_stores={MIN_STORES}, {unpriced} delisted/unpriced skipped)")
+    src_db, src_coll = SOURCE.split(".", 1)
+    source = db.client[src_db][src_coll]
+    docs = list(source.find({"n_stores": {"$gte": MIN_STORES}, **_SHELVED}))
+    unpriced = source.count_documents({"n_stores": {"$not": {"$gte": MIN_STORES}}, **_SHELVED})
+    unshelved = source.count_documents({"source": "catalogue", "canonical_category_slug": None})
+    print(f"clusters: {len(docs)} from {SOURCE} (min_stores={MIN_STORES}, {unpriced} delisted/unpriced skipped, "
+          f"{unshelved} unshelved catalogue families skipped)")
 
     # ⭐ QUALITY EXCLUSIONS — a product nobody can buy is not catalogue, it is noise.
     #
@@ -433,6 +463,9 @@ def main() -> None:
         # number to a projection that exists for the page rather than for the truth.
         view["n_stores_priced"] = priced_store_count(doc)
         view["price_history"] = build_history(doc, histories)
+        # zip, not index: `_cluster_view` keeps `configs` in source order, one for one
+        for cfg, extra in zip(view["configs"], config_extras(doc, device_images, histories)):
+            cfg.update(extra)
         # Demoted, never dropped: the row stays browsable and its detail page still
         # resolves. Category slugs come straight from the store's own category page,
         # so a phone case really can arrive filed as `headphones`.
@@ -544,7 +577,7 @@ def main() -> None:
 
     manifest = {
         "captured_at": datetime.now().isoformat(timespec="seconds"),
-        "source_collection": SOURCE_COLLECTION,
+        "source_collection": SOURCE,
         "min_stores": MIN_STORES,
         "page_size": PAGE_SIZE,
         "total_clusters": len(views),
@@ -628,6 +661,12 @@ if __name__ == "__main__":
     # mock's prebuild script only unpacks, it never talks to the live API.
     from scripts.capture_demo_shelves import capture_shelves
 
-    capture_shelves()
+    # ⛔ The spine shelves are mirrored from the live API over the ENGINE's `product_clusters`: under a catalogue
+    # capture they would link old-cluster pages beside catalogue ones — one listing on two pages with two "best
+    # prices". Skipped until the spine is placed from catalogue families.
+    if SOURCE.endswith(f".{SOURCE_COLLECTION}"):
+        capture_shelves()
+    else:
+        print(f"shelves: skipped for {SOURCE} (they are captured from the engine's clusters)")
     size = pack_dataset().stat().st_size
     print(f"packed dealsonline_ui_ux_mock/data/demo-dataset.tar.gz ({size / 1e6:.1f} MB)")

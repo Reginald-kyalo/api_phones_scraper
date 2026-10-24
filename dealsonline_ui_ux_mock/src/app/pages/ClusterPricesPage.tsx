@@ -21,7 +21,7 @@ import {
 } from '../lib/format';
 import { departmentDisplayLabel } from '../lib/navLabels';
 import { describeLoadError, type LoadError } from '../lib/loadError';
-import { bestImage } from '../lib/images';
+import { bestImage, imageUsable } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -173,7 +173,6 @@ export default function ClusterPricesPage() {
 function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; capturedAt?: string }) {
   const name = productName(cluster);
   const likelyUsed = cluster.condition_basis === 'likely_used';
-  const image = bestImage(cluster);
 
   // Variant selector. With several configurations the default is the one most
   // shops price, so the first list a shopper sees is like-for-like; "Any
@@ -194,6 +193,10 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   useEffect(() => setSelected(defaultConfig), [defaultConfig]);
 
   const config = selected >= 0 ? configs[selected] : null;
+  // The photo is the shown version's own when it has one; "All versions" shows the most-priced version's.
+  const photoConfig = config ?? (defaultConfig >= 0 ? configs[defaultConfig] : null);
+  const photo = photoConfig?.image;
+  const image = (imageUsable(photo) ? photo : null) ?? bestImage(cluster);
   const offers = config ? pricedOffers(config.by_store) : pricedOffers(cluster.best_by_store);
   const lowest = offers[0] ?? null;
   const allOffers = useMemo(() => pricedOffers(cluster.best_by_store), [cluster.best_by_store]);
@@ -210,11 +213,14 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   const checked = checkedAgo(cluster.last_seen);
   // Decided now, not at capture: a July check is historical in October.
   const stale = isStale(cluster.last_seen);
-  const history = useMemo(() => usablePriceHistory(cluster.price_history), [cluster.price_history]);
-  // History is recorded for the product, not per variant or for used stock:
-  // a 128GB price judged against 256GB history would mislead. Only products
-  // with a single configuration get a verdict.
-  const verdict = configs.length < 2 && !likelyUsed ? priceVerdict(cluster.price_history, lowest?.[1].price) : null;
+  // A series belongs to ONE version. A version that carries its own (catalogue captures) shows it; otherwise only a
+  // single-version product shows the product's series. Several versions with no per-version series show none:
+  // a 128GB price beside 256GB history, or 330ml beside 2L, misleads even when labelled.
+  const ownSeries = config?.price_history !== undefined;
+  const series = config && ownSeries ? config.price_history ?? null : configs.length < 2 ? cluster.price_history ?? null : null;
+  const history = useMemo(() => usablePriceHistory(series), [series]);
+  const verdict = series && !likelyUsed ? priceVerdict(series, lowest?.[1].price) : null;
+  const historyTitle = config && ownSeries ? `${name} ${variantLabel(config)}` : name;
 
   const [alertOpen, setAlertOpen] = useState(false);
   const alertProduct = {
@@ -309,6 +315,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
           <div className="min-w-0">
             {/* The breadcrumb names the category and brand; no eyebrow repeating them. */}
             <h1 className="page-title">{name}</h1>
+            {config && <p className="mt-1 text-sm text-muted-foreground">{variantLabel(config)}</p>}
 
             {configs.length > 1 && (
               <VersionChips
@@ -450,10 +457,10 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
 
             {/* Real history only — never synthesised to fill the slot, and
                 only where the cleaned series has two points to draw. */}
-            {history.length >= 2 && cluster.price_history && (
+            {history.length >= 2 && series && (
               <section id="price-history" className="mt-10 scroll-mt-32">
                 <Suspense fallback={<Skeleton className="h-[420px] w-full" />}>
-                  <PRPriceHistoryChart title={name} priceHistory={cluster.price_history} />
+                  <PRPriceHistoryChart title={historyTitle} priceHistory={series} />
                 </Suspense>
               </section>
             )}
@@ -783,7 +790,10 @@ function ProductPhoto({ image, compact = false }: { image: string | null; compac
     >
       <Package className="absolute h-10 w-10 text-muted-foreground/20" aria-hidden="true" />
       {image && (
+        // keyed on the URL: the fallback's error state must not outlive the photo it was for, or one failed
+        // version's photo would hide every other version's after a chip switch
         <ImageWithFallback
+          key={image}
           src={image}
           alt=""
           className="relative max-h-full max-w-full object-contain"

@@ -42,6 +42,13 @@ export interface ClusterConfig<Store = number> {
    */
   n_stores_priced?: number | null;
   spread_pct: number | null;
+  /**
+   * This version's own photo and price series. Present only on catalogue captures, whose versions name their
+   * listings; an engine config has neither, and its page must not borrow the family's (the Fanta Orange page drew
+   * the 2L history under the 330ml chip).
+   */
+  image?: string | null;
+  price_history?: PricePoint[] | null;
   by_store: Record<string, Store>;
 }
 
