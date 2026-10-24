@@ -592,3 +592,12 @@ def test_engine_configs_without_member_ids_get_nothing_extra():
     from scripts.capture_demo_dataset import config_extras
     doc = {"cluster_id": "x", "members": [], "configs": [{"facet_value": 128}]}
     assert config_extras(doc, {}, {}) == [{}]
+
+
+def test_an_inline_member_series_wins_over_the_id_lookup():
+    """A catalogue export refreshed from the crawl rows carries each member's `prices` inline: it is the CURRENT row's,
+    found by url, so it survives the id drift that breaks the product_id lookup (93.5% of avechi urls carry >1 id)."""
+    cluster = {"members": [{"product_id": "lid1", "price_history": [
+        {"amount": 100, "timestamp": "2026-09-01T10:00:00+0300"}, {"amount": 90, "timestamp": "2026-10-24T10:00:00+0300"}]}]}
+    stale = {"lid1": [{"at": "2026-04-01", "price": 500}, {"at": "2026-05-01", "price": 510}]}
+    assert [p["price"] for p in build_history(cluster, stale)] == [100, 90]

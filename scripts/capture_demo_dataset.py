@@ -243,7 +243,9 @@ def build_history(cluster: dict, histories: dict) -> list | None:
     """
     best: list = []
     for member in cluster.get("members") or []:
-        series = normalise_series(histories.get(member.get("product_id")))
+        # an inline series (catalogue export, refreshed from the crawl row by url) is the current one; the id
+        # lookup is the fallback, and misses whenever the listing's id drifted with a retitle
+        series = normalise_series(member.get("price_history") or histories.get(member.get("product_id")))
         if len(series) > len(best):
             best = series
     return best or None
