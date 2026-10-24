@@ -395,6 +395,11 @@ def test_detail_shards_carry_the_evidence_the_ui_asks_the_reader_to_judge(demo_d
     """
     shards = sorted((demo_dir / "clusters").glob("*.json"))
     assert shards, "no detail shards captured"
+    # The merge evidence is the MVP's (title-similarity merges). A catalogue capture has no such merges by
+    # construction — its families are judged, not merged by title — so this check belongs to MVP captures only.
+    manifest = json.loads((demo_dir / "manifest.json").read_text())
+    if not str(manifest.get("source_collection", "")).endswith("product_clusters_mvp"):
+        pytest.skip(f"merge evidence is MVP-only; this capture is {manifest.get('source_collection')}")
 
     merges = spreads = 0
     for shard in shards:
