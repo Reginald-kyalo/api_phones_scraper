@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { catalogueNavigationDefine } from './scripts/catalogue-navigation.mjs'
 
 /**
  * Sub-path deploys (GitHub Pages project sites at /<repo>/) need every asset URL
@@ -16,6 +17,10 @@ const BASE = process.env.BASE_PATH || '/'
 
 export default defineConfig({
   base: BASE,
+  // A catalogue capture's spine navigation, or null for the MVP's static one
+  // (src/app/data/catalogueNavigation.ts; DEPLOY.md, "Which navigation").
+  // Read after the prebuild/predev hook has unpacked public/demo/.
+  define: catalogueNavigationDefine(path.resolve(__dirname, 'public', 'demo')),
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used – do not remove them

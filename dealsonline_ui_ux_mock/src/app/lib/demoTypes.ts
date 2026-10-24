@@ -76,6 +76,8 @@ export interface DemoBrowseNode {
   coarse: boolean;
   browsable: boolean;
   unsorted: boolean;
+  /** Catalogue capture: spine level (0 department, 1 family, 2 leaf). */
+  level?: number | null;
 }
 
 /** Static copy of `GET /api/clusters/browse-tree?parent={slug}`. */
@@ -93,4 +95,14 @@ export interface DemoShelfMeta {
   multi_total: number;
   multi_pages: number;
   page_size: number;
+}
+
+/** `shelves/manifest.json`: every captured shelf and the shelf-details bucket count. */
+export interface DemoShelfManifest {
+  captured_at: string;
+  page_size: number;
+  /** shelf-details/ shards are `fnv1a(cluster_id) % detail_buckets`. */
+  detail_buckets: number;
+  count: number;
+  shelves: DemoShelfMeta[];
 }

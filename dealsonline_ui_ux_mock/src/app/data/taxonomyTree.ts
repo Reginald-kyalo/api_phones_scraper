@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
-import { PawPrint, SprayCan } from 'lucide-react';
+import { LayoutGrid, PawPrint, SprayCan } from 'lucide-react';
+import { CATALOGUE_NAVIGATION, familyShelfLinks, type CatalogueNavigation } from './catalogueNavigation';
 import { LIVE_SPINE_SHELVES, spineShelfDisplay, type LiveSpineShelf } from './liveSpineShelves';
 import { SPINE_DEPARTMENTS, type DemoSpineDepartment } from './spineDepartments';
 import {
@@ -18,11 +19,16 @@ export interface TaxonomyFamily {
   id: string;
   label: string;
   shelves: LiveSpineShelf[];
+  /** Catalogue build only: the family's own spine page (/shelf/:slug) and its product count. */
+  slug?: string;
+  count?: number;
 }
 
 export interface TaxonomyDepartment extends Omit<DemoSpineDepartment, 'n_shelves'> {
   n_shelves: number;
   families: TaxonomyFamily[];
+  /** Catalogue build only: the department's own spine page, listing every product in it. */
+  shelfSlug?: string;
 }
 
 type Placement = { departmentId?: string; family: string; familyLabel: string };
@@ -503,12 +509,52 @@ for (const [sourceId, shelves] of Object.entries(LIVE_SPINE_SHELVES)) {
   }
 }
 
-export const TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
+const LEGACY_TAXONOMY_DEPARTMENTS = [...departmentMap.values()]
   .map(({ base, families }) => makeDepartment(base, families))
   // Approved phone categories are independent of captured legacy collections.
   // Keep their department and aisle routable even when a capture has no phone shelves.
   .filter((department) => reviewedSourceDepartments.has(department.id)
     || shouldRetainTaxonomyDepartment(department.id, department.families.length));
+
+/**
+ * A catalogue build's departments, straight from the generated navigation:
+ * every spine family that holds a product, its leaves, counts derived from the
+ * captured rows. Icons, short labels and the /browse categories each
+ * department links to come from the static department list, by department id
+ * (an id is a spine department slug in both).
+ */
+export function catalogueDepartments(nav: CatalogueNavigation): TaxonomyDepartment[] {
+  return nav.departments.map((d) => {
+    const base = SPINE_DEPARTMENTS.find((s) => s.id === d.slug);
+    const families: TaxonomyFamily[] = d.families.map((f) => ({
+      id: f.slug,
+      label: f.name,
+      slug: f.slug,
+      count: f.n_clusters_subtree,
+      shelves: familyShelfLinks(f),
+    }));
+    return {
+      id: d.slug,
+      label: departmentOverrides[d.slug]?.label ?? base?.label ?? d.name,
+      n_clusters: d.n_clusters_subtree,
+      n_shelves: families.reduce((sum, family) => sum + family.shelves.length, 0),
+      Icon: base?.Icon ?? LayoutGrid,
+      capturedSlugs: base?.capturedSlugs ?? [],
+      families,
+      shelfSlug: d.slug,
+    };
+  });
+}
+
+/**
+ * The navigation every menu, aisle and prerendered page reads. A catalogue
+ * build (its dataset carries navigation.json for the same capture) uses the
+ * spine placed from the catalogue's families; the MVP build uses the static
+ * engine shelf capture above.
+ */
+export const TAXONOMY_DEPARTMENTS: TaxonomyDepartment[] = CATALOGUE_NAVIGATION
+  ? catalogueDepartments(CATALOGUE_NAVIGATION)
+  : LEGACY_TAXONOMY_DEPARTMENTS;
 
 export const taxonomyDepartmentById = (id: string | undefined) =>
   TAXONOMY_DEPARTMENTS.find((department) => department.id === id);
@@ -523,14 +569,14 @@ export const isLegacyPhoneCollection = createCollectionDetector(legacyPhoneColle
 /** Fails fast if a capture or disposition change drops or duplicates a shelf. */
 export function assertTaxonomyIntegrity(): void {
   const source = Object.values(LIVE_SPINE_SHELVES).flat().map((shelf) => shelf.slug).sort();
-  const derived = TAXONOMY_DEPARTMENTS.flatMap((department) => department.families.flatMap((family) => family.shelves.map((shelf) => shelf.slug))).sort();
+  const derived = LEGACY_TAXONOMY_DEPARTMENTS.flatMap((department) => department.families.flatMap((family) => family.shelves.map((shelf) => shelf.slug))).sort();
   if (new Set(source).size !== source.length) {
     throw new Error('The generated shelf capture contains a duplicate legacy slug.');
   }
   if (source.length !== derived.length || source.some((id, index) => id !== derived[index])) {
     throw new Error('The derived taxonomy must contain every captured shelf exactly once.');
   }
-  for (const department of TAXONOMY_DEPARTMENTS) {
+  for (const department of LEGACY_TAXONOMY_DEPARTMENTS) {
     const labels = new Set<string>();
     for (const family of department.families) {
       const normalized = family.label.trim().toLocaleLowerCase();
@@ -546,20 +592,42 @@ assertTaxonomyIntegrity();
 
 export { spineShelfDisplay };
 
-/** Where a shelf sits: its department and family, for breadcrumbs and links. */
+/**
+ * Where a shelf sits, for breadcrumbs and links. `family` is absent for a
+ * page that IS a family or a department (catalogue build): its trail stops at
+ * the department.
+ */
 export interface ShelfPlacement {
   department: TaxonomyDepartment;
-  family: TaxonomyFamily;
+  family?: TaxonomyFamily;
   shelf: LiveSpineShelf;
 }
 
 const shelfPlacements = new Map<string, ShelfPlacement>();
 for (const department of TAXONOMY_DEPARTMENTS) {
+  if (department.shelfSlug) {
+    shelfPlacements.set(department.shelfSlug, {
+      department,
+      shelf: { slug: department.shelfSlug, label: department.label, count: department.n_clusters },
+    });
+  }
   for (const family of department.families) {
-    for (const shelf of family.shelves) shelfPlacements.set(shelf.slug, { department, family, shelf });
+    if (family.slug) {
+      shelfPlacements.set(family.slug, {
+        department,
+        shelf: { slug: family.slug, label: family.label, count: family.count ?? 0 },
+      });
+    }
+    for (const shelf of family.shelves) {
+      // A family's own "All …" link is the family page, placed above.
+      if (shelf.slug !== family.slug) shelfPlacements.set(shelf.slug, { department, family, shelf });
+    }
   }
 }
 export const shelfPlacement = (slug: string | undefined) => (slug ? shelfPlacements.get(slug) : undefined);
+
+/** Every /shelf page the navigation links to (department and family pages included in a catalogue build). */
+export const navigationShelfSlugs = (): string[] => [...shelfPlacements.keys()];
 
 /**
  * The department a captured comparison category (/browse/:slug) belongs to,

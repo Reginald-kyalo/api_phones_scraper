@@ -37,7 +37,7 @@ import { brandFacets, brandPageBrands, readFilters, PAGE_SIZE } from '../src/app
 import { storeName } from '../src/app/lib/storeIdentity';
 import { bestImage } from '../src/app/lib/images';
 import { browseLabel, departmentDisplayLabel, familyDisplayLabel } from '../src/app/lib/navLabels';
-import { TAXONOMY_DEPARTMENTS, departmentForCategory, shelfPlacement, spineShelfDisplay } from '../src/app/data/taxonomyTree';
+import { TAXONOMY_DEPARTMENTS, departmentForCategory, navigationShelfSlugs, shelfPlacement, spineShelfDisplay } from '../src/app/data/taxonomyTree';
 
 const DIST = join(process.cwd(), 'dist');
 const BASE = process.env.BASE_PATH || '/';
@@ -157,9 +157,10 @@ const deptCrumb = (slug: string): [string, string][] => {
 };
 const shelfCrumbs = (slug: string): [string, string][] => {
   const p = shelfPlacement(slug);
-  return p
-    ? [[departmentDisplayLabel(p.department), `/aisle/${p.department.id}`], [familyDisplayLabel(p.family), `/aisle/${p.department.id}#${p.family.id}`]]
-    : [];
+  if (!p) return [];
+  const trail: [string, string][] = [[departmentDisplayLabel(p.department), `/aisle/${p.department.id}`]];
+  if (p.family) trail.push([familyDisplayLabel(p.family), `/aisle/${p.department.id}#${p.family.id}`]);
+  return trail;
 };
 
 const crumbs = (items: [label: string, path?: string][]) =>
@@ -551,9 +552,10 @@ async function main() {
       body:
         crumbs([['Home', '/'], [label]]) +
         `<h1 class="page-title">${esc(label)}</h1>` +
+        (d.shelfSlug ? `<p class="mt-2"><a href="${href(`/shelf/${d.shelfSlug}`)}">See all ${esc(d.n_clusters.toLocaleString('en-GB'))} products</a></p>` : '') +
         d.families
           .map((f) =>
-            `<h2 class="section-title mt-6">${esc(familyDisplayLabel(f))}</h2><ul class="mt-2 space-y-1">` +
+            `<h2 class="section-title mt-6">${f.slug ? `<a href="${href(`/shelf/${f.slug}`)}">${esc(familyDisplayLabel(f))}</a>` : esc(familyDisplayLabel(f))}</h2><ul class="mt-2 space-y-1">` +
             f.shelves.map((s) => `<li><a href="${href(`/shelf/${s.slug}`)}">${esc(spineShelfDisplay(s))}</a></li>`).join('') +
             `</ul>`,
           )
@@ -561,7 +563,8 @@ async function main() {
     });
   }
 
-  const shelfSlugs = new Set(TAXONOMY_DEPARTMENTS.flatMap((d) => d.families.flatMap((f) => f.shelves.map((s) => s.slug))));
+  // Every shelf the menus link to; in a catalogue build that includes department and family pages.
+  const shelfSlugs = new Set(navigationShelfSlugs());
   for (const slug of shelfSlugs) {
     let shelf;
     let tree;
@@ -581,7 +584,7 @@ async function main() {
       title: `${heading} prices in Kenya`,
       description: `Compare ${heading.toLowerCase()} listings from Kenyan shops. Check product versions, shop prices and available details before buying.`,
       body:
-        crumbs([['Home', '/'], ...shelfCrumbs(slug), [heading]]) +
+        crumbs([['Home', '/'], ...shelfCrumbs(slug), [shelfPlacement(slug)?.department.shelfSlug === slug ? 'All products' : heading]]) +
         `<h1 class="page-title">${esc(heading)}</h1>` +
         `<p class="mt-1 text-sm text-muted-foreground">${esc(shelf.total.toLocaleString('en-GB'))} products</p>` +
         productList(shelf.results),

@@ -1,7 +1,8 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Seo } from '../components/common/Seo';
 import { Breadcrumbs, type Crumb } from '../components/common/Breadcrumbs';
-import { departmentForCategory } from '../data/taxonomyTree';
+import { departmentForCategory, shelfPlacement } from '../data/taxonomyTree';
+import { CATALOGUE_NAVIGATION } from '../data/catalogueNavigation';
 import { useParams, Link } from 'react-router';
 import { clustersApi, type ClusterDetail, type ClusterStore } from '../lib/api';
 import {
@@ -19,7 +20,7 @@ import {
   shopLabel,
   usablePriceHistory,
 } from '../lib/format';
-import { departmentDisplayLabel } from '../lib/navLabels';
+import { departmentDisplayLabel, familyDisplayLabel } from '../lib/navLabels';
 import { describeLoadError, type LoadError } from '../lib/loadError';
 import { bestImage, imageUsable } from '../lib/images';
 import { categoryLabel } from './CatalogueCategoriesPage';
@@ -535,6 +536,18 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
 
 function ProductCrumbs({ cluster }: { cluster: ClusterDetail }) {
   const slug = cluster.category ?? '';
+  // A family with no /browse category (catalogue build) is reached from its
+  // spine shelf; the trail names that shelf instead. ⛔ Only when the build's
+  // navigation IS the spine: an MVP build's shelf slugs are the engine's
+  // browse_nodes, a different slug space, and a match there would be a
+  // plausible wrong page.
+  const place = !slug && CATALOGUE_NAVIGATION ? shelfPlacement(cluster.spine_slug ?? undefined) : undefined;
+  if (place) {
+    const trail: Crumb[] = [{ label: departmentDisplayLabel(place.department), to: `/aisle/${place.department.id}` }];
+    if (place.family) trail.push({ label: familyDisplayLabel(place.family), to: `/aisle/${place.department.id}#${place.family.id}` });
+    if (place.shelf.slug !== place.department.shelfSlug) trail.push({ label: place.shelf.label, to: `/shelf/${place.shelf.slug}` });
+    return <Breadcrumbs items={trail} />;
+  }
   const department = departmentForCategory(slug);
   const brand = cluster.brand?.trim().toLowerCase() ?? '';
   const items: Crumb[] = [];

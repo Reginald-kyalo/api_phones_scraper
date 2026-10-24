@@ -59,6 +59,12 @@ export interface ClusterView<Store = number> {
   representative_title: string | null;
   category: string | null;
   /**
+   * Catalogue capture, families with no /browse category only: the spine page
+   * (/shelf/:slug in a catalogue build) the family is listed on. A SPINE slug,
+   * never a /browse category — the two slug spaces collide.
+   */
+  spine_slug?: string | null;
+  /**
    * Position in the 424-node canonical taxonomy, for nested navigation.
    *
    * ⚠️ `null` is a real answer, not a lookup failure: `groceries` — the LARGEST

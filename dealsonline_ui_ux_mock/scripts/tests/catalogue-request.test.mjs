@@ -11,6 +11,10 @@ beforeEach(() => resetCatalogueState());
 const { parseCatalogueRequest, MAX_LIMIT } = await load('functions/lib/catalogueRequest.ts');
 
 const DEMO = join(ROOT, 'public', 'demo');
+// The biggest captured shelf, whichever capture is unpacked: the engine's
+// shelves (MVP) and the catalogue's spine shelves have different slugs.
+const SHELF = JSON.parse(await readFile(join(DEMO, 'shelves', 'manifest.json'), 'utf8'))
+  .shelves.reduce((a, b) => (b.total > a.total ? b : a)).slug;
 
 /** An R2 bucket backed by public/demo, optionally under a version prefix. */
 function fakeBucket({ prefix = '', current = null, failing = false } = {}) {
@@ -52,7 +56,7 @@ test('list responses never exceed MAX_LIMIT rows across arrays', async () => {
     '/api/catalogue/category?slug=mobile-phones&limit=10000',
     '/api/catalogue/search?q=Samsung&slug=mobile-phones&limit=10000',
     '/api/catalogue/search?q=a&limit=10000',
-    '/api/catalogue/shelf?slug=smartphone-tablet-wearable&limit=10000',
+    `/api/catalogue/shelf?slug=${SHELF}&limit=10000`,
   ]) {
     const r = await call(path, env);
     assert.equal(r.status, 200, path);

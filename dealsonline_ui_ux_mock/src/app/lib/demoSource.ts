@@ -14,6 +14,7 @@ import type { ClusterDetail, ClusterSummary } from './clusterTypes';
 import type {
   DemoBrowseNode,
   DemoManifest,
+  DemoShelfManifest,
   DemoShelfMeta,
   DemoShelfTreeResponse,
 } from './demoTypes';
@@ -23,7 +24,12 @@ import type {
 const BASE = `${import.meta.env?.BASE_URL ?? '/'}demo`;
 /** Must match SHELF_PAGE_SIZE in scripts/capture_demo_shelves.py. */
 const SHELF_PAGE_SIZE = 100;
-/** Must match SHELF_DETAIL_BUCKETS in scripts/capture_demo_shelves.py. */
+/**
+ * shelf-details/ bucket count when shelves/manifest.json does not name one.
+ * The engine capture (capture_demo_shelves.py) writes 256; the catalogue
+ * capture (capture_catalogue_shelves.py) sizes it from bytes. Both publish it
+ * as `detail_buckets`, which getDetail reads.
+ */
 const SHELF_DETAIL_BUCKETS = 256;
 /**
  * Parsed files, newest last. Capped: a Worker isolate has 128 MB, and the
@@ -171,11 +177,24 @@ export async function getDetail(clusterId: string): Promise<ClusterDetail> {
     // the forwarding address for those rows.
   }
 
-  const shard = `${pad(fnv1a(clusterId) % SHELF_DETAIL_BUCKETS)}`;
+  const buckets = await shelfDetailBuckets();
+  const shard = `${pad(fnv1a(clusterId) % buckets)}`;
   const rows = await load<Record<string, ClusterDetail>>(`shelf-details/${shard}.json`);
   const hit = rows[clusterId];
   if (!hit) throw new CatalogueMissingError(`unknown cluster: ${clusterId}`);
   return hit;
+}
+
+async function shelfDetailBuckets(): Promise<number> {
+  try {
+    const manifest = await load<DemoShelfManifest>('shelves/manifest.json');
+    const n = Number(manifest.detail_buckets);
+    return Number.isInteger(n) && n > 0 ? n : SHELF_DETAIL_BUCKETS;
+  } catch (err) {
+    // No shelves in this dataset: fall back. An unreachable store is still an outage.
+    if (err instanceof CatalogueMissingError) return SHELF_DETAIL_BUCKETS;
+    throw err;
+  }
 }
 
 export async function getShelfTree(slug: string): Promise<DemoShelfTreeResponse> {

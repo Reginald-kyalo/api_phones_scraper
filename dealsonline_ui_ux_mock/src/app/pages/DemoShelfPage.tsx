@@ -9,6 +9,7 @@ import { Button } from '../components/ui/button';
 import { PAGE_SIZE } from '../lib/listing';
 import { MULTI_SHOP_LABEL } from '../features/search/components/ListingFiltersPanel';
 import { shelfPlacement } from '../data/taxonomyTree';
+import { CATALOGUE_NAVIGATION } from '../data/catalogueNavigation';
 import { browseLabel, departmentDisplayLabel, familyDisplayLabel } from '../lib/navLabels';
 import { Breadcrumbs } from '../components/common/Breadcrumbs';
 import { describeLoadError } from '../lib/loadError';
@@ -28,8 +29,11 @@ function Crumbs({ slug, heading }: { slug: string; heading: string }) {
         place
           ? [
               { label: departmentDisplayLabel(place.department), to: `/aisle/${place.department.id}` },
-              { label: familyDisplayLabel(place.family), to: `/aisle/${place.department.id}#${place.family.id}` },
-              { label: heading },
+              ...(place.family
+                ? [{ label: familyDisplayLabel(place.family), to: `/aisle/${place.department.id}#${place.family.id}` }]
+                : []),
+              // A department's own page: its name is already the crumb before.
+              { label: place.shelf.slug === place.department.shelfSlug ? 'All products' : heading },
             ]
           : [{ label: 'All categories', to: '/browse' }, { label: heading }]
       }
@@ -54,6 +58,7 @@ export default function DemoShelfPage() {
   const page = Math.max(0, (Number(params.get('page') ?? '1') || 1) - 1);
 
   const [node, setNode] = useState<BrowseNode | null>(null);
+  const [children, setChildren] = useState<BrowseNode[]>([]);
   const [clusters, setClusters] = useState<ClusterSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -73,6 +78,7 @@ export default function DemoShelfPage() {
       .then((res) => {
         if (cancelled) return;
         setNode(res.parent);
+        setChildren(res.results);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -80,6 +86,7 @@ export default function DemoShelfPage() {
         // could not read is a failure with a retry.
         setError(describeLoadError(err).kind === 'not-found' ? 'missing' : 'failed');
         setNode(null);
+        setChildren([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -175,6 +182,30 @@ export default function DemoShelfPage() {
         {error === null && (
           <>
             <h1 className="page-title">{heading}</h1>
+            {/* Catalogue build only: a spine node's children each have their
+                own page (the capture writes one for every node that holds a
+                product), so they are links that always lead somewhere. The
+                engine capture's children did not, hence no tiles there. */}
+            {CATALOGUE_NAVIGATION && children.length > 0 && (
+              <nav aria-label={`Within ${heading}`} className="mt-3">
+                <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
+                  {children.map((child) => (
+                    <li key={child.slug}>
+                      <Link
+                        to={`/shelf/${child.slug}`}
+                        className="text-sm text-link underline underline-offset-4 decoration-link/40 hover:decoration-link"
+                      >
+                        {browseLabel(child)}
+                      </Link>
+                      <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">
+                        {child.n_clusters_subtree.toLocaleString('en-GB')}
+                        <span className="sr-only"> products</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
             {/* Subcategory tiles are gone: 185 of the 208 the shops named had
                 no page of their own, and every product is already listed
                 here (descendant closure), so the tiles only led to dead ends. */}

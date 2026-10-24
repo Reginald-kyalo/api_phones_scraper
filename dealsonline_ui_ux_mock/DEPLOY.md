@@ -72,6 +72,40 @@ On Pages that is an environment variable in the dashboard. A missing or
 unreachable dataset **fails the build** rather than publishing a site whose every
 page renders its empty state.
 
+### Which navigation a build uses (MVP vs catalogue)
+
+The departments, families and shelves in every menu, `/aisle/:id` page and
+prerendered shelf come from one of two places, chosen by the **dataset**, not
+by a flag:
+
+| dataset in `data/demo-dataset.tar.gz` | navigation | `/shelf/:slug` means |
+|---|---|---|
+| MVP capture (default; `product_clusters_mvp`) | static engine shelf list, `src/app/data/liveSpineShelves.ts` → `taxonomyTree.ts` | an engine `browse_nodes` slug |
+| catalogue capture (`DEMO_SOURCE=catalogue_snapshot.storefront_clusters`) | `demo/navigation.json`, written by `scripts/capture_catalogue_shelves.py` | a redesign-**spine** slug |
+
+`vite.config.ts` and `scripts/postbuild.mjs` (the prerender) both read
+`public/demo/navigation.json` through `scripts/catalogue-navigation.mjs` and
+compile it in as `__CATALOGUE_NAVIGATION__` (`src/app/data/catalogueNavigation.ts`).
+It is used only when its `source_collection` and `captured_at` match
+`public/demo/manifest.json`, so a navigation left over from another capture is
+ignored (the build logs a warning) and the static one is used. The MVP capture
+deletes any `navigation.json`.
+
+A catalogue capture writes, for every spine node with at least one family in
+its subtree: `shelves/<slug>/tree.json`, `meta.json` and 100-row
+`products-NNN.json` / `products-multi-NNN.json` pages (the node's own families
+and its subtree's, in the category pages' order), and `shelf-details/` for
+families no category shard serves (every family with no `/browse` category).
+Counts are derived from the rows that ship. Department and family pages exist
+too: the aisle links each family heading to its page, a family whose products
+sit at the family itself gets an "All …" shelf link, and the department page
+links "See all N products". To rebuild only the shelves over an existing
+category capture: `DEMO_SOURCE=… apienv/bin/python -m scripts.capture_catalogue_shelves`.
+
+⛔ **The spine's slugs collide with the `/browse` categories** (`mobile-phones`
+is both). `/browse/:slug` is always the legacy category and `/shelf/:slug` in a
+catalogue build always a spine node; nothing builds one from the other.
+
 ### Deploying under a sub-path
 
 GitHub Pages project sites live at `https://<user>.github.io/<repo>/`. Every

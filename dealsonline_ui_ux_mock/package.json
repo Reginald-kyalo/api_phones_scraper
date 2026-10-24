@@ -15,7 +15,7 @@
     "check:design": "node scripts/check-design-tokens.mjs",
     "demo:cards": "node scripts/build-card-index.mjs",
     "catalogue:upload": "node scripts/upload-catalogue.mjs",
-    "test:catalogue": "node --test scripts/tests/catalogue-request.test.mjs scripts/tests/catalogue-bootstrap.test.mjs"
+    "test:catalogue": "node --test scripts/tests/catalogue-request.test.mjs scripts/tests/catalogue-bootstrap.test.mjs scripts/tests/catalogue-navigation.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",

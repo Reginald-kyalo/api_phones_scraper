@@ -21,6 +21,7 @@ import { existsSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } 
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
+import { catalogueNavigationDefine } from './catalogue-navigation.mjs';
 
 const dist = join(process.cwd(), 'dist');
 const base = process.env.BASE_PATH || '/';
@@ -51,7 +52,12 @@ await build({
   platform: 'node',
   format: 'esm',
   logLevel: 'warning',
-  define: { 'import.meta.env.BASE_URL': JSON.stringify(base) },
+  // The same navigation the app was built with (vite.config.ts), read from the
+  // same unpacked dataset, so prerendered aisles and shelves match the menus.
+  define: {
+    'import.meta.env.BASE_URL': JSON.stringify(base),
+    ...catalogueNavigationDefine(join(process.cwd(), 'public', 'demo')),
+  },
 });
 await import(pathToFileURL(bundle).href);
 

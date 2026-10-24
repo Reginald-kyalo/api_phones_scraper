@@ -75,6 +75,18 @@ export default function DemoAislePage() {
           {department.n_shelves.toLocaleString('en-GB')} categories
           {department.n_clusters > 0 && ` · ${department.n_clusters.toLocaleString('en-GB')} products`}
         </p>
+        {/* Catalogue build: the department's own page lists every product in
+            it, including the ones placed at the department itself. */}
+        {department.shelfSlug && department.n_clusters > 0 && (
+          <p className="mt-2">
+            <Link
+              to={`/shelf/${department.shelfSlug}`}
+              className="text-sm font-medium text-link underline underline-offset-4 decoration-link/40 hover:decoration-link"
+            >
+              See all {department.n_clusters.toLocaleString('en-GB')} products
+            </Link>
+          </p>
+        )}
 
         {compare.length > 0 && (
           <section aria-labelledby="compare-heading" className="mt-8">
@@ -102,7 +114,21 @@ export default function DemoAislePage() {
             aria-labelledby={`${department.id}-${family.id}`}
             className="mt-8 scroll-mt-24 border-t border-border pt-6"
           >
-            <h2 id={`${department.id}-${family.id}`} className="section-title">{familyDisplayLabel(family)}</h2>
+            <h2 id={`${department.id}-${family.id}`} className="section-title">
+              {family.slug ? (
+                <Link to={`/shelf/${family.slug}`} className="hover:text-link hover:underline underline-offset-4">
+                  {familyDisplayLabel(family)}
+                </Link>
+              ) : (
+                familyDisplayLabel(family)
+              )}
+              {family.count !== undefined && (
+                <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">
+                  {family.count.toLocaleString('en-GB')}
+                  <span className="sr-only"> products</span>
+                </span>
+              )}
+            </h2>
             <ul className="mt-2 columns-2 gap-x-8 sm:columns-3 lg:columns-4">
               {family.shelves.map((shelf) => (
                 <li key={shelf.slug} className="break-inside-avoid py-1">
