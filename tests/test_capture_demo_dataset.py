@@ -601,3 +601,9 @@ def test_an_inline_member_series_wins_over_the_id_lookup():
         {"amount": 100, "timestamp": "2026-09-01T10:00:00+0300"}, {"amount": 90, "timestamp": "2026-10-24T10:00:00+0300"}]}]}
     stale = {"lid1": [{"at": "2026-04-01", "price": 500}, {"at": "2026-05-01", "price": 510}]}
     assert [p["price"] for p in build_history(cluster, stale)] == [100, 90]
+
+
+def test_an_unusable_inline_series_falls_back_to_the_lookup():
+    cluster = {"members": [{"product_id": "lid1", "price_history": [{"amount": 90, "timestamp": "2026-10-24T10:00:00+0300"}]}]}
+    hist = {"lid1": [{"at": "2026-04-01", "price": 500}, {"at": "2026-05-01", "price": 510}]}
+    assert [p["price"] for p in build_history(cluster, hist)] == [500, 510]
