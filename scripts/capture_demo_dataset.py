@@ -672,12 +672,16 @@ if __name__ == "__main__":
     # mock's prebuild script only unpacks, it never talks to the live API.
     from scripts.capture_demo_shelves import capture_shelves
 
-    # ⛔ The spine shelves are mirrored from the live API over the ENGINE's `product_clusters`: under a catalogue
-    # capture they would link old-cluster pages beside catalogue ones — one listing on two pages with two "best
-    # prices". Skipped until the spine is placed from catalogue families.
+    # ⛔ The engine spine shelves are mirrored from the live API over the ENGINE's `product_clusters`: under a
+    # catalogue capture they would link old-cluster pages beside catalogue ones — one listing on two pages with two
+    # "best prices". A catalogue capture builds its shelves from its own families' spine placement instead.
     if SOURCE.endswith(f".{SOURCE_COLLECTION}"):
         capture_shelves()
+        # navigation.json describes a catalogue capture's spine; the MVP build keeps its static navigation.
+        (OUT / "navigation.json").unlink(missing_ok=True)
     else:
-        print(f"shelves: skipped for {SOURCE} (they are captured from the engine's clusters)")
+        from scripts.capture_catalogue_shelves import capture_catalogue_shelves
+
+        capture_catalogue_shelves(SOURCE)
     size = pack_dataset().stat().st_size
     print(f"packed dealsonline_ui_ux_mock/data/demo-dataset.tar.gz ({size / 1e6:.1f} MB)")
