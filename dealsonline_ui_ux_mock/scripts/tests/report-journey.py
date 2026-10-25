@@ -181,6 +181,7 @@ def run(pw, theme):
     page.get_by_text(SUCCESS).wait_for()
     keys = [r["key"] for r in server.requests]
     check(f"[{theme}] edit created a new submission key", keys[0] != keys[1], str(keys))
+    check(f"[{theme}] the warned edit is stored as a second report", len(server.committed) == 2, str(len(server.committed)))
     ctx.close()
 
     # 4. Server says 409 / 503(Retry-After) / invalid receipts.

@@ -195,7 +195,8 @@ export function ReportDialog({
       setNow(Date.now());
       setState('error');
     } finally {
-      inFlight.current = false;
+      // A request from a closed dialog must not clear the flag of a newer one.
+      if (gen === generation.current) inFlight.current = false;
     }
   }
 
@@ -203,6 +204,7 @@ export function ReportDialog({
     setOpen(next);
     if (!next) {
       generation.current++;
+      inFlight.current = false;
       attempt.current = null;
       setLastError(null);
       setRetryAt(null);
@@ -344,10 +346,13 @@ export function ReportDialog({
                     second report.
                   </p>
                 )}
-                {coolingDown && lastError && (
-                  <p className="pl-6">You can try again in {waitSeconds} seconds.</p>
-                )}
               </div>
+            )}
+            {/* Outside the alert: it changes every second and must not re-announce it. */}
+            {state === 'error' && coolingDown && lastError && (
+              <p className="pl-6 text-sm text-muted-foreground">
+                You can try again in {waitSeconds} seconds.
+              </p>
             )}
 
             <div className="flex gap-3">
