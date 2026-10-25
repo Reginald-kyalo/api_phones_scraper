@@ -55,6 +55,7 @@ interface Env {
 }
 
 import { readReportRequest } from '../lib/reportRequest';
+import { ReportConflictError, saveReport } from '../lib/reportStore';
 
 /** One submission, flattened — the shape every sink receives. */
 interface Record_ {
@@ -74,38 +75,6 @@ const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...extra },
   });
-
-/** The store of record: one `reports` row + one `report_facets` row per tick. */
-async function storeInD1(db: D1Database, r: Record_): Promise<void> {
-  const insert = await db
-    .prepare(
-      `INSERT INTO reports
-         (scope, cluster_id, title, category, captured_at, page_url, note,
-          country, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-    )
-    .bind(
-      r.scope, r.cluster_id, r.title, r.category, r.captured_at, r.page_url,
-      r.note, r.country,
-    )
-    .run();
-
-  const reportId = insert.meta?.last_row_id;
-  if (r.facets.length && reportId) {
-    // Batched so the facets land with the report or not at all — a report whose
-    // ticks silently vanished would read as "reader ticked nothing".
-    await db.batch(
-      r.facets.map((f) =>
-        db
-          .prepare(
-            `INSERT INTO report_facets (report_id, kind, subject, value)
-             VALUES (?, ?, ?, ?)`,
-          )
-          .bind(reportId, f.kind, f.subject, f.value),
-      ),
-    );
-  }
-}
 
 /**
  * Any endpoint that accepts a JSON POST: a Google Apps Script bound to a sheet,
@@ -144,57 +113,67 @@ function sinksFor(env: Env): { d1: boolean; webhook: boolean } {
 export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   // Validation happens before any storage call. Keys are optional until the
   // staging/client transition ends (REPORT_REQUIRE_KEY=1 in production).
-  const req = await readReportRequest(ctx.request, {
-    requireKey: ctx.env.REPORT_REQUIRE_KEY === '1',
-  });
+  const production = ctx.env.REPORT_REQUIRE_KEY === '1';
+  const req = await readReportRequest(ctx.request, { requireKey: production });
   if (!req.ok) return json({ error: req.error }, req.status);
-  const { report } = req;
-  const clean = report.facets;
+  const { report, submissionKey } = req;
+  // Coarse origin only — enough to spot a flood, not enough to identify anyone.
+  const country = ctx.request.headers.get('cf-ipcountry') || null;
 
-  const record: Record_ = {
-    scope: report.scope,
-    cluster_id: report.cluster_id,
-    title: report.title,
-    category: report.category,
-    captured_at: report.captured_at,
-    page_url: report.page_url,
-    note: report.note,
-    // Coarse origin only — enough to spot a flood, not enough to identify anyone.
-    country: ctx.request.headers.get('cf-ipcountry') || null,
-    facets: clean,
-  };
-
-  const sinks = sinksFor(ctx.env);
+  // ⛔ FIRST-LAUNCH PRODUCTION PROFILE (REPORT_REQUIRE_KEY=1): D1 is required and
+  // the webhook is neither a primary nor a mirror. A webhook cannot give the
+  // atomic, idempotent receipt this profile promises. Environments that run
+  // webhook-only today are NOT this profile and keep the legacy path below
+  // unchanged; they are not silently rerouted.
+  const sinks = production
+    ? { d1: !!ctx.env.DB, webhook: false }
+    : sinksFor(ctx.env);
 
   // ⛔ No sink is a DEPLOYMENT fault, not a reader's. Saying "try again in a
   // moment" would invite them to retype a report that can never land, so it is a
-  // 503 with a distinct message rather than the generic write failure below.
+  // 503 with a distinct message and no Retry-After.
   if (!sinks.d1 && !sinks.webhook) {
     return json({ error: 'no report storage is configured' }, 503);
   }
 
-  // D1 is the store of record wherever it exists; a webhook alongside it is a
-  // mirror and must not make the reader wait. Whichever one is PRIMARY is
-  // awaited, because a 201 has to be backed by a write that actually finished.
-  const primary = sinks.d1
-    ? () => storeInD1(ctx.env.DB as D1Database, record)
-    : () => storeViaWebhook(ctx.env, record);
+  const record: Record_ = { ...report, country, facets: report.facets };
+  const unavailable = () =>
+    json({ error: 'could not save the report' }, 503, { 'retry-after': '30' });
 
-  try {
-    await primary();
-  } catch {
-    // Never claim a report was filed when it was not.
-    return json({ error: 'could not save the report' }, 500);
+  if (!sinks.d1) {
+    // Legacy webhook-only deployment (outside the production profile): the
+    // webhook is the primary and is awaited, as before.
+    try {
+      await storeViaWebhook(ctx.env, record);
+    } catch {
+      return unavailable();
+    }
+    return json({ ok: true, facets: report.facets.length }, 201);
   }
 
-  if (sinks.d1 && sinks.webhook) {
-    // Mirror failures are deliberately invisible to the reader: the report IS
-    // stored, and reporting the mirror's problem to them would be both useless
-    // and untrue. waitUntil keeps the request alive past the response.
+  let saved: { reportId: string; created: boolean };
+  try {
+    saved = await saveReport(ctx.env.DB as D1Database, submissionKey, report, { country });
+  } catch (err) {
+    if (err instanceof ReportConflictError) {
+      // Never echo the stored or submitted report.
+      return json({ error: 'this submission key was already used for a different report' }, 409);
+    }
+    // Never claim a report was filed when it was not.
+    return unavailable();
+  }
+
+  // A mirror (legacy, non-production) is told about a report once, on its first
+  // write — a replay must not duplicate it. Its failures are deliberately
+  // invisible: the report IS stored. waitUntil keeps the request alive.
+  if (saved.created && sinks.webhook) {
     ctx.waitUntil(storeViaWebhook(ctx.env, record).catch(() => {}));
   }
 
-  return json({ ok: true, facets: clean.length }, 201);
+  return json(
+    { ok: true, report_id: saved.reportId, submission_key: submissionKey },
+    saved.created ? 201 : 200,
+  );
 };
 
 /** Anything other than POST — say so rather than falling through to the SPA. */

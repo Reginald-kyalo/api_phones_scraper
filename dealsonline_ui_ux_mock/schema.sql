@@ -1,7 +1,12 @@
--- D1 schema for reader-submitted reports.
+-- D1 schema for reader-submitted reports: the FINAL-SCHEMA REFERENCE.
 --
---   npx wrangler d1 create dealsonline-reports
---   npx wrangler d1 execute dealsonline-reports --remote --file=./schema.sql
+-- ⛔ Do not execute this file on a database that migrations manage. Provision
+-- through the numbered chain in migrations/ (0000 freezes the legacy tables,
+-- 0001 adds the idempotency columns with ALTER TABLE), so running this file
+-- first would make 0001's ALTERs fail on columns that already exist.
+--
+--   npx wrangler d1 migrations apply dealsonline-reports --local    # rehearsal
+--   npx wrangler d1 migrations apply dealsonline-reports --remote   # deliberate, by the owner
 --
 -- TWO TABLES, because one submission carries many verdicts. `reports` is the
 -- submission and its context; `report_facets` is one row per thing the reader
@@ -38,7 +43,12 @@ CREATE TABLE IF NOT EXISTS reports (
 
   note        TEXT,                 -- the optional free-text comment
   country     TEXT,                 -- cf-ipcountry; coarse enough not to identify anyone
-  created_at  TEXT NOT NULL
+  created_at  TEXT NOT NULL,
+
+  -- Added by 0001 (NULL on rows that predate it).
+  submission_key   TEXT,            -- the client's Idempotency-Key (lowercase UUID)
+  payload_hash     TEXT,            -- SHA-256 of the canonical body (functions/lib/reportStore.ts)
+  selected_version TEXT             -- dataset version the reader had selected
 );
 
 -- One row per ticked item. `kind` says which question, `subject` says which
@@ -66,9 +76,14 @@ CREATE TABLE IF NOT EXISTS report_facets (
   report_id   INTEGER NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
   kind        TEXT NOT NULL,
   subject     TEXT,
-  value       TEXT
+  value       TEXT,
+  position    INTEGER               -- added by 0001: index within the report, submitted order
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_reports_submission_key
+  ON reports (submission_key) WHERE submission_key IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_facets_report_position
+  ON report_facets (report_id, position);
 CREATE INDEX IF NOT EXISTS idx_reports_cluster ON reports (cluster_id);
 CREATE INDEX IF NOT EXISTS idx_reports_scope   ON reports (scope, created_at);
 CREATE INDEX IF NOT EXISTS idx_facets_report   ON report_facets (report_id);

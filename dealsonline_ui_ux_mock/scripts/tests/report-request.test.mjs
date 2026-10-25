@@ -11,8 +11,24 @@ const { isReportReceipt } = await load('src/app/lib/reportContract.ts');
 const KEY = '3f2b8c1e-5a7d-4e9b-8c3a-1d2e3f4a5b6c';
 const good = () => ({ scope: 'cluster', cluster_id: 'c1', note: 'wrong variant', facets: [] });
 
+// A stand-in D1 that counts every storage touch. It answers like a store that
+// accepted the write: the winner row echoes whatever payload hash was bound.
 function fakeDb() {
-  const db = { calls: 0, prepare() { db.calls++; return { bind: () => ({ run: async () => ({ meta: { last_row_id: 1 } }) }) }; }, batch: async () => { db.calls++; } };
+  let hash = null;
+  const db = {
+    calls: 0,
+    prepare(sql) {
+      db.calls++;
+      return {
+        bind: (...args) => {
+          if (/INSERT INTO reports/.test(sql)) hash = args.find((a) => typeof a === 'string' && /^[0-9a-f]{64}$/.test(a)) ?? hash;
+          return { first: async () => ({ id: 1, payload_hash: hash, facet_count: db.facets }), sql, args };
+        },
+      };
+    },
+    facets: 0,
+    batch: async (stmts) => { db.calls++; db.facets = stmts.length - 1; return stmts.map(() => ({ meta: { changes: 1 } })); },
+  };
   return db;
 }
 const realFetch = globalThis.fetch;
