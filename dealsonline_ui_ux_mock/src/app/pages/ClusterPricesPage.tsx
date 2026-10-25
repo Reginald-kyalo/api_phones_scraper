@@ -14,6 +14,7 @@ import {
   formatPrice,
   hasPrice,
   isStale,
+  STALE_AFTER_DAYS,
   brandName,
   productName,
   shopLabel,
@@ -23,6 +24,7 @@ import { departmentDisplayLabel } from '../lib/navLabels';
 import { describeLoadError, type LoadError } from '../lib/loadError';
 import { bestImage } from '../lib/images';
 import { explainOffer, type OfferExplanation } from '../lib/offerExplanation';
+import { coverageLine } from '../lib/coverageLine';
 import { excludedFromConfig, describeExclusions } from '../lib/excludedOffers';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
@@ -203,6 +205,10 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
     () => (config ? excludedFromConfig(cluster, config) : null),
     [cluster, config],
   );
+  const coverage = useMemo(
+    () => coverageLine(offers.map(([, o]) => o), Date.now(), STALE_AFTER_DAYS),
+    [offers],
+  );
   const highest = offers.length > 1 ? offers[offers.length - 1] : null;
   // One percentage needs one version: with "All versions" selected the list
   // mixes configurations, and no single figure describes it (design audit §7).
@@ -347,6 +353,8 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                 </>
               )}
             </p>
+
+            {coverage.text && <p className="mt-1 text-sm text-muted-foreground">{coverage.text}</p>}
 
             {verdict && (
               <p className="mt-1 text-sm text-foreground">
