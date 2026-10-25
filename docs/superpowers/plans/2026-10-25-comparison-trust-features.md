@@ -69,3 +69,6 @@
 - [ ] Implement store read, endpoint, migration, dialog reference and status page. Status changes are operator-only (no public write path); document in `DEPLOY.md` how an operator updates status with wrangler d1 execute.
 - [ ] Browser check (Playwright or the existing harness): submit a synthetic report locally, open the reference link, see "Received".
 - [ ] Type-check, `npm run test:reports`, design check.
+
+## Task 1b — Per-offer evidence fields (inserted 2026-10-25 by controller ruling)
+See `.superpowers/sdd/2026-10-25-comparison-trust-features/task-1b-brief.md` (copied here for the record): enrich `best_by_store` / `configs[].best_by_store` offers in `app/api/routes/clusters.py::_cluster_view` with `condition`, `likely_used`, `observed_at`, `stock_status`, `delisted` from the matching member row, and `facet_value` per config; pass through `clusterTypes.ts` and `cataloguePublic.ts`; recapture the demo dataset if the API can run locally. Tasks 1–3 depend on it.
