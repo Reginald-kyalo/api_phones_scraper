@@ -259,6 +259,11 @@ def _flag(v) -> bool:
     return v is True or (isinstance(v, str) and v.strip().lower() == "true")
 
 
+def _flag_or_none(v):
+    """A missing flag is unknown (None), never False: a default is a guess."""
+    return None if v is None else _flag(v)
+
+
 def _member_evidence(members: list) -> tuple[dict, dict]:
     """Index members by url and by product_id for the per-offer evidence join."""
     by_url, by_pid = {}, {}
@@ -281,10 +286,10 @@ def _offer_evidence(offer: dict, index: tuple[dict, dict]) -> dict:
         return {}
     return {
         "condition": _CONDITIONS.get((_text(m.get("condition")) or "").lower()),
-        "likely_used": _flag(m.get("likely_used")),
+        "likely_used": _flag_or_none(m.get("likely_used")),
         "observed_at": _text(m.get("last_seen")),
         "stock_status": _text(m.get("stock_status")),
-        "delisted": _flag(m.get("delisted")),
+        "delisted": _flag_or_none(m.get("delisted")),
     }
 
 

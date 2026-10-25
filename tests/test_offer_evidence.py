@@ -70,3 +70,13 @@ def test_summary_unchanged_and_schema_passes_fields_through():
     dumped = ClusterView(**_cluster_view(_doc())).model_dump(exclude_unset=True)
     assert dumped["configs"][0]["by_store"]["a.co.ke"]["facet_value"] == "64"
     assert dumped["best_by_store"]["a.co.ke"]["condition"] == "new"
+
+
+def test_missing_flags_are_null_not_false():
+    d = _doc()
+    del d["members"][0]["likely_used"]
+    del d["members"][0]["delisted"]
+    o = _cluster_view(d)["configs"][0]["by_store"]["a.co.ke"]
+    assert o["likely_used"] is None and o["delisted"] is None
+    d["members"][0]["delisted"] = None
+    assert _cluster_view(d)["configs"][0]["by_store"]["a.co.ke"]["delisted"] is None

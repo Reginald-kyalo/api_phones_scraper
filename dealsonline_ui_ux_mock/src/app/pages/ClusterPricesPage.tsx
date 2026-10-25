@@ -23,6 +23,7 @@ import { departmentDisplayLabel } from '../lib/navLabels';
 import { describeLoadError, type LoadError } from '../lib/loadError';
 import { bestImage } from '../lib/images';
 import { explainOffer, type OfferExplanation } from '../lib/offerExplanation';
+import { excludedFromConfig, describeExclusions } from '../lib/excludedOffers';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -198,6 +199,10 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
   const offers = config ? pricedOffers(config.by_store) : pricedOffers(cluster.best_by_store);
   const lowest = offers[0] ?? null;
   const allOffers = useMemo(() => pricedOffers(cluster.best_by_store), [cluster.best_by_store]);
+  const excluded = useMemo(
+    () => (config ? excludedFromConfig(cluster, config) : null),
+    [cluster, config],
+  );
   const highest = offers.length > 1 ? offers[offers.length - 1] : null;
   // One percentage needs one version: with "All versions" selected the list
   // mixes configurations, and no single figure describes it (design audit §7).
@@ -440,6 +445,20 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                     Report a problem
                   </a>
                 </p>
+              )}
+
+              {config && excluded && excluded.total > 0 && (
+                // Secondary: native <details> is collapsed by default and
+                // operable from the keyboard (Tab to focus, Enter/Space to open).
+                <details className="mt-3 rounded-md border border-border">
+                  <summary className="cursor-pointer px-4 py-3 text-sm text-muted-foreground">
+                    {describeExclusions(excluded, config).heading}
+                  </summary>
+                  <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+                    {describeExclusions(excluded, config).detail}. They are kept out so every price above is for
+                    the same version.
+                  </p>
+                </details>
               )}
 
               {!likelyUsed && cluster.likely_used_best_price != null && (cluster.n_likely_used ?? 0) > 0 && (
