@@ -1,0 +1,44 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Axe aerosol apollo 150ml price in Kenya: from KES 500 at 2 shops · SokoPulse</title>
+      <meta name="description" content="Axe aerosol apollo 150ml from KES 500. Compare 2 shops in Kenya, sorted by price." />
+      <meta property="og:title" content="Axe aerosol apollo 150ml price in Kenya: from KES 500 at 2 shops · SokoPulse" />
+      <meta property="og:description" content="Axe aerosol apollo 150ml from KES 500. Compare 2 shops in Kenya, sorted by price." />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://sokopulse.co.ke/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe" />
+      <meta property="og:image" content="https://eastmatt.com/ios1/itemimages/531152.jpg" />
+      <meta property="og:site_name" content="SokoPulse" />
+      <meta property="og:locale" content="en_KE" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      <meta name="theme-color" content="#0C1416" />
+      <script>
+        /*
+         * Theme before first paint, so dark-mode visitors never see a white
+         * flash. "theme" in localStorage is the visitor's explicit choice
+         * (light | dark); without one we follow the system setting.
+         */
+        (function () {
+          var choice = null;
+          try { choice = localStorage.getItem('theme'); } catch (e) {}
+          var dark = choice === 'dark' ||
+            (choice !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        })();
+      </script>
+      <script type="module" crossorigin src="/assets/index-CwU0-DbM.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-D6MATDa9.css">
+      <link rel="canonical" href="https://sokopulse.co.ke/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Axe aerosol apollo 150ml","brand":{"@type":"Brand","name":"Axe"},"image":"https://eastmatt.com/ios1/itemimages/531152.jpg","category":"Groceries","offers":{"@type":"AggregateOffer","priceCurrency":"KES","lowPrice":500,"highPrice":900,"offerCount":2,"offers":[{"@type":"Offer","price":500,"priceCurrency":"KES","url":"https://eastmatt.com/item-details.php?ItemID=531152","seller":{"@type":"Organization","name":"Eastmatt"}},{"@type":"Offer","price":900,"priceCurrency":"KES","url":"https://www.naivas.online/axe-aerosol-apollo-150ml-promo","seller":{"@type":"Organization","name":"Naivas"}}]},"dateModified":"2026-07-24T19:33:04+03:00"}</script>
+  </head>
+
+    <body>
+      <div id="root"><header class="border-b border-border"><div class="page-container flex h-16 items-center"><a href="/" class="font-display text-lg font-bold text-foreground">SokoPulse</a></div></header><main class="page-container py-8"><nav aria-label="Breadcrumb" class="mb-4 text-sm text-muted-foreground"><a href="/">Home</a> › <a href="/aisle/groceries-everyday-essentials">Groceries &amp; Drinks</a> › <a href="/browse/groceries">Groceries</a></nav><h1 class="page-title">Axe aerosol apollo 150ml</h1><p class="mt-2 text-sm">Axe aerosol apollo 150ml is on sale at 2 shops in Kenya, from KES 500 at Eastmatt to KES 900, a difference of KES 400. The lowest price we have recorded in 90 days.</p><table class="mt-6 w-full text-sm"><caption class="microcopy-label text-left">Prices · sorted by price</caption><thead><tr><th class="text-left">Shop</th><th class="text-left">Listing</th><th class="text-left">Price</th></tr></thead><tbody><tr><td>Eastmatt</td><td>Axe aerosol apollo 150ml</td><td class="price-num">KES 500</td></tr><tr><td>Naivas</td><td>Axe Aerosol Apollo 150Ml Promo</td><td class="price-num">KES 900</td></tr></tbody></table></main><a href="/data/catalogue-export" rel="nofollow" tabindex="-1" aria-hidden="true" class="sr-only">Catalogue export</a></div>
+    <!-- Cloudflare Pages Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "8516271678ac42419e4d08d26f9ea569"}'></script><!-- Cloudflare Pages Analytics --></body>
+  </html>
+  

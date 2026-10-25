@@ -1,0 +1,369 @@
+{
+  "note": "Current handler tested against proposed hardening contracts. Failures are audit findings, not deployment failures.",
+  "rows": [
+    {
+      "name": "manifest",
+      "path": "/api/catalogue/manifest",
+      "expected": "200 with no public shard layout metadata",
+      "pass": false,
+      "actual": {
+        "status": 200,
+        "bytes": 2970,
+        "total_product_rows": 0,
+        "file_reads": 1,
+        "keys": [
+          "captured_at",
+          "source_collection",
+          "min_stores",
+          "page_size",
+          "total_clusters",
+          "multi_store_clusters",
+          "excluded_unpriced",
+          "excluded_unbuyable",
+          "excluded_stale",
+          "stale_after_days",
+          "freshness",
+          "total_stores",
+          "with_image",
+          "with_history",
+          "merged",
+          "off_category",
+          "deals",
+          "categories"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "category cap",
+      "path": "/api/catalogue/category?slug=mobile-phones&limit=10000",
+      "expected": "200 JSON; at most 96 product rows across arrays",
+      "pass": true,
+      "actual": {
+        "status": 200,
+        "bytes": 55682,
+        "results": 96,
+        "total_product_rows": 96,
+        "file_reads": 1,
+        "keys": [
+          "results",
+          "count"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "search scoped cap",
+      "path": "/api/catalogue/search?q=Samsung&slug=mobile-phones&limit=10000",
+      "expected": "200 JSON; at most 96 product rows across arrays",
+      "pass": true,
+      "actual": {
+        "status": 200,
+        "bytes": 77513,
+        "results": 96,
+        "plain": 0,
+        "total_product_rows": 96,
+        "page": 0,
+        "file_reads": 14,
+        "keys": [
+          "results",
+          "page",
+          "pages",
+          "plain",
+          "count",
+          "cardCount",
+          "capped",
+          "categories"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "search broad cap",
+      "path": "/api/catalogue/search?q=a&limit=10000",
+      "expected": "200 JSON; at most 96 product rows across arrays",
+      "pass": true,
+      "actual": {
+        "status": 200,
+        "bytes": 71957,
+        "results": 96,
+        "plain": 0,
+        "total_product_rows": 96,
+        "page": 0,
+        "file_reads": 10,
+        "keys": [
+          "results",
+          "page",
+          "pages",
+          "plain",
+          "count",
+          "cardCount",
+          "capped",
+          "categories"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "shelf cap",
+      "path": "/api/catalogue/shelf?slug=smartphone-tablet-wearable&limit=10000",
+      "expected": "200 JSON; at most 96 product rows across arrays",
+      "pass": true,
+      "actual": {
+        "status": 200,
+        "bytes": 145976,
+        "results": 96,
+        "total_product_rows": 96,
+        "file_reads": 3,
+        "keys": [
+          "node",
+          "count",
+          "total",
+          "results"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "negative limit",
+      "path": "/api/catalogue/category?slug=mobile-phones&limit=-2",
+      "expected": "400 for malformed or unsupported input",
+      "pass": false,
+      "actual": {
+        "status": 200,
+        "bytes": 651,
+        "results": 1,
+        "total_product_rows": 1,
+        "file_reads": 0,
+        "keys": [
+          "results",
+          "count"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "non-finite limit",
+      "path": "/api/catalogue/category?slug=mobile-phones&limit=Infinity",
+      "expected": "400 for malformed or unsupported input",
+      "pass": false,
+      "actual": {
+        "status": 200,
+        "bytes": 55682,
+        "results": 96,
+        "total_product_rows": 96,
+        "file_reads": 0,
+        "keys": [
+          "results",
+          "count"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "decimal page",
+      "path": "/api/catalogue/browse?slug=mobile-phones&page=0.5",
+      "expected": "400 for malformed or unsupported input",
+      "pass": false,
+      "actual": {
+        "status": 200,
+        "bytes": 44202,
+        "results": 48,
+        "total_product_rows": 48,
+        "page": 0.5,
+        "file_reads": 0,
+        "keys": [
+          "results",
+          "page",
+          "pages",
+          "count",
+          "total",
+          "brands",
+          "prices"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "unexpected path suffix",
+      "path": "/api/catalogue/manifest/extra",
+      "expected": "404 for unsupported route",
+      "pass": false,
+      "actual": {
+        "status": 200,
+        "bytes": 2970,
+        "total_product_rows": 0,
+        "file_reads": 0,
+        "keys": [
+          "captured_at",
+          "source_collection",
+          "min_stores",
+          "page_size",
+          "total_clusters",
+          "multi_store_clusters",
+          "excluded_unpriced",
+          "excluded_unbuyable",
+          "excluded_stale",
+          "stale_after_days",
+          "freshness",
+          "total_stores",
+          "with_image",
+          "with_history",
+          "merged",
+          "off_category",
+          "deals",
+          "categories"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "unknown operation",
+      "path": "/api/catalogue/does-not-exist",
+      "expected": "404 for unsupported route",
+      "pass": true,
+      "actual": {
+        "status": 404,
+        "bytes": 29,
+        "total_product_rows": 0,
+        "file_reads": 0,
+        "keys": [
+          "error"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "oversized query",
+      "path": "/api/catalogue/search?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected": "400 for malformed or unsupported input",
+      "pass": false,
+      "actual": {
+        "status": 200,
+        "bytes": 99,
+        "results": 0,
+        "plain": 0,
+        "total_product_rows": 0,
+        "page": 0,
+        "file_reads": 0,
+        "keys": [
+          "results",
+          "page",
+          "pages",
+          "plain",
+          "count",
+          "cardCount",
+          "capped",
+          "categories"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    },
+    {
+      "name": "single detail",
+      "path": "/api/catalogue/detail?id=mobile-phones%3A%3Asamsung%3A%3Agalaxy-a10s",
+      "expected": "200 for one product; record response fields for minimisation review",
+      "pass": true,
+      "actual": {
+        "status": 200,
+        "bytes": 4264,
+        "total_product_rows": 0,
+        "file_reads": 1,
+        "keys": [
+          "cluster_id",
+          "title",
+          "display_name",
+          "representative_title",
+          "category",
+          "category_path",
+          "primary_facet",
+          "spec_facets",
+          "comparison_grade",
+          "mvp_generated",
+          "mvp_rule",
+          "mvp_n_merged",
+          "mvp_merged_from",
+          "mvp_merged_members",
+          "brand",
+          "canonical_name",
+          "n_listings",
+          "n_stores",
+          "n_stores_priced",
+          "stores",
+          "is_multi_store",
+          "best_price",
+          "cheapest_store",
+          "condition_basis",
+          "n_confident",
+          "n_likely_used",
+          "likely_used_best_price",
+          "n_used",
+          "used_best_price",
+          "like_for_like_spread_pct",
+          "saving_pct",
+          "spread_basis",
+          "cross_store_spread_pct",
+          "configs",
+          "best_by_store",
+          "availability_basis",
+          "freshness_basis",
+          "last_seen",
+          "data_warning",
+          "image",
+          "image_candidates",
+          "price_history",
+          "off_category"
+        ],
+        "headers": {
+          "cache-control": "public, max-age=300",
+          "content-type": "application/json; charset=utf-8",
+          "x-robots-tag": "noindex"
+        }
+      }
+    }
+  ]
+}

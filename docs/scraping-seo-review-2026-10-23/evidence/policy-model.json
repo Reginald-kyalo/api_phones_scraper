@@ -1,0 +1,20 @@
+{
+  "tests": 9,
+  "failures": 0,
+  "errors": 0,
+  "scope": "Offline policy simulation only; trusted session and crawler inputs, no deployed WAF test.",
+  "scenarios": {
+    "80_request_single_actor_burst": {
+      "allowed": 30,
+      "limited": 50
+    },
+    "20_shoppers_x20_reads_shared_ip": {
+      "proposed_session_limited": 0,
+      "naive_60_per_minute_ip_limited": 340
+    },
+    "400_new_identities": {
+      "allowed": 400,
+      "interpretation": "Known bypass; sessions alone do not establish human identity"
+    }
+  }
+}

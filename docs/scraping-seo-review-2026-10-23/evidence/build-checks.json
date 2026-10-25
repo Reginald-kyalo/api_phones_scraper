@@ -1,0 +1,16 @@
+{
+  "kind": "Static artifact inspection only",
+  "raw_catalogue_absent_from_public_dist": true,
+  "private_catalogue_present": true,
+  "remaining_public_json": [
+    "shop-icons/index.json"
+  ],
+  "sitemap_urls": 6179,
+  "live_sitemap_urls": 6179,
+  "sitemap_uses_test_origin": true,
+  "product_html_contains_prices": true,
+  "product_html_contains_structured_data": true,
+  "robots_declares_api_disallow": true,
+  "robots_declares_catalogue_api_allow": false,
+  "note": "The API robots result is a current SEO risk. This does not simulate Google rendering or establish index coverage."
+}

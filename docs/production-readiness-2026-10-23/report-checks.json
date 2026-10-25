@@ -1,0 +1,36 @@
+{
+  "scope": "Local handler with fake storage and intercepted fetch only",
+  "cases": [
+    {
+      "name": "null JSON body",
+      "uncaught": "TypeError",
+      "message": "Cannot read properties of null (reading 'scope')"
+    },
+    {
+      "name": "numeric scope",
+      "uncaught": "TypeError",
+      "message": "(body.scope || \"cluster\").trim is not a function"
+    },
+    {
+      "name": "numeric facet kind",
+      "uncaught": "TypeError",
+      "message": "((intermediate value) || \"\").trim is not a function"
+    },
+    {
+      "name": "no configured sink",
+      "status": 503,
+      "body": "{\"error\":\"no report storage is configured\"}"
+    },
+    {
+      "name": "facet write fails after parent insert",
+      "status": 500,
+      "body": "{\"error\":\"could not save the report\"}",
+      "parentWrites": 1
+    },
+    {
+      "name": "primary webhook returns HTML error with HTTP 200",
+      "status": 201,
+      "body": "{\"ok\":true,\"facets\":0}"
+    }
+  ]
+}

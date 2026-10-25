@@ -1,0 +1,480 @@
+{
+  "tested_at": "2026-10-23T07:45:05.046271+00:00",
+  "requests": [
+    {
+      "label": "home",
+      "path": "/",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 10182,
+      "sha256": "fb1e35cf7afd5318a81f2b14c22458f20b15c437af80b4ba66b4bb181087262c",
+      "html": {
+        "h1": [
+          "Compare prices across 36 Kenyan shops"
+        ],
+        "canonical": [
+          "https://sokopulse.co.ke/"
+        ],
+        "robots": [],
+        "rows": 0,
+        "jsonld": 0,
+        "product_links": 24,
+        "price_mentions": 24,
+        "hidden_export_link": true
+      },
+      "elapsed_seconds": 0.565
+    },
+    {
+      "label": "robots",
+      "path": "/robots.txt",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/robots.txt",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Length": "1000",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 1000,
+      "sha256": "79d7ed08663f2e6d43d3996c6034d530586b62415a812c56a07280ff2314d843",
+      "elapsed_seconds": 0.316
+    },
+    {
+      "label": "sitemap",
+      "path": "/sitemap.xml",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/sitemap.xml",
+      "headers": {
+        "Content-Type": "application/xml",
+        "Content-Length": "609299",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 609299,
+      "sha256": "af1a8d37ff4c1c1c4b92ad6ec66447beb651cd56ffdffe223c73c94dbb45831c",
+      "elapsed_seconds": 16.831
+    },
+    {
+      "label": "raw-manifest",
+      "path": "/demo/manifest.json",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/demo/manifest.json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Content-Length": "2970",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 2970,
+      "sha256": "a736fee4c2edd74889760a935159eac348963b9f64dfa10f17f0db8beaa0b0c1",
+      "json_type": "dict",
+      "json_keys": [
+        "captured_at",
+        "source_collection",
+        "min_stores",
+        "page_size",
+        "total_clusters",
+        "multi_store_clusters",
+        "excluded_unpriced",
+        "excluded_unbuyable",
+        "excluded_stale",
+        "stale_after_days",
+        "freshness",
+        "total_stores",
+        "with_image",
+        "with_history",
+        "merged",
+        "off_category",
+        "deals",
+        "categories"
+      ],
+      "array_counts": {
+        "categories": 13
+      },
+      "scalars": {
+        "total_clusters": 74609,
+        "total_stores": 36
+      },
+      "elapsed_seconds": 1.918
+    },
+    {
+      "label": "api-manifest",
+      "path": "/api/catalogue/manifest",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/api/catalogue/manifest",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Length": "2970",
+        "Cache-Control": "public, max-age=300",
+        "x-robots-tag": "noindex",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 2970,
+      "sha256": "a736fee4c2edd74889760a935159eac348963b9f64dfa10f17f0db8beaa0b0c1",
+      "json_type": "dict",
+      "json_keys": [
+        "captured_at",
+        "source_collection",
+        "min_stores",
+        "page_size",
+        "total_clusters",
+        "multi_store_clusters",
+        "excluded_unpriced",
+        "excluded_unbuyable",
+        "excluded_stale",
+        "stale_after_days",
+        "freshness",
+        "total_stores",
+        "with_image",
+        "with_history",
+        "merged",
+        "off_category",
+        "deals",
+        "categories"
+      ],
+      "array_counts": {
+        "categories": 13
+      },
+      "scalars": {
+        "total_clusters": 74609,
+        "total_stores": 36
+      },
+      "elapsed_seconds": 0.571
+    },
+    {
+      "label": "category",
+      "path": "/browse/mobile-phones",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/browse/mobile-phones",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 13443,
+      "sha256": "7d76a719d215cf1cbeff968beccfa2450f091566f8cbf86e6c2963fe320deb9a",
+      "html": {
+        "h1": [
+          "Phones"
+        ],
+        "canonical": [
+          "https://sokopulse.co.ke/browse/mobile-phones"
+        ],
+        "robots": [],
+        "rows": 0,
+        "jsonld": 0,
+        "product_links": 48,
+        "price_mentions": 48,
+        "hidden_export_link": true
+      },
+      "elapsed_seconds": 0.325
+    },
+    {
+      "label": "search",
+      "path": "/search?q=Samsung",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/search?q=Samsung",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 2637,
+      "sha256": "05f73bb9d5d6321c8de57ab57e3479f76d58a6123c24003129a5681c73a50989",
+      "html": {
+        "h1": [
+          "Search"
+        ],
+        "canonical": [
+          "https://sokopulse.co.ke/search"
+        ],
+        "robots": [
+          "noindex"
+        ],
+        "rows": 0,
+        "jsonld": 0,
+        "product_links": 0,
+        "price_mentions": 0,
+        "hidden_export_link": true
+      },
+      "elapsed_seconds": 0.258
+    },
+    {
+      "label": "product",
+      "path": "/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 4427,
+      "sha256": "9ef58286c02aed678ef2694f2830b86452104e61e111c02fd3871b2c21c8d20a",
+      "html": {
+        "h1": [
+          "Axe aerosol apollo 150ml"
+        ],
+        "canonical": [
+          "https://sokopulse.co.ke/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe"
+        ],
+        "robots": [],
+        "rows": 3,
+        "jsonld": 1,
+        "product_links": 0,
+        "price_mentions": 9,
+        "hidden_export_link": true
+      },
+      "elapsed_seconds": 0.235
+    },
+    {
+      "label": "product-googlebot-ua",
+      "path": "/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe",
+      "user_agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 4427,
+      "sha256": "9ef58286c02aed678ef2694f2830b86452104e61e111c02fd3871b2c21c8d20a",
+      "html": {
+        "h1": [
+          "Axe aerosol apollo 150ml"
+        ],
+        "canonical": [
+          "https://sokopulse.co.ke/prices/groceries%3A%3Aaerosol%2Bapollo%2Baxe"
+        ],
+        "robots": [],
+        "rows": 3,
+        "jsonld": 1,
+        "product_links": 0,
+        "price_mentions": 9,
+        "hidden_export_link": true
+      },
+      "elapsed_seconds": 0.078
+    },
+    {
+      "label": "api-detail",
+      "path": "/api/catalogue/detail?id=groceries%3A%3Aaerosol%2Bapollo%2Baxe",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/api/catalogue/detail?id=groceries%3A%3Aaerosol%2Bapollo%2Baxe",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Length": "3211",
+        "Cache-Control": "public, max-age=300",
+        "x-robots-tag": "noindex",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 3211,
+      "sha256": "f45cc2f3633d948e175fd156abfb94f6b1ee63317a9ffa6ce683a148aa59ba83",
+      "json_type": "dict",
+      "json_keys": [
+        "cluster_id",
+        "title",
+        "display_name",
+        "representative_title",
+        "category",
+        "category_path",
+        "primary_facet",
+        "spec_facets",
+        "comparison_grade",
+        "mvp_generated",
+        "mvp_rule",
+        "mvp_n_merged",
+        "mvp_merged_from",
+        "mvp_merged_members",
+        "brand",
+        "canonical_name",
+        "n_listings",
+        "n_stores",
+        "n_stores_priced",
+        "stores",
+        "is_multi_store",
+        "best_price",
+        "cheapest_store",
+        "condition_basis",
+        "n_confident",
+        "n_likely_used",
+        "likely_used_best_price",
+        "n_used",
+        "used_best_price",
+        "like_for_like_spread_pct",
+        "saving_pct",
+        "spread_basis",
+        "cross_store_spread_pct",
+        "configs",
+        "best_by_store"
+      ],
+      "array_counts": {
+        "mvp_merged_from": 2,
+        "mvp_merged_members": 2,
+        "stores": 2,
+        "configs": 1,
+        "image_candidates": 2,
+        "price_history": 4
+      },
+      "scalars": {},
+      "elapsed_seconds": 0.299
+    },
+    {
+      "label": "raw-card-index",
+      "path": "/demo/cards/mobile-phones.json",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/demo/cards/mobile-phones.json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Content-Length": "628766",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 628766,
+      "sha256": "741ea5579f73a3b51e56c5a1141e915580924927c2b07eb2386da6f6b970c702",
+      "json_type": "dict",
+      "json_keys": [
+        "slug",
+        "stores",
+        "rows"
+      ],
+      "array_counts": {
+        "stores": 30,
+        "rows": 3496
+      },
+      "scalars": {},
+      "elapsed_seconds": 2.334
+    },
+    {
+      "label": "raw-category-page",
+      "path": "/demo/categories/mobile-phones-000.json",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/demo/categories/mobile-phones-000.json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Content-Length": "282038",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 282038,
+      "sha256": "38458f045c8956980372d8b37cafa1f65e606277736214d4c83866c2438fd9e7",
+      "json_type": "list",
+      "json_keys": [],
+      "row_count": 500,
+      "elapsed_seconds": 1.297
+    },
+    {
+      "label": "api-category-cap",
+      "path": "/api/catalogue/category?slug=mobile-phones&limit=10000",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/api/catalogue/category?slug=mobile-phones&limit=10000",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Length": "55682",
+        "Cache-Control": "public, max-age=300",
+        "x-robots-tag": "noindex",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 55682,
+      "sha256": "b12cccdfb012776665befbcd99dfc04c7a8ce361f148b28c01145b81934c7b2b",
+      "json_type": "dict",
+      "json_keys": [
+        "results",
+        "count"
+      ],
+      "array_counts": {
+        "results": 96
+      },
+      "scalars": {
+        "count": 3495
+      },
+      "elapsed_seconds": 0.407
+    },
+    {
+      "label": "api-search-cap",
+      "path": "/api/catalogue/search?q=Samsung&slug=mobile-phones&limit=10000",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "status": 200,
+      "final_url": "https://dealsonline-d58.pages.dev/api/catalogue/search?q=Samsung&slug=mobile-phones&limit=10000",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Length": "76409",
+        "Cache-Control": "public, max-age=300",
+        "x-robots-tag": "noindex",
+        "Server": "cloudflare"
+      },
+      "truncated": false,
+      "bytes_read": 76409,
+      "sha256": "58ed1cce221bb70fbbf2ece87d5a5e9356ac8fc49fde895d287c1b3e2e49b235",
+      "json_type": "dict",
+      "json_keys": [
+        "results",
+        "page",
+        "pages",
+        "plain",
+        "count",
+        "cardCount",
+        "categories"
+      ],
+      "array_counts": {
+        "results": 96,
+        "plain": 0,
+        "categories": 7
+      },
+      "scalars": {
+        "page": 0,
+        "pages": 3,
+        "count": 3064,
+        "cardCount": 212
+      },
+      "elapsed_seconds": 4.436
+    },
+    {
+      "label": "missing-page",
+      "path": "/review-nonexistent-page-20261023",
+      "user_agent": "SokoPulseReview/1.0 (owner-requested SEO and exposure review)",
+      "error": "<urlopen error [Errno 104] Connection reset by peer>",
+      "elapsed_seconds": 4.84
+    }
+  ]
+}

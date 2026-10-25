@@ -1,0 +1,56 @@
+vite v6.3.5 building for production...
+transforming...
+✓ 2845 modules transformed.
+rendering chunks...
+computing gzip size...
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/index.html                                    2.12 kB │ gzip:   0.89 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/index-D5wo0d-Y.css                   116.55 kB │ gzip:  19.32 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/PhoneCategoryPage-d9XIZWg5.js          0.14 kB │ gzip:   0.14 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/PriceOrDash-Bljr0rZ4.js                0.26 kB │ gzip:   0.21 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/chevron-down-BuqoNIJT.js               0.30 kB │ gzip:   0.25 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/chevron-left-BFEtNVHl.js               0.30 kB │ gzip:   0.25 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/loader-circle-hg8eO1ru.js              0.32 kB │ gzip:   0.26 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/arrow-right-BxYDNPNj.js                0.34 kB │ gzip:   0.27 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/index-COmoeNUr.js                      0.48 kB │ gzip:   0.34 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/refresh-cw-ChSkleSS.js                 0.49 kB │ gzip:   0.33 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/trash-2-BsMy2j_X.js                    0.53 kB │ gzip:   0.36 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/Seo-DYZq-j0s.js                        0.59 kB │ gzip:   0.39 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/NotFound-D7lyxwjy.js                   0.62 kB │ gzip:   0.37 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/label-C06KdtEP.js                      0.64 kB │ gzip:   0.42 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/Breadcrumbs-DXWQHT3R.js                0.71 kB │ gzip:   0.42 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/AuthPage-Ced7_mkC.js                   0.79 kB │ gzip:   0.49 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/SavingBadge-BmBHkWw7.js                1.09 kB │ gzip:   0.69 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/navLabels-B3-aP2gZ.js                  1.25 kB │ gzip:   0.71 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/StoreMark-CCEZgLOg.js                  1.33 kB │ gzip:   0.83 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/AdSlot-Cfgjy8Mh.js                     1.59 kB │ gzip:   0.86 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/dialog-ldzR0RTm.js                     2.05 kB │ gzip:   0.78 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/FavoritesPage-Bmf9mXmC.js              2.21 kB │ gzip:   0.99 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/MobileCategoryNav-BSilqGI9.js          2.44 kB │ gzip:   1.02 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/ClusterCard-B9wypGpB.js                2.60 kB │ gzip:   1.07 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/CatalogueCategoriesPage-k14xq6P8.js    2.97 kB │ gzip:   1.21 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/DemoAislePage-syZQME8v.js              3.04 kB │ gzip:   1.30 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/DealsPage-CmTUXCLF.js                  4.07 kB │ gzip:   1.68 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/MegaMenu-bFS45Rnk.js                   4.51 kB │ gzip:   1.75 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/StyleGuidePage-B59Tq_2H.js             4.89 kB │ gzip:   1.60 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/CatalogueBrowsePage-BZZbC9id.js        5.31 kB │ gzip:   2.28 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/SearchPage-CGV39duH.js                 5.42 kB │ gzip:   2.23 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/DemoShelfPage-DqbIfiDg.js              6.09 kB │ gzip:   2.41 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/HomePage-DLYk5fxp.js                   7.50 kB │ gzip:   2.98 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/AccountPage-BuDaWEQy.js                8.12 kB │ gzip:   3.00 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/PriceAlertsPage-D6t-EZON.js            9.19 kB │ gzip:   3.26 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/ListingFiltersPanel-BOS-HSsm.js       10.72 kB │ gzip:   3.98 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/ComparisonPage-DtXDw5aK.js            11.54 kB │ gzip:   3.75 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/LegalPage-BQ4HUhLr.js                 13.40 kB │ gzip:   4.08 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/ClusterPricesPage-BGRMxnnu.js         44.95 kB │ gzip:  14.49 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/taxonomyTree-Df6s_Kd_.js              88.53 kB │ gzip:  21.94 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/PriceHistoryChart-Df6he9Is.js        401.28 kB │ gzip: 111.18 kB
+../../../../../tmp/soko-seo-stage-a5w9f8gr/dist/assets/index-Db9WmvIQ.js                    533.74 kB │ gzip: 172.89 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 56.50s
+postbuild: base=/, _headers written
+prerender: 6186 pages (5522 products), sitemap 6179 URLs
+postbuild: catalogue moved out of dist to .catalogue/ (upload with npm run catalogue:upload)
