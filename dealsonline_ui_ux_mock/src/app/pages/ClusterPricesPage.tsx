@@ -22,6 +22,7 @@ import {
 import { departmentDisplayLabel } from '../lib/navLabels';
 import { describeLoadError, type LoadError } from '../lib/loadError';
 import { bestImage } from '../lib/images';
+import { explainOffer, type OfferEvidence, type OfferExplanation } from '../lib/offerExplanation';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -411,7 +412,14 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               {offers.length > 0 ? (
                 <ul aria-label={`${name} prices`} className="divide-y divide-border rounded-md border border-border list-none p-0">
                   {offers.map(([store, offer], idx) => (
-                    <OfferRow key={store} store={store} offer={offer} product={name} lowest={idx === 0 && offers.length > 1} />
+                    <OfferRow
+                      key={store}
+                      store={store}
+                      offer={offer}
+                      product={name}
+                      lowest={idx === 0 && offers.length > 1}
+                      why={config ? explainOffer(offer as OfferEvidence, config, cluster, Date.now()) : []}
+                    />
                   ))}
                 </ul>
               ) : (
@@ -593,7 +601,7 @@ function VersionChips({
   );
 }
 
-function OfferRow({ store, offer, product, lowest }: { store: string; offer: ClusterStore; product: string; lowest: boolean }) {
+function OfferRow({ store, offer, product, lowest, why }: { store: string; offer: ClusterStore; product: string; lowest: boolean; why: OfferExplanation[] }) {
   return (
     <li className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-4">
       <StoreMark store={store} url={offer.url} size={36} />
@@ -610,6 +618,13 @@ function OfferRow({ store, offer, product, lowest }: { store: string; offer: Clu
             checks the match against, and one truncated line hid the part
             that differed (review §3). */}
         {offer.title && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{offer.title}</p>}
+        {why.length > 0 && (
+          <ul aria-label={`About the lower price at ${storeName(store)}`} className="mt-1 list-none space-y-0.5 p-0">
+            {why.map((line) => (
+              <li key={line.kind} className="text-xs text-muted-foreground">{line.text}</li>
+            ))}
+          </ul>
+        )}
       </div>
       <div className="flex flex-shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-4">
         <span className="price-num text-base font-bold text-foreground">{formatPrice(offer.price)}</span>
