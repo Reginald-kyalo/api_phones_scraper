@@ -22,7 +22,7 @@ import {
 import { departmentDisplayLabel } from '../lib/navLabels';
 import { describeLoadError, type LoadError } from '../lib/loadError';
 import { bestImage } from '../lib/images';
-import { explainOffer, type OfferEvidence, type OfferExplanation } from '../lib/offerExplanation';
+import { explainOffer, type OfferExplanation } from '../lib/offerExplanation';
 import { categoryLabel } from './CatalogueCategoriesPage';
 import { Button } from '../components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -418,7 +418,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                       offer={offer}
                       product={name}
                       lowest={idx === 0 && offers.length > 1}
-                      why={config ? explainOffer(offer as OfferEvidence, config, cluster, Date.now()) : []}
+                      why={config ? explainOffer(offer, config, cluster, Date.now()) : []}
                     />
                   ))}
                 </ul>

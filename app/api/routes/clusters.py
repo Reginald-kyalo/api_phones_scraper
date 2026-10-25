@@ -240,7 +240,56 @@ def _data_warning(d: dict) -> str | None:
     return None
 
 
-def _by_store(raw: dict, summary: bool, stock: dict | None = None) -> dict:
+_CONDITIONS = {
+    "new": "new", "brand new": "new",
+    "used": "used", "pre-owned": "used", "preowned": "used", "second hand": "used", "second-hand": "used",
+    "refurbished": "refurbished", "refurb": "refurbished", "renewed": "refurbished",
+}
+
+
+def _text(v):
+    """A stored value that may be the string 'None' / '' -> None, else the stripped string."""
+    if v is None:
+        return None
+    t = str(v).strip()
+    return None if t in ("", "None", "null") else t
+
+
+def _flag(v) -> bool:
+    return v is True or (isinstance(v, str) and v.strip().lower() == "true")
+
+
+def _member_evidence(members: list) -> tuple[dict, dict]:
+    """Index members by url and by product_id for the per-offer evidence join."""
+    by_url, by_pid = {}, {}
+    for m in members or []:
+        if m.get("url"):
+            by_url.setdefault(m["url"], m)
+        if m.get("product_id"):
+            by_pid.setdefault(m["product_id"], m)
+    return by_url, by_pid
+
+
+def _offer_evidence(offer: dict, index: tuple[dict, dict]) -> dict:
+    """Evidence fields from the member whose url (else product_id) matches the offer.
+
+    Absent entirely when neither matches -- never guessed.
+    """
+    by_url, by_pid = index
+    m = by_url.get(offer.get("url")) or by_pid.get(offer.get("product_id"))
+    if not m:
+        return {}
+    return {
+        "condition": _CONDITIONS.get((_text(m.get("condition")) or "").lower()),
+        "likely_used": _flag(m.get("likely_used")),
+        "observed_at": _text(m.get("last_seen")),
+        "stock_status": _text(m.get("stock_status")),
+        "delisted": _flag(m.get("delisted")),
+    }
+
+
+def _by_store(raw: dict, summary: bool, stock: dict | None = None,
+              members: tuple[dict, dict] | None = None, facet_value=None) -> dict:
     """best_by_store → {site: {price,url,title}} (detail) or {site: price} (summary).
 
     Keys are canonicalised first, so a retailer crawled under both a bare name and
@@ -253,7 +302,9 @@ def _by_store(raw: dict, summary: bool, stock: dict | None = None) -> dict:
             else {"price": v.get("price"), "url": v.get("url"),
                   "title": clean_text(v.get("title")),
                   # so "out of stock" can name the shop it applies to
-                  "stock": (stock or {}).get(site, "unknown")}
+                  "stock": (stock or {}).get(site, "unknown"),
+                  **(_offer_evidence(v, members) if members else {}),
+                  **({"facet_value": str(facet_value)} if facet_value is not None else {})}
     return out
 
 
@@ -281,6 +332,7 @@ def _cluster_view(d: dict, summary: bool = False, *, now: datetime | None = None
     # Idealo-style feature variants: `configs` are split on the category PRIMARY facet
     # (storage for phones/tablets, CPU for laptops). facet_label is the chip text the UI
     # shows ("256GB", "Intel Core i5"); storage_gb is kept for back-compat.
+    evidence = _member_evidence(d.get("members"))
     configs = []
     for c in d.get("configs") or []:
         configs.append({
@@ -291,11 +343,12 @@ def _cluster_view(d: dict, summary: bool = False, *, now: datetime | None = None
             "cheapest_store": c.get("cheapest_store"),
             "n_stores": c.get("n_stores"),
             "spread_pct": c.get("spread_pct"),
-            "by_store": _by_store(c.get("best_by_store"), summary),
+            "by_store": _by_store(c.get("best_by_store"), summary, members=evidence,
+                                facet_value=c.get("facet_value", c.get("storage_gb"))),
         })
     # ⭐ Built ONCE and used twice — as the rendered map and as the comparable-store count — so
     # the number can never disagree with the columns it describes.
-    by_store = _by_store(d.get("best_by_store"), summary, stock_by_store(d))
+    by_store = _by_store(d.get("best_by_store"), summary, stock_by_store(d), members=evidence)
     return {
         "cluster_id": d.get("cluster_id"),
         # clean brand+model title (features go in the facet chips, not the title): prefer the

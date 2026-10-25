@@ -23,6 +23,15 @@ export interface ClusterStore {
   price: number | null;
   url: string;
   title: string;
+  /** Per-offer evidence from the listing itself; absent/null when not known. */
+  condition?: 'new' | 'used' | 'refurbished' | null;
+  likely_used?: boolean | null;
+  /** When this offer was last observed (ISO). */
+  observed_at?: string | null;
+  stock_status?: string | null;
+  delisted?: boolean | null;
+  /** Config offers only: the configuration's own facet value, stringified. */
+  facet_value?: string | null;
 }
 
 export interface ClusterConfig<Store = number> {

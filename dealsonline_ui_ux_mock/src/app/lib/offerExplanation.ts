@@ -9,20 +9,6 @@
 import type { ClusterDetail, ClusterStore } from './clusterTypes';
 import { checkedDate, isStale } from './format';
 
-/**
- * The evidence an offer may carry. The public detail projection currently
- * serves only price, url and title per offer, so these are optional: until the
- * capture supplies them, no reason line can appear and `unknown` is the answer.
- */
-export interface OfferEvidence extends ClusterStore {
-  /** The listing's own condition, as the shop states it. */
-  condition?: string | null;
-  /** When this offer was last observed (ISO). */
-  observed_at?: string | null;
-  /** The facet value this offer is for (storage int, cpu string). */
-  facet_value?: string | number | null;
-}
-
 export type OfferExplanationKind = 'condition' | 'configuration' | 'stale' | 'unknown';
 export interface OfferExplanation {
   kind: OfferExplanationKind;
@@ -50,7 +36,7 @@ function facetName(value: string | number, config: Config): string {
 }
 
 export function explainOffer(
-  offer: OfferEvidence,
+  offer: ClusterStore,
   config: Config,
   _cluster: Pick<ClusterDetail, 'last_seen'>,
   now: number,
@@ -66,8 +52,9 @@ export function explainOffer(
     lines.push({ kind: 'condition', text: `This listing is ${cond}.` });
   }
 
-  const own = offer.facet_value;
-  if (own != null && String(own) !== '' && String(own) !== String(config.facet_value)) {
+  const own = offer.facet_value == null ? '' : String(offer.facet_value).trim();
+  const selected = config.facet_value == null ? '' : String(config.facet_value).trim();
+  if (own !== '' && selected !== '' && own !== selected) {
     lines.push({ kind: 'configuration', text: `This price is for the ${facetName(own, config)} version.` });
   }
 

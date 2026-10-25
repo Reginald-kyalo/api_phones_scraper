@@ -88,3 +88,10 @@ test('median is of this configuration only, not best_by_store', () => {
   const c = { ...cluster, best_by_store: { z: o(500_000) } };
   assert.deepEqual(explainOffer(o(99_000, { condition: 'used' }), config({ a: o(99_000), b: o(100_000) }), c, NOW), []);
 });
+
+test('no configuration line when the selected config has no facet value', () => {
+  assert.equal(run(o(80_000, { facet_value: '64' }), others, null).some((l) => l.kind === 'configuration'), false);
+  assert.equal(explainOffer(o(80_000, { facet_value: '64' }), { ...config({ a: o(80_000), ...others }), facet_value: undefined }, cluster, NOW).some((l) => l.kind === 'configuration'), false);
+  // whitespace is trimmed on both sides
+  assert.equal(run(o(80_000, { facet_value: ' 128 ' }), others, '128').some((l) => l.kind === 'configuration'), false);
+});

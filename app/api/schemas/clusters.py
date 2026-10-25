@@ -39,6 +39,14 @@ class StoreOffer(BaseModel):
         ),
     )
 
+    # Per-offer evidence, joined from the member row. Null/absent = not known.
+    condition: Literal["new", "used", "refurbished"] | None = None
+    likely_used: bool | None = None
+    observed_at: str | None = None
+    stock_status: str | None = None
+    delisted: bool | None = None
+    facet_value: str | None = None
+
 
 class ClusterConfig(BaseModel):
     """One feature variant, split on the category's PRIMARY facet (storage for
