@@ -70,6 +70,21 @@ class FakeReports:
         self.committed: dict[str, dict] = {}
         self.requests: list[dict] = []
         self.lost_once = False
+        self.status_requests: list[str] = []
+        self.report_status = "received"
+        self.outcome = None
+
+    def status(self, route, request):
+        """GET /api/reports/<id>: only the four public fields."""
+        rid = request.url.rsplit("/", 1)[-1]
+        self.status_requests.append(rid)
+        if rid == "r-missing":
+            return route.fulfill(status=404, content_type="application/json",
+                                 body='{"error":"report not found"}', headers={"cache-control": "no-store"})
+        body = {"ok": True, "report_id": rid, "status": self.report_status,
+                "outcome": self.outcome, "status_updated_at": None}
+        return route.fulfill(status=200, content_type="application/json", body=json.dumps(body),
+                             headers={"cache-control": "no-store"})
 
     def handle(self, route, request):
         key = request.headers.get("idempotency-key")
@@ -102,6 +117,7 @@ class FakeReports:
 def open_dialog(page, server, theme):
     page.add_init_script(f"try{{localStorage.setItem('theme','{theme}')}}catch(e){{}}")
     page.route("**/api/reports", server.handle)
+    page.route("**/api/reports/*", server.status)
     # Later routes win in Playwright, so the catch-all goes first.
     page.route("**/api/catalogue/**", lambda r: r.fulfill(status=404, json={}))
     page.route("**/api/catalogue/detail*", lambda r: r.fulfill(json=DETAIL))
@@ -151,6 +167,31 @@ def run(pw, theme):
     check(f"[{theme}] explicit version field is the selected configuration", req["body"]["version"] == "256GB",
           str(req["body"].get("version")))
     check(f"[{theme}] title keeps the human-readable version", req["body"]["title"].endswith("· 256GB"))
+    # 1b. The reference: shown, copyable, and linked to a status page.
+    check(f"[{theme}] reference is shown after the receipt", page.get_by_text("Your reference: r-1").count() == 1)
+    check(f"[{theme}] a copy control is offered", page.get_by_role("button", name="Copy reference").count() == 1)
+    link = page.get_by_role("link", name="Check this report’s status")
+    check(f"[{theme}] link points at /report/<id>", (link.get_attribute("href") or "").endswith("/report/r-1"),
+          str(link.get_attribute("href")))
+    link.click()
+    page.get_by_text("Report status", exact=True).wait_for()
+    page.get_by_text("We have not reviewed this yet.").wait_for()
+    check(f"[{theme}] status page shows Received, reached", page.get_by_role("listitem").filter(has_text="Received").get_attribute("aria-current") == "step")
+    check(f"[{theme}] Reviewed and Resolved are not yet reached",
+          page.get_by_role("listitem").filter(has_text="Resolved").get_attribute("aria-current") is None)
+    check(f"[{theme}] dialog closed on navigation", page.get_by_role("dialog").count() == 0)
+    check(f"[{theme}] status page asked for the id only", server.status_requests == ["r-1"], str(server.status_requests))
+    # An operator outcome is shown verbatim, and Resolved becomes the current step.
+    server.report_status, server.outcome = "resolved", "We split the two listings."
+    page.reload()
+    page.get_by_text("We split the two listings.").wait_for()
+    check(f"[{theme}] outcome shown, no 'not reviewed' line", page.get_by_text("We have not reviewed this yet.").count() == 0)
+    check(f"[{theme}] Resolved is the current step",
+          page.get_by_role("listitem").filter(has_text="Resolved").get_attribute("aria-current") == "step")
+    # An unknown reference.
+    page.goto(f"{UI}/report/r-missing")
+    page.get_by_text("We couldn’t find a report with that reference.").wait_for()
+    check(f"[{theme}] unknown reference says so", True)
     ctx.close()
 
     # 2. Response lost after commit -> retry same key -> one stored report.

@@ -55,3 +55,26 @@ export function isReportReceipt(value: unknown, expectedKey?: string): value is 
   if (expectedKey !== undefined && v.submission_key.toLowerCase() !== expectedKey.toLowerCase()) return false;
   return true;
 }
+
+export type ReportStatusName = 'received' | 'reviewed' | 'resolved';
+
+/** GET /api/reports/:id — the four public fields and nothing about the report's content. */
+export interface ReportStatusView {
+  ok: true;
+  report_id: string;
+  status: ReportStatusName;
+  outcome: string | null;
+  status_updated_at: string | null;
+}
+
+export function isReportStatusView(value: unknown, expectedId?: string): value is ReportStatusView {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const v = value as Record<string, unknown>;
+  if (v.ok !== true) return false;
+  if (typeof v.report_id !== 'string' || v.report_id === '') return false;
+  if (expectedId !== undefined && v.report_id !== expectedId) return false;
+  if (v.status !== 'received' && v.status !== 'reviewed' && v.status !== 'resolved') return false;
+  if (v.outcome !== null && typeof v.outcome !== 'string') return false;
+  if (v.status_updated_at !== null && typeof v.status_updated_at !== 'string') return false;
+  return true;
+}

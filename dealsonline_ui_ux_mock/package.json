@@ -17,7 +17,7 @@
     "catalogue:upload": "node scripts/upload-catalogue.mjs",
     "test:catalogue": "node --test scripts/tests/catalogue-request.test.mjs scripts/tests/catalogue-bootstrap.test.mjs",
     "test:trust": "node --test scripts/tests/offer-explanation.test.mjs scripts/tests/excluded-offers.test.mjs scripts/tests/coverage-line.test.mjs",
-    "test:reports": "node --test scripts/tests/report-request.test.mjs scripts/tests/report-store.test.mjs scripts/tests/report-client.test.mjs scripts/tests/report-migration.test.mjs"
+    "test:reports": "node --test scripts/tests/report-request.test.mjs scripts/tests/report-store.test.mjs scripts/tests/report-client.test.mjs scripts/tests/report-migration.test.mjs scripts/tests/report-status.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",

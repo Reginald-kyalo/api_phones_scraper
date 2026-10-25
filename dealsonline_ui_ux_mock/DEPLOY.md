@@ -368,7 +368,7 @@ npx wrangler d1 create dealsonline-reports          # note the id it prints (ope
 
 Provision the schema ONLY through the numbered migration chain in `migrations/`
 (`0000_legacy_reports.sql` freezes the legacy tables, `0001_report_idempotency.sql`
-adds the idempotency columns). Cloudflare records applied files in the database's
+adds the idempotency columns, `0002_report_status.sql` adds the reader-visible status). Cloudflare records applied files in the database's
 `d1_migrations` table, so each runs once:
 
 ```bash
@@ -399,6 +399,21 @@ Read reports with:
 npx wrangler d1 execute dealsonline-reports --remote \
   --command "SELECT cluster_id, reason, COUNT(*) n FROM reports GROUP BY 1,2 ORDER BY n DESC LIMIT 50"
 ```
+
+#### Report status (what the reader sees at `/report/<id>`)
+
+After a report lands the reader is given its id as a reference. `GET /api/reports/<id>`
+returns only `report_id`, `status` (`received` | `reviewed` | `resolved`), `outcome`
+and `status_updated_at`, never the note, page URL or facets. A NULL status reads as
+`received`. Status is **operator-only**: there is no public write path. To update
+one (`outcome` is plain text, at most 300 characters, shown to the reader as written):
+
+```bash
+npx wrangler d1 execute dealsonline-reports --remote --command \
+  "UPDATE reports SET status='resolved', outcome='We split the two listings.', status_updated_at=datetime('now') WHERE id=41"
+```
+
+Rehearse with `--local` first. The schema rejects any other status value.
 
 ⛔ **Without the binding the endpoint returns 500 and the UI says so.** It never
 shows a confirmation it cannot back up — a static preview with no Function

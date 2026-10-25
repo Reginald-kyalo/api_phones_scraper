@@ -56,11 +56,12 @@ const columns = (d, table) => d.sql(`PRAGMA table_info(${table})`).map((c) => c.
 const recorded = (d) => d.sql('SELECT name FROM d1_migrations ORDER BY id').map((r) => r.name);
 const indexes = (d) => d.sql("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'").map((r) => r.name).sort();
 
-const CHAIN = ['0000_legacy_reports.sql', '0001_report_idempotency.sql'];
+const CHAIN = ['0000_legacy_reports.sql', '0001_report_idempotency.sql', '0002_report_status.sql'];
 
 function assertConverged(d) {
   assert.deepEqual(recorded(d), CHAIN);
   for (const c of ['submission_key', 'payload_hash', 'selected_version']) assert.ok(columns(d, 'reports').includes(c), `reports.${c}`);
+  for (const c of ['status', 'outcome', 'status_updated_at']) assert.ok(columns(d, 'reports').includes(c), `reports.${c}`);
   assert.ok(columns(d, 'report_facets').includes('position'));
   for (const i of ['uq_reports_submission_key', 'uq_facets_report_position', 'idx_reports_cluster', 'idx_facets_report']) {
     assert.ok(indexes(d).includes(i), i);
@@ -114,6 +115,8 @@ test('a legacy hand-built database keeps its ids and content, and old rows sit b
   // (wrangler 3's --json renders SQL NULL as the string "null", so assert NULL-ness in SQL.)
   assert.equal(d.sql('SELECT COUNT(*) n FROM reports WHERE submission_key IS NULL AND payload_hash IS NULL AND selected_version IS NULL')[0].n, 2);
   assert.equal(d.sql('SELECT COUNT(*) n FROM report_facets WHERE position IS NULL')[0].n, 3);
+  // 0002 is additive too: legacy rows keep a NULL status (the API reads NULL as received).
+  assert.equal(d.sql('SELECT COUNT(*) n FROM reports WHERE status IS NULL AND outcome IS NULL AND status_updated_at IS NULL')[0].n, 2);
 
   // A new-format report coexists; AUTOINCREMENT continues past the legacy ids.
   d.sql(`INSERT INTO reports (scope, cluster_id, created_at, submission_key, payload_hash, selected_version)

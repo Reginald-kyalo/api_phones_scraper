@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Flag, Check, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router';
+import { Flag, Check, AlertTriangle, Copy } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -94,6 +95,8 @@ export function ReportDialog({
   const [store, setStore] = useState<string>('');
   const [rejected, setRejected] = useState<string[]>([]);
   const [state, setState] = useState<State>('idle');
+  const [reference, setReference] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   // One submission identity per logical report. It survives failed attempts so a
   // retry of the same content cannot store twice; any edit makes a new identity.
   const attempt = useRef<{ key: string; json: string; uncertain: boolean } | null>(null);
@@ -166,6 +169,16 @@ export function ReportDialog({
   const waitSeconds = retryAt !== null ? Math.max(0, Math.ceil((retryAt - now) / 1000)) : 0;
   const coolingDown = waitSeconds > 0;
 
+  async function copyReference() {
+    if (!reference) return;
+    try {
+      await navigator.clipboard.writeText(reference);
+      setCopied(true);
+    } catch {
+      // No clipboard permission: the reference is on screen to copy by hand.
+    }
+  }
+
   async function submit() {
     if (!reason || inFlight.current || coolingDown) return;
     const body = buildBody();
@@ -180,8 +193,9 @@ export function ReportDialog({
     inFlight.current = true;
     setState('sending');
     try {
-      await submitReport(body, mine.key);
+      const receipt = await submitReport(body, mine.key);
       if (gen !== generation.current) return;
+      setReference(receipt.report_id);
       setLastError(null);
       setState('sent');
     } catch (e) {
@@ -207,6 +221,8 @@ export function ReportDialog({
       inFlight.current = false;
       attempt.current = null;
       setLastError(null);
+      setReference(null);
+      setCopied(false);
       setRetryAt(null);
       setReason('');
       setNote('');
@@ -237,6 +253,23 @@ export function ReportDialog({
           <div className="py-6 text-center">
             <Check className="mx-auto mb-3 h-8 w-8 text-teal-deep" aria-hidden="true" />
             <p className="text-sm font-medium text-foreground">Report received. Thank you.</p>
+            {reference ? (
+              <div className="mt-4 space-y-2 text-sm">
+                <p className="text-foreground">
+                  Your reference: <span className="font-medium">{reference}</span>
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={copyReference}>
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                    {copied ? 'Copied' : 'Copy reference'}
+                  </Button>
+                  <Link to={`/report/${encodeURIComponent(reference)}`} className="underline" onClick={() => reset(false)}>
+                    Check this report&rsquo;s status
+                  </Link>
+                </div>
+                <p role="status" className="sr-only">{copied ? 'Reference copied' : ''}</p>
+              </div>
+            ) : null}
             <Button className="mt-5" onClick={() => reset(false)}>Close</Button>
           </div>
         ) : (

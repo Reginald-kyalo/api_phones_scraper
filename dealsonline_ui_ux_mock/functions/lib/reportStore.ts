@@ -69,8 +69,8 @@ export async function saveReport(
     .prepare(
       `INSERT INTO reports
          (scope, cluster_id, title, category, captured_at, page_url, note,
-          country, created_at, submission_key, payload_hash, selected_version)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?)
+          country, created_at, submission_key, payload_hash, selected_version, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, 'received')
        ON CONFLICT (submission_key) WHERE submission_key IS NOT NULL DO NOTHING`,
     )
     .bind(
@@ -108,4 +108,37 @@ export async function saveReport(
   if (winner.payload_hash !== payloadHash) throw new ReportConflictError();
   if (winner.facet_count !== report.facets.length) throw new Error('report facets incomplete after write');
   return { reportId: String(winner.id), created };
+}
+
+export type ReportStatus = 'received' | 'reviewed' | 'resolved';
+
+export interface ReportStatusView {
+  report_id: string;
+  status: ReportStatus;
+  outcome: string | null;
+  status_updated_at: string | null;
+}
+
+/** Report ids are positive integers; anything else cannot exist, so is not looked up. */
+const REPORT_ID_RE = /^[1-9][0-9]{0,14}$/;
+
+/**
+ * The reader-visible status of one report, or null when the id is malformed or
+ * unknown. Selects only the four public columns: the note, page URL and facets
+ * are never read. A NULL (or unrecognised) status reads as 'received'.
+ */
+export async function getReportStatus(db: D1Database, id: string): Promise<ReportStatusView | null> {
+  if (!REPORT_ID_RE.test(id)) return null;
+  const row = await db
+    .prepare('SELECT id, status, outcome, status_updated_at FROM reports WHERE id = ?')
+    .bind(Number(id))
+    .first<{ id: number; status: string | null; outcome: string | null; status_updated_at: string | null }>();
+  if (!row) return null;
+  const status: ReportStatus = row.status === 'reviewed' || row.status === 'resolved' ? row.status : 'received';
+  return {
+    report_id: String(row.id),
+    status,
+    outcome: row.outcome ?? null,
+    status_updated_at: row.status_updated_at ?? null,
+  };
 }

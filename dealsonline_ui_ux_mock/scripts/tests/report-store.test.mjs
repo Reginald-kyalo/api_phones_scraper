@@ -49,6 +49,7 @@ before(async () => {
   migDb = await mf.getD1Database('MIG');
   await applySql(db, migration('0000_legacy_reports.sql'));
   await applySql(db, migration('0001_report_idempotency.sql'));
+  await applySql(db, migration('0002_report_status.sql'));
 });
 after(async () => { await mf.dispose(); });
 afterEach(async () => {
@@ -173,8 +174,9 @@ test('migrations adopt a legacy database: rows and ids survive, 0000 is re-runna
   await migDb.prepare("INSERT INTO honeypot_hits (ip, created_at) VALUES ('1.2.3.4', '2026-01-01')").run();
   await applySql(migDb, migration('0000_legacy_reports.sql')); // adopting an existing db is a no-op
   await applySql(migDb, migration('0001_report_idempotency.sql'));
-  const old = await migDb.prepare('SELECT id, cluster_id, submission_key, payload_hash, selected_version FROM reports').first();
-  assert.deepEqual(old, { id: 41, cluster_id: 'old', submission_key: null, payload_hash: null, selected_version: null });
+  await applySql(migDb, migration('0002_report_status.sql'));
+  const old = await migDb.prepare('SELECT id, cluster_id, submission_key, payload_hash, selected_version, status, outcome, status_updated_at FROM reports').first();
+  assert.deepEqual(old, { id: 41, cluster_id: 'old', submission_key: null, payload_hash: null, selected_version: null, status: null, outcome: null, status_updated_at: null });
   assert.equal((await migDb.prepare('SELECT position FROM report_facets').first()).position, null);
   assert.equal((await migDb.prepare('SELECT COUNT(*) c FROM honeypot_hits').first()).c, 1);
   // Several legacy rows without a key must not collide on the unique index.
@@ -183,6 +185,7 @@ test('migrations adopt a legacy database: rows and ids survive, 0000 is re-runna
   // New ids continue after the legacy ones.
   const out = await saveReport(migDb, K1, report(), { country: null });
   assert.ok(Number(out.reportId) > 41);
+  assert.equal((await migDb.prepare('SELECT status FROM reports WHERE id = ?').bind(Number(out.reportId)).first()).status, 'received');
 });
 
 // --- the handler, end to end on real D1 --------------------------------------------------

@@ -17,6 +17,7 @@ const DealsPage = lazy(() => import("./pages/DealsPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const ComparisonPage = lazy(() => import("./pages/ComparisonPage"));
 const ClusterPricesPage = lazy(() => import("./pages/ClusterPricesPage"));
+const ReportStatusPage = lazy(() => import("./pages/ReportStatusPage"));
 const StyleGuidePage = lazy(() => import("./pages/StyleGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
       { path: "for-business", Component: LegalPage },
       { path: "faq", Component: LegalPage },
       { path: "compare", Component: ComparisonPage },
+      { path: "report/:id", Component: ReportStatusPage },
       { path: "style-guide", Component: StyleGuidePage },
       { path: "*", Component: NotFound },
     ],
