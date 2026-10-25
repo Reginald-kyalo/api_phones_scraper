@@ -344,6 +344,15 @@ Google Sheets to be told their report landed, and a mirror failure is not their
 problem. With only a webhook configured it *becomes* the primary and is awaited,
 because otherwise the 201 would be a claim nothing backs.
 
+⛔ **`REPORT_REQUIRE_KEY=1` is the first-launch production profile, and it changes
+the table above.** It means: an `Idempotency-Key` is required on every submission;
+**D1 is required**; and the webhook is **disabled both as primary and as mirror**,
+whatever `REPORT_WEBHOOK_URL` / `REPORT_SINK` say (a webhook cannot give the
+atomic, idempotent receipt this profile promises). With the profile on and no `DB`
+binding the endpoint returns 503 rather than falling back to a webhook. An
+environment that runs webhook-only today is not this profile and is not silently
+rerouted: it keeps the legacy path until it sets the variable.
+
 ⛔ With **no** sink configured the endpoint returns **503**, not 500: a missing
 binding is a deployment fault, and "try again in a moment" would invite someone
 to retype a report that can never land.
@@ -354,9 +363,33 @@ to retype a report that can never land.
 deploy from this repo with the site, so there is no second service.
 
 ```bash
-npx wrangler d1 create dealsonline-reports          # note the id it prints
-npx wrangler d1 execute dealsonline-reports --remote --file=./schema.sql
+npx wrangler d1 create dealsonline-reports          # note the id it prints (operator-owned)
 ```
+
+Provision the schema ONLY through the numbered migration chain in `migrations/`
+(`0000_legacy_reports.sql` freezes the legacy tables, `0001_report_idempotency.sql`
+adds the idempotency columns). Cloudflare records applied files in the database's
+`d1_migrations` table, so each runs once:
+
+```bash
+npx wrangler d1 migrations list  dealsonline-reports --local     # rehearse locally first
+npx wrangler d1 migrations apply dealsonline-reports --local
+npx wrangler d1 migrations list  dealsonline-reports --remote    # then, deliberately, by the owner
+npx wrangler d1 migrations apply dealsonline-reports --remote
+```
+
+(`migrations_dir` and the `DB` binding come from the wrangler config the operator
+supplies; none is committed.)
+
+⛔ **Never execute `schema.sql` against a database.** It is the final-schema
+*reference*, not a provisioning script. Running it first leaves a database the
+chain cannot manage: `0001`'s `ALTER TABLE ... ADD COLUMN` then fails with
+`duplicate column name` (`scripts/tests/report-migration.test.mjs` proves it).
+A database that was already built by hand from the old `schema.sql` is *adopted*,
+not rebuilt: `0000` is all `CREATE ... IF NOT EXISTS`, so `migrations apply`
+records it without touching a row, then applies `0001`. **Back up first** (see
+`docs/production-readiness-2026-10-23/report-release-runbook.md`). Rollback never
+drops columns or deletes rows.
 
 Then bind it in **Pages → Settings → Functions → D1 bindings**: variable `DB`.
 

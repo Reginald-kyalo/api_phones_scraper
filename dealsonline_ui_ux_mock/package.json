@@ -16,7 +16,7 @@
     "demo:cards": "node scripts/build-card-index.mjs",
     "catalogue:upload": "node scripts/upload-catalogue.mjs",
     "test:catalogue": "node --test scripts/tests/catalogue-request.test.mjs scripts/tests/catalogue-bootstrap.test.mjs",
-    "test:reports": "node --test scripts/tests/report-request.test.mjs scripts/tests/report-store.test.mjs scripts/tests/report-client.test.mjs"
+    "test:reports": "node --test scripts/tests/report-request.test.mjs scripts/tests/report-store.test.mjs scripts/tests/report-client.test.mjs scripts/tests/report-migration.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",

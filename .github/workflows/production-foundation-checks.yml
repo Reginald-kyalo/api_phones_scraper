@@ -1,0 +1,119 @@
+# Production-foundation checks: tests only.
+#
+#   * No deployment. No Cloudflare / Azure / registry login, no wrangler --remote.
+#   * `permissions: contents: read` and nothing else; no repository secrets are
+#     referenced anywhere in this file.
+#   * No production report sink: the report tests use in-process miniflare D1 and
+#     the throwaway local D1 of `wrangler ... --local` with an all-zero placeholder
+#     id; the browser journey intercepts /api/reports in Playwright. The report
+#     webhook variables are blanked below so a stray runner env cannot be used.
+#   * Toolchain is pinned: Node and Python by exact version, npm by lockfile
+#     (`npm ci`), Python test deps by exact version, Playwright (and therefore its
+#     Chromium build) by exact version.
+name: production-foundation-checks
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'sdd/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-foundation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24.22.1'
+  PYTHON_VERSION: '3.13.7'
+  PLAYWRIGHT_VERSION: '1.52.0'
+  WRANGLER_SEND_METRICS: 'false'
+  CI: '1'
+  REPORT_WEBHOOK_URL: ''
+  REPORT_WEBHOOK_TOKEN: ''
+
+defaults:
+  run:
+    working-directory: dealsonline_ui_ux_mock
+
+jobs:
+  python-and-static:
+    name: Python baseline, type checks, design checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: dealsonline_ui_ux_mock/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: npm ci
+      - name: Install pinned Python test dependencies
+        working-directory: .
+        run: python -m pip install pytest==9.0.2 PyYAML==6.0.3
+      - name: Python checks
+        working-directory: .
+        run: python -m pytest tests/test_hygiene.py tests/test_capture_demo_dataset.py tests/test_mock_phone_navigation.py -q
+      # unpacks the committed demo archive into public/demo (generated, git-ignored)
+      - run: npm run demo:prepare
+      - run: npm run test:catalogue
+      - run: npm run type-check
+      - run: npm run check:design
+
+  reports-local-d1:
+    name: Report tests and migration convergence (local D1)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: dealsonline_ui_ux_mock/package-lock.json
+      - run: npm ci
+      # request parsing, atomic/idempotent store on miniflare D1, receipt-aware
+      # client, and the wrangler `d1 migrations apply --local` convergence test
+      - run: npm run test:reports
+
+  report-browser-journey:
+    name: Report dialog browser journey (synthetic API)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: dealsonline_ui_ux_mock/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: npm ci
+      - name: Install pinned Playwright and its matching Chromium
+        run: |
+          python -m pip install playwright==${PLAYWRIGHT_VERSION}
+          python -m playwright install --with-deps chromium
+      - name: Start the dev server (API read mode; no network sink exists)
+        run: |
+          VITE_CATALOGUE=api npx vite --port 5199 > "$RUNNER_TEMP/vite.log" 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://localhost:5199/ >/dev/null && exit 0; sleep 2; done
+          cat "$RUNNER_TEMP/vite.log"; exit 1
+      - name: Browser journey
+        run: UI_BASE=http://localhost:5199 python scripts/tests/report-journey.py
+      - name: Dev server log on failure
+        if: failure()
+        run: cat "$RUNNER_TEMP/vite.log" || true
