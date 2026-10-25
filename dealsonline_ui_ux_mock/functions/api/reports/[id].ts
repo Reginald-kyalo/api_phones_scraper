@@ -1,8 +1,8 @@
 /**
- * Cloudflare Pages Function — GET /api/reports/:id
+ * Cloudflare Pages Function — GET /api/reports/:reference
  *
  * The public, read-only status of one report, so a reader can come back to the
- * reference they were given. It returns exactly report_id, status, outcome and
+ * reference they were given. It returns exactly reference, status, outcome and
  * status_updated_at — never the note, page URL, facets or any other content.
  * Status is written only by an operator (DEPLOY.md); this route has no write path.
  *

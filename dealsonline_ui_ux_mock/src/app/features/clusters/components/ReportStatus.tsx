@@ -17,7 +17,7 @@ type Load =
   | { kind: 'error' };
 
 /** The timeline for one report. Shows only what the status endpoint returns. */
-export default function ReportStatus({ reportId }: { reportId: string }) {
+export default function ReportStatus({ reference }: { reference: string }) {
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function ReportStatus({ reportId }: { reportId: string }) {
     setLoad({ kind: 'loading' });
     (async () => {
       try {
-        const res = await fetch(`${import.meta.env.BASE_URL}api/reports/${encodeURIComponent(reportId)}`, {
+        const res = await fetch(`${import.meta.env.BASE_URL}api/reports/${encodeURIComponent(reference)}`, {
           signal: ctl.signal,
           cache: 'no-store',
         });
@@ -33,14 +33,14 @@ export default function ReportStatus({ reportId }: { reportId: string }) {
         const type = res.headers.get('content-type') || '';
         if (!res.ok || !type.includes('json')) return setLoad({ kind: 'error' });
         const body: unknown = await res.json();
-        if (!isReportStatusView(body, reportId)) return setLoad({ kind: 'error' });
+        if (!isReportStatusView(body, reference)) return setLoad({ kind: 'error' });
         setLoad({ kind: 'ok', view: body });
       } catch {
         if (!ctl.signal.aborted) setLoad({ kind: 'error' });
       }
     })();
     return () => ctl.abort();
-  }, [reportId]);
+  }, [reference]);
 
   if (load.kind === 'loading') {
     return <p className="text-sm text-muted-foreground" role="status">Checking your report&hellip;</p>;

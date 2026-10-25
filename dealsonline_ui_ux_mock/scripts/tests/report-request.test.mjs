@@ -22,7 +22,7 @@ function fakeDb() {
       return {
         bind: (...args) => {
           if (/INSERT INTO reports/.test(sql)) hash = args.find((a) => typeof a === 'string' && /^[0-9a-f]{64}$/.test(a)) ?? hash;
-          return { first: async () => ({ id: 1, payload_hash: hash, facet_count: db.facets }), sql, args };
+          return { first: async () => ({ id: 1, public_ref: '7c9e6679-7425-40de-944b-e07fc1f90ae7', payload_hash: hash, facet_count: db.facets }), sql, args };
         },
       };
     },
@@ -249,12 +249,12 @@ test('unsupported methods are 405 with Allow: POST and no-store', async () => {
 
 // --- receipt guard -----------------------------------------------------------
 test('isReportReceipt requires ok, nonempty id and a valid UUID (optionally matching)', () => {
-  const r = { ok: true, report_id: 'r1', submission_key: KEY };
+  const r = { ok: true, report_id: 'r1', submission_key: KEY, reference: '7c9e6679-7425-40de-944b-e07fc1f90ae7' };
   assert.equal(isReportReceipt(r), true);
   assert.equal(isReportReceipt(r, KEY), true);
   assert.equal(isReportReceipt(r, '00000000-0000-4000-8000-000000000000'), false);
   for (const bad of [null, [], 'x', { ...r, ok: false }, { ...r, ok: 'true' }, { ...r, report_id: '' }, { ...r, report_id: 7 },
-    { ...r, submission_key: 'nope' }, { ok: true, report_id: 'r1' }]) {
+    { ...r, submission_key: 'nope' }, { ...r, reference: 'nope' }, { ...r, reference: 7 }, { ok: true, report_id: 'r1', submission_key: KEY }, { ok: true, report_id: 'r1' }]) {
     assert.equal(isReportReceipt(bad), false, JSON.stringify(bad));
   }
 });

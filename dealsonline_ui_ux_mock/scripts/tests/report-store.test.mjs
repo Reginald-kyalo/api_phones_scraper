@@ -99,7 +99,7 @@ test('a report with no facets is stored and replays cleanly', async () => {
 test('a same-body retry returns the same id, created=false, and adds nothing', async () => {
   const first = await saveReport(db, K1, report(), { country: 'KE' });
   const again = await saveReport(db, K1, report(), { country: 'US' }); // country is not part of the body
-  assert.deepEqual(again, { reportId: first.reportId, created: false });
+  assert.deepEqual(again, { reportId: first.reportId, reference: first.reference, created: false });
   assert.equal(await count('reports'), 1);
   assert.equal(await count('report_facets'), 3);
   assert.equal((await db.prepare('SELECT country FROM reports').first()).country, 'KE', 'replay must not rewrite the parent');
@@ -185,6 +185,7 @@ test('migrations adopt a legacy database: rows and ids survive, 0000 is re-runna
   // New ids continue after the legacy ones.
   const out = await saveReport(migDb, K1, report(), { country: null });
   assert.ok(Number(out.reportId) > 41);
+  assert.match(out.reference, /^[0-9a-f-]{36}$/);
   assert.equal((await migDb.prepare('SELECT status FROM reports WHERE id = ?').bind(Number(out.reportId)).first()).status, 'received');
 });
 
@@ -214,12 +215,13 @@ test('handler: 201 first write, 200 identical receipt on replay, both no-store J
   assert.equal(first.headers.get('cache-control'), 'no-store');
   assert.match(first.headers.get('content-type'), /json/);
   const receipt = await first.json();
-  assert.deepEqual(Object.keys(receipt).sort(), ['ok', 'report_id', 'submission_key']);
+  assert.deepEqual(Object.keys(receipt).sort(), ['ok', 'reference', 'report_id', 'submission_key']);
+  assert.match(receipt.reference, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.equal(receipt.submission_key, K1);
   const replay = await post(body());
   assert.equal(replay.status, 200);
   assert.equal(replay.headers.get('cache-control'), 'no-store');
-  assert.deepEqual(await replay.json(), receipt);
+  assert.deepEqual(await replay.json(), receipt, 'replay returns the same reference');
   assert.equal(await count('reports'), 1);
   assert.equal(await count('report_facets'), 2);
 });

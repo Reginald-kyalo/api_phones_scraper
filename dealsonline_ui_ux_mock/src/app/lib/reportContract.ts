@@ -42,6 +42,8 @@ export interface ReportReceipt {
   ok: true;
   report_id: string;
   submission_key: string;
+  /** Random UUID the reader keeps; the only public handle on the report. */
+  reference: string;
 }
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -52,6 +54,7 @@ export function isReportReceipt(value: unknown, expectedKey?: string): value is 
   if (v.ok !== true) return false;
   if (typeof v.report_id !== 'string' || v.report_id.trim() === '') return false;
   if (typeof v.submission_key !== 'string' || !UUID_RE.test(v.submission_key)) return false;
+  if (typeof v.reference !== 'string' || !UUID_RE.test(v.reference)) return false;
   if (expectedKey !== undefined && v.submission_key.toLowerCase() !== expectedKey.toLowerCase()) return false;
   return true;
 }
@@ -61,18 +64,18 @@ export type ReportStatusName = 'received' | 'reviewed' | 'resolved';
 /** GET /api/reports/:id — the four public fields and nothing about the report's content. */
 export interface ReportStatusView {
   ok: true;
-  report_id: string;
+  reference: string;
   status: ReportStatusName;
   outcome: string | null;
   status_updated_at: string | null;
 }
 
-export function isReportStatusView(value: unknown, expectedId?: string): value is ReportStatusView {
+export function isReportStatusView(value: unknown, expectedRef?: string): value is ReportStatusView {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const v = value as Record<string, unknown>;
   if (v.ok !== true) return false;
-  if (typeof v.report_id !== 'string' || v.report_id === '') return false;
-  if (expectedId !== undefined && v.report_id !== expectedId) return false;
+  if (typeof v.reference !== 'string' || !UUID_RE.test(v.reference)) return false;
+  if (expectedRef !== undefined && v.reference.toLowerCase() !== expectedRef.toLowerCase()) return false;
   if (v.status !== 'received' && v.status !== 'reviewed' && v.status !== 'resolved') return false;
   if (v.outcome !== null && typeof v.outcome !== 'string') return false;
   if (v.status_updated_at !== null && typeof v.status_updated_at !== 'string') return false;

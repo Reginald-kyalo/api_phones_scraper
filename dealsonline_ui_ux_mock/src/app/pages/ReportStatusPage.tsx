@@ -9,7 +9,7 @@ export default function ReportStatusPage() {
       <Seo title="Report status" noindex />
       <h1 className="page-title mb-1">Report status</h1>
       <p className="mb-6 text-sm text-muted-foreground">Your reference: {id}</p>
-      <ReportStatus reportId={id} />
+      <ReportStatus reference={id} />
     </div>
   );
 }

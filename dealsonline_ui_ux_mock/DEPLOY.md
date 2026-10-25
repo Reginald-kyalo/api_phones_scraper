@@ -402,8 +402,8 @@ npx wrangler d1 execute dealsonline-reports --remote \
 
 #### Report status (what the reader sees at `/report/<id>`)
 
-After a report lands the reader is given its id as a reference. `GET /api/reports/<id>`
-returns only `report_id`, `status` (`received` | `reviewed` | `resolved`), `outcome`
+After a report lands the reader is given a random UUID `reference` (the integer row id
+is never exposed). `GET /api/reports/<reference>` returns only `reference`, `status` (`received` | `reviewed` | `resolved`), `outcome`
 and `status_updated_at`, never the note, page URL or facets. A NULL status reads as
 `received`. Status is **operator-only**: there is no public write path. To update
 one (`outcome` is plain text, at most 300 characters, shown to the reader as written):
@@ -412,6 +412,11 @@ one (`outcome` is plain text, at most 300 characters, shown to the reader as wri
 npx wrangler d1 execute dealsonline-reports --remote --command \
   "UPDATE reports SET status='resolved', outcome='We split the two listings.', status_updated_at=datetime('now') WHERE id=41"
 ```
+
+To find the row from a reference the reader quotes, use
+`SELECT id, status FROM reports WHERE public_ref='<reference>'` (or put
+`WHERE public_ref='<reference>'` on the UPDATE instead of `WHERE id=41`).
+Reports saved before migration 0002 have no reference and no status page.
 
 Rehearse with `--local` first. The schema rejects any other status value.
 

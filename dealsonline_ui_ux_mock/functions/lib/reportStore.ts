@@ -62,21 +62,21 @@ export async function saveReport(
   submissionKey: string,
   report: ValidatedReport,
   context: { country: string | null },
-): Promise<{ reportId: string; created: boolean }> {
+): Promise<{ reportId: string; reference: string; created: boolean }> {
   const payloadHash = await sha256Hex(canonicalReportBody(report));
 
   const parent = db
     .prepare(
       `INSERT INTO reports
          (scope, cluster_id, title, category, captured_at, page_url, note,
-          country, created_at, submission_key, payload_hash, selected_version, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, 'received')
+          country, created_at, submission_key, payload_hash, selected_version, status, public_ref)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, 'received', ?)
        ON CONFLICT (submission_key) WHERE submission_key IS NOT NULL DO NOTHING`,
     )
     .bind(
       report.scope, report.cluster_id, report.title, report.category,
       report.captured_at, report.page_url, report.note, context.country,
-      submissionKey, payloadHash, report.selected_version,
+      submissionKey, payloadHash, report.selected_version, crypto.randomUUID(),
     );
 
   const children = report.facets.map((f, position) =>
@@ -97,46 +97,47 @@ export async function saveReport(
   // Whoever won, read the row that now owns this key and verify it is ours.
   const winner = await db
     .prepare(
-      `SELECT r.id AS id, r.payload_hash AS payload_hash,
+      `SELECT r.id AS id, r.public_ref AS public_ref, r.payload_hash AS payload_hash,
               (SELECT COUNT(*) FROM report_facets f WHERE f.report_id = r.id) AS facet_count
          FROM reports r WHERE r.submission_key = ?`,
     )
     .bind(submissionKey)
-    .first<{ id: number; payload_hash: string; facet_count: number }>();
+    .first<{ id: number; public_ref: string | null; payload_hash: string; facet_count: number }>();
 
   if (!winner) throw new Error('report row missing after write');
   if (winner.payload_hash !== payloadHash) throw new ReportConflictError();
   if (winner.facet_count !== report.facets.length) throw new Error('report facets incomplete after write');
-  return { reportId: String(winner.id), created };
+  if (!winner.public_ref) throw new Error('report reference missing after write');
+  return { reportId: String(winner.id), reference: winner.public_ref, created };
 }
 
 export type ReportStatus = 'received' | 'reviewed' | 'resolved';
 
 export interface ReportStatusView {
-  report_id: string;
+  reference: string;
   status: ReportStatus;
   outcome: string | null;
   status_updated_at: string | null;
 }
 
-/** Report ids are positive integers; anything else cannot exist, so is not looked up. */
-const REPORT_ID_RE = /^[1-9][0-9]{0,14}$/;
+/** References are random UUIDs; the integer row id is never a lookup key or exposed. */
+const REFERENCE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 /**
  * The reader-visible status of one report, or null when the id is malformed or
  * unknown. Selects only the four public columns: the note, page URL and facets
  * are never read. A NULL (or unrecognised) status reads as 'received'.
  */
-export async function getReportStatus(db: D1Database, id: string): Promise<ReportStatusView | null> {
-  if (!REPORT_ID_RE.test(id)) return null;
+export async function getReportStatus(db: D1Database, reference: string): Promise<ReportStatusView | null> {
+  if (!REFERENCE_RE.test(reference)) return null;
   const row = await db
-    .prepare('SELECT id, status, outcome, status_updated_at FROM reports WHERE id = ?')
-    .bind(Number(id))
-    .first<{ id: number; status: string | null; outcome: string | null; status_updated_at: string | null }>();
+    .prepare('SELECT public_ref, status, outcome, status_updated_at FROM reports WHERE public_ref = ?')
+    .bind(reference)
+    .first<{ public_ref: string; status: string | null; outcome: string | null; status_updated_at: string | null }>();
   if (!row) return null;
   const status: ReportStatus = row.status === 'reviewed' || row.status === 'resolved' ? row.status : 'received';
   return {
-    report_id: String(row.id),
+    reference: row.public_ref,
     status,
     outcome: row.outcome ?? null,
     status_updated_at: row.status_updated_at ?? null,

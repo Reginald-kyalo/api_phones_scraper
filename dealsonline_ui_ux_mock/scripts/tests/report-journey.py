@@ -23,6 +23,8 @@ from playwright.sync_api import sync_playwright
 
 UI = os.environ.get("UI_BASE", "http://localhost:5199").rstrip("/")
 URL = f"{UI}/prices/synthetic-1"
+MISSING = "00000000-0000-4000-8000-000000000000"
+REF = "7c9e6679-7425-40de-944b-e07fc1f90ae7"
 SUCCESS = "Report received. Thank you."
 FAILURE = "We couldn’t save your report. Your text is still here. Try again."
 
@@ -78,10 +80,10 @@ class FakeReports:
         """GET /api/reports/<id>: only the four public fields."""
         rid = request.url.rsplit("/", 1)[-1]
         self.status_requests.append(rid)
-        if rid == "r-missing":
+        if rid == MISSING:
             return route.fulfill(status=404, content_type="application/json",
                                  body='{"error":"report not found"}', headers={"cache-control": "no-store"})
-        body = {"ok": True, "report_id": rid, "status": self.report_status,
+        body = {"ok": True, "reference": rid, "status": self.report_status,
                 "outcome": self.outcome, "status_updated_at": None}
         return route.fulfill(status=200, content_type="application/json", body=json.dumps(body),
                              headers={"cache-control": "no-store"})
@@ -90,7 +92,8 @@ class FakeReports:
         key = request.headers.get("idempotency-key")
         body = json.loads(request.post_data or "{}")
         self.requests.append({"key": key, "body": body})
-        receipt = lambda k: {"ok": True, "report_id": f"r-{len(self.committed)}", "submission_key": k}
+        receipt = lambda k: {"ok": True, "report_id": "41", "submission_key": k,
+                                     "reference": REF}
         hdr = {"cache-control": "no-store"}
         if self.mode == "html":
             return route.fulfill(status=200, content_type="text/html", body="<!doctype html><html></html>")
@@ -168,11 +171,12 @@ def run(pw, theme):
           str(req["body"].get("version")))
     check(f"[{theme}] title keeps the human-readable version", req["body"]["title"].endswith("· 256GB"))
     # 1b. The reference: shown, copyable, and linked to a status page.
-    check(f"[{theme}] reference is shown after the receipt", page.get_by_text("Your reference: r-1").count() == 1)
+    check(f"[{theme}] reference is shown after the receipt", page.get_by_text(f"Your reference: {REF}").count() == 1)
     check(f"[{theme}] a copy control is offered", page.get_by_role("button", name="Copy reference").count() == 1)
     link = page.get_by_role("link", name="Check this report’s status")
-    check(f"[{theme}] link points at /report/<id>", (link.get_attribute("href") or "").endswith("/report/r-1"),
+    check(f"[{theme}] link points at /report/<id>", (link.get_attribute("href") or "").endswith(f"/report/{REF}"),
           str(link.get_attribute("href")))
+    check(f"[{theme}] the integer report id is not shown", "41" not in (page.get_by_role("dialog").inner_text().replace(REF, "")))
     link.click()
     page.get_by_text("Report status", exact=True).wait_for()
     page.get_by_text("We have not reviewed this yet.").wait_for()
@@ -180,7 +184,7 @@ def run(pw, theme):
     check(f"[{theme}] Reviewed and Resolved are not yet reached",
           page.get_by_role("listitem").filter(has_text="Resolved").get_attribute("aria-current") is None)
     check(f"[{theme}] dialog closed on navigation", page.get_by_role("dialog").count() == 0)
-    check(f"[{theme}] status page asked for the id only", server.status_requests == ["r-1"], str(server.status_requests))
+    check(f"[{theme}] status page asked for the id only", server.status_requests == [REF], str(server.status_requests))
     # An operator outcome is shown verbatim, and Resolved becomes the current step.
     server.report_status, server.outcome = "resolved", "We split the two listings."
     page.reload()
@@ -189,7 +193,7 @@ def run(pw, theme):
     check(f"[{theme}] Resolved is the current step",
           page.get_by_role("listitem").filter(has_text="Resolved").get_attribute("aria-current") == "step")
     # An unknown reference.
-    page.goto(f"{UI}/report/r-missing")
+    page.goto(f"{UI}/report/{MISSING}")
     page.get_by_text("We couldn’t find a report with that reference.").wait_for()
     check(f"[{theme}] unknown reference says so", True)
     ctx.close()

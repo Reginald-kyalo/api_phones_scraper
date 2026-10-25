@@ -9,7 +9,7 @@ const { submitReport, ReportError } = await load('src/app/lib/reportClient.ts');
 const KEY = '3f2b8c1e-5a7d-4e9b-8c3a-1d2e3f4a5b6c';
 const OTHER = '9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d';
 const body = { scope: 'cluster', cluster_id: 'c1', note: 'n', version: '256GB', facets: [] };
-const receipt = (key = KEY) => ({ ok: true, report_id: 'r-1', submission_key: key });
+const receipt = (key = KEY) => ({ ok: true, report_id: 'r-1', submission_key: key, reference: '7c9e6679-7425-40de-944b-e07fc1f90ae7' });
 const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json', ...headers } });
 const fake = (res) => {
@@ -62,6 +62,8 @@ test('false successes are rejected', async (t) => {
   await t.test('receipt for another key', () => failsWith(fake(json(receipt(OTHER), 201)), 'bad-receipt'));
   await t.test('receipt without report_id', () =>
     failsWith(fake(json({ ok: true, submission_key: KEY }, 201)), 'bad-receipt'));
+  await t.test('receipt without reference', () =>
+    failsWith(fake(json({ ok: true, report_id: 'r-1', submission_key: KEY }, 201)), 'bad-receipt'));
   await t.test('valid-looking receipt on a non-2xx status', () => failsWith(fake(json(receipt(), 500)), 'unavailable'));
 });
 

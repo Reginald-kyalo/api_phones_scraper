@@ -195,7 +195,7 @@ export function ReportDialog({
     try {
       const receipt = await submitReport(body, mine.key);
       if (gen !== generation.current) return;
-      setReference(receipt.report_id);
+      setReference(receipt.reference);
       setLastError(null);
       setState('sent');
     } catch (e) {

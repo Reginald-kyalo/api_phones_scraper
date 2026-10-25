@@ -151,7 +151,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     return json({ ok: true, facets: report.facets.length }, 201);
   }
 
-  let saved: { reportId: string; created: boolean };
+  let saved: { reportId: string; reference: string; created: boolean };
   try {
     saved = await saveReport(ctx.env.DB as D1Database, submissionKey, report, { country });
   } catch (err) {
@@ -171,7 +171,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   }
 
   return json(
-    { ok: true, report_id: saved.reportId, submission_key: submissionKey },
+    { ok: true, report_id: saved.reportId, submission_key: submissionKey, reference: saved.reference },
     saved.created ? 201 : 200,
   );
 };

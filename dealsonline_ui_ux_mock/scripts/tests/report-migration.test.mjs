@@ -61,9 +61,9 @@ const CHAIN = ['0000_legacy_reports.sql', '0001_report_idempotency.sql', '0002_r
 function assertConverged(d) {
   assert.deepEqual(recorded(d), CHAIN);
   for (const c of ['submission_key', 'payload_hash', 'selected_version']) assert.ok(columns(d, 'reports').includes(c), `reports.${c}`);
-  for (const c of ['status', 'outcome', 'status_updated_at']) assert.ok(columns(d, 'reports').includes(c), `reports.${c}`);
+  for (const c of ['status', 'outcome', 'status_updated_at', 'public_ref']) assert.ok(columns(d, 'reports').includes(c), `reports.${c}`);
   assert.ok(columns(d, 'report_facets').includes('position'));
-  for (const i of ['uq_reports_submission_key', 'uq_facets_report_position', 'idx_reports_cluster', 'idx_facets_report']) {
+  for (const i of ['uq_reports_submission_key', 'uq_facets_report_position', 'uq_reports_public_ref', 'idx_reports_cluster', 'idx_facets_report']) {
     assert.ok(indexes(d).includes(i), i);
   }
 }
@@ -116,7 +116,7 @@ test('a legacy hand-built database keeps its ids and content, and old rows sit b
   assert.equal(d.sql('SELECT COUNT(*) n FROM reports WHERE submission_key IS NULL AND payload_hash IS NULL AND selected_version IS NULL')[0].n, 2);
   assert.equal(d.sql('SELECT COUNT(*) n FROM report_facets WHERE position IS NULL')[0].n, 3);
   // 0002 is additive too: legacy rows keep a NULL status (the API reads NULL as received).
-  assert.equal(d.sql('SELECT COUNT(*) n FROM reports WHERE status IS NULL AND outcome IS NULL AND status_updated_at IS NULL')[0].n, 2);
+  assert.equal(d.sql('SELECT COUNT(*) n FROM reports WHERE status IS NULL AND outcome IS NULL AND status_updated_at IS NULL AND public_ref IS NULL')[0].n, 2);
 
   // A new-format report coexists; AUTOINCREMENT continues past the legacy ids.
   d.sql(`INSERT INTO reports (scope, cluster_id, created_at, submission_key, payload_hash, selected_version)
