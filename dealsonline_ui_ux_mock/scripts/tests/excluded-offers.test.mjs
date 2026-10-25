@@ -83,14 +83,15 @@ test('two reasons: counted once, under the first in order', () => {
   // unpriced + out of stock -> unpriced
   cluster.best_by_store.e = o('e', null, 'e1', { facet_value: '128', stock_status: 'out of stock' });
   // other configuration + used -> other_configuration
-  cluster.best_by_store.c = o('c', 80, 'c256', { facet_value: '256', condition: 'used' });
+  const cu = o('c', 80, 'c256-used', { facet_value: '256', condition: 'used' });
+  cluster.configs[1].by_store.cu = cu; // used AND in the other configuration
   const r = excludedFromConfig(cluster, config128);
   assert.deepEqual(r.reasons, [
-    { kind: 'other_configuration', count: 2 },
+    { kind: 'other_configuration', count: 3 },
     { kind: 'used', count: 1 },
     { kind: 'unpriced', count: 1 },
   ]);
-  assert.equal(r.total, 4);
+  assert.equal(r.total, 5);
 });
 
 test('an offer is not double counted when it is in the cluster map and another config map', () => {
@@ -124,4 +125,15 @@ test('words: counts and agreement, storage vs other facet', () => {
     describeExclusions({ total: 3, reasons: [{ kind: 'unpriced', count: 2 }, { kind: 'out_of_stock', count: 1 }] },
       cfg(128, {})).detail,
     '2 have no price listed, 1 is out of stock');
+});
+
+test('membership in another config map is enough, even when facet values are missing', () => {
+  const { cluster, config128 } = fixture();
+  const x = o('x', 120, 'x1'); // no facet_value on the offer
+  cluster.configs.push({ facet_label: null, facet_value: null, storage_gb: null, by_store: { x } });
+  cluster.configs.push({ facet_label: null, facet_value: '', storage_gb: null, by_store: { y: o('y', null, 'y1', { condition: 'used' }) } });
+  assert.deepEqual(excludedFromConfig(cluster, config128).reasons, [{ kind: 'other_configuration', count: 4 }]);
+  // and a selected config with an empty facet still sees other maps' offers
+  const blank = { facet_label: null, facet_value: null, storage_gb: null, by_store: { a: cluster.configs[0].by_store.a } };
+  assert.equal(excludedFromConfig(cluster, blank).reasons.find((r) => r.kind === 'other_configuration').count >= 3, true);
 });

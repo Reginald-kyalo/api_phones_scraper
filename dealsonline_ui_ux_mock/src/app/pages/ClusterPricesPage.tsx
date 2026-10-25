@@ -455,8 +455,8 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
                     {describeExclusions(excluded, config).heading}
                   </summary>
                   <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-                    {describeExclusions(excluded, config).detail}. They are kept out so every price above is for
-                    the same version.
+                    {describeExclusions(excluded, config).detail}. Only listings that match this version and can
+                    be compared are in the list above.
                   </p>
                 </details>
               )}

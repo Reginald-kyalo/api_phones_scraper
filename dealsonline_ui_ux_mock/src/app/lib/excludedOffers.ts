@@ -50,18 +50,21 @@ export function excludedFromConfig(
   }
 
   // identity -> [offer, the facet it is known to belong to, if any]
-  const seen = new Map<string, { offer: ClusterStore; facet: string }>();
-  const add = (store: string, o: ClusterStore | null | undefined, ownFacet: string) => {
+  const seen = new Map<string, { offer: ClusterStore; facet: string; inConfigMap: boolean }>();
+  const add = (store: string, o: ClusterStore | null | undefined, ownFacet: string, fromConfig = false) => {
     if (!o) return;
     const key = identity(store, o);
     const prev = seen.get(key);
     const f = facet(o.facet_value) || ownFacet;
-    if (!prev) seen.set(key, { offer: o, facet: f });
-    else if (!prev.facet && f) prev.facet = f;
+    if (!prev) seen.set(key, { offer: o, facet: f, inConfigMap: fromConfig });
+    else {
+      if (!prev.facet && f) prev.facet = f;
+      if (fromConfig) prev.inConfigMap = true;
+    }
   };
   for (const c of cluster.configs ?? []) {
     for (const [store, o] of Object.entries((c.by_store ?? {}) as Record<string, ClusterStore>)) {
-      add(store, o, facet(c.facet_value));
+      add(store, o, facet(c.facet_value), true);
     }
   }
   for (const [store, o] of Object.entries((cluster.best_by_store ?? {}) as Record<string, ClusterStore>)) {
@@ -72,9 +75,10 @@ export function excludedFromConfig(
   const counts = new Map<ExclusionKind, number>();
   const bump = (k: ExclusionKind) => counts.set(k, (counts.get(k) ?? 0) + 1);
 
-  for (const [key, { offer, facet: f }] of seen) {
+  for (const [key, { offer, facet: f, inConfigMap }] of seen) {
     if (inMap.has(key)) continue;
-    if (f !== '' && selected !== '' && f !== selected) bump('other_configuration');
+    // Being in another configuration's map is itself the evidence, whatever the facet strings.
+    if (inConfigMap || (f !== '' && selected !== '' && f !== selected)) bump('other_configuration');
     else if (isUsed(offer)) bump('used');
     else if (!isPriced(offer)) bump('unpriced');
     else if (isOutOfStock(offer)) bump('out_of_stock');
