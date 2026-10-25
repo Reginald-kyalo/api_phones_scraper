@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Flag, Check, AlertTriangle } from 'lucide-react';
 import {
   Dialog,
@@ -14,6 +14,18 @@ import { productName } from '../../../lib/format';
 import { Label } from '../../../components/ui/label';
 import type { ClusterDetail } from '../../../lib/api';
 import { storeName } from '../../../lib/storeIdentity';
+import { submitReport, ReportError } from '../../../lib/reportClient';
+import type { ReportFacetInput, ReportInput } from '../../../lib/reportContract';
+
+/** A fresh identity for one logical submission (secure contexts and older browsers). */
+function newSubmissionKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
 
 /**
  * Report a bad listing.
@@ -24,7 +36,8 @@ import { storeName } from '../../../lib/storeIdentity';
  * the store's own page. Naming them is what makes a report actionable — "wrong
  * grouping" routes to the matcher, "wrong category" to the categoriser.
  *
- * Values must stay in step with REASONS in functions/api/reports.ts.
+ * Values must stay in step with ReportFacetKind in src/app/lib/reportContract.ts
+ * (the server validates against the same list in functions/lib/reportRequest.ts).
  */
 const REPORT_REASONS = [
   { value: 'grouping', label: 'Different products grouped together' },
@@ -81,6 +94,23 @@ export function ReportDialog({
   const [store, setStore] = useState<string>('');
   const [rejected, setRejected] = useState<string[]>([]);
   const [state, setState] = useState<State>('idle');
+  // One submission identity per logical report. It survives failed attempts so a
+  // retry of the same content cannot store twice; any edit makes a new identity.
+  const attempt = useRef<{ key: string; json: string; uncertain: boolean } | null>(null);
+  const generation = useRef(0); // bumped on close so a late response is ignored
+  const inFlight = useRef(false);
+  const [lastError, setLastError] = useState<ReportError | null>(null);
+  const [retryAt, setRetryAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (retryAt === null) return;
+    const t = setInterval(() => {
+      setNow(Date.now());
+      if (Date.now() >= retryAt) setRetryAt(null);
+    }, 250);
+    return () => clearInterval(t);
+  }, [retryAt]);
 
   const stores = displayedStores ?? Object.keys(cluster.best_by_store ?? {});
   const reasons = reasonsFor(cluster);
@@ -96,54 +126,86 @@ export function ReportDialog({
    * still a real verdict about the group, so it sends one subject-less facet
    * rather than nothing at all.
    */
-  function facets() {
+  function facets(): ReportFacetInput[] {
     if (reason === 'grouping' && rejected.length) {
       return rejected.map((id) => ({ kind: 'grouping', subject: id, value: 'wrong' }));
     }
+    // A shop picked earlier may no longer be on screen (the version changed);
+    // only a displayed shop can be named.
+    const shop = STORE_SCOPED.has(reason) && store && stores.includes(store) ? store : null;
     return [
       {
-        kind: reason,
-        subject: STORE_SCOPED.has(reason) && store ? store : null,
+        kind: reason as ReportFacetInput['kind'],
+        subject: shop,
         value: reason === 'grouping' ? 'wrong' : null,
       },
     ];
   }
 
+  function buildBody(): ReportInput {
+    return {
+      scope: 'cluster',
+      cluster_id: cluster.cluster_id,
+      note,
+      // `version` is the exact selected configuration, stored in its own column.
+      // The title keeps the human-readable version too, for operators reading
+      // older rows or tools that only show the title.
+      title: version ? `${productName(cluster)} · ${version}` : productName(cluster),
+      category: cluster.category,
+      captured_at: capturedAt ?? null,
+      version: version ?? null,
+      page_url: location.href,
+      facets: facets(),
+    };
+  }
+
+  // The content a retry would send, compared with what the unsure attempt sent.
+  const draftJson = reason ? JSON.stringify(buildBody()) : '';
+  const editedAfterUncertain =
+    state === 'error' && !!attempt.current?.uncertain && draftJson !== attempt.current.json;
+  const waitSeconds = retryAt !== null ? Math.max(0, Math.ceil((retryAt - now) / 1000)) : 0;
+  const coolingDown = waitSeconds > 0;
+
   async function submit() {
-    if (!reason) return;
+    if (!reason || inFlight.current || coolingDown) return;
+    const body = buildBody();
+    const json = JSON.stringify(body);
+    // Same content as the last attempt: same key. Different content (or a key the
+    // server rejected as reused): a new submission identity.
+    if (!attempt.current || attempt.current.json !== json) {
+      attempt.current = { key: newSubmissionKey(), json, uncertain: false };
+    }
+    const mine = attempt.current;
+    const gen = generation.current;
+    inFlight.current = true;
     setState('sending');
     try {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/reports`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          scope: 'cluster',
-          cluster_id: cluster.cluster_id,
-          note,
-          // The reports table has no version column yet; the selected version
-          // rides in the title so a report about 256GB cannot be read as one
-          // about 128GB once stored.
-          title: version ? `${productName(cluster)} · ${version}` : productName(cluster),
-          category: cluster.category,
-          captured_at: capturedAt ?? null,
-          version: version ?? null,
-          page_url: location.href,
-          facets: facets(),
-        }),
-      });
-      // A static preview has no Function behind /api/reports and returns the
-      // SPA shell with a 200, so "ok" alone is not proof it was stored.
-      const saved =
-        res.ok && (res.headers.get('content-type') || '').includes('json');
-      setState(saved ? 'sent' : 'error');
-    } catch {
+      await submitReport(body, mine.key);
+      if (gen !== generation.current) return;
+      setLastError(null);
+      setState('sent');
+    } catch (e) {
+      if (gen !== generation.current) return;
+      const err = e instanceof ReportError ? e : new ReportError('network', 0, true);
+      mine.uncertain = err.uncertain;
+      // The server refused this key/content pairing for good: never send it again.
+      if (err.kind === 'conflict' || err.kind === 'invalid') attempt.current = null;
+      setLastError(err);
+      setRetryAt(err.retryAfterMs ? Date.now() + err.retryAfterMs : null);
+      setNow(Date.now());
       setState('error');
+    } finally {
+      inFlight.current = false;
     }
   }
 
   function reset(next: boolean) {
     setOpen(next);
     if (!next) {
+      generation.current++;
+      attempt.current = null;
+      setLastError(null);
+      setRetryAt(null);
       setReason('');
       setNote('');
       setStore('');
@@ -271,10 +333,21 @@ export function ReportDialog({
             </div>
 
             {state === 'error' && (
-              <p className="flex items-start gap-2 text-sm text-muted-foreground">
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                We couldn&rsquo;t send your report. Try again.
-              </p>
+              <div role="alert" className="space-y-1.5 text-sm text-muted-foreground">
+                <p className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                  We couldn&rsquo;t save your report. Your text is still here. Try again.
+                </p>
+                {editedAfterUncertain && (
+                  <p className="pl-6">
+                    Your earlier report may already have arrived. Sending this one will add a
+                    second report.
+                  </p>
+                )}
+                {coolingDown && lastError && (
+                  <p className="pl-6">You can try again in {waitSeconds} seconds.</p>
+                )}
+              </div>
             )}
 
             <div className="flex gap-3">
@@ -283,10 +356,10 @@ export function ReportDialog({
               </Button>
               <Button
                 className="flex-1"
-                disabled={!reason || state === 'sending'}
+                disabled={!reason || state === 'sending' || coolingDown}
                 onClick={submit}
               >
-                {state === 'sending' ? 'Sending…' : 'Send report'}
+                {state === 'sending' ? 'Sending…' : state === 'error' ? 'Try again' : 'Send report'}
               </Button>
             </div>
           </div>
