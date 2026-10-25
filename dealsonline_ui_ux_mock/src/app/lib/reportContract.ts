@@ -1,0 +1,57 @@
+/**
+ * The browser/edge wire contract for POST /api/reports. Types only plus the
+ * receipt guard: the runtime validation of a submission lives in
+ * functions/lib/reportRequest.ts and never trusts these types.
+ */
+
+export type ReportScope = 'cluster' | 'deal' | 'site';
+
+export type ReportFacetKind =
+  | 'grouping'
+  | 'title'
+  | 'image'
+  | 'category'
+  | 'price'
+  | 'dead_link'
+  | 'lowest_price'
+  | 'spread'
+  | 'not_a_deal'
+  | 'other';
+
+export interface ReportFacetInput {
+  kind: ReportFacetKind;
+  subject?: string | null;
+  value?: string | null;
+}
+
+/** What the browser sends. Optional context values may be null. */
+export interface ReportInput {
+  scope: ReportScope;
+  cluster_id?: string | null;
+  title?: string | null;
+  category?: string | null;
+  captured_at?: string | null;
+  page_url?: string | null;
+  note?: string | null;
+  version?: string | null;
+  facets: ReportFacetInput[];
+}
+
+/** The receipt echoes ids only, never the submitted note or context. */
+export interface ReportReceipt {
+  ok: true;
+  report_id: string;
+  submission_key: string;
+}
+
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isReportReceipt(value: unknown, expectedKey?: string): value is ReportReceipt {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const v = value as Record<string, unknown>;
+  if (v.ok !== true) return false;
+  if (typeof v.report_id !== 'string' || v.report_id.trim() === '') return false;
+  if (typeof v.submission_key !== 'string' || !UUID_RE.test(v.submission_key)) return false;
+  if (expectedKey !== undefined && v.submission_key.toLowerCase() !== expectedKey.toLowerCase()) return false;
+  return true;
+}

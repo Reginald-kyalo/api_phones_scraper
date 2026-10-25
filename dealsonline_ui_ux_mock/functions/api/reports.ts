@@ -50,7 +50,11 @@ interface Env {
   REPORT_SINK?: string;
   REPORT_WEBHOOK_URL?: string;
   REPORT_WEBHOOK_TOKEN?: string;
+  /** '1' makes the Idempotency-Key header mandatory (production). */
+  REPORT_REQUIRE_KEY?: string;
 }
+
+import { readReportRequest } from '../lib/reportRequest';
 
 /** One submission, flattened — the shape every sink receives. */
 interface Record_ {
@@ -65,65 +69,11 @@ interface Record_ {
   facets: { kind: string; subject: string | null; value: string | null }[];
 }
 
-interface FacetIn {
-  kind?: string;
-  subject?: string | null;
-  value?: string | number | null;
-}
-
-interface ReportBody {
-  scope?: string;
-  cluster_id?: string;
-  title?: string;
-  category?: string;
-  captured_at?: string;
-  page_url?: string;
-  note?: string;
-  facets?: FacetIn[];
-}
-
-const SCOPES = new Set(['cluster', 'deal', 'site']);
-
-/**
- * The checklist axes. Each names something the reader can actually see on the
- * page, because a report is only actionable if it points at one artefact:
- * `grouping` routes to the matcher, `category` to the categoriser, `price` and
- * `lowest_price` to the price guard, `dead_link` to freshness.
- *
- * Keep in step with the checklist the UI renders.
- */
-const KINDS = new Set([
-  'grouping',      // subject = absorbed cluster_id, value = 'wrong' | 'ok'
-  'title',         // value = corrected name (optional)
-  'image',
-  'category',      // value = the category it belongs in (optional)
-  'price',         // subject = store, value = corrected price (optional)
-  'dead_link',     // subject = store
-  'lowest_price',  // value = the store that is actually cheapest (optional)
-  'spread',        // value = why the % is wrong (optional)
-  'not_a_deal',    // value = why (optional)
-  'other',
-]);
-
-const MAX_NOTE = 1000;
-const MAX_VALUE = 200;
-const MAX_SUBJECT = 300;
-// A page shows at most a few dozen tickable things; anything beyond this is a
-// script, not a reader. Rejected rather than truncated — silently storing half a
-// submission would look like a reader who ticked half.
-const MAX_FACETS = 60;
-
-const json = (body: unknown, status = 200) =>
+const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...extra },
   });
-
-const trim = (v: unknown, max: number): string | null => {
-  const s = typeof v === 'number' ? String(v) : typeof v === 'string' ? v : '';
-  const out = s.trim().slice(0, max);
-  return out || null;
-};
 
 /** The store of record: one `reports` row + one `report_facets` row per tick. */
 async function storeInD1(db: D1Database, r: Record_): Promise<void> {
@@ -192,52 +142,23 @@ function sinksFor(env: Env): { d1: boolean; webhook: boolean } {
 }
 
 export const onRequestPost: PagesFunction<Env> = async (ctx) => {
-  let body: ReportBody;
-  try {
-    body = await ctx.request.json();
-  } catch {
-    return json({ error: 'expected a JSON body' }, 400);
-  }
-
-  const scope = (body.scope || 'cluster').trim();
-  if (!SCOPES.has(scope)) return json({ error: 'unknown scope' }, 400);
-
-  const clusterId = (body.cluster_id || '').trim();
-  // Only a site-wide report may omit the product; anything else without one
-  // cannot be routed to a fix.
-  if (scope !== 'site' && !clusterId) {
-    return json({ error: 'cluster_id is required unless scope is "site"' }, 400);
-  }
-
-  const facets = Array.isArray(body.facets) ? body.facets : [];
-  if (facets.length > MAX_FACETS) return json({ error: 'too many facets' }, 400);
-
-  const note = trim(body.note, MAX_NOTE);
-  const clean: { kind: string; subject: string | null; value: string | null }[] = [];
-  for (const f of facets) {
-    const kind = (f?.kind || '').trim();
-    if (!KINDS.has(kind)) return json({ error: `unknown facet kind: ${kind}` }, 400);
-    clean.push({
-      kind,
-      subject: trim(f.subject, MAX_SUBJECT),
-      value: trim(f.value, MAX_VALUE),
-    });
-  }
-
-  // A submission with neither a ticked box nor a comment says nothing. Reject it
-  // rather than storing an empty row that inflates every count downstream.
-  if (!clean.length && !note) {
-    return json({ error: 'nothing reported' }, 400);
-  }
+  // Validation happens before any storage call. Keys are optional until the
+  // staging/client transition ends (REPORT_REQUIRE_KEY=1 in production).
+  const req = await readReportRequest(ctx.request, {
+    requireKey: ctx.env.REPORT_REQUIRE_KEY === '1',
+  });
+  if (!req.ok) return json({ error: req.error }, req.status);
+  const { report } = req;
+  const clean = report.facets;
 
   const record: Record_ = {
-    scope,
-    cluster_id: clusterId || null,
-    title: trim(body.title, 500),
-    category: trim(body.category, 100),
-    captured_at: trim(body.captured_at, 40),
-    page_url: trim(body.page_url, 500),
-    note,
+    scope: report.scope,
+    cluster_id: report.cluster_id,
+    title: report.title,
+    category: report.category,
+    captured_at: report.captured_at,
+    page_url: report.page_url,
+    note: report.note,
     // Coarse origin only — enough to spot a flood, not enough to identify anyone.
     country: ctx.request.headers.get('cf-ipcountry') || null,
     facets: clean,
@@ -280,4 +201,4 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
 export const onRequest: PagesFunction<Env> = async (ctx) =>
   ctx.request.method === 'POST'
     ? onRequestPost(ctx as never)
-    : json({ error: 'method not allowed' }, 405);
+    : json({ error: 'method not allowed' }, 405, { allow: 'POST' });
