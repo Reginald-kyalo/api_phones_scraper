@@ -33,7 +33,7 @@ def test_each_config_offer_carries_its_own_facet_and_member_evidence():
     a, b = (c["by_store"]["a.co.ke"] for c in v["configs"][:2])
     assert a["facet_value"] == "64" and b["facet_value"] == "Intel Core i5"
     assert a["condition"] == "new" and b["condition"] == "refurbished"
-    assert a["observed_at"] == "2026-10-20T10:00:00" and b["observed_at"] is None
+    assert a["observed_at"] == "2026-10-20T10:00:00+00:00" and b["observed_at"] is None
     assert a["likely_used"] is False and b["likely_used"] is True
     assert a["delisted"] is False and b["delisted"] is True
 
@@ -62,7 +62,7 @@ def test_unknown_condition_is_null_and_product_id_fallback():
     d["members"][0]["product_id"] = "p1"
     d["best_by_store"]["a.co.ke"] = {"price": 100.0, "url": "changed", "title": "t", "product_id": "p1"}
     o = _cluster_view(d)["best_by_store"]["a.co.ke"]
-    assert o["condition"] is None and o["observed_at"] == "2026-10-20T10:00:00"
+    assert o["condition"] is None and o["observed_at"] == "2026-10-20T10:00:00+00:00"
 
 
 def test_summary_unchanged_and_schema_passes_fields_through():
@@ -80,3 +80,17 @@ def test_missing_flags_are_null_not_false():
     assert o["likely_used"] is None and o["delisted"] is None
     d["members"][0]["delisted"] = None
     assert _cluster_view(d)["configs"][0]["by_store"]["a.co.ke"]["delisted"] is None
+
+
+def test_observed_at_is_normalised_like_cluster_last_seen():
+    from datetime import datetime, timezone
+    d = _doc()
+    d["members"][0]["last_seen"] = "2026-10-20T10:00:00"  # naive string -> UTC
+    d["members"][1]["last_seen"] = datetime(2026, 10, 21, 8, 30)  # naive datetime
+    d["members"].append({"site": "a.co.ke", "url": "nomatch", "price": 200.0,
+                         "last_seen": "garbage"})
+    v = _cluster_view(d)
+    a, b, c = (x["by_store"]["a.co.ke"] for x in v["configs"])
+    assert a["observed_at"] == "2026-10-20T10:00:00+00:00"
+    assert b["observed_at"] == datetime(2026, 10, 21, 8, 30, tzinfo=timezone.utc).isoformat()
+    assert c["observed_at"] is None  # unparsable -> null

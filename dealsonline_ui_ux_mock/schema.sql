@@ -2,8 +2,9 @@
 --
 -- ⛔ Do not execute this file on a database that migrations manage. Provision
 -- through the numbered chain in migrations/ (0000 freezes the legacy tables,
--- 0001 adds the idempotency columns with ALTER TABLE), so running this file
--- first would make 0001's ALTERs fail on columns that already exist.
+-- 0001 adds the idempotency columns with ALTER TABLE, 0002 adds the reader-visible
+-- status columns), so running this file first would make 0001's and 0002's ALTERs
+-- fail on columns that already exist.
 --
 --   npx wrangler d1 migrations apply dealsonline-reports --local    # rehearsal
 --   npx wrangler d1 migrations apply dealsonline-reports --remote   # deliberate, by the owner
@@ -48,7 +49,13 @@ CREATE TABLE IF NOT EXISTS reports (
   -- Added by 0001 (NULL on rows that predate it).
   submission_key   TEXT,            -- the client's Idempotency-Key (lowercase UUID)
   payload_hash     TEXT,            -- SHA-256 of the canonical body (functions/lib/reportStore.ts)
-  selected_version TEXT             -- dataset version the reader had selected
+  selected_version TEXT,            -- dataset version the reader had selected
+
+  -- Added by 0002 (NULL on rows that predate it; the API reads a NULL status as 'received').
+  status            TEXT CHECK (status IS NULL OR status IN ('received', 'reviewed', 'resolved')),
+  outcome           TEXT CHECK (outcome IS NULL OR length(outcome) <= 300),
+  status_updated_at TEXT,           -- when an operator last changed status/outcome (ISO 8601)
+  public_ref        TEXT            -- random UUID handed to the reader as their reference
 );
 
 -- One row per ticked item. `kind` says which question, `subject` says which
@@ -82,6 +89,8 @@ CREATE TABLE IF NOT EXISTS report_facets (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_reports_submission_key
   ON reports (submission_key) WHERE submission_key IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_reports_public_ref
+  ON reports (public_ref) WHERE public_ref IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_facets_report_position
   ON report_facets (report_id, position);
 CREATE INDEX IF NOT EXISTS idx_reports_cluster ON reports (cluster_id);

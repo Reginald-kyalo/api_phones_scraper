@@ -12,18 +12,18 @@ const ago = (d) => new Date(NOW - d * DAY).toISOString();
 const offer = (price, observed_at) => ({ price, observed_at, url: `u${price}${observed_at}` });
 
 test('no offers: no text', () => {
-  assert.deepEqual(coverageLine([], NOW, 30), { text: '', recent: 0, older: 0 });
+  assert.deepEqual(coverageLine([], NOW, 30), { text: '', recent: 0, older: 0, unknown: 0 });
   assert.equal(coverageLine(null, NOW, 30).text, '');
 });
 
 test('unpriced offers are not counted', () => {
   const r = coverageLine([offer(0, ago(1)), offer(NaN, ago(1)), offer(-5, ago(1)), offer(null, ago(1))], NOW, 30);
-  assert.deepEqual(r, { text: '', recent: 0, older: 0 });
+  assert.deepEqual(r, { text: '', recent: 0, older: 0, unknown: 0 });
 });
 
 test('one fresh offer: singular, one sentence', () => {
   assert.deepEqual(coverageLine([offer(100, ago(2))], NOW, 30), {
-    text: '1 matching offer from the shops we track', recent: 1, older: 0,
+    text: '1 matching offer from the shops we track', recent: 1, older: 0, unknown: 0,
   });
 });
 
@@ -49,10 +49,23 @@ test('older observations are plural when more than one', () => {
   assert.match(r.text, /1 was checked in the last 30 days; 2 have older observations\.$/);
 });
 
-test('no observed_at counts as older, never as recent', () => {
+test('no observed_at is unknown: not older, not recent', () => {
   const r = coverageLine([offer(100, ago(1)), offer(110, undefined), offer(120, 'not a date')], NOW, 30);
   assert.equal(r.recent, 1);
-  assert.equal(r.older, 2);
+  assert.equal(r.older, 0);
+  assert.equal(r.unknown, 2);
+  assert.equal(r.text, '3 matching offers from the shops we track');
+});
+
+test('all undated: only the first sentence', () => {
+  const r = coverageLine([offer(100, undefined), offer(110, null)], NOW, 30);
+  assert.deepEqual(r, { text: '2 matching offers from the shops we track', recent: 0, older: 0, unknown: 2 });
+});
+
+test('dated older offers still get the second sentence alongside undated ones', () => {
+  const r = coverageLine([offer(100, ago(1)), offer(110, ago(90)), offer(120, undefined)], NOW, 30);
+  assert.equal(r.text, '3 matching offers from the shops we track. 1 was checked in the last 30 days; 1 has an older observation.');
+  assert.equal(r.unknown, 1);
 });
 
 test('none recent', () => {

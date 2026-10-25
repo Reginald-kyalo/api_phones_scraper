@@ -61,10 +61,11 @@ jobs:
         run: python -m pip install pytest==9.0.2 PyYAML==6.0.3
       - name: Python checks
         working-directory: .
-        run: python -m pytest tests/test_hygiene.py tests/test_capture_demo_dataset.py tests/test_mock_phone_navigation.py -q
+        run: python -m pytest tests/test_hygiene.py tests/test_capture_demo_dataset.py tests/test_mock_phone_navigation.py tests/test_offer_evidence.py tests/test_cluster_schemas.py -q
       # unpacks the committed demo archive into public/demo (generated, git-ignored)
       - run: npm run demo:prepare
       - run: npm run test:catalogue
+      - run: npm run test:trust
       - run: npm run type-check
       - run: npm run check:design
 

@@ -37,6 +37,7 @@ from app.api.hygiene import (
     clean_text,
     fold_by_store,
     fold_stores,
+    _parse_seen,
     freshness,
     last_seen_at,
     saving_pct,
@@ -287,7 +288,7 @@ def _offer_evidence(offer: dict, index: tuple[dict, dict]) -> dict:
     return {
         "condition": _CONDITIONS.get((_text(m.get("condition")) or "").lower()),
         "likely_used": _flag_or_none(m.get("likely_used")),
-        "observed_at": _text(m.get("last_seen")),
+        "observed_at": (ts.isoformat() if (ts := _parse_seen(m.get("last_seen"))) else None),
         "stock_status": _text(m.get("stock_status")),
         "delisted": _flag_or_none(m.get("delisted")),
     }

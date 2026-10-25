@@ -270,6 +270,22 @@ test('handler: production mode requires D1 and never uses or mirrors to a webhoo
   assert.equal(await count('reports'), 1);
 });
 
+test('handler: webhook-only (no DB, not production) is 503 and never calls the webhook', async () => {
+  fetches = 0;
+  const env = { DB: undefined, REPORT_WEBHOOK_URL: 'https://hook.example/x' };
+  for (const extra of [{}, { REPORT_SINK: 'webhook' }]) {
+    const res = await post(body(), { env: { ...env, ...extra } });
+    assert.equal(res.status, 503);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.ok(res.headers.get('retry-after'));
+    const j = await res.json();
+    assert.equal(j.error, 'no report storage is configured');
+    assert.equal(j.ok, undefined);
+  }
+  assert.equal(fetches, 0, 'the webhook is never a primary sink');
+  assert.equal(await count('reports'), 0);
+});
+
 test('handler: outside production, a D1+webhook mirror fires only for a first write, never a replay', async () => {
   const hits = [];
   globalThis.fetch = async (url) => { hits.push(url); return new Response('ok'); };

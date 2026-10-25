@@ -39,11 +39,11 @@
  *   REPORT_WEBHOOK_URL   any endpoint that accepts a JSON POST
  *   REPORT_WEBHOOK_TOKEN optional; sent as Authorization: Bearer …
  *
- * ⚠️ A PRIMARY SINK IS AWAITED; A MIRROR IS NOT. With both configured, D1 is the
- * store of record and the webhook is fire-and-forget via waitUntil — a reader
- * should not wait on Google Sheets to be told their report landed. With only a
- * webhook configured it becomes the primary and IS awaited, because otherwise
- * the 201 would be a claim nothing backs.
+ * ⚠️ D1 IS THE ONLY PRIMARY. With both configured, D1 is the store of record and
+ * the webhook is a fire-and-forget mirror via waitUntil — a reader should not
+ * wait on Google Sheets to be told their report landed. A webhook-only
+ * deployment (no `DB`) answers 503 and never calls the webhook: it has no
+ * idempotency, so client retries would duplicate reports at the sink.
  */
 interface Env {
   DB?: D1Database;
@@ -122,9 +122,8 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
 
   // ⛔ FIRST-LAUNCH PRODUCTION PROFILE (REPORT_REQUIRE_KEY=1): D1 is required and
   // the webhook is neither a primary nor a mirror. A webhook cannot give the
-  // atomic, idempotent receipt this profile promises. Environments that run
-  // webhook-only today are NOT this profile and keep the legacy path below
-  // unchanged; they are not silently rerouted.
+  // atomic, idempotent receipt this profile promises. Outside this
+  // profile D1 is still the only primary; a webhook-only deployment answers 503.
   const sinks = production
     ? { d1: !!ctx.env.DB, webhook: false }
     : sinksFor(ctx.env);
@@ -141,14 +140,12 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     json({ error: 'could not save the report' }, 503, { 'retry-after': '30' });
 
   if (!sinks.d1) {
-    // Legacy webhook-only deployment (outside the production profile): the
-    // webhook is the primary and is awaited, as before.
-    try {
-      await storeViaWebhook(ctx.env, record);
-    } catch {
-      return unavailable();
-    }
-    return json({ ok: true, facets: report.facets.length }, 201);
+    // ⛔ Webhook-only is no longer a supported sink for submissions. The client
+    // treats a bare `{ok:true, facets}` as a failure and retries, and the webhook
+    // path has no idempotency, so every retry would duplicate the report at the
+    // sink. Answer as an unconfigured deployment and never call the webhook as
+    // primary. (D1 primary + webhook mirror, outside production mode, is intact.)
+    return json({ error: 'no report storage is configured' }, 503, { 'retry-after': '30' });
   }
 
   let saved: { reportId: string; reference: string; created: boolean };

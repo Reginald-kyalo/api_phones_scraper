@@ -338,20 +338,24 @@ Anything that accepts a JSON POST works: a Google Apps Script bound to a sheet
 Airtable, Supabase, or this project's own FastAPI so the labels land next to the
 clusters they label.
 
-⚠️ **A primary sink is awaited; a mirror is not.** With both configured D1 is the
-store of record and the webhook is fire-and-forget — a reader should not wait on
-Google Sheets to be told their report landed, and a mirror failure is not their
-problem. With only a webhook configured it *becomes* the primary and is awaited,
-because otherwise the 201 would be a claim nothing backs.
+⚠️ **D1 is the only primary sink; a webhook is at most a mirror.** With both
+configured D1 is the store of record and the webhook is fire-and-forget — a reader
+should not wait on Google Sheets to be told their report landed, and a mirror
+failure is not their problem. ⛔ **Webhook-only is no longer a supported sink for
+submissions.** With a webhook configured but no `DB` binding the endpoint returns
+the same 503 "no report storage is configured" (no-store, `Retry-After`) and never
+calls the webhook: the receipt-aware client treats a bare `{ok:true}` as a failure
+and retries, and a webhook has no idempotency, so every retry would duplicate the
+report at the sink.
 
 ⛔ **`REPORT_REQUIRE_KEY=1` is the first-launch production profile, and it changes
 the table above.** It means: an `Idempotency-Key` is required on every submission;
 **D1 is required**; and the webhook is **disabled both as primary and as mirror**,
 whatever `REPORT_WEBHOOK_URL` / `REPORT_SINK` say (a webhook cannot give the
 atomic, idempotent receipt this profile promises). With the profile on and no `DB`
-binding the endpoint returns 503 rather than falling back to a webhook. An
-environment that runs webhook-only today is not this profile and is not silently
-rerouted: it keeps the legacy path until it sets the variable.
+binding the endpoint returns 503 rather than falling back to a webhook. Outside
+the profile the behaviour is the same for a webhook-only environment (503); only
+the D1-primary + webhook-mirror combination still mirrors.
 
 ⛔ With **no** sink configured the endpoint returns **503**, not 500: a missing
 binding is a deployment fault, and "try again in a moment" would invite someone
@@ -369,7 +373,13 @@ npx wrangler d1 create dealsonline-reports          # note the id it prints (ope
 Provision the schema ONLY through the numbered migration chain in `migrations/`
 (`0000_legacy_reports.sql` freezes the legacy tables, `0001_report_idempotency.sql`
 adds the idempotency columns, `0002_report_status.sql` adds the reader-visible status). Cloudflare records applied files in the database's
-`d1_migrations` table, so each runs once:
+`d1_migrations` table, so each runs once.
+
+⛔ **A push to the Pages production branch deploys.** Therefore **back up, then
+apply migrations 0000, 0001 and 0002 together to production D1 BEFORE merging.**
+Applying 0001 without 0002 leaves rows saved without a `public_ref`, whose replay
+returns 503. Pre-merge gate: `DB` is bound in every Pages environment (Production
+and Preview); no environment is webhook-only (webhook-only now answers 503).
 
 ```bash
 npx wrangler d1 migrations list  dealsonline-reports --local     # rehearse locally first
@@ -387,7 +397,7 @@ chain cannot manage: `0001`'s `ALTER TABLE ... ADD COLUMN` then fails with
 `duplicate column name` (`scripts/tests/report-migration.test.mjs` proves it).
 A database that was already built by hand from the old `schema.sql` is *adopted*,
 not rebuilt: `0000` is all `CREATE ... IF NOT EXISTS`, so `migrations apply`
-records it without touching a row, then applies `0001`. **Back up first** (see
+records it without touching a row, then applies `0001` and `0002`. **Back up first** (see
 `docs/production-readiness-2026-10-23/report-release-runbook.md`). Rollback never
 drops columns or deletes rows.
 
@@ -403,7 +413,7 @@ npx wrangler d1 execute dealsonline-reports --remote \
 #### Report status (what the reader sees at `/report/<id>`)
 
 After a report lands the reader is given a random UUID `reference` (the integer row id
-is never exposed). `GET /api/reports/<reference>` returns only `reference`, `status` (`received` | `reviewed` | `resolved`), `outcome`
+is never used as the public reference). `GET /api/reports/<reference>` returns only `reference`, `status` (`received` | `reviewed` | `resolved`), `outcome`
 and `status_updated_at`, never the note, page URL or facets. A NULL status reads as
 `received`. Status is **operator-only**: there is no public write path. To update
 one (`outcome` is plain text, at most 300 characters, shown to the reader as written):
@@ -420,7 +430,7 @@ Reports saved before migration 0002 have no reference and no status page.
 
 Rehearse with `--local` first. The schema rejects any other status value.
 
-⛔ **Without the binding the endpoint returns 500 and the UI says so.** It never
+⛔ **Without the binding the endpoint returns 503 and the UI says so.** It never
 shows a confirmation it cannot back up — a static preview with no Function
 returns the SPA shell at 200, so the client checks for a JSON content-type
 before believing a report was stored.

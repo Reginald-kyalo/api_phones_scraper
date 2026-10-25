@@ -354,7 +354,7 @@ function ProductView({ cluster, capturedAt }: { cluster: ClusterDetail; captured
               )}
             </p>
 
-            {coverage.text && <p className="mt-1 text-sm text-muted-foreground">{coverage.text}</p>}
+            {coverage.text && (config || configs.length <= 1) && <p className="mt-1 text-sm text-muted-foreground">{coverage.text}</p>}
 
             {verdict && (
               <p className="mt-1 text-sm text-foreground">

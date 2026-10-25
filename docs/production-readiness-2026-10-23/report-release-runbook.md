@@ -12,14 +12,23 @@ receipt-aware client in `dealsonline_ui_ux_mock/`.
 
 | Step | Artifact | Safe alone? |
 |---|---|---|
-| 1 | Migrations `0000_legacy_reports.sql` (adopts legacy tables, all `IF NOT EXISTS`) and `0001_report_idempotency.sql` (additive columns + partial unique indexes) | Yes: old handler ignores new columns |
+| 1 | Migrations `0000_legacy_reports.sql` (adopts legacy tables, all `IF NOT EXISTS`), `0001_report_idempotency.sql` (additive columns + partial unique indexes) and `0002_report_status.sql` (status, outcome, status_updated_at, public_ref + unique index) | Yes: old handler ignores new columns. Apply 0000-0002 together: 0001 without 0002 leaves rows whose replay returns 503 |
 | 2 | Compatible handler (`reportRequest.ts`, `reportStore.ts`, `reports.ts`): validates, writes parent+facets in one D1 batch, 201 / 200 replay / 409 conflict / 503. Keys optional while `REPORT_REQUIRE_KEY` is unset | Yes, needs step 1 |
 | 3 | Receipt-aware client: sends `Idempotency-Key`, shows success only for a receipt carrying its own key, retries under the same key | Needs step 2 |
 | 4 | Observe real clients and receipts in staging, then production logs | evidence only |
 | 5 | Set `REPORT_REQUIRE_KEY=1` (first-launch profile) | Only after step 4 |
 
 `REPORT_REQUIRE_KEY=1` means: key required on every submission; **D1 required**;
-the webhook is disabled both as primary and as mirror. See DEPLOY.md.
+the webhook is disabled both as primary and as mirror. Webhook-only (no `DB`) is no
+longer a supported sink in any mode: the endpoint answers 503 and never calls the
+webhook. See DEPLOY.md.
+
+⛔ **A push to the Pages production branch deploys.** Back up and apply migrations
+0000-0002 together to production D1 BEFORE merging. Applying 0001 without 0002
+leaves rows whose replay returns 503.
+
+**Pre-merge gate:** `DB` is bound in every Pages environment (Production and
+Preview); no environment is webhook-only.
 
 ## 2. Local rehearsal (DONE, real, reproducible)
 
@@ -44,7 +53,7 @@ UI_BASE=http://localhost:5199 python scripts/tests/report-journey.py   # 0 failu
 (`wrangler d1 migrations apply --local`, which records files in `d1_migrations`) on
 throwaway local databases with the placeholder id `00000000-0000-0000-0000-000000000000`:
 
-1. Fresh DB: both migrations apply; a second apply prints "No migrations to apply"
+1. Fresh DB: all three migrations (0000-0002) apply; a second apply prints "No migrations to apply"
    (no repeated ALTER); columns and indexes are present.
 2. Legacy hand-built DB (0000 schema, no `d1_migrations`, seeded reports 7 and 41,
    facets 3/4/9, a honeypot hit): `migrations apply` adopts it, applies only the
@@ -89,7 +98,7 @@ copy of the old tables only (never `schema.sql`; it is the final schema):
 ```bash
 npx wrangler d1 execute dealsonline-reports-staging --remote --file=migrations/0000_legacy_reports.sql
 # seed a few legacy reports/facets with explicit ids, as in the local fixture
-npx wrangler d1 migrations list dealsonline-reports-staging --remote     # expect 0000 and 0001 pending
+npx wrangler d1 migrations list dealsonline-reports-staging --remote     # expect 0000, 0001 and 0002 pending
 ```
 If production was provisioned from a differently shaped `schema.sql`, first compare
 `wrangler d1 export dealsonline-reports --remote --no-data --output=prod-schema.sql`
@@ -97,12 +106,12 @@ with `migrations/0000_legacy_reports.sql`; reconcile differences before proceedi
 
 ### O4. Backup and restoration proof (staging)
 ```bash
-npx wrangler d1 export dealsonline-reports-staging --remote --output=backups/staging-pre-0001.sql
+npx wrangler d1 export dealsonline-reports-staging --remote --output=backups/staging-pre-migrations.sql
 npx wrangler d1 time-travel info dealsonline-reports-staging          # note the bookmark / timestamp
 npx wrangler d1 migrations apply dealsonline-reports-staging --remote
 # prove restore: apply the export into a scratch database and compare row counts and ids
 npx wrangler d1 create dealsonline-reports-restore-check
-npx wrangler d1 execute dealsonline-reports-restore-check --remote --file=backups/staging-pre-0001.sql
+npx wrangler d1 execute dealsonline-reports-restore-check --remote --file=backups/staging-pre-migrations.sql
 npx wrangler d1 time-travel restore dealsonline-reports-staging --timestamp=<pre-migration timestamp>   # only if the drill calls for it
 ```
 Evidence: export file checksum, row counts of `reports`/`report_facets`/`honeypot_hits` before,
@@ -134,7 +143,7 @@ Evidence: both outputs, `d1_migrations` rows, legacy ids and content unchanged.
 Only after O1-O6 are complete and the owner approves, in this order, each as its own recorded step:
 1. Confirm the production database name and id from the Cloudflare dashboard and record them.
 2. Backup: `wrangler d1 export <prod-db> --remote --output=...` plus a Time Travel bookmark.
-3. `wrangler d1 migrations list <prod-db> --remote`, then `migrations apply --remote`.
+3. `wrangler d1 migrations list <prod-db> --remote` (expect 0000-0002 pending), then `migrations apply --remote` so 0000, 0001 and 0002 land together, BEFORE merging to the production branch.
    (First-time adoption of a hand-built database also works: 0000 is idempotent.)
 4. Deploy the compatible handler, then the receipt-aware client.
 5. Observe real clients/receipts (O6 query on `submission_key IS NOT NULL` vs NULL).
@@ -157,7 +166,8 @@ Only after O1-O6 are complete and the owner approves, in this order, each as its
 | Field | Value |
 |---|---|
 | Candidate commit | |
-| Schema version (last recorded migration) | |
+| Schema version (last recorded migration; expect 0002_report_status.sql) | |
+| Pre-merge gate: `DB` bound in Production and Preview, none webhook-only | |
 | CI run URL | |
 | Local test outputs | see section 2 (commit above plus Task 5 commit) |
 | Browser journey evidence | local run: 0 failures, light and dark |
