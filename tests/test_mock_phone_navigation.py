@@ -63,9 +63,9 @@ def test_phone_navigation_has_distinct_types_and_brand_shortcuts():
     assert not {"phone-tablet", "computer-tablet", "iphone-ipad"} & nodes.keys()
 
 
-def test_phone_navigation_preserves_legacy_category_fallback():
+def test_phone_category_route_falls_back_to_the_phones_wearables_aisle():
     route_source = (Path(__file__).resolve().parents[1] / "dealsonline_ui_ux_mock/src/app/pages/PhoneCategoryPage.tsx").read_text()
-    assert '<Navigate to="/browse" replace />' in route_source
+    assert '<Navigate to="/aisle/phones-wearables" replace />' in route_source
 
 
 def test_phone_navigation_has_only_valid_parents():
@@ -186,8 +186,17 @@ def test_navigation_contract_separates_categories_from_legacy_collections():
     # Legacy collections stay separate from approved categories, but the
     # shopper-facing copy no longer exposes pipeline caveats (SokoPulse design
     # rules: never expose the pipeline).
-    assert "More collections" in directory
-    assert "isLegacyPhoneCollection(slug, node?.ancestors)" in shelf_page
+    # The directory is department entry points, each with its comparison
+    # categories and its family anchors.
+    assert "TAXONOMY_DEPARTMENTS.map" in directory
+    assert "to={`/aisle/${department.id}`}" in directory
+    assert "to={`/browse/${c.slug}`}" in directory
+    assert "manifest.categories.filter((c) => department.capturedSlugs.includes(c.slug))" in directory
+    assert "orderedFamilies(department)" in directory
+    assert "to={`/aisle/${department.id}#${family.id}`}" in directory
+    # DemoShelfPage no longer branches on the legacy detector; the separation
+    # now lives in the taxonomy module, which still exports it.
+    assert "export const isLegacyPhoneCollection = createCollectionDetector(" in taxonomy
     for page in (directory, shelf_page):
         assert "mixed product types" not in page
         assert "collection counts" not in page

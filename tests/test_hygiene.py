@@ -308,10 +308,26 @@ def test_the_projection_prefers_the_real_listing_title():
 def test_the_projection_surfaces_availability_and_freshness():
     from app.api.routes.clusters import _cluster_view
 
-    view = _cluster_view({"members": [member()], "canonical_category_slug": "groceries"})
+    view = _cluster_view({"members": [member()], "canonical_category_slug": "groceries"}, now=NOW)
     assert view["availability_basis"] == "available"
     assert view["freshness_basis"] == "fresh"
     assert view["last_seen"] is not None
+
+
+def test_projection_freshness_uses_supplied_clock():
+    """The same dated fixture is fresh just after its observation and stale past
+    the threshold; the verdict depends on the supplied clock, not today's date."""
+    from app.api.routes.clusters import _cluster_view
+
+    observed = datetime(2026, 7, 1, 12, 0, tzinfo=timezone.utc)
+    doc = {"members": [member(last_seen=observed.isoformat())],
+           "canonical_category_slug": "groceries"}
+    just_after = observed + timedelta(minutes=1)
+    at_threshold = observed + timedelta(days=STALE_AFTER_DAYS)
+    past_threshold = observed + timedelta(days=STALE_AFTER_DAYS + 1)
+    assert _cluster_view(doc, now=just_after)["freshness_basis"] == "fresh"
+    assert _cluster_view(doc, now=at_threshold)["freshness_basis"] == "fresh"
+    assert _cluster_view(doc, now=past_threshold)["freshness_basis"] == "stale"
 
 
 def test_an_unbuyable_cluster_warns_the_consumer():

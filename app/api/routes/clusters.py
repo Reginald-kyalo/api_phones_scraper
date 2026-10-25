@@ -25,6 +25,7 @@ projection.
 import os
 import re
 import time
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -256,7 +257,7 @@ def _by_store(raw: dict, summary: bool, stock: dict | None = None) -> dict:
     return out
 
 
-def _cluster_view(d: dict, summary: bool = False) -> dict:
+def _cluster_view(d: dict, summary: bool = False, *, now: datetime | None = None) -> dict:
     """Consumer-facing projection of a cluster doc.
 
     `summary=True` drops the per-store URL and title, leaving a bare price — for
@@ -272,6 +273,10 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
     The two failure modes are not symmetric. Forgetting the flag now costs bytes;
     forgetting it before cost the product's whole purpose. The quiet path is the
     safe one. (Requested by the frontend after they found the outage.)
+
+    `now` is the clock freshness is judged against (default: the current UTC
+    time); tests pass an explicit aware datetime so verdicts never depend on
+    today's date.
     """
     # Idealo-style feature variants: `configs` are split on the category PRIMARY facet
     # (storage for phones/tablets, CPU for laptops). facet_label is the chip text the UI
@@ -388,7 +393,7 @@ def _cluster_view(d: dict, summary: bool = False) -> dict:
         # projection then dropped them entirely — so no consumer could tell a live
         # price from a three-month-old one. Recomputed uniformly from members[].
         "availability_basis": availability(d),
-        "freshness_basis": freshness(d),
+        "freshness_basis": freshness(d, now),
         "last_seen": (ls.isoformat() if (ls := last_seen_at(d)) else None),
         "data_warning": _data_warning(d),
     }
