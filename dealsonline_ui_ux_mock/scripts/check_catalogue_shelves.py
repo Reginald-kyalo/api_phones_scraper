@@ -4,6 +4,9 @@ Checks, against the captured files (public/demo/navigation.json, shelves/<slug>/
   aisle   /aisle/<department>: every family in the navigation is a heading, every family shelf link is present
   shelf   /shelf/<slug>: the product count, the first page's cards in capture order, a later page (pagination,
           across the 100-row file boundary), and that a clicked card opens its product page (h1 = the row's name)
+  wiring  (--every-nav) EVERY category a shopper can reach from the menus has products: every /shelf and /browse link
+          on the 19 aisle pages and the All-categories page renders at least one product card and never the empty
+          state, and every captured comparison category (manifest.json) is linked from an aisle and from /browse
 
 Usage: ALLOW_PUBLIC_CATALOGUE=1 npm run build && npx vite preview --port 4181 --strictPort, then
     ../apienv/bin/python scripts/check_catalogue_shelves.py [--port 4181] [--departments N] [--shelves N]
@@ -25,6 +28,7 @@ ap.add_argument("--port", type=int, default=4181)
 ap.add_argument("--departments", type=int, default=6)
 ap.add_argument("--shelves", type=int, default=12)
 ap.add_argument("--seed", type=int, default=20261024)
+ap.add_argument("--every-nav", action="store_true", help="render every linked category page (~1,250 pages, ~15 min)")
 args = ap.parse_args()
 BASE = f"http://localhost:{args.port}"
 rng = random.Random(args.seed)
@@ -69,6 +73,46 @@ def wait_cards(pg, want):
 def card_hrefs(pg):
     return pg.locator("section[aria-label='Products'] a[href^='/prices/']").evaluate_all(
         "els => els.map(e => decodeURIComponent(e.getAttribute('href').slice('/prices/'.length)))")
+
+
+EMPTY_TEXTS = ("No products listed in this category yet", "No products found", "Category not found")
+
+
+def check_every_nav(browser):
+    """Every category link the aisles and /browse show leads to a page with products on it."""
+    manifest = json.loads((DEMO / "manifest.json").read_text())
+    ctx = browser.new_context(viewport={"width": 1280, "height": 1600})
+    pg = ctx.new_page()
+    linked, from_aisle, from_index = {}, set(), set()
+    pages = [f"/aisle/{d['slug']}" for d in nav["departments"]] + ["/browse"]
+    for src in pages:
+        pg.goto(f"{BASE}{src}", wait_until="domcontentloaded")
+        pg.wait_for_selector("h1.page-title", timeout=15_000)
+        try:
+            pg.wait_for_selector("a[href^='/browse/'], a[href^='/shelf/']", timeout=10_000)
+        except Exception:
+            pass
+        for href in pg.locator("main a[href^='/shelf/'], main a[href^='/browse/']").evaluate_all(
+                "els => els.map(e => e.getAttribute('href'))"):
+            href = href.split("#")[0]
+            linked.setdefault(href, src)
+            (from_aisle if src.startswith("/aisle/") else from_index).add(href)
+    for cat in manifest["categories"]:
+        check(f"/browse/{cat['slug']}" in from_aisle, f"wiring: comparison category /browse/{cat['slug']} linked from an aisle")
+        check(f"/browse/{cat['slug']}" in from_index, f"wiring: comparison category /browse/{cat['slug']} linked from /browse")
+    empty = 0
+    for href, src in sorted(linked.items()):
+        pg.goto(f"{BASE}{href}", wait_until="domcontentloaded")
+        try:
+            pg.wait_for_selector("main a[href^='/prices/']", timeout=12_000)
+        except Exception:
+            pass
+        n_cards = pg.locator("main a[href^='/prices/']").count()
+        blank = sum(pg.get_by_text(t, exact=False).count() for t in EMPTY_TEXTS)
+        if not check(n_cards > 0 and not blank, f"wiring: {href} (linked from {src}) shows products ({n_cards} cards)"):
+            empty += 1
+    ok.append(f"note wiring: {len(linked)} category links from {len(pages)} pages, {empty} without products")
+    ctx.close()
 
 
 # Aisles: the biggest department, the smallest, and a random sample in between.
@@ -154,8 +198,13 @@ with sync_playwright() as p:
                   f"shelf {slug}: card '{name_of(row)[:50]}' opens its page (h1 '{title[:50]}')")
             products_opened += 1
         ctx.close()
+    if args.every_nav:
+        check_every_nav(browser)
     browser.close()
 
 print("\n".join(ok + fails))
 print(f"\n{len(picked)} aisles, {len(sample)} shelves, {products_opened} products opened: "
       f"{sum(1 for o in ok if o.startswith('ok'))} ok, {len(fails)} failed")
+
+if fails:
+    raise SystemExit(1)

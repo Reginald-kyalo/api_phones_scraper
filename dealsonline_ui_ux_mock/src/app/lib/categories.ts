@@ -21,4 +21,7 @@ const LABELS: Record<string, string> = {
   'desktop-computers': 'Desktops',
 };
 
+/** Every captured comparison category the storefront names. */
+export const CATEGORY_SLUGS: readonly string[] = Object.keys(LABELS);
+
 export const categoryLabel = (slug: string) => LABELS[slug] ?? slug.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());

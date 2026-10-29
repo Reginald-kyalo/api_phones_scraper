@@ -54,3 +54,21 @@ test('a family links its leaves, and its own page when products sit at the famil
 test('a family with no leaves still has a link', () => {
   assert.deepEqual(familyShelfLinks({ ...node('wearables', 'Wearables', 3, 3), leaves: [] }).map((l) => l.slug), ['wearables']);
 });
+
+// Every captured comparison category (/browse/:slug) must be reachable from a
+// department: the aisles and the All-categories page list a department's
+// categories from its static `capturedSlugs`, so a category missing there is
+// a page with products that no menu links to (routers and desktop-computers
+// were, 2026-10-29: 401 + 67 products).
+const { SPINE_DEPARTMENTS } = await load('src/app/data/spineDepartments.ts');
+const { CATEGORY_SLUGS } = await load('src/app/lib/categories.ts');
+
+test('every comparison category belongs to exactly one department', () => {
+  const owners = new Map();
+  for (const d of SPINE_DEPARTMENTS) for (const s of d.capturedSlugs) owners.set(s, [...(owners.get(s) ?? []), d.id]);
+  assert.ok(CATEGORY_SLUGS.length >= 15);
+  for (const slug of CATEGORY_SLUGS) {
+    assert.equal((owners.get(slug) ?? []).length, 1, `${slug} -> ${owners.get(slug) ?? 'no department'}`);
+  }
+  for (const slug of owners.keys()) assert.ok(CATEGORY_SLUGS.includes(slug), `${slug} is not a known category`);
+});

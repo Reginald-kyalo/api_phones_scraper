@@ -44,7 +44,7 @@ export const SPINE_DEPARTMENTS: DemoSpineDepartment[] = [
   { id: 'phones-wearables', label: 'Phones & Wearables', n_clusters: 28152, n_shelves: 34, Icon: Smartphone, capturedSlugs: ['mobile-phones', 'mobile-phone-accessories', 'wearables'] },
   { id: 'groceries-everyday-essentials', label: 'Groceries & Everyday Essentials', n_clusters: 17594, n_shelves: 158, Icon: ShoppingBasket, capturedSlugs: ['groceries'] },
   { id: 'tv-audio-home-entertainment', label: 'TV, Audio & Home Entertainment', n_clusters: 7596, n_shelves: 27, Icon: Tv, capturedSlugs: ['tvs', 'audio-systems', 'headphones', 'speakers'] },
-  { id: 'computing-networking', label: 'Computing & Networking', n_clusters: 5516, n_shelves: 42, Icon: Laptop, capturedSlugs: ['laptops', 'tablets', 'monitors', 'printers'] },
+  { id: 'computing-networking', label: 'Computing & Networking', n_clusters: 5516, n_shelves: 42, Icon: Laptop, capturedSlugs: ['laptops', 'tablets', 'monitors', 'printers', 'routers', 'desktop-computers'] },
   { id: 'health-beauty-personal-care', label: 'Health, Beauty & Personal Care', n_clusters: 5322, n_shelves: 33, Icon: Sparkles, capturedSlugs: [] },
   { id: 'home-appliances', label: 'Home Appliances', n_clusters: 3182, n_shelves: 32, Icon: WashingMachine, capturedSlugs: [] },
   { id: 'home-furniture-decor', label: 'Home, Furniture & Décor', n_clusters: 2999, n_shelves: 31, Icon: Sofa, capturedSlugs: [] },
