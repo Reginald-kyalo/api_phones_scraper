@@ -186,7 +186,7 @@ with sync_playwright() as p:
             href = "/prices/" + urllib.parse.quote(row["cluster_id"], safe="-_.!~*'()")  # = encodeURIComponent
             card = pg.locator(f'section[aria-label="Products"] a[href="{href}"]').first
             card.click()
-            pg.wait_for_url("**/prices/**")
+            pg.wait_for_url("**/prices/**", wait_until="commit")   # SPA push; "load" can wait forever on a shop CDN image that never completes
             try:   # the product page is a lazy chunk + a detail fetch
                 pg.wait_for_function("(name) => [...document.querySelectorAll('h1.page-title')].some(h => h.innerText.trim().toLowerCase() === name)",
                                      arg=name_of(row).lower(), timeout=10_000)
