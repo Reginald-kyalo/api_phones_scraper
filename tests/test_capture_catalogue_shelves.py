@@ -23,6 +23,7 @@ from scripts.capture_catalogue_shelves import (
     place_families,
     rank_key,
     resolves_in_category_shard,
+    site_totals,
     tree_payload,
 )
 from scripts.capture_demo_dataset import SHARD_DIGITS
@@ -157,3 +158,19 @@ def test_load_spine_reads_nodes(tmp_path):
     path = tmp_path / "_spine.json"
     path.write_text(json.dumps({"nodes": list(NODES.values()), "cross_refs": []}))
     assert load_spine(path)["smartphones"]["parent_slug"] == "mobile-phones"
+
+
+def test_site_totals_count_category_pages_and_shelves_once():
+    # The headline must count every product the site shows: category-page clusters plus spine-only families,
+    # a family on both counted once, and the shops across all of them.
+    cat_rows = {"a": {"is_multi_store": True}, "b": {"is_multi_store": False}}
+    shelf_rows = {"b": {"is_multi_store": False}, "c": {"is_multi_store": True}, "d": {"is_multi_store": False}}
+    stores = {"a": ["s1", "s2"], "b": ["s2"], "c": ["s3", "s4"], "d": ["s4"]}
+    assert site_totals(cat_rows, shelf_rows, stores) == {
+        "total_clusters": 4, "multi_store_clusters": 2, "total_stores": 4}
+
+
+def test_site_totals_without_shelves_are_the_category_totals():
+    cat_rows = {"a": {"is_multi_store": True}}
+    assert site_totals(cat_rows, {}, {"a": ["s1", "s2"]}) == {
+        "total_clusters": 1, "multi_store_clusters": 1, "total_stores": 2}

@@ -263,6 +263,18 @@ def _family_views(docs: list[dict], db, raw_db, raw_colls: set) -> list[dict]:
     return views
 
 
+def site_totals(cat_rows: dict[str, dict], shelf_rows: dict[str, dict], stores: dict[str, list]) -> dict:
+    """The manifest headline over everything the site shows: category-page clusters plus spine-shelf families, each
+    counted once. The category capture alone counted 25,050 products / 1,001 shops on 2026-10-31 while the site
+    showed 115,242 / 1,812 — the spine-only families were missing from the home page and the categories page."""
+    rows = {**cat_rows, **shelf_rows}
+    return {
+        "total_clusters": len(rows),
+        "multi_store_clusters": sum(1 for r in rows.values() if r.get("is_multi_store")),
+        "total_stores": len({s for cid in rows for s in (stores.get(cid) or [])}),
+    }
+
+
 def _category_rows(manifest: dict) -> tuple[dict[str, dict], dict[str, str]]:
     """Summary rows the category capture shipped (cluster_id -> row) and each row's category."""
     rows: dict[str, dict] = {}
@@ -314,6 +326,7 @@ def capture_catalogue_shelves(source: str = SOURCE, spine_path: Path = SPINE_JSO
     rows: dict[str, dict] = {}
     stores: dict[str, list] = {}
     details: dict[str, str] = {}
+    site_stores: dict[str, list] = {}   # every category-page cluster, for the site totals
     for cid, row in cat_rows.items():
         if cid in placement_of:
             rows[cid] = row
@@ -323,6 +336,7 @@ def capture_catalogue_shelves(source: str = SOURCE, spine_path: Path = SPINE_JSO
             if not path.exists():
                 continue
             for cid, view in json.loads(path.read_text()).items():
+                site_stores[cid] = view.get("stores") or []
                 if cid not in rows:
                     continue
                 stores[cid] = view.get("stores") or []
@@ -415,6 +429,13 @@ def capture_catalogue_shelves(source: str = SOURCE, spine_path: Path = SPINE_JSO
         "shelves": shelf_meta,
     }
     _write(shelf_root / "manifest.json", summary)
+    # The headline counts what the site shows; the category capture's own figures stay alongside.
+    totals = site_totals(cat_rows, rows, {**site_stores, **stores})
+    if "category_clusters" not in manifest:   # a re-run of this pass must not record its own totals as the category's
+        manifest.update(category_clusters=manifest["total_clusters"], category_stores=manifest["total_stores"],
+                        category_multi_store_clusters=manifest["multi_store_clusters"])
+    manifest.update(totals)
+    _write(OUT / "manifest.json", manifest)
     _write(OUT / "navigation.json", navigation(nodes, direct, subtree, stores, source=source,
                                                captured_at=manifest["captured_at"]))
     print(f"shelves: {len(shelf_meta)} spine shelves over {len(rows)} families ({from_categories} from category pages, "
