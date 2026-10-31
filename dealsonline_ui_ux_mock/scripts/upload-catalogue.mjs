@@ -21,7 +21,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 
 const root = join(process.cwd(), '.catalogue');
 const bucket = process.env.CATALOGUE_BUCKET || 'sokopulse-catalogue';
@@ -33,8 +33,11 @@ const flag = (name) => {
 };
 // Local R2 is one SQLite file and errors under parallel writes.
 const CONCURRENCY = target === '--local' ? 1 : 8;
-const ATTEMPTS = 3;
+const ATTEMPTS = 6;   // a flaky (mobile) uplink drops a few of 8,000+ puts; back off between tries
 const wrangler = join(process.cwd(), 'node_modules', '.bin', 'wrangler');
+// Wrangler 3 writes R2 remotely by default and rejects --remote; wrangler 4 defaults to local storage and needs it.
+const wranglerMajor = Number(execFileSync(wrangler, ['--version'], { encoding: 'utf8' }).match(/(\d+)\./)?.[1]);
+const targetArgs = target === '--local' ? ['--local'] : wranglerMajor >= 4 ? ['--remote'] : [];
 
 function run(cliArgs) {
   return new Promise((resolve) => {
@@ -48,8 +51,9 @@ function run(cliArgs) {
 async function putFile(key, file) {
   let last = { ok: false, err: '' };
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
-    last = await run(['r2', 'object', 'put', `${bucket}/${key}`, '--file', file, '--content-type', 'application/json', target]);
+    last = await run(['r2', 'object', 'put', `${bucket}/${key}`, '--file', file, '--content-type', 'application/json', ...targetArgs]);
     if (last.ok) return true;
+    await new Promise((r) => setTimeout(r, 2000 * attempt));
   }
   console.error(`failed: ${key}\n${last.err}`);
   return false;
